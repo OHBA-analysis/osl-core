@@ -46,7 +46,7 @@ for subi=1:length(current_level.subjects_to_do),
     subinds(subi)=sub;
     
     % load in single subject stats
-    lower_level_results=osl_load_oat_results(oat, lower_level.results_fnames{sub});
+    lower_level_results=oat_load_results(oat, lower_level.results_fnames{sub});
         
     if(subi==1)
         sc=[size(lower_level_results.cope) 1 1];

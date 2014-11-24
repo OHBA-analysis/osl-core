@@ -23,7 +23,7 @@ end;
 
 if isfield(Sin,'stats_fname')
     if isstr(Sin.stats_fname')
-        Sin.stats=osl_load_oat_results(Sin.oat,Sin.stats_fname);
+        Sin.stats=oat_load_results(Sin.oat,Sin.stats_fname);
     else
         Sin.stats=Sin.stats_fname;
     end;
@@ -94,7 +94,7 @@ elseif(Sin.stats.level==2)
      
     % use first subject as the one to show results on
     %D=spm_eeg_load(Sin.oat.source_recon.D_epoched{1}); 
-    stats1=osl_load_oat_results(Sin.oat,Sin.oat.first_level.results_fnames{Sin.oat.first_level.sessions_to_do(1)});
+    stats1=oat_load_results(Sin.oat,Sin.oat.first_level.results_fnames{Sin.oat.first_level.sessions_to_do(1)});
     D=oat_get_sensordata(stats1);
     
     for gcon=1:size(Sin.stats.cope,5),

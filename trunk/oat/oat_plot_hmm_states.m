@@ -13,7 +13,7 @@ fig_handles=[];
 %%%%%%%%%%%%%%%%%%%%%%%
 %% plot hmm classes
 
-res=osl_load_oat_results(oat,oat.source_recon.results_fnames{1});
+res=oat_load_results(oat,oat.source_recon.results_fnames{1});
 
 D=oat_get_sensordata(res);
 

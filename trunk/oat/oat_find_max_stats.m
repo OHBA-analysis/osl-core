@@ -18,7 +18,7 @@ function [vox_ind_max time_ind_max freq_ind_max stats max_stat] = oat_find_max_s
 try, stats=S.stats; catch error('S.stats not specified'); end;
 
 if isstr(stats)
-    stats=osl_load_oat_results(S.oat,stats);
+    stats=oat_load_results(S.oat,stats);
 else
     stats=stats;
 end;

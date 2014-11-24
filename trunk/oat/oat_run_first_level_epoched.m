@@ -107,7 +107,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% load in the beamformer result for this session
     source_recon_results_fname = oat.source_recon.results_fnames{sub};
-    source_recon_results=osl_load_oat_results(oat,source_recon_results_fname);
+    source_recon_results=oat_load_results(oat,source_recon_results_fname);
     
     % get D and update path in case OAT dir has been moved
     D = oat_get_sensordata( source_recon_results );
