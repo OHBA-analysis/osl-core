@@ -1,4 +1,4 @@
-function D = nosl_inverse_model(S)
+function D = osl_inverse_model(S)
 % NOSL_INVERSE_MODEL runs MEG forward model in SPM12
 %
 % This function passes a limited set of parameters to SPM batch and returns
@@ -246,7 +246,6 @@ switch S.inverse_method,
         disp('Inversion method unknown!');        
 end;
 
-if(1)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matlabbatch{5}.spm.tools.beamforming.output.BF(1)                               = cfg_dep('Inverse solution: BF.mat file', substruct('.','val', '{}',{4}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
 matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise       = 'both';
@@ -255,7 +254,6 @@ matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise       =
 matlabbatch{6}.spm.tools.beamforming.write.BF(1)                                = cfg_dep('Output: BF.mat file', substruct('.','val', '{}',{5}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
 matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.modality          = 'MEG'; % Fix this to allow multiple modalities
 matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix            = 'B';
-end;
 
 spm_jobman('run',matlabbatch)
 
