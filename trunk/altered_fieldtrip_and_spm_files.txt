@@ -1,0 +1,17 @@
+%%%%%%%%%%%%%%%%%%%%%%%
+% for binary masking of triggers to work for elekta data
+% i.e. corresponds to the S.fixoxfordneuromag flag passed into spm_eeg_convert_4osl from osl_convert_script
+
+osl2.0/osl/spm_eeg_convert_4osl.m
+osl2.0/spm12/external/fieldtrip/fileio/ft_read_event_4osl.m
+osl2.0/spm12/external/fieldtrip/fileio/private/read_trigger_4osl.m
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Problem:  Calls to ft_multiplotER were producing an error in calling the mex file spm12/external/fieldtrip/utilities/private/mxSerialize
+
+% Solution: inserted all fieldtrip/utilities/private/*.mexmaci64 files from spm12b (beta) 
+
+osl2.0/spm12/external/fieldtrip/utilities/private/*.mexmaci64
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+
