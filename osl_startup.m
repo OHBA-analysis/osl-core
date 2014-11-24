@@ -70,9 +70,9 @@ end % if ~ isdeployed
 filelist={};targetdir={};
 
 filelist{1}='osl2/spm-beamforming-toolbox-osl-addons/bf_output_montage_osl.m';
-targetdir{1}='spm12/toolbox/beamforming';
+targetdir{1}='spm12/toolbox/spm-beamforming-toolbox';
 filelist{2}='osl2/spm-beamforming-toolbox-osl-addons/bf_write_spmeeg_osl.m';
-targetdir{2}='spm12/toolbox/beamforming';
+targetdir{2}='spm12/toolbox/spm-beamforming-toolbox';
 
 filelist{3}='osl2/spm-changes/ft_read_event_4osl.m';
 targetdir{3}='spm12/external/fieldtrip/fileio';
