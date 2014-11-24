@@ -1,4 +1,4 @@
-function res = bf_write_spmeeg_nosl(BF, S)
+function res = bf_write_spmeeg_osl(BF, S)
 % Writes out beamformer results as M/EEG dataset using different montages
 % for weights normalised and unnormalised data
 %
@@ -36,7 +36,7 @@ if nargin == 0
     prefix.val     = {'B'};
     
     spmeeg      = cfg_branch;
-    spmeeg.tag  = 'spmeeg_nosl';
+    spmeeg.tag  = 'spmeeg_osl';
     spmeeg.name = 'SPM M/EEG dataset';
     spmeeg.val  = {modality, prefix};
     

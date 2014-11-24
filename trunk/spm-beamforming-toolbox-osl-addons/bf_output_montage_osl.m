@@ -1,4 +1,4 @@
-function mont = bf_output_montage_nosl(BF, S)
+function mont = bf_output_montage_osl(BF, S)
 % Generates a montage for source extraction with weights normalisation
 %
 % Adam Baker & MWW
@@ -13,7 +13,7 @@ if nargin == 0
     normalise.val    = {'both'};
     
     mont = cfg_branch;
-    mont.tag = 'montage_nosl';
+    mont.tag = 'montage_osl';
     mont.name = 'Source montage with weights normalisation';
     mont.val  = {normalise}; 
     
