@@ -34,10 +34,10 @@ function D = osl_forward_model(S)
 %% Allow branching into Adam's new coregistration code 
 % This was the easiest way for me to wrap my code while retaining
 % compatibility with the SPM8 coregistration. For OSL2/SPM12 I will adapt
-% nosl_headmodel to switch between SPM/my coregistration & this function
+% osl_headmodel to switch between SPM/my coregistration & this function
 % will become obsolete
 if isfield(S,'use_rhino') && S.use_rhino == 1,
-    D = nosl_headmodel(S);
+    D = osl_headmodel(S);
     return
 end%if
 
