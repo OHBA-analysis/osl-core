@@ -97,7 +97,7 @@ for sessi=1:length(oat.source_recon.sessions_to_do), sessnum=oat.source_recon.se
 
     try,
         % load in opt results for this session:            
-        res=osl_load_oat_results(oat, oat.source_recon.results_fnames{sessnum});
+        res=oat_load_results(oat, oat.source_recon.results_fnames{sessnum});
 
         mod_ind=find(strcmp(oat.source_recon.modalities,oat.first_level.report.modality_to_do));                
         

@@ -1,6 +1,6 @@
-function res=osl_load_oat_results(oat, fname)
+function res=oat_load_results(oat, fname)
     
-% res=osl_load_oat_results.m(oat, fname)
+% res=oat_load_results.m(oat, fname)
 %
 % load a matlab struct named results from file named fname
 

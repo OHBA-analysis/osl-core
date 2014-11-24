@@ -23,7 +23,7 @@ if nargin<3,
 end;
 
 if isstr(group_level_results)
-    group_level_results=osl_load_oat_results(oat,group_level_results);
+    group_level_results=oat_load_results(oat,group_level_results);
 else
     group_level_results=group_level_results;
 end;

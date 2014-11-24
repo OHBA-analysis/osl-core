@@ -33,7 +33,7 @@ for subi=1:length(oat.subject_level.subjects_to_do),
         ses=oat.subject_level.session_index_list{sub}(sesi);
         
         % load in single session stats
-        first_level_results=osl_load_oat_results(oat, oat.first_level.results_fnames{ses});
+        first_level_results=oat_load_results(oat, oat.first_level.results_fnames{ses});
         
         if(sesi==1)
             sc=[size(first_level_results.cope) 1 1];

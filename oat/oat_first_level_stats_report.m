@@ -27,7 +27,7 @@ for c=1:length(contrast_list),
 end;
 
 if isstr(first_level_results)
-    first_level_results=osl_load_oat_results(oat,first_level_results);
+    first_level_results=oat_load_results(oat,first_level_results);
 else
     first_level_results=first_level_results;
 end;

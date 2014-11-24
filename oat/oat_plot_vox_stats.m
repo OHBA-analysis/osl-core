@@ -23,7 +23,7 @@ function [fig_handle, fig_name, fig_title] = oat_plot_vox_stats(S)
 try stats=S.stats; catch, error('S.stats not specified'); end;
 
 if isstr(stats)
-    stats=osl_load_oat_results(S.oat,stats);
+    stats=oat_load_results(S.oat,stats);
 else
     stats=stats;
 end;

@@ -36,7 +36,7 @@ try, tmp=Sin.oat; catch, error('Sin.oat not specfied'); end;
 try, tmp=Sin.stats_fname; catch, error('Sin.stats_fname not specfied'); end; 
 try, tmp=Sin.temporal_ds; catch, Sin.temporal_ds=1; end; % factor to downsample in time
 
-Sin.stats=osl_load_oat_results(Sin.oat,Sin.stats_fname);
+Sin.stats=oat_load_results(Sin.oat,Sin.stats_fname);
 
 try, statsdir=Sin.stats_dir; catch, statsdir=[Sin.oat.source_recon.dirname '/' Sin.stats.fname '_dir']; end; %full path of directory where stats will be stored
 
