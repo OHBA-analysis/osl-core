@@ -87,8 +87,8 @@ filelist{7}='osl2/spm-changes/ptriproj.mexmaci64';
 targetdir{7}='spm12/external/fieldtrip/utilities/private';
 
 for kk=1:length(filelist),
-    kk
     runcmd(['cp -f ' osldir '/' filelist{kk} ' ' osldir '/' targetdir{kk}]);
+    rmpath([osldir '/' targetdir{kk}]);
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

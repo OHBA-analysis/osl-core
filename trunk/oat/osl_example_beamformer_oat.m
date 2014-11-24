@@ -64,8 +64,8 @@ oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband_' oat.source_re
 
 %oat.source_recon.forward_meg='MEG Local Spheres';
 oat.source_recon.forward_meg='Single Shell';
-oat.source_recon.work_in_pca_subspace=1;
-oat.source_recon.modalities{1}='MEGPLANAR';
+%oat.source_recon.work_in_pca_subspace=1;
+%oat.source_recon.modalities{1}='MEGPLANAR';
 
 do_hmm=0;
 if(do_hmm)
