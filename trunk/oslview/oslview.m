@@ -790,7 +790,7 @@ pointer_wait;
     
     D = spm_eeg_load(datafile);
     
-    D = badchannels(D,D.meegchannels,0);
+    D = badchannels(D,D.indchantype('MEEG'),0);
     if ~isempty(ch_bad)
       D = badchannels(D,ch_bad,1);
     end
@@ -850,7 +850,7 @@ pointer_wait;
         D = spm_eeg_load(datafile);
         
         set_bad
-        D = badchannels(D,D.meegchannels,0);
+        D = badchannels(D,D.indchantype('MEEG'),0);
         if ~isempty(ch_bad)
           D = badchannels(D,ch_bad,1);
         end

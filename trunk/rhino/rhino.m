@@ -503,7 +503,7 @@ close_hf = onCleanup(@() close(hf));
 % ICP RIGID BODY TRANSFORMATION USING HEADSHAPE POINTS AND SCALP OUTLINE
 if S.useheadshape,
     % get headshape points
-    headshape_polhemus = D.fiducials.pnt;
+    headshape_polhemus = [D.fiducials.pnt; D.fiducials.fid.pnt];
     assert(~isempty(headshape_polhemus),      ...
            [mfilename ':NoHeadhshapePoints'], ...
            'Headshape points not found in D.fiducials.pnt. \n');
