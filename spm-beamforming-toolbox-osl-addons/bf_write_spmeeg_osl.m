@@ -10,16 +10,12 @@ if nargin == 0
     modality.tag     = 'modality';
     modality.name    = 'Modality';
     modality.help    = {'What modality to output'};
-    modality.labels  = {
-        'MEG'
-        'MEGPLANAR'
-        'EEG'
-        }';
-    modality.values  = {
-        'MEG'
-        'MEGPLANAR'
-        'EEG'
-        }';
+    modality.labels  = {'MEG'
+                        'MEGPLANAR'
+                        'EEG'}';
+    modality.values  = {'MEG'
+                        'MEGPLANAR'
+                        'EEG'}';
     modality.val = {'MEG'};
     
     none = cfg_const;
@@ -33,7 +29,7 @@ if nargin == 0
     prefix.help    = {'Specify the string to be prepended to the output (if relevant).'};
     prefix.strtype = 's';
     prefix.num     = [1 Inf];
-    prefix.val     = {'B'};
+    prefix.val     = {''};
     
     spmeeg      = cfg_branch;
     spmeeg.tag  = 'spmeeg_osl';
@@ -58,20 +54,29 @@ chanunitorg = units(D, D.indchannel(montage.labelorg))';
 for m = 1:numel(BF.output.montage.(S.modality))
     
     montage = BF.output.montage.(S.modality)(m);
-
     montage.chantypeorg = chantypeorg;
     montage.chanunitorg = chanunitorg;
+        
+    % Online montage needs additional channel information
+    for ch = 1:length(montage.labelnew)
+        montage.channels(ch).label = montage.labelnew{ch};
+        montage.channels(ch).type  = montage.chantypenew{ch};
+        montage.channels(ch).units = montage.chanunitnew{ch};
+        montage.channels(ch).bad   = 0;
+    end 
     
     S1 = [];
     S1.montage      = montage;
-    S1.prefix       = S.prefix; % ignored for online
     S1.keepsensors  = false;
     S1.keepothers   = false;
     S1.mode         = 'switch';
-    
-    %if m == 1
-    %  D = copy(D, [S.prefix D.fname]);
-    %end
+   
+    % Write a new MEEG object if a prefix is given
+    if ~isempty(S.prefix) 
+        if m == 1
+            D = copy(D, [S.prefix D.fname]);
+        end
+    end
     
     S1.D = D;
     D = spm_eeg_montage(S1);

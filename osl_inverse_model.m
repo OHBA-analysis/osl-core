@@ -15,9 +15,8 @@ function D = osl_inverse_model(S)
 % 
 % OPTIONAL INPUTS:
 %
-% S.modality       - Sensor modality to use (e.g. MEG,MEGPLANAR, or both) 
+% S.modalities     - Sensor modalities to use (e.g. MEG,MEGPLANAR, or both) 
 %                    (default MEGPLANAR for Neuromag, MEG for CTF)
-% OR S.modalities  - List of modalities to use
 % 
 % S.fuse           - fuse modalities or not
 %                     (default 'no')
@@ -45,6 +44,9 @@ function D = osl_inverse_model(S)
 % S.dirname        - dir to output results to
 %                     (default is D.path)
 %
+% S.prefix         - write new SPM file by prepending this prefix
+%                     (default is '')
+%
 % AB 2014, MWW 2014
 
 
@@ -55,13 +57,13 @@ function D = osl_inverse_model(S)
 
 % Check SPM File Specification:
 try
-    if isstr(S.D),        
+    if strcmp(S.D,'meeg'),        
+        D = S.D;
+    else
         S.D = char(S.D);
         [pathstr,filestr] = fileparts(S.D);
         S.D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
         D = spm_eeg_load(S.D);
-    else
-        D = S.D;
     end;
     D.check;
 catch
@@ -78,29 +80,17 @@ end
 
 % Check Modality Specification:
 try
-    S.modality = cellstr(S.modality);
-    S.modality = S.modality(:);
-    S = ft_checkopt(S,'modality','cell',{{'MEG'},{'MEGPLANAR'},{'MEG';'MEGPLANAR'}});  
-        
-    S.modalities=S.modality;
-    S=rmfield(S,'modality');
-catch 
-    
-    try
-        S.modalities=S.modalities;
-    catch
-    
-        if any(strcmp(unique(D.chantype),'MEGPLANAR'))
-            default_modality = {'MEGPLANAR'};
-        else
-            default_modality = {'MEG'};
-        end
-        warning(['Modality specification not recognised or incorrect, assigning default: ' char(default_modality)])
-        S = ft_setopt(S,'modality',default_modality);
-        
-        S.modalities=S.modality;
-        S=rmfield(S,'modality');
-    end;
+    S.modalities = cellstr(S.modalities);
+    S.modalities = S.modalities(:);
+    S = ft_checkopt(S,'modalities','cell',{{'MEG'},{'MEGPLANAR'},{'MEG';'MEGPLANAR'}});
+catch
+    if any(strcmp(unique(D.chantype),'MEGPLANAR'))
+        default_modality = {'MEGPLANAR'};
+    else
+        default_modality = {'MEG'};
+    end
+    warning(['Modalities specification not recognised or incorrect, assigning default: ' char(default_modality)])
+    S = ft_setopt(S,'modalities',default_modality);
 end
 
 % Check Vector/Scalar Specification:
@@ -119,7 +109,6 @@ catch
     warning('Timespan specification not recognised or incorrect, using entire time window')
     S = ft_setopt(S,'timespan',[0 Inf]);
 end
-
 
 % Check PCA Order Specification:
 try
@@ -149,26 +138,33 @@ end
 try
     S = ft_checkopt(S,'use_class_channel','logical');
 catch 
-    S.use_class_channel=false;
+    S.use_class_channel = false;
 end
 
 % Check conditions Specification:
 try
-    [sel1 sel2]=setdiff(S.conditions,D.condlist);
-    if length(sel1)>0,
-        error(['Condition "' sel1{1} '" is not a valid condition']);
-    end;
+    cond = setdiff(S.conditions,D.condlist);
+    if ~isempty(cond),
+        error(['Condition "' cond{1} '" is not a valid condition']);
+    end
 catch 
     warning('conditions specification not recognised or incorrect, assuming conditions=all for now')
-    S.conditions='all';
+    S.conditions = {'all'};
 end
 
-% Check fuse Specification:
+% Check dirname Specification:
 try
     S = ft_checkopt(S,'dirname','char');
 catch 
     warning('dirname not set, assuming dirname=D.path for now')
     S = ft_setopt(S,'dirname',D.path);
+end
+
+% Check prefix Specification:
+try
+    S = ft_checkopt(S,'prefix','char');
+catch 
+    S = ft_setopt(S,'prefix','');
 end
 
 %%%%%%%%%%%%%%%%%%   R U N   I N V E R S E   M O D E L   %%%%%%%%%%%%%%%%%%
@@ -177,7 +173,7 @@ clear matlabbatch
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matlabbatch{1}.spm.tools.beamforming.data.dir                                   = {S.dirname}; % For now
-matlabbatch{1}.spm.tools.beamforming.data.D                                     = {[D.path '/' D.fname]};
+matlabbatch{1}.spm.tools.beamforming.data.D                                     = {fullfile(D.path,D.fname)};
 matlabbatch{1}.spm.tools.beamforming.data.val                                   = 1;
 matlabbatch{1}.spm.tools.beamforming.data.gradsource                            = 'inv';
 matlabbatch{1}.spm.tools.beamforming.data.space                                 = 'MNI-aligned';
@@ -197,7 +193,7 @@ if strcmp(S.conditions{1},'all')
     matlabbatch{3}.spm.tools.beamforming.features.whatconditions.all            = 1;
 else
     matlabbatch{3}.spm.tools.beamforming.features.whatconditions.condlabel      = S.conditions;
-end;
+end
 
 if ~S.use_class_channel,
     matlabbatch{3}.spm.tools.beamforming.features.plugin.contcov                = struct([]);
@@ -205,11 +201,11 @@ if ~S.use_class_channel,
 else
     matlabbatch{3}.spm.tools.beamforming.features.plugin.cov_bysamples          = struct([]);
     matlabbatch{3}.spm.tools.beamforming.features.woi                           = S.timespan;
-end;
+end
 
 for jj=1:length(S.modalities),
     matlabbatch{3}.spm.tools.beamforming.features.modality{jj}                  = S.modalities{jj};
-end;
+end
 
 matlabbatch{3}.spm.tools.beamforming.features.fuse                              = S.fuse;
 matlabbatch{3}.spm.tools.beamforming.features.regularisation.manual.lambda      = 0;
@@ -221,40 +217,46 @@ matlabbatch{4}.spm.tools.beamforming.inverse.BF(1)                              
 
 switch S.inverse_method,
     case 'beamform'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order = S.pca_order;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type = S.type;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral=0;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 0;
     case 'beamform_bilateral'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order = S.pca_order;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type = S.type;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral=1;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 1;
     case 'mne_diag_datacov'
         mne_lambda=1;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.noise_cov_type='diag_datacov';
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.lambda = mne_lambda;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.type = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.noise_cov_type = 'diag_datacov';
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.lambda         = mne_lambda;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.type           = S.type;
     case 'mne_eye'
         mne_lambda=1;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.noise_cov_type='eye';    
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.lambda = mne_lambda;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.type = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.noise_cov_type = 'eye';    
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.lambda         = mne_lambda;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.type           = S.type;
     case 'nosl'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.pca_order = S.pca_order;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.keeplf = true;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.type = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.pca_order         = S.pca_order;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.keeplf            = true;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.type              = S.type;
     otherwise 
         disp('Inversion method unknown!');        
-end;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matlabbatch{5}.spm.tools.beamforming.output.BF(1)                               = cfg_dep('Inverse solution: BF.mat file', substruct('.','val', '{}',{4}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
-matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise       = 'both';
+matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise        = 'both';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matlabbatch{6}.spm.tools.beamforming.write.BF(1)                                = cfg_dep('Output: BF.mat file', substruct('.','val', '{}',{5}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
-matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.modality          = 'MEG'; % Fix this to allow multiple modalities
-matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix            = 'B';
+matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.modality           = 'MEG'; % Fix this to allow multiple modalities
+matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             = S.prefix;
 
 spm_jobman('run',matlabbatch)
 
 end
+
+
+
+
+
+
