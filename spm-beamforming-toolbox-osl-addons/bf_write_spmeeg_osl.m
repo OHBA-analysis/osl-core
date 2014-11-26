@@ -11,9 +11,11 @@ if nargin == 0
     modality.name    = 'Modality';
     modality.help    = {'What modality to output'};
     modality.labels  = {'MEG'
+                        'MEGMAG'
                         'MEGPLANAR'
                         'EEG'}';
     modality.values  = {'MEG'
+                        'MEGMAG'
                         'MEGPLANAR'
                         'EEG'}';
     modality.val = {'MEG'};
