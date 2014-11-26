@@ -23,7 +23,7 @@ elseif nargin < 2
     error('Two input arguments are required');
 end
 
-modalities = intersect(fieldnames(BF.features), {'EEG', 'MEG', 'MEGPLANAR'});
+modalities = intersect(fieldnames(BF.features), {'EEG', 'MEG', 'MEGMAG', 'MEGPLANAR'});
 
 for m  = 1:numel(modalities)
     
@@ -32,12 +32,12 @@ for m  = 1:numel(modalities)
     
     %%%%%%
     % get weights to work out sizes of containers
-    if isfield(BF.inverse.MEG,'class'),
+    if isfield(BF.(modalities{m}),'class'),
         % using multi-class festures (see bf_features)   
-        W=BF.inverse.MEG.class{1}.W;
+        W=BF.inverse.(modalities{m}).class{1}.W;
         nclasses=length(BF.inverse.(modalities{m}).class);
     else
-        W=BF.inverse.MEG.W;
+        W=BF.inverse.(modalities{m}).W;
         nclasses=1;
     end;
     
@@ -61,7 +61,7 @@ for m  = 1:numel(modalities)
         for ind = 1:Ncoords % for all points in space
 
             % Get weights
-            if isfield(BF.inverse.MEG,'class'),
+            if isfield(BF.inverse.(modalities{m}),'class'),
                 % using multi-class festures (see bf_features)   
                 W=cat(1,BF.inverse.(modalities{m}).class{kk}.W{ind});
             else
