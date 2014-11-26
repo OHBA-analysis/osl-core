@@ -39,7 +39,7 @@ for ff=1:length(S.modalities),
     chanind{ff} = setdiff(chanind{ff}, D.badchannels);
     if isempty(chanind{ff})
         error(['No good ' S.modalities{ff} ' channels were found.']);
-    end
+    end    
 end;
 
 for ff=1:length(S.modalities),
@@ -183,6 +183,8 @@ montage=[];
 montage.labelorg = D.chanlabels;
 montage.tra = diag(norm_vec);
 montage.labelnew = montage.labelorg;
+montage.name = 'normalised_sensors';
+montage.chanunitnew = D.units;
 
 S1 = [];
 S1.D = D;
