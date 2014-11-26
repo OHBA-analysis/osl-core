@@ -186,10 +186,10 @@ std_brain  = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz'];
 
 % SWITCH ORIENTATION OF SCALP FILE IF IT'S NOT THE SAME AS STD_BRAIN
 % (RADIOLOGICAL)
-std_orient  = ROInets.call_fsl_wrapper(['fslorient -getorient ' std_brain ],1);
-smri_orient = ROInets.call_fsl_wrapper(['fslorient -getorient ' sMRI      ],1);
+std_orient  = call_fsl_wrapper(['fslorient -getorient ' std_brain ],1);
+smri_orient = call_fsl_wrapper(['fslorient -getorient ' sMRI      ],1);
 if ~strcmp(deblank(smri_orient),deblank(std_orient))
-    ROInets.call_fsl_wrapper(['fslorient -swaporient ' sMRI],1);
+    call_fsl_wrapper(['fslorient -swaporient ' sMRI],1);
 end
 
 % RUN FSLREORIENT2STD
@@ -197,7 +197,7 @@ if ~useCTFhack
     sMRI_reorient = fullfile(struct_path,[struct_name '_reorient.nii']);    
     if exist(sMRI_reorient,'file') ~= 2
         fslreorientCommand = ['fslreorient2std ' sMRI ' ' sMRI_reorient];
-        ROInets.call_fsl_wrapper(fslreorientCommand, 1);
+        call_fsl_wrapper(fslreorientCommand, 1);
         if exist([sMRI_reorient '.gz'],'file') == 2
             gunzip([sMRI_reorient '.gz']);
             dos(['rm ' sMRI_reorient '.gz'])
@@ -216,7 +216,7 @@ if exist(scalp_file,'file')~=2
                         ' -ref ' std_brain   ...
                         ' -omat ' trans_file ...
                         ' -o ' fullfile(struct_path,[struct_name,'_MNI'])];
-        ROInets.call_fsl_wrapper(flirtCommand, 1);
+        call_fsl_wrapper(flirtCommand, 1);
     end
     
     % RUN BET
@@ -224,7 +224,7 @@ if exist(scalp_file,'file')~=2
         disp('Running BET...')
         betCommand = ['bet2 ' sMRI ' ' fullfile(struct_path,struct_name) ...
                       ' -n -e'];
-        ROInets.call_fsl_wrapper(betCommand, 1);
+        call_fsl_wrapper(betCommand, 1);
     end
     
     % RUN BETSURF
@@ -233,7 +233,7 @@ if exist(scalp_file,'file')~=2
         betsurfCommand = ['betsurf --t1only -o ' sMRI ' ' mesh_file ...
                           ' ' trans_file                            ...
                           ' ' fullfile(struct_path,struct_name)];
-        ROInets.call_fsl_wrapper(betsurfCommand, 1);
+        call_fsl_wrapper(betsurfCommand, 1);
     end
     
     % CLEAN UP
@@ -348,7 +348,7 @@ disp('Running scalp extraction')
     
     % SAVE AS NIFTI
     save_avw(outline,scalp_file,'d',scales);
-    ROInets.call_fsl_wrapper(['fslcpgeom  ' bet_file ' ' scalp_file], 1);
+    call_fsl_wrapper(['fslcpgeom  ' bet_file ' ' scalp_file], 1);
 
     % CLEAN UP
 %    dos(['rm ' bet_file]);
@@ -400,8 +400,8 @@ toMNI = load(trans_file);
 % toMNI transformation is qform_mni*trans_file
 
 % qform and/or sform need to be valid to keep orientation consistent:
-qformcode = str2double(ROInets.call_fsl_wrapper(['fslorient -getqformcode ' scalp_file], 1));
-sformcode = str2double(ROInets.call_fsl_wrapper(['fslorient -getsformcode ' scalp_file], 1));
+qformcode = str2double(call_fsl_wrapper(['fslorient -getqformcode ' scalp_file], 1));
+sformcode = str2double(call_fsl_wrapper(['fslorient -getsformcode ' scalp_file], 1));
 
 if 0 == qformcode 
     warning('qform code is not valid\n');

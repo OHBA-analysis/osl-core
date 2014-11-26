@@ -148,7 +148,7 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     S2.forward_meg  = source_recon.forward_meg;
     S2.fid_label    = source_recon.fid_label;
 
-    D = osl_forward_model(S2);
+    D = osl_headmodel(S2);
 
     if(oat.do_plots)
         %spm_eeg_inv_checkmeshes(D);

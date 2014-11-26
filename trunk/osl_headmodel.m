@@ -6,32 +6,41 @@ function D = osl_headmodel(S)
 %
 % D = osl_headmodel(S)
 %
-% Required inputs:
-% S.D: SPM MEG object filename
-% S.mri: structural MRI nii file name (set S.mri=[] or '' to use template
-% structural)
-% S.useheadshape: set to 0 or 1 to indicated if the headshape points should
-% be used in the registration
+% REQUIRED INPUTS:
 %
-% Optional:
-% S.forward_meg: e.g. set to 'Single Shell' or 'MEG Local Spheres' (default)
+% S.D               - SPM MEG object filename
 %
-% S.fid_label.nasion: default: 'Nasion'
-% S.fid_label.lpa:    default: 'LPA';
-% S.fid_label.rpa:    default: 'RPA';
+% S.mri             - structural MRI nii file name (set S.mri=[] or '' to 
+%                     use template structural)
 %
-% S.fid_mnicoords: Specify fiducual MNI coordinates with fields:
-%                     .nasion - [1 x 3]
-%                     .lpa    - [1 x 3]
-%                     .rpa    - [1 x 3]
-%                   (omit field to use SPM defaults)
+% S.useheadshape    - set to 0 or 1 to indicated if the headshape points 
+%                     should be used in the registration
 %
-% S.neuromag_planar_baseline_correction: determines whether this correction
-%                                        is performed. 
+%
+% OPTIONAL INPUTS:
+%
+% S.use_rhino       - use RHINO coregistration instead of SPM
+%
+% S.forward_meg     - 'Single Shell' or 'MEG Local Spheres' (default)
+%
+% S.fid_label       - Fiducial labels with fields:
+%                       .nasion (Neuromag default 'Nasion')
+%                       .lpa    (Neuromag default 'LPA')
+%                       .rpa    (Neuromag default 'RPA')
+%
+% S.fid_mnicoords   - Specify fiducual MNI coordinates with fields:
+%                       .nasion - [1 x 3]
+%                       .lpa    - [1 x 3]
+%                       .rpa    - [1 x 3]
+%                       (omit field to use SPM defaults)
+% OR:
+%
+% S.fid_nativecoords - Specify native MNI coordinates with fields:
+%                        .nasion - [1 x 3]
+%                        .lpa    - [1 x 3]
+%                        .rpa    - [1 x 3]
 %
 % Adam Baker 2014
-
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%   P A R S E   I N P U T S   %%%%%%%%%%%%%%%%%%%%%%%
@@ -42,20 +51,69 @@ try
     [pathstr,filestr] = fileparts(S.D);
     S.D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
     D = spm_eeg_load(S.D);
-catch ME
-    error(ME.identifier, ...
-          'SPM file specification not recognised or incorrect\n');
+catch
+    error('SPM file specification not recognised or incorrect');
 end%try
 
 % Check Headmodel Specification:
 try
     S = ft_checkopt(S,'forward_meg','char',{'Single Shell','MEG Local Spheres'});
-catch ME
-    warning(ME.identifier,                                                ...
-            ['Forward model specification not recognised or incorrect, ', ...
-             'assigning default: "Single Shell"'])
+catch
+    warning('Forward model specification not recognised or incorrect, assigning default: "Single Shell"')
     S = ft_setopt(S,'forward_meg','Single Shell');
 end%try
+
+% Check RHINO Specification:
+try
+    S = ft_checkopt(S,'use_rhino','double');
+catch
+    S = ft_setopt(S,'use_rhino',0);
+end
+
+% Check Structural Specification:
+try
+    S.mri = char(S.mri);
+    [pathstr,filestr,ext] = fileparts(S.mri);   
+catch
+    S.mri = ft_getopt(S,'mri','');
+    error('Structural MRI specification not recognised or incorrect');
+end
+if ~isempty(S.mri)
+    if isempty(ext) % force .nii suffix
+        ext = '.nii';
+    elseif strcmp(ext,'.gz') && S.use_rhino == 0
+        error('S.mri must be .nii (not .nii.gz) when using SPM coregistration')
+    else
+        tempMesh = spm_eeg_inv_mesh;
+        S.mri     = tempMesh.sMRI;
+    end
+    S.mri = fullfile(pathstr,[filestr,ext]);
+end
+
+% Check Headshape Specification:
+try
+    S = ft_checkopt(S,'useheadshape',{'single','double','logical'},{0,1});
+catch
+    warning('Headshape specification not recognised or incorrect, assigning default: "1"')
+    S = ft_setopt(S, 'useheadshape', 1);
+end%try
+
+% Check Fiducial Label Specification:
+try
+    S = ft_checkopt(S,'fid_label','struct');
+    assert(isfield(S.fid_label, 'nasion') &&        ...
+           isfield(S.fid_label, 'lpa')    &&        ...
+           isfield(S.fid_label, 'rpa'),             ...
+           [mfilename ':fid_labelIncorrectFields'], ...
+           'Incorrect fields in S.fid_label\n');
+catch
+    warning('Fiducial label specification not recognised or incorrect, assigning Elekta defaults\n')
+    % default
+    S = ft_setopt(S,'fid_label',struct('nasion','Nasion', ...
+                                       'lpa','LPA',       ...
+                                       'rpa','RPA'));
+end
+
 
 
 %%%%%%%%%%%%%%%%%%   S E T   U P   T R A   M A T R I X   %%%%%%%%%%%%%%%%%%
@@ -77,28 +135,61 @@ elseif strcmpi(S.forward_meg, 'MEG Local Spheres')
 end%if
 
 
+if S.use_rhino
+    
 %%%%%   R U N   C O R E G I S T R A T I O N   U S I N G   R H I N O   %%%%%
-
-% input parsing done within Rhino. 
-% strip out un-necessary fields
-S_coreg = S;
-if isfield(S_coreg, 'neuromag_planar_baseline_correction'),
-    S_coreg = rmfield(S_coreg, 'neuromag_planar_baseline_correction');
-end%if
-if isfield(S_coreg, 'forward_meg'),
-    S_coreg = rmfield(S_coreg, 'forward_meg');
-end%if
-S_coreg.do_plots = 1;
-rhino(S_coreg);
-close all
-
-
+    
+    S_coreg = S;
+    if isfield(S_coreg, 'forward_meg'),
+        S_coreg = rmfield(S_coreg, 'forward_meg');
+    end%if
+    S_coreg.do_plots = 1;
+    rhino(S_coreg);
+    close all
+    
+    
 %%%%%%%%%%%%%%%%%%   R U N   F O R W A R D   M O D E L   %%%%%%%%%%%%%%%%%%
+    
+    S_forward               = struct();
+    S_forward.D             = S.D;
+    S_forward.forward_meg   = S.forward_meg;
+    osl_forward_model(S_forward);
+    
+    
+else % ~S.use_rhino
+    
+%%%%%%%   R U N   C O R E G I S T R A T I O N   U S I N G   S P M   %%%%%%%
+    
+    matlabbatch{1}.spm.meeg.source.headmodel.D       = {S.D};
+    matlabbatch{1}.spm.meeg.source.headmodel.val     = 1;
+    matlabbatch{1}.spm.meeg.source.headmodel.comment = '';
+    
+    matlabbatch{1}.spm.meeg.source.headmodel.meshing.meshes.mri = {[S.mri ',1']};
+    matlabbatch{1}.spm.meeg.source.headmodel.meshing.meshres    = 2;
+    
+    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).fidname = S.fid_label.nasion;
+    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).fidname = S.fid_label.lpa;
+    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).fidname = S.fid_label.rpa;
+    
+    if(isfield(S,'fid_mnicoords'))
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).specification.type = S.fid_mnicoords.nasion;
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).specification.type = S.fid_mnicoords.lpa;
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).specification.type = S.fid_mnicoords.rpa;
+    else
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).specification.select = 'nas';
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).specification.select = 'lpa';
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).specification.select = 'rpa';
+    end
+    
+    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.useheadshape = S.useheadshape;
+    matlabbatch{1}.spm.meeg.source.headmodel.forward.eeg = 'EEG BEM';
+    matlabbatch{1}.spm.meeg.source.headmodel.forward.meg = S.forward_meg;
+    
+    spm_jobman('run', matlabbatch);
+    
+end % if S.use_rhino
 
-S_forward               = struct();
-S_forward.D             = S.D;
-S_forward.forward_meg   = S.forward_meg;
-osl_forward_model(S_forward);
+
 
 
 %%%%%%%%%%   C O P Y   T O   O R I G I N A L   S P M   F I L E   %%%%%%%%%%
@@ -112,16 +203,11 @@ else
     D = spm_eeg_load(S.D); % reload SPM object with new forward model
 end
 
-    
-%%%%%%%   N E U R O M A G   B A S E L I N E   C O R R E C T I O N   %%%%%%%
-if  sum(ismember(unique(D.chantype),'MEGPLANAR')) && ...
-   ~sum(ismember(unique(D.chantype),'MEGPCACOMP')),
-
-    D = apply_neuromag_baseline_correction(S);
-end%if
 end%osl_headmodel
 
-%%
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function S = set_up_tra(S)
 %SET_UP_TRA sets up tra matrix for local spheres model
@@ -174,44 +260,5 @@ Dnew.save;
 % update filename passed to matlab batch
 S.D = fullfile(Dnew.path,Dnew.fname);
 end%set_up_tra
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function D = apply_neuromag_baseline_correction(S)
-    
-    D = spm_eeg_load(S.D);
-    
-    % check neuromag
-    assert( sum(ismember(unique(D.chantype),'MEGPLANAR')) && ...
-           ~sum(ismember(unique(D.chantype),'MEGPCACOMP')),  ...
-           'Expecting Elekta Neuromag data. \n');
-       
-    disp('Using Elekta Neuromag 306 data.');
-    
-    % check to see if baseline correction has been done before or not
-    grad = D.sensors('MEG');
-    if ~isfield(grad,'tra_baseline_corrected')
-        grad.tra_baseline_corrected = 0;
-    end%if
-    
-    if grad.tra_baseline_corrected
-        % if done before then do not redo now:
-        if isfield(S,'neuromag_planar_baseline_correction') && ~strcmp(S.neuromag_planar_baseline_correction,'none')
-            warning('No gradiometer baseline correction being carried out, as it has already been done.');
-        end%if
-        
-    else
-        if  isfield(S,'neuromag_planar_baseline_correction') && ~strcmp(S.neuromag_planar_baseline_correction,'none'),
-            % do baseline correction
-            D = osl_neuromag_grad_baseline_correction(S.D, S.neuromag_planar_baseline_correction);
-            
-        else
-            % baseline correction not been done, and is not being done now
-            if grad.tra_baseline_corrected == 0,
-                warning(['You have not gradiometer baseline corrected - you may need to make sure this is done. Note '...
-                         'that this should be done before any montaging (e.g. before AFRICA), and can be done by turning '...
-                         'on the opt.coreg.neuromag_planar_baseline_correction=1 option if using OPT.)']);
-            end%if            
-        end%if
-    end%if
-end%apply_neuromag_baseline_correction
-% [EOF]
+
+
