@@ -52,9 +52,6 @@ function D = osl_inverse_model(S)
 
 %%%%%%%%%%%%%%%%%%%%%%%   P A R S E   I N P U T S   %%%%%%%%%%%%%%%%%%%%%%%
 
-%S.dir %??? not being used in the way I'd hope at the moment - only BF.mat ends up here
-
-
 % Check SPM File Specification:
 try
     if strcmp(S.D,'meeg'),        
@@ -70,7 +67,6 @@ catch
     error('SPM file specification not recognised or incorrect');
 end
 
-
 % Check MNI Coordinates Specification:
 try
     S = ft_checkopt(S,'mni_coords',{'doublevector','doublematrix'});
@@ -82,7 +78,7 @@ end
 try
     S.modalities = cellstr(S.modalities);
     S.modalities = S.modalities(:);
-    S = ft_checkopt(S,'modalities','cell',{{'MEG'},{'MEGPLANAR'},{'MEG';'MEGPLANAR'}});
+    S = ft_checkopt(S,'modalities','cell',{{'MEG'},{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'}});
 catch
     if any(strcmp(unique(D.chantype),'MEGPLANAR'))
         default_modality = {'MEGPLANAR'};
@@ -120,10 +116,10 @@ end
 
 % Check fuse Specification:
 try
-    S = ft_checkopt(S,'fuse','char',{'no','all'});
+    S = ft_checkopt(S,'fuse','char',{'no','all','meg'});
 catch 
     warning('fuse specification not recognised or incorrect, assuming fuse=no for now')
-    S = ft_setopt(S,'fuse','no');
+    S = ft_setopt(S,'fuse','no');oa
 end
 
 % Check inverse_method Specification:
