@@ -172,7 +172,6 @@ oat=[];
 
 oat.source_recon.dirname=[testoutputdir '/beamform'];
 
-oat.source_recon.work_in_pca_subspace=0;
 oat.source_recon.D_continuous=[]; % do not have continuous files
 oat.source_recon.D_epoched=opt.results.spm_files_epoched; % only epoched files
 oat.source_recon.conditions={'Motorbike','Neutral face','Happy face','Fearful face'};
