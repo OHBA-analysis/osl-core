@@ -69,8 +69,8 @@ else
         vox_coord=S.vox_coord;
 
         % Find the nearest index of the beamformed voxels to the specified mni_coord 
-        [vox_ind,vec,dist]=nearest_vec(stats.mni_coord,vox_coord);
-        spatial_loc_str=mat2str(stats.mni_coord(vox_ind,:));
+        [vox_ind,vec,dist]=nearest_vec(stats.mni_coords,vox_coord);
+        spatial_loc_str=mat2str(stats.mni_coords(vox_ind,:));
         
     else
         if isempty(S.chanlabel),

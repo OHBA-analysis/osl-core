@@ -1,4 +1,4 @@
-function [results_fnames, source_recon_results ]=osl_run_source_recon_inverse(oat)
+function [results_fnames, source_recon_results ]=oat_run_source_recon(oat)
 
 % results_fnames=osl_run_source_recon_beamform(oat)
 %
@@ -166,7 +166,7 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     S2.type=source_recon.type;
     S2.pca_order=source_recon.pca_dim;
     S2.modalities=source_recon.modalities;
-    S2.fuse='all';
+    S2.fuse='meg';
     S2.conditions=source_recon.conditions;
     S2.inverse_method=source_recon.method;
     S2.dirname=source_recon.dirname;
