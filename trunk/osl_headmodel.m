@@ -126,8 +126,46 @@ end
 % MEEG object
     
 if strcmp(S.forward_meg,'MEG Local Spheres') && isfield(D,'raw_sensors') 
-    S = set_up_tra(S);
+    D = spm_eeg_load(S.D);
+
+    % check local spheres model and that raw sensor information is present
+    assert(strcmp(S.forward_meg,'MEG Local Spheres') && isfield(D,'raw_sensors'), ...
+        ['Expecting to operate on Local Spheres model, ',                      ...
+        'with raw_sensors information provided. \n']);
     
+    % Set up a temporary SPM object to run through the matlabbatch
+    S_copy.D = D;
+    switch(lower(spm('ver')))
+        case 'spm8'
+            S_copy.newname = fullfile(D.path, ['temp_' D.fname]);
+        case {'spm12','spm12b'}
+            S_copy.outfile = fullfile(D.path, ['temp_' D.fname]);
+    end
+    Dnew = spm_eeg_copy(S_copy);
+    
+    % get original sensor object
+    sens = D.sensors('MEG');
+    
+    % ensure all labels match up and sizes are the same
+    if ~isempty(setxor(sens.label, D.raw_sensors.label)),
+        error([mfilename ':LabelMismatch'], ...
+            'Label inconsistency between D.raw_sensors and sensors(D). \n');
+    end
+    if ~isequal(size(sens.tra), size(D.raw_sensors.tra)),
+        error([mfilename ':TraSizeMismatch'], ...
+            'Size inconsistency between D.raw_sensors and sensors(D). \n');
+    end
+    
+    % set new tra matrix and match labels
+    [~,newInd] = ismember(sens.label, D.raw_sensors.label);
+    sens.tra     = D.raw_sensors.tra(newInd, :);
+    
+    Dnew = sensors(Dnew,'MEG',sens);
+    
+    Dnew.save;
+    
+    S.D = fullfile(Dnew.path,Dnew.fname);
+
 elseif strcmpi(S.forward_meg, 'MEG Local Spheres')
     error([mfilename ':Raw_sensorsNotSpecified'], ...
           ['D.raw_sensors not detected. \n',      ...
@@ -204,61 +242,5 @@ else
 end
 
 end%osl_headmodel
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function S = set_up_tra(S)
-%SET_UP_TRA sets up tra matrix for local spheres model
-% This must be done for MEG Local Spheres forward model. This is because
-% ft_headmodel_localspheres.m matches the magnetometers/gradiometers to the
-% channels by looking for nonzero values in the tra matrix. Hence any
-% alterations to the tra matrix, such as Africa, or other montages must be
-% undone prior to running the forward model. As a workaround we run the
-% forward model on the pre-montaged data and copy this to the current SPM
-% MEEG object
-
-D = spm_eeg_load(S.D);
-
-% check local spheres model and that raw sensor information is present
-assert(strcmp(S.forward_meg,'MEG Local Spheres') && isfield(D,'raw_sensors'), ...
-       ['Expecting to operate on Local Spheres model, ',                      ...
-        'with raw_sensors information provided. \n']);
-
-% Set up a temporary SPM object to run through the matlabbatch
-S_copy.D = D;
-switch(lower(spm('ver')))
-    case 'spm8'
-        S_copy.newname = fullfile(D.path, ['temp_' D.fname]);
-    case {'spm12','spm12b'}
-        S_copy.outfile = fullfile(D.path, ['temp_' D.fname]);
-end
-Dnew = spm_eeg_copy(S_copy);
-
-% get original sensor object
-sens = D.sensors('MEG');
-
-% ensure all labels match up and sizes are the same
-if ~isempty(setxor(sens.label, D.raw_sensors.label)),
-    error([mfilename ':LabelMismatch'], ...
-        'Label inconsistency between D.raw_sensors and sensors(D). \n');
-end
-if ~isequal(size(sens.tra), size(D.raw_sensors.tra)),
-    error([mfilename ':TraSizeMismatch'], ...
-        'Size inconsistency between D.raw_sensors and sensors(D). \n');
-end
-
-% set new tra matrix and match labels
-[~,newInd] = ismember(sens.label, D.raw_sensors.label);
-sens.tra     = D.raw_sensors.tra(newInd, :);
-
-Dnew = sensors(Dnew,'MEG',sens);
-
-Dnew.save;
-
-% update filename passed to matlab batch
-S.D = fullfile(Dnew.path,Dnew.fname);
-end%set_up_tra
 
 
