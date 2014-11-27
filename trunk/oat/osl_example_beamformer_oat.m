@@ -101,7 +101,7 @@ oat = osl_check_oat(oat);
 %%%%%%%%%%%%%%%%%%%
 %% RUN THE OAT:
 
-oat.to_do=[1 1 0 0];
+oat.to_do=[0 1 0 0];
 oat = osl_run_oat(oat);
 
 % report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});disp(report.html_fname);
