@@ -93,6 +93,7 @@ try oat.source_recon.artefact_chanlabel = oatin.source_recon.artefact_chanlabel;
 try oat.source_recon.use_rhino = oatin.source_recon.use_rhino; oatin.source_recon = rmfield(oatin.source_recon,'use_rhino'); catch, oat.source_recon.use_rhino = 0; end % Use RHINO coregistration
 
 try oat.source_recon.modalities=oatin.source_recon.modalities; oatin.source_recon = rmfield(oatin.source_recon,'modalities'); 
+    oat.source_recon.modalities = ft_checkopt(oat.source_recon,'modalities','cell',{{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'}});      
 catch, 
     switch datatype
         case 'neuromag'
@@ -104,6 +105,8 @@ catch,
         otherwise
             error('datatype not set properly. \n'); % should not be here
     end;
+    warning(['oat.source_recon.modalities not set, or not set properly. Will set to default:' oat.source_recon.modalities{:}]);
+    
 end; % modalities to include
 
 if isfield(oatin.source_recon, 'session_names'),                           %GC 2014
@@ -160,7 +163,6 @@ else
     oat.source_recon.pca_dim=ones(num_sessions,1)*oat.source_recon.pca_dim;
 end;
 
-try oat.source_recon.work_in_pca_subspace = oatin.source_recon.work_in_pca_subspace; oatin.source_recon = rmfield(oatin.source_recon,'work_in_pca_subspace'); catch, oat.source_recon.work_in_pca_subspace=0; end; % Do beamforming in a reduced PCA subspace (with dim determined by pca_dim)
 try oat.source_recon.force_pca_dim = oatin.source_recon.force_pca_dim;  oatin.source_recon = rmfield(oatin.source_recon,'force_pca_dim'); 
 catch,  
     switch datatype
