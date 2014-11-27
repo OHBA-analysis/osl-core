@@ -442,13 +442,17 @@ if ~isempty(bad_components)
         tra = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(:,bad_components)'))';
         
         montage             =  [];
-        montage.tra         =  tra(chan_inds,chan_inds);
+        montage.tra         =  tra;
         montage.labelnew    =  D.chanlabels(chan_inds);
         montage.labelorg    =  D.chanlabels(chan_inds);
-        montage.chanunitnew =  D.sensors('MEG').chanunit(chan_inds);
-        montage.chanunitorg =  D.sensors('MEG').chanunit(chan_inds);
-        montage.chantypenew =  lower(D.sensors('MEG').chantype(chan_inds));
-        montage.chantypeorg =  lower(D.sensors('MEG').chantype(chan_inds));
+        
+        [~,locs] = ismember(montage.labelnew,D.sensors('MEG').label);
+        
+        
+        montage.chanunitnew =  D.sensors('MEG').chanunit(locs);
+        montage.chanunitorg =  D.sensors('MEG').chanunit(locs);
+        montage.chantypenew =  lower(D.sensors('MEG').chantype(locs));
+        montage.chantypeorg =  lower(D.sensors('MEG').chantype(locs));
         
         
         if ~isempty(badchannels) % CHECK THIS!!
