@@ -166,9 +166,10 @@ end%if
 S.do_plots   = ft_getopt(S,'do_plots',   1);
 S.multistart = ft_getopt(S,'multistart', 10);
 
-useCTFhack = 0; % To be removed once my nottingham structurals have been converted correctly...
-if useCTFhack==1
-    warning('USING CTF HACK!!!')
+if isfield(S,'useCTFhack') && S.useCTFhack == 1; % To be removed once my nottingham structurals have been converted correctly...
+  warning('USING CTF HACK!!!')
+else
+    S.useCTFhack = 0;
 end
 
 %%%%%%%%%%%%%%%%   G E T   S C A L P   U S I N G   F S L   %%%%%%%%%%%%%%%%
@@ -193,7 +194,7 @@ if ~strcmp(deblank(smri_orient),deblank(std_orient))
 end
 
 % RUN FSLREORIENT2STD
-if ~useCTFhack
+if ~S.useCTFhack
     sMRI_reorient = fullfile(struct_path,[struct_name '_reorient.nii']);    
     if exist(sMRI_reorient,'file') ~= 2
         fslreorientCommand = ['fslreorient2std ' sMRI ' ' sMRI_reorient];
@@ -419,7 +420,7 @@ if 0 == qformcode && 0 == sformcode
     % coordinate systems. This means that the orientation is not correctly
     % accounted for by FLIRT. For now, a solution is to hack in a flip about
     % the x-axis.
-    if useCTFhack
+    if S.useCTFhack
         CTFhack = [-1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1];                   %#ok<UNRCH>
         toMNI   = CTFhack * qform_mni * toMNI;
     end%if
