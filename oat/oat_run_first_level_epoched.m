@@ -747,6 +747,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
         else
             S2.montage_index=1;
         end;
+        S2.D_block.size=min(500,Nvoxels_out);
         
         for indind=1:Nvoxels_out, % indexes brain space
 

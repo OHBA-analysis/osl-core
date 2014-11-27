@@ -27,8 +27,9 @@ function [ dat S ] = osl_get_recon_timecourse( S )
 %                   S.D_block.from : S.D_block.from+S.D_block.size-1
 %                   If not provided, or requested S.index is outside the 
 %                   block, then will be reconstructed from S.D
-% S.D_block.from - defaults to []
-% S.D_block.size - defaults to 500
+% S.D_block.from - Voxel index for start of block. If not set or puts S.index outside block then this 
+%                  will be determined from S.index
+% S.D_block.size - No. of voxels in block. Defaults to 500
 %
 % returns:
 %
@@ -148,7 +149,8 @@ if ~use_current_block
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-%% recon
+%% get recon for voxel S.index from cached block of recon data
+
 dat=S.D_block.data(S.index-S.D_block.from+1,:,:,:);
 
 
