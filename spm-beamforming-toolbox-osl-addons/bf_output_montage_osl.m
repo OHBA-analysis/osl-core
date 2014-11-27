@@ -32,7 +32,7 @@ for m  = 1:numel(modalities)
     
     %%%%%%
     % get weights to work out sizes of containers
-    if isfield(BF.(modalities{m}),'class'),
+    if isfield(BF.inverse.(modalities{m}),'class'),
         % using multi-class festures (see bf_features)   
         W=BF.inverse.(modalities{m}).class{1}.W;
         nclasses=length(BF.inverse.(modalities{m}).class);

@@ -29,8 +29,8 @@ if nargin == 0
     prefix.tag     = 'prefix';
     prefix.name    = 'Filename Prefix';
     prefix.help    = {'Specify the string to be prepended to the output (if relevant).'};
-    prefix.strtype = 's';
-    prefix.num     = [1 Inf];
+    %prefix.strtype = 's';
+    %prefix.num     = [1 Inf];
     prefix.val     = {''};
     
     spmeeg      = cfg_branch;
