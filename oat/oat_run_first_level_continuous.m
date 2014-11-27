@@ -84,6 +84,8 @@ for subi_todo=1:length(first_level.sessions_to_do),
             
             disp('Working in sensor space');
 
+            source_recon_results.is_sensor_space=1;
+            
             chanindmeg = strmatch(modality_meeg, D.chantype);
             first_level_results.mask_indices_in_source_recon=1:length(chanindmeg);
 
@@ -95,8 +97,10 @@ for subi_todo=1:length(first_level.sessions_to_do),
             
         else,
 
-            if(isfield(first_level,'mni_coords'))    
-                                
+            source_recon_results.is_sensor_space=0;
+            
+            if(isfield(first_level,'mni_coords'))                         
+                
                 current_level_mni_coord = first_level.mni_coords;
                 
                 % load in lower level coords
@@ -586,7 +590,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
 
         S2.index=first_level_results.mask_indices_in_source_recon(indind);     
 
-        [dat_tf S2.timeinds] = osl_get_recon_timecourse( S2 );
+        [dat_tf S2] = osl_get_recon_timecourse( S2 );
 
         % dat_tf needs to trials x time:
         dat_tf=permute(dat_tf,[2 1 3]);

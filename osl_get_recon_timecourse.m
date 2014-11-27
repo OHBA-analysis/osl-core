@@ -1,7 +1,7 @@
-function [ dat class_timeinds ] = osl_get_recon_timecourse( S )
+function [ dat S ] = osl_get_recon_timecourse( S )
 
 % [ dat ] = osl_get_recon_timecourse( S )
-% [ dat class_timeinds ] = osl_get_recon_timecourse( S )
+% [ dat S ] = osl_get_recon_timecourse( S )
 %  
 % Reconstructs time courses using montages in S.D
 %
@@ -23,6 +23,13 @@ function [ dat class_timeinds ] = osl_get_recon_timecourse( S )
 % for the NK classes should correspond to the indexes 
 % S.montage_index:S.montage_index+NK-1). Default value is 1.
 %
+% S.D_block.data - caches block of recon data for voxel indexes:
+%                   S.D_block.from : S.D_block.from+S.D_block.size-1
+%                   If not provided, or requested S.index is outside the 
+%                   block, then will be reconstructed from S.D
+% S.D_block.from - defaults to []
+% S.D_block.size - defaults to 500
+%
 % returns:
 %
 % dat - ntrials x ntpts x nfreq
@@ -38,9 +45,17 @@ catch
     S = ft_setopt(S,'montage_index',1);
 end
 
-dat=[];
-class_timeinds=[];
-
+if ~isfield(S,'D_block')
+    S.D_block=[];
+end;
+if ~isfield(S.D_block,'from')
+    S.D_block.from=[];
+end;
+if ~isfield(S.D_block,'size')
+    S.D_block.size=500;
+end;  
+        
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% establish dims
 if ~isempty(S.D.nfrequencies),  
     nfreqs=S.D.nfrequencies;
@@ -51,28 +66,20 @@ end;
 ntrials=S.D.ntrials;
 ntpts=S.D.nsamples;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% setup container for output
 dat=nan(ntrials,ntpts,nfreqs);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% does S.D contain a Class channel?
 classchanind=find(strcmp(S.D.chanlabels,'Class'));
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% if needed setup the S.class_timeinds
 if ~isempty(classchanind),
     
-    %% there is no Class channel - so do a straightforward recon
-    
-    % switch to recon montage
-    D=montage(S.D,'switch',S.montage_index);
-    
-    % recon
-    dat=D(S.index,:,:,:);
-    
-else
-    
-    %% there is a Class channel
-    nclasses=length(S.class_samples_inds);
-    
-    %% if needed setup the S.class_timeinds
+    nclasses=max(squash(S.D(classchanind, :, :, 1)));
+
     if ~isfield(S,'class_timeinds'),
 
         %% establish the time indices for each class by using the 'Class' channel in S.D 
@@ -85,31 +92,64 @@ else
                 class_timeinds{kk,tri}=find(class_samples_inds_recon(1,:, tri)); % time indices for class kk
             end;
         end;
-    else
-        class_timeinds=S.class_timeinds;
-    end;    
+        S.class_timeinds=class_timeinds;
+
+    end;  
+end;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% if S.index is outside the current block then create S.D_block from will 
+%% be created from S.D
+
+% is S.index outside the current block
+use_current_block=0;
+try
+    use_current_block = (S.index >= S.D_block.from  && S.index <= S.D_block.from + S.D_block.size - 1);
+catch
+    use_current_block=0;
+end;
+
+if ~use_current_block
+
+    % establish S.D_block.from to place block of size S.D_block.size around S.index
+    S.D_block.from = floor((S.index-1)/S.D_block.size)*S.D_block.size+1;
+
+    % do sanity check
+    use_current_block = (S.index >= S.D_block.from  && S.index <= S.D_block.from + S.D_block.size - 1);
+    if ~use_current_block, error('Something has gone wrong'); end;
+
+    % construct new D_block from S.D 
+    D=montage(S.D,'switch',S.montage_index); 
+    to=min(S.D_block.from+S.D_block.size-1,size(D,1));
     
-    %% specify the index of the montage for the first class
-    start=S.montage_index;
+    if isempty(classchanind),  
+        %% there is no Class channel - so do a straightforward recon       
+        S.D_block.data=D(S.D_block.from:to,:,:,:);
+    else
+        
+        %% there is a Class channel               
+        start=S.montage_index;
 
-    %% recon
-    for kk=1:nclasses,
-
-        % switch to recon montage for this class    
-        D=montage(S.D,'switch',start-1+kk);
-
-        for ff=1:nfreqs,
-            for tri=1:ntrials, 
-                if ~isempty(class_timeinds{kk,tri}),
-                    dat(tri,class_timeinds{kk,tri},ff)=D(S.index,class_timeinds{kk,tri},tri,ff); 
+        S.D_block.data=nan(to-S.D_block.from+1,ntpts,ntrials,nfreqs);
+        for kk=1:nclasses,
+            % switch to recon montage for this class    
+            D=montage(S.D,'switch',start-1+kk);
+            
+            for ff=1:nfreqs,
+                for tri=1:ntrials, 
+                    if ~isempty(S.class_timeinds{kk,tri}),
+                        S.D_block.data(:,S.class_timeinds{kk,tri},tri,ff)=D(S.D_block.from:to,S.class_timeinds{kk,tri},tri,ff); 
+                    end;
                 end;
             end;
         end;
-
     end;
-
+    
 end;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+%% recon
+dat=S.D_block.data(S.index-S.D_block.from+1,:,:,:);
 
 
 
