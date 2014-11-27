@@ -114,7 +114,15 @@ end
 
 % Remove bad segments
 if D.ntrials==1;
-    badsections = any(D.badsamples(chan_inds,:,:));
+    t = D.time;
+    badsections = false(1,D.nsamples);
+    Events = D.events;
+    if ~isempty(Events)
+        Events = Events(strcmp({Events.type},'BadEpoch'));
+        for ev = 1:numel(Events)
+            badsections = badsections | t >= Events(ev).time & t < (Events(ev).time+Events(ev).duration);
+        end
+    end
     samples_of_interest(1,badsections)=false;
 end
 
