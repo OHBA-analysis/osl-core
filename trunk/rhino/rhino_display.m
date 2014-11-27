@@ -4,6 +4,8 @@ hf = figure('WindowButtonMotionFcn',@movelight,'Interruptible','off','busyaction
 ha = axes('parent',hf); hold on
 rotate3d(hf);
 
+D = montage(D,'switch');
+
 mesh_rhino = D.inv{1}.mesh.tess_rhino;
 mesh_rhino = spm_eeg_inv_transform_mesh(D.inv{1}.datareg.fromMNI*D.inv{1}.mesh.Affine,mesh_rhino);
 
