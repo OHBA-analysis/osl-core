@@ -13,8 +13,6 @@ function [source_recon_sess source_recon_results report] = osl_prepare_oat_sourc
 % 4) Establishes valid time windows, trials and channels
 % 5) Normalises different modalities
 % 6) Performs HMM (optional)
-% 7) Converts data into PCA subspace (optional - if
-% oat.source_recon.work_in_pca_subspace flag is on)
 %
 % MWW 2014
 
@@ -456,74 +454,6 @@ end;
 
 D.delete;
 D=Dnew;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% do dimensionality reduction
-
-if strcmp(source_recon_sess.modalities{1},'EEG')
-    modality_meeg='EEG';
-else
-    modality_meeg='MEG';
-end
-
-% use montage to move everything into PCA subspace from now on
-if(source_recon_sess.work_in_pca_subspace)
-    
-    if strcmp(source_recon_sess.method,'none'),
-        error('Working in PCA subspace not possible when doing a sensor space analysis');
-    end;
-
-    if strcmp(source_recon_sess.forward_meg,'MEG Local Spheres'),
-        error('MEG Local Spheres not compatible with working in PCA subspace');
-    end;
-
-    disp('Doing PCA dimensionality reduction...');
-    
-    if strcmp(modality_meeg,'EEG'),
-        error('Not currently implemented');
-    end;
-    
-    if(source_recon_sess.regpc~=0)
-        warning('No covariance regularisation is done if working in PCA subspace.');
-    end;
-    
-    S2=[];
-    
-    S2.D=D;
-    S2.modality_meeg=modality_meeg;
-    S2.method='pca_adapt';
-    
-    S2.settings.force_pca_dim=1;
-    S2.settings.ncomp=pcadim;
-    S2.conditions=source_recon_sess.conditions;
-    S2.woi = woi;
-    S2.channels=chanind;
-    
-    [Dnew pca_montage] = spm_eeg_reduce(S2);
-    
-    source_recon_results.pca_tra=pca_montage.tra;
-    
-    D.delete;
-    D=Dnew;
-    
-    % update the modality names
-    if strcmp(modality_meeg,'MEG')
-        source_recon_sess.modalities={'MEGPCACOMP'};
-        pcadim = sum(strcmp(D.chantype,'MEGPCACOMP'));
-    else
-        source_recon_sess.modalities={'EEGPCACOMP'};
-        pcadim = sum(strcmp(D.chantype,'EEGPCACOMP'));
-    end;
-   
-else,
-    if ~strcmp(source_recon_sess.method,'none') && (strcmp(source_recon_sess.modalities{1},'MEGMAG') || strcmp(source_recon_sess.modalities{1},'MEGPLANAR')) && length(source_recon_sess.modalities)==1 && ~source_recon_sess.work_in_pca_subspace,
-        error('Must work in PCA subspace if using only one MEG modality type, when there is more than one available.');
-    end;
-end;
-
-clear dat;
-
-disp(['PCA rank from now on is: ' num2str(pcadim)]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 
