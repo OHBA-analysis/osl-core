@@ -33,7 +33,8 @@ global OSLDIR;
     
 % This cell sets the Matlab paths to include OSL. Change the osldir path so
 % that it corresponds to the setup on your computer before running the cell. 
-osldir = '/Users/andrew/Software/Matlab/osl/osl_full/osl2.0';
+practical_dir='/Users/woolrich';
+osldir=[practical_dir '/homedir/matlab/osl2.0'];    
 
 addpath(osldir);
 osl_startup(osldir);
@@ -99,7 +100,7 @@ D
 
 % check data in oslview
 oslview(D);
-
+       
 %% SET UP WHOLE BRAIN BEAMFORMER IN OAT
 %
 % In previous practicals, the oat.source_recon parameters defined some simple

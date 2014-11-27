@@ -754,7 +754,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
 
             S2.index=first_level_results.mask_indices_in_source_recon(indind);
            
-            [dat_tf S2.timeinds] = osl_get_recon_timecourse( S2 );
+            [dat_tf S2] = osl_get_recon_timecourse( S2 );
                        
             % dat_tf needs to trials x time:
             dat_tf=permute(dat_tf,[3 2 1]);
