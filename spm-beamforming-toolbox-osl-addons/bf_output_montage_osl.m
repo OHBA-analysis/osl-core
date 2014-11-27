@@ -23,7 +23,7 @@ elseif nargin < 2
     error('Two input arguments are required');
 end
 
-modalities = intersect(fieldnames(BF.features), {'EEG', 'MEG', 'MEGMAG', 'MEGPLANAR'});
+modalities = intersect(fieldnames(BF.features), {'EEG', 'MEG', 'MEGMAG', 'MEGGRAD', 'MEGPLANAR'});
 
 for m  = 1:numel(modalities)
     
