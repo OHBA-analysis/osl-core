@@ -166,7 +166,7 @@ end%if
 S.do_plots   = ft_getopt(S,'do_plots',   1);
 S.multistart = ft_getopt(S,'multistart', 10);
 
-useCTFhack = 1; % To be removed once my nottingham structurals have been converted correctly...
+useCTFhack = 0; % To be removed once my nottingham structurals have been converted correctly...
 if useCTFhack==1
     warning('USING CTF HACK!!!')
 end
