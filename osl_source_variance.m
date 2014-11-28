@@ -3,7 +3,7 @@ function V = osl_source_variance(D)
 % V = osl_source_variance(D)
 dat = D.montage('switch');
 
-tbad = get_bad_sections(D,'logical');
+tbad = osl_bad_sections(D,'logical');
 V = var(dat(:,find(~tbad),:),[],2); %#ok - logical indexing didn't work...
 V = D.montage('getmontage').tra * V;
 
