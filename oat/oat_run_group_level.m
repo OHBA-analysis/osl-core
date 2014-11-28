@@ -546,7 +546,7 @@ oat.group_level.results_fnames=results_fnames;
 
 if (strcmp(current_level_results.recon_method,'none') | current_level.space_average),
 else
-    disp(['To create niftii files from this use a call to osl_save_nii_stats']);
+    disp(['To create niftii files from this use a call to oat_save_nii_stats']);
 end;
 
 end

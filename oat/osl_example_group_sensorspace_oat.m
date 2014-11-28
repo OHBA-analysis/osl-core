@@ -94,7 +94,7 @@ S2.cfg.colorbar='yes';
 S2.view_cope=0;
 
 % calculate t-stat using contrast of absolute value of parameter estimates
-[cfg, data]=osl_stats_multiplotER(S2);
+[cfg, data]=oat_stats_multiplotER(S2);
 
 %% do cluster stats in sensor space
 
@@ -106,7 +106,7 @@ S.first_level_copes_to_do=[3];
 S.group_level_copes_to_do=[1];
 S.group_varcope_time_smooth_std=oat.group_level.group_varcope_time_smooth_std;
 S.modality='MEGMAG';
-[corrp ts] = osl_cluster_perm_sensor_tf(S);
+[corrp ts] = oat_cluster_perm_sensor_tf(S);
 
 gcon=1;
 con=3;
@@ -119,12 +119,12 @@ figure;plot(ts(:,:,con,:,gcon)'>S.cluster_stats_thresh)
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.group_level.results_fnames;
-S2.modality=S.modality; % MUST be set to MEGMAG to look at osl_cluster_perm_sensor_tf as even as MEGPLANAR are viewed this way
+S2.modality=S.modality; % MUST be set to MEGMAG to look at oat_cluster_perm_sensor_tf as even as MEGPLANAR are viewed this way
 S2.data=corrp(:,:,con,:,gcon);
 S2.first_level_contrast=con;
 %S2.data=ts(:,:,con,:,gcon)>S.cluster_stats_thresh;
 S2.cfg.colorbar='yes';
-[cfg, data]=osl_stats_multiplotER(S2);
+[cfg, data]=oat_stats_multiplotER(S2);
 
 
 

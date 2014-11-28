@@ -135,7 +135,7 @@ S2.oat=oat;
 S2.stats_fname=oat.group_level.results_fnames;
 S2.first_level_contrasts=[3]; % list of first level contrasts to output
 S2.resamp_gridstep=8;
-[statsdir,times]=osl_save_nii_stats(S2);
+[statsdir,times]=oat_save_nii_stats(S2);
 
 %% VIEW NIFTII RESULTS IN FSLVIEW
 %
@@ -277,7 +277,7 @@ S2.oat=oat;
 S2.stats_fname=oat.group_level.results_fnames;
 S2.first_level_contrasts=[3]; % list of first level contrasts to output
 
-[statsdir,times]=osl_save_nii_stats(S2);
+[statsdir,times]=oat_save_nii_stats(S2);
 
 con=3;gcon=1;
 
@@ -304,7 +304,7 @@ S.write_cluster_script=0;
 S.time_range=[0.140 0.150];
 S.time_average=1;
 S.fsl_version_4p1=0;
-[ gstats ] = osl_cluster_permutation_testing( S );
+[ gstats ] = oat_cluster_permutation_testing( S );
 
 % View permutation stats
 con=S.first_level_copes_to_do(1);
@@ -464,13 +464,13 @@ if(0),
     S.fsl_version_4p1=0;
     S.matlab_exe_name='/Applications/MATLAB_R2012a.app/bin/matlab';
     S.time_average=0;
-    [ gstats ] = osl_cluster_permutation_testing( S );
+    [ gstats ] = oat_cluster_permutation_testing( S );
 
     %%
     
     if(0),
         % if running using script - you will need this extra stuff
-        %cluster_stats= % replace ???? with text outputted by osl_cluster_permutation_testing call above
+        %cluster_stats= % replace ???? with text outputted by oat_cluster_permutation_testing call above
         gstats=oat_load_results(oat,oat.group_level.results_fnames);
         gstats.clusterstats{1,1}=cluster_stats;
         oat_save_results(oat,gstats);
@@ -482,7 +482,7 @@ if(0),
     S2.stats_fname=oat.group_level.results_fnames;
     S2.first_level_contrasts=[3]; % list of first level contrasts to output
     S2.resamp_gridstep=8;
-    [statsdir,times,clust_times]=osl_save_nii_stats(S2);
+    [statsdir,times,clust_times]=oat_save_nii_stats(S2);
 
     con=3;
     runcmd(['fslview ' OSLDIR '/std_masks/MNI152_T1_' num2str(S2.resamp_gridstep) 'mm_brain.nii.gz ' statsdir '/tstat' num2str(con) '_gc1_' num2str(S2.resamp_gridstep) 'mm.nii.gz &']);
@@ -563,7 +563,7 @@ S.write_cluster_script=0;
 S.time_range=[0.140 0.150];
 S.time_average=1;
 S.fsl_version_4p1=0;
-[ gstats ] = osl_cluster_permutation_testing( S );
+[ gstats ] = oat_cluster_permutation_testing( S );
 
 % View permutation stats
 con=S.first_level_copes_to_do(1);

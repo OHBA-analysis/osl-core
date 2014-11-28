@@ -102,7 +102,7 @@ if is_sensor_space,
     end;
          
     %%%%%%%%%%%%%
-    %% need to call osl_stats_multiplotER to get dat and cfg
+    %% need to call oat_stats_multiplotER to get dat and cfg
     clear cfg dats
 
     S2=[];
@@ -124,7 +124,7 @@ if is_sensor_space,
                     
         if(nfreqs>1),
             
-            [cfg, dat, fig_handle_tmp]=osl_stats_multiplotTFR(S2);
+            [cfg, dat, fig_handle_tmp]=oat_stats_multiplotTFR(S2);
                     
             cfg.xlim        = [first_level_results.times(time_ind_max) first_level_results.times(time_ind_max)];
             cfg.ylim        = [first_level_results.frequencies(freq_ind_max) first_level_results.frequencies(freq_ind_max)];
@@ -148,7 +148,7 @@ if is_sensor_space,
             fig_title{1}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} ']']; 
             fig_title{1}=[fig_title{1} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
         
-            [cfg, dat, fig_handle(1)]=osl_stats_multiplotER(S2);
+            [cfg, dat, fig_handle(1)]=oat_stats_multiplotER(S2);
             view([90 90])
             
             fig_handle(2)=sfigure; 
@@ -207,7 +207,7 @@ else
         resamp_gridstep=2;
         S2.freq_bin=freq_ind_max;
         S2.resamp_gridstep=resamp_gridstep;%oat.source_recon.gridstep;
-        [statsdir,times,count]=osl_save_nii_stats(S2);
+        [statsdir,times,count]=oat_save_nii_stats(S2);
 
         %%%%%%%%%%%%%
         %% plot cope orthoviews at time point (and freq) with max tstat 

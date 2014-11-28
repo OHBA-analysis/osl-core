@@ -26,9 +26,10 @@ function [ dat S ] = osl_get_recon_timecourse( S )
 % S.D_block.data - caches block of recon data for voxel indexes:
 %                   S.D_block.from : S.D_block.from+S.D_block.size-1
 %                   If not provided, or requested S.index is outside the 
-%                   block, then will be reconstructed from S.D
-% S.D_block.from - Voxel index for start of block. If not set or puts S.index outside block then this 
-%                  will be determined from S.index
+%                   block, then will be reconstructed from S.D.
+% S.D_block.from - Voxel index for start of block. If not provided, or 
+%                   requested S.index is outside the block, then this will 
+%                   be determined from S.index.
 % S.D_block.size - No. of voxels in block. Defaults to 500
 %
 % returns:
@@ -66,10 +67,6 @@ end;
 
 ntrials=S.D.ntrials;
 ntpts=S.D.nsamples;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% setup container for output
-dat=nan(ntrials,ntpts,nfreqs);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% does S.D contain a Class channel?

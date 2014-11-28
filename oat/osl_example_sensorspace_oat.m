@@ -124,4 +124,4 @@ S2.modality='MEGPLANAR'; % can also set this to 'MEGPLANAR'
 S2.first_level_contrast=[3];
 
 % calculate t-stat using contrast of absolute value of parameter estimates
-[cfg, dats, fig_handle]=osl_stats_multiplotER(S2);
+[cfg, dats, fig_handle]=oat_stats_multiplotER(S2);
