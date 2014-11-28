@@ -155,7 +155,7 @@ if(0)
     S2.first_level_contrasts=[3]; % list of first level contrasts to output
     S2.resamp_gridstep=oat.source_recon.gridstep;
 
-    [statsdir,times]=osl_save_nii_stats(S2);
+    [statsdir,times]=oat_save_nii_stats(S2);
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

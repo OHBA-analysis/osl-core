@@ -162,7 +162,7 @@ S2.cfg.interactive='yes';
 S2.view_cope=0; % means we view the t-stats
 
 % calculate t-stat using contrast of absolute value of parameter estimates
-osl_stats_multiplotER(S2);
+oat_stats_multiplotER(S2);
 
 % try taking a look at the other contrasts and look at the lateralisation
 

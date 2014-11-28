@@ -139,11 +139,11 @@ if is_sensor_space,
                 S2.group_level_contrast=gcon;
 
                 if(nfreqs>1),                
-                    % need to call osl_stats_multiplot to get dat and cfg
+                    % need to call oat_stats_multiplot to get dat and cfg
                     S2.view_cope=1;
-                    [cfg, dat, fig_handle_tmp]=osl_stats_multiplotTFR(S2);      
+                    [cfg, dat, fig_handle_tmp]=oat_stats_multiplotTFR(S2);      
                     S2.view_cope=0;
-                    [cfg_tstat, dat_tstat, fig_handle_tmp]=osl_stats_multiplotTFR(S2);      
+                    [cfg_tstat, dat_tstat, fig_handle_tmp]=oat_stats_multiplotTFR(S2);      
 
                     fig_handle(1)=sfigure; 
                     fig_name{1}=['stats_at_max_topo_c' num2str(con) '_gc' num2str(gcon)];                      
@@ -181,8 +181,8 @@ if is_sensor_space,
                     
                     S2.do_plots=1;
                     S2.view_cope=1;
-                    % need to call osl_stats_multiplot to get dat and cfg                        
-                    [cfg, dat, fig_handle(1)]=osl_stats_multiplotER(S2);
+                    % need to call oat_stats_multiplot to get dat and cfg                        
+                    [cfg, dat, fig_handle(1)]=oat_stats_multiplotER(S2);
                     view([90 90])
                     
                     con_report=osl_report_set_figs(con_report,fig_name,fig_handle,fig_title);        
@@ -190,7 +190,7 @@ if is_sensor_space,
 
                     S2.do_plots=0;
                     S2.view_cope=0;
-                    [cfg_tstat, dat_tstat, fig_handle_tmp]=osl_stats_multiplotER(S2);
+                    [cfg_tstat, dat_tstat, fig_handle_tmp]=oat_stats_multiplotER(S2);
                                        
                     fig_handle(1)=sfigure;                    
                     fig_name{1}=['stats_at_max_topo_c' num2str(con) '_gc' num2str(gcon)];                      
@@ -377,7 +377,7 @@ else
             resamp_gridstep=2;
             S2.resamp_gridstep=resamp_gridstep;%oat.source_recon.gridstep;
             S2.freq_bin=freq_ind_max;        
-            [statsdir,times,count]=osl_save_nii_stats(S2);
+            [statsdir,times,count]=oat_save_nii_stats(S2);
 
             %%%%%%%%%%%%%
             %% plot cope orthoviews at time point (and freq) with max tstat 
@@ -446,7 +446,7 @@ else
                     resamp_gridstep=2;
                     S2.resamp_gridstep=resamp_gridstep;%oat.source_recon.gridstep;
                     S2.freq_bin=freq_ind_max;        
-                    [statsdir,times,count]=osl_save_nii_stats(S2);
+                    [statsdir,times,count]=oat_save_nii_stats(S2);
 
                     fig_handle(subi)=sfigure; 
                     set(fig_handle(subi),'Position',[1 1 1300 450]);

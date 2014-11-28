@@ -133,10 +133,10 @@ oat.source_recon.time_range=[300,32*30];
 oat.source_recon.method='beamform_bilateral';
 oat.source_recon.gridstep=8; % in mm, using a lower resolution here than you would normally, for computational speed
 oat.source_recon.mri=structural_files;
-do_hmm=0;
+do_hmm=1;
 if(do_hmm)
     oat.source_recon.hmm_num_states=10;    
-    oat.source_recon.hmm_num_starts=1;
+    oat.source_recon.hmm_num_starts=3;
     oat.first_level.hmm_do_glm_statewise=0;
 end;
 
@@ -199,7 +199,6 @@ end;
 
 figure;plot(D.time,x);
 
-
 %% SET UP FIRST LEVEL GLM ANALYSIS CONTRASTS
 %
 % This cell defines the contrast vectors for the first level analysis. The OAT
@@ -226,7 +225,6 @@ oat=osl_load_oat(oat.source_recon.dirname, oat.first_level.name,'sub_level','gro
 
 oat.first_level.name=['first_level'];
 oat.first_level.hmm_do_glm_statewise=0;
-
 
 % GLM stuff:
 oat.first_level.design_matrix=x';
@@ -260,7 +258,7 @@ oat = osl_run_oat(oat);
 
 %% SAVE ADDITIONAL NIFTI VOLUMES AND VIEW IN FSLVIEW
 %
-% Additional Nifti volumes can be saved out by calling osl_save_nii_stats and
+% Additional Nifti volumes can be saved out by calling oat_save_nii_stats and
 % viewed by calling fslview. In this case we are saving out first level
 % contrasts 1,2 and 3 in all frequencies. fslview is then called to view the
 % Nifti volume in the first frequency
@@ -275,7 +273,7 @@ for ff=1:size(oat.first_level.tf_hilbert_freq_ranges,1),
     S2.freq_bin=ff;
     S2.stats_dir=[oat.source_recon.dirname '/' oat.first_level.name 'new_f' num2str(mean(oat.first_level.tf_hilbert_freq_ranges(ff,:))) '_stats_dir'];
 
-    [statsdir{ff},times]=osl_save_nii_stats(S2);    
+    [statsdir{ff},times]=oat_save_nii_stats(S2);    
 end;
 
 % make sure you view results using fslview

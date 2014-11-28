@@ -831,7 +831,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
 
     if (strcmp(source_recon_results.recon_method,'none')),
     else
-        disp(['To create niftii files from this use a call to osl_save_nii_stats']);
+        disp(['To create niftii files from this use a call to oat_save_nii_stats']);
     end;
 
     %%%%%%%%%%%%%%%%%%%

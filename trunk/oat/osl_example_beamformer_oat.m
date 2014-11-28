@@ -135,7 +135,7 @@ S2.stats_fname=oat.first_level.results_fnames{1};
 S2.first_level_contrasts=[3]; % list of first level contrasts to output
 %S2.resamp_gridstep=oat.source_recon.gridstep;
 S2.resamp_gridstep=oat.source_recon.gridstep;
-[statsdir,times,count]=osl_save_nii_stats(S2);
+[statsdir,times,count]=oat_save_nii_stats(S2);
 
 %%%%%%%%%%%%%%%%%%%
 %% VIEW NIFTII RESULTS IN FSLVIEW
@@ -273,7 +273,7 @@ S2.first_level_contrasts=[3]; % list of first level contrasts to output
 S2.freq_bin=1;
 S2.stats_dir=[oat.source_recon.dirname '/' oat.first_level.name '_f' num2str(S2.freq_bin) '_stats_dir']; % directory to put niis in
 S2.resamp_gridstep=oat.source_recon.gridstep;
-[statsdir,times]=osl_save_nii_stats(S2);    
+[statsdir,times]=oat_save_nii_stats(S2);    
 
 % view results using fslview
 mni_brain=[OSLDIR '/std_masks/MNI152_T1_' num2str(S2.resamp_gridstep) 'mm_brain']; 
