@@ -369,7 +369,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
         S3.Xsummary=first_level.design_matrix_summary;
     end;
     
-    first_level.x=setup_beamformer_designmatrix(S3);
+    first_level.x=oat_setup_designmatrix(S3);
     
     const_reg=0;
     for p=1:size(first_level.x,2),
