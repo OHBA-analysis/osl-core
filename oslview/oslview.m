@@ -21,7 +21,7 @@ viewer_dir = strrep(which('oslview'),'oslview.m','');
 
 % Update D with the one on file
 datafile = fullfile(D.path,D.fname);
-D = spm_eeg_load(datafile);
+%D = spm_eeg_load(datafile);
 
 % Initialise shared variables
 p1=[]; p2=[];
