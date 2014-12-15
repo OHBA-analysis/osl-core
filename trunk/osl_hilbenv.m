@@ -2,6 +2,9 @@ function Denv = osl_hilbenv(S)
 % Computes the Hilbert envelope of MEEG data
 % Dnew = osl_hilbenv(S)
 %
+% S.D       - MEEG object
+% S.winsize - window size (seconds)
+%
 % Adam Baker 2014
 
 % Check SPM File Specification:
@@ -24,10 +27,6 @@ if isempty(S.winsize)
     S.winsize = D.fsample; % 1 second
 end
 
-S.overlap = ft_getopt(S,'overlap');
-if isempty(S.overlap)
-    S.overlap = 0.75;
-end
 
 trl = 1; % TODO - fix for trialwise data
 
@@ -54,9 +53,10 @@ ft_progress('init','eta')
 for iblk = 1:size(blks,1)
     ft_progress(iblk/size(blks,1));
 
-    % Load in data for this block and rearrange into complex form
+    % Compute Hilbert transform:
     dat_blk = transpose(abs(hilbert(D(blks(iblk,1):blks(iblk,2),:,trl)')));
-    
+  
+    % Apply moving average:
     dat_blk = fftfilt(repmat(ones(S.winsize,1),1,size(dat_blk,1)),dat_blk');
     dat_blk = dat_blk./S.winsize;
     dat_blk = dat_blk(S.winsize:end,:);
@@ -64,7 +64,7 @@ for iblk = 1:size(blks,1)
     
     % Downsample
     dat_blk = resample(dat_blk,1,ds_fac)';
-    
+    dat_blk(dat_blk<0) = 0;
     Denv(blks(iblk,1):blks(iblk,2),:) = dat_blk;
 end
 ft_progress('close');
