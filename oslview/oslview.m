@@ -20,8 +20,10 @@ function D = oslview(D)
 viewer_dir = strrep(which('oslview'),'oslview.m','');
 
 % Update D with the one on file
+current_montage = D.montage('getindex');
 datafile = fullfile(D.path,D.fname);
-%D = spm_eeg_load(datafile);
+D = spm_eeg_load(datafile);
+D = montage(D,'switch',current_montage);
 
 % Initialise shared variables
 p1=[]; p2=[];
@@ -795,6 +797,8 @@ pointer_wait;
       D = badchannels(D,ch_bad,1);
     end
     set_bad;
+    D = montage(D,'switch',current_montage);
+
     save(D);
   end
 
