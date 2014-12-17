@@ -140,6 +140,13 @@ if(do_hmm)
     oat.first_level.hmm_do_glm_statewise=0;
 end;
 
+if(0)
+    % load in previously run HMM to avoid having to rerun it
+    recon=oat_load_results(oat,oat.source_recon.results_fnames{1});
+    
+    oat.source_recon.hmm_block=recon.block;
+end;
+
 oat = osl_check_oat(oat);
 
 %% CHECK OAT SOURCE_RECON AND RUN BEAMFORMER
