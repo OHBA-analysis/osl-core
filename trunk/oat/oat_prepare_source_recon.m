@@ -293,13 +293,14 @@ if(isfield(source_recon_sess,'hmm_num_states') && source_recon_sess.hmm_num_stat
         block=source_recon_sess.hmm_block;
         
         if(source_recon_sess.hmm_num_states<0)
-            NK=size(max(block.q_star),2);
+            NK=size(block.delta,2);
         else
             NK=source_recon_sess.hmm_num_states;
-            if size(max(block.q_star),2)~=NK,
+            if size(block.delta,2)~=NK,
                 error('Incompatible number of states');
             end;
         end;
+        tres=D.time(2)-D.time(1);
         
     else
         
@@ -355,10 +356,8 @@ if(isfield(source_recon_sess,'hmm_num_states') && source_recon_sess.hmm_num_stat
     if(1),
           
         S2=[];
-        S2.hmm=hmm;;
         S2.block=block;
         S2.tres=tres;
-        S2.Apca=Apca;
         S2.NK=NK;
         
         [fig_handles fig_names fig_titles]=plot_hmm(S2);

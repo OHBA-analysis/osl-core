@@ -745,7 +745,11 @@ for subi_todo=1:length(first_level.sessions_to_do),
         if source_recon_results.is_sensor_space
             S2.montage_index=0;
         else
-            S2.montage_index=1;
+            if oat.first_level.do_weights_normalisation
+                S2.montage_index=NKrecon+1; % with weights normalisation
+            else
+                S2.montage_index=1; % without weights normalisation
+            end;  
         end;
         S2.D_block.size=min(500,Nvoxels_out);
         
