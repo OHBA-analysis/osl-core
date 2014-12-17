@@ -81,16 +81,15 @@ if ~isempty(classchanind),
     if ~isfield(S,'class_timeinds'),
 
         %% establish the time indices for each class by using the 'Class' channel in S.D 
-        class_timeinds=cell(nclasses,ntrials);
+        S.class_timeinds=cell(nclasses,ntrials);
 
         for kk=1:nclasses,
             class_samples_inds_recon = (S.D(classchanind, :, :, 1)==kk);
 
             for tri=1:ntrials,            
-                class_timeinds{kk,tri}=find(class_samples_inds_recon(1,:, tri)); % time indices for class kk
+                S.class_timeinds{kk,tri}=find(class_samples_inds_recon(1,:, tri)); % time indices for class kk
             end;
-        end;
-        S.class_timeinds=class_timeinds;
+        end;        
 
     end;  
 end;
@@ -120,7 +119,7 @@ if ~use_current_block
     D=montage(S.D,'switch',S.montage_index); 
     to=min(S.D_block.from+S.D_block.size-1,size(D,1));
     
-    if isempty(classchanind),  
+    if 1,%isempty(classchanind),  
         %% there is no Class channel - so do a straightforward recon       
         S.D_block.data=D(S.D_block.from:to,:,:,:);
     else
