@@ -13,10 +13,8 @@ function [fig_handles fig_names fig_titles]=plot_hmm( S )
 %
 % MWW 2013
 
-hmm=S.hmm;
 block=S.block;
 tres=S.tres;
-Apca=S.Apca;
 NK=S.NK;
 
 fig_handles(1)=figure; 
@@ -37,26 +35,31 @@ set(gca,'YTick', yticks);
 set(gca,'YTickLabel',yticklab);
 plot4paper('time(s)','');
 
-fig_handles(2)=sfigure; 
-fig_names{2}='hmm_state_covs';
-fig_titles{2}='HMM state data covs';
+if isfield(S,'hmm') && isfield(S,'Apca')
+    Apca=S.Apca;
+    hmm=S.hmm;
 
-for ii=1:NK,
+    fig_handles(2)=sfigure; 
+    fig_names{2}='hmm_state_covs';
+    fig_titles{2}='HMM state data covs';
 
-    cv=Apca*hmm.state(ii).Cov*Apca';
-    snugplot(ceil(NK/2),2,ii); imagesc(abs(cv)); colorbar; 
-%        subplot(NK,1,(ii-1)*2+2); imagesc(abs(hmm.state(ii).Mu), [0 1]); colorbar; 
+    for ii=1:NK,
 
+        cv=Apca*hmm.state(ii).Cov*Apca';
+        snugplot(ceil(NK/2),2,ii); imagesc(abs(cv)); colorbar; 
+    %        subplot(NK,1,(ii-1)*2+2); imagesc(abs(hmm.state(ii).Mu), [0 1]); colorbar; 
+
+    end;
 end;
 
 
 StatePath = block(1).q_star;
 %StatePath = simdata.Xclass(1:Nto);
-NumberOccurences = zeros(1,hmm.K);
-FractionalOccupancy = zeros(1,hmm.K);
-MeanLifeTime = zeros(1,hmm.K);
+NumberOccurences = zeros(1,NK);
+FractionalOccupancy = zeros(1,NK);
+MeanLifeTime = zeros(1,NK);
 
-for ctr = 1:hmm.K
+for ctr = 1:NK
     temp = StatePath == ctr;
     NumberOccurences(ctr) = sum(diff(temp) == 1);
     FractionalOccupancy(ctr) = sum(temp)/length(temp); 
