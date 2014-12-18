@@ -380,11 +380,9 @@ for subi=1:length(opt.sessions_to_do),
 
             S2.updatehistory=0;
             D = spm_eeg_copy(S2);
-            
             runcmd(['mv ' D.path '/' D.fname ' ' opt.dirname]);
-            runcmd(['mv ' D.path '/' D.fnamedat ' ' opt.dirname]);
+            runcmd(['mv ' D.fnamedat ' ' opt.dirname]);
             spm_filename=[opt.dirname '/' D.fname];
-            D=spm_eeg_load(spm_filename);
 
         end;
         
@@ -456,15 +454,16 @@ for subi=1:length(opt.sessions_to_do),
         S.forward_meg = 'MEG Local Spheres';
         S.forward_meg = 'Single Shell';
 
+        S.use_rhino=opt.coreg.use_rhino;
+        S.useCTFhack=1;
+
         if(isfield(opt.coreg,'fid_mnicoords')),
             S.fid_mnicoords=opt.coreg.fid_mnicoords; 
             % flirt -in /Users/woolrich/Desktop/GN170_anatomy_test.nii -ref /usr/local/fsl/data/standard/MNI152_T1_2mm -out /Users/woolrich/Desktop/anat_mne2;
         end;
         S.fid_label=opt.coreg.fid_label
-
-        S.neuromag_planar_baseline_correction=opt.coreg.neuromag_planar_baseline_correction;
         
-        D=osl_forward_model(S);
+        D=osl_headmodel(S);
         clc
         close all;
 

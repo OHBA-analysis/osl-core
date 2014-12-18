@@ -216,6 +216,8 @@ try, opt.outliers.wthresh_chan=optin.outliers.wthresh_chan; optin.outliers = rmf
 try, opt.coreg.do=optin.coreg.do; optin.coreg = rmfield(optin.coreg,'do'); catch, opt.coreg.do=1; end; % flag to do or not do downsample
 try, opt.coreg.useheadshape = optin.coreg.useheadshape; optin.coreg = rmfield(optin.coreg,'useheadshape'); catch, opt.coreg.useheadshape=1; end
 try, opt.coreg.mri = optin.coreg.mri; optin.coreg = rmfield(optin.coreg,'mri'); catch, for i=1:num_sessions, opt.coreg.mri{i}=''; end; end
+try, opt.coreg.use_rhino = optin.coreg.use_rhino; optin.coreg = rmfield(optin.coreg,'use_rhino'); catch, opt.coreg.use_rhino = 1; end % Use RHINO coregistration
+
 try, opt.coreg.fid_label = optin.coreg.fid_label; optin.coreg = rmfield(optin.coreg,'fid_label'); 
 catch, 
     switch opt.datatype
@@ -230,16 +232,7 @@ catch,
     end;
 end; % To see what these should be look at: D.fiducials.fid.label
 
-try, opt.coreg.neuromag_planar_baseline_correction = optin.coreg.neuromag_planar_baseline_correction; optin.coreg = rmfield(optin.coreg,'neuromag_planar_baseline_correction'); 
-catch,  
-    switch opt.datatype
-        case 'neuromag'
-            disp('Using Neuromag Vector View defaults (e.g. this may need changing if you are using a Triux system)'); 
-            opt.coreg.neuromag_planar_baseline_correction='vector_view'; 
-        otherwise
-            opt.coreg.neuromag_planar_baseline_correction='none';
-    end;
-end; % e.g. 'none' for none or 'vector_view' vector_view correction, or 'triux'
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% copy any results
