@@ -30,12 +30,7 @@ C = zeros(length(targetind),D.ntrials);
 for trl = 1:D.ntrials
     
     % Read data from file in blocks
-    Mem_max = 200*2^20;
-    Mem_chan = 8*numel(D(1,samples2use,trl));
-    blk_size = floor(Mem_max./Mem_chan);
-    blks = 0:blk_size:length(targetind);
-    blks = unique([blks length(targetind)]);
-    blks = [blks(1:end-1)+1; blks(2:end)]';
+    blks = osl_memblocks(Denv,1);
     
     seed_data = squeeze(D(seedind,samples2use,trl))';
     
