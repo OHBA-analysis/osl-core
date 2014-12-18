@@ -3,7 +3,7 @@ function Denv = osl_hilbenv(S)
 % Dnew = osl_hilbenv(S)
 %
 % S.D       - MEEG object
-% S.winsize - window size (seconds)
+% S.winsize - window size (samples)
 %
 % Adam Baker 2014
 
@@ -24,9 +24,8 @@ end
 
 S.winsize = ft_getopt(S,'winsize');
 if isempty(S.winsize)
-    S.winsize = D.fsample; % 1 second
+    S.winsize = 0; % No smoothing
 end
-
 
 trl = 1; % TODO - fix for trialwise data
 
@@ -36,18 +35,24 @@ blk_size = floor(Mem_max./Mem_chan);
     
 % Set up new MEEG object to hold downsampled envelope
 ds_fac = ceil(S.winsize/2);
+if ds_fac < 1
+    ds_fac = 1;
+    t_env = D.time;
+else
+    t_env = D.time(ceil(S.winsize/2):end-floor(S.winsize/2));
+    t_env = t_env(ds_fac:ds_fac:end);
+end
 
-t_env = D.time(floor(S.winsize/2):end-ceil(S.winsize/2));
-t_env = t_env(ds_fac:ds_fac:end);
+
 
 Denv = clone(montage(D,'switch',0),prefix(D.fnamedat,'h'),[D.nchannels,length(t_env),D.ntrials]);
 Denv = timeonset(Denv,t_env(1));
 Denv = fsample(Denv,Denv.fsample/ds_fac);
 
 % Loop over blocks and voxels and apply envelope averaging
-blks = 1:blk_size:D.nchannels;
+blks = 0:blk_size:D.nchannels;
 blks = unique([blks D.nchannels]);
-blks = [blks(1:end-1); blks(2:end)]';
+blks = [blks(1:end-1)+1; blks(2:end)]';
 
 ft_progress('init','eta')
 for iblk = 1:size(blks,1)
@@ -57,14 +62,17 @@ for iblk = 1:size(blks,1)
     dat_blk = transpose(abs(hilbert(D(blks(iblk,1):blks(iblk,2),:,trl)')));
   
     % Apply moving average:
-    dat_blk = fftfilt(repmat(ones(S.winsize,1),1,size(dat_blk,1)),dat_blk');
-    dat_blk = dat_blk./S.winsize;
-    dat_blk = dat_blk(S.winsize:end,:);
-    dat_blk = dat_blk(1:end-rem(size(dat_blk,1),ds_fac),:);
+    if S.winsize > 0
+        dat_blk = fftfilt(repmat(ones(S.winsize,1),1,size(dat_blk,1)),dat_blk');
+        dat_blk = dat_blk./S.winsize;
+        dat_blk = dat_blk(S.winsize:end,:);
+        dat_blk = dat_blk(1:end-rem(size(dat_blk,1),ds_fac),:);
+        
+        % Downsample
+        dat_blk = resample(dat_blk,1,ds_fac)';
+        dat_blk(dat_blk<0) = 0;
+    end
     
-    % Downsample
-    dat_blk = resample(dat_blk,1,ds_fac)';
-    dat_blk(dat_blk<0) = 0;
     Denv(blks(iblk,1):blks(iblk,2),:) = dat_blk;
 end
 ft_progress('close');
