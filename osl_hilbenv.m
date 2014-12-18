@@ -28,10 +28,6 @@ if isempty(S.winsize)
 end
 
 trl = 1; % TODO - fix for trialwise data
-
-Mem_max = 200*2^20;
-Mem_chan = 8*numel(D(1,:,trl));
-blk_size = floor(Mem_max./Mem_chan);
     
 % Set up new MEEG object to hold downsampled envelope
 ds_fac = ceil(S.winsize/2);
@@ -50,9 +46,7 @@ Denv = timeonset(Denv,t_env(1));
 Denv = fsample(Denv,Denv.fsample/ds_fac);
 
 % Loop over blocks and voxels and apply envelope averaging
-blks = 0:blk_size:D.nchannels;
-blks = unique([blks D.nchannels]);
-blks = [blks(1:end-1)+1; blks(2:end)]';
+blks = blks = osl_memblocks(Denv,1);
 
 ft_progress('init','eta')
 for iblk = 1:size(blks,1)
