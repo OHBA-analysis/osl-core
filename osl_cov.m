@@ -27,10 +27,7 @@ Mem_smp = 8*nch;
 Mem_ch = 8*nsmp;
 
 % Compute means
-blk_size = floor(Mem_max./Mem_ch);    
-blks = 0:blk_size:nch;
-blks = unique([blks nch]);
-blks = [blks(1:end-1)+1; blks(2:end)]';
+blks = osl_memblocks(X,1);
 M = zeros(nch,1);
 for i = 1:size(blks,1)
     Xblk = X(blks(i,1):blks(i,2),:);
