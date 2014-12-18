@@ -11,5 +11,6 @@ function res=oat_load_results(oat, fname)
     if(isfield(res,'source_recon')),
         res.source_recon.dirname=oat.source_recon.dirname;
     end;
+    
 end
 

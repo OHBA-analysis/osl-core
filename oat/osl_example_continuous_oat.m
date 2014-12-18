@@ -130,24 +130,28 @@ oat.source_recon.freq_range=[4 30]; % frequency range in Hz
 oat.source_recon.time_range=[300,32*30];
 
 % beamformer parameters.
-oat.source_recon.method='beamform_bilateral';
-oat.source_recon.gridstep=8; % in mm, using a lower resolution here than you would normally, for computational speed
+oat.source_recon.method='beamform';
+oat.source_recon.gridstep=7; % in mm, using a lower resolution here than you would normally, for computational speed
 oat.source_recon.mri=structural_files;
 do_hmm=1;
 if(do_hmm)
     oat.source_recon.hmm_num_states=10;    
-    oat.source_recon.hmm_num_starts=3;
+    oat.source_recon.hmm_num_starts=1;
     oat.first_level.hmm_do_glm_statewise=0;
 end;
 
-if(0)
-    % load in previously run HMM to avoid having to rerun it
-    recon=oat_load_results(oat,oat.source_recon.results_fnames{1});
-    
-    oat.source_recon.hmm_block=recon.block;
-end;
+oat.source_recon.dirname=[workingdir '/subj1_results_beta_hmm' num2str(do_hmm) '_' oat.source_recon.method];
 
 oat = osl_check_oat(oat);
+
+if(0)
+    % load in previously run HMM to avoid having to rerun it
+    oat=osl_load_oat(oat);
+    recon=oat_load_results(oat,oat.source_recon.results_fnames{1});
+    
+    oat.source_recon.hmm_block={};
+    oat.source_recon.hmm_block{1}=recon.block;
+end;
 
 %% CHECK OAT SOURCE_RECON AND RUN BEAMFORMER
 %
@@ -162,8 +166,7 @@ oat
 oat.source_recon
 
 oat.to_do=[1 0 0 0];
-oat.source_recon.pca_dim=150;
-oat.source_recon.dirname=[workingdir '/subj1_results_beta_hmm' num2str(do_hmm) '_' oat.source_recon.method];
+oat.source_recon.pca_dim=250;
 
 oat = osl_run_oat(oat);
 
@@ -231,7 +234,6 @@ oat.source_recon.dirname=[workingdir '/subj1_results_beta_hmm' num2str(do_hmm) '
 oat=osl_load_oat(oat.source_recon.dirname, oat.first_level.name,'sub_level','group_level');
 
 oat.first_level.name=['first_level'];
-oat.first_level.hmm_do_glm_statewise=0;
 
 % GLM stuff:
 oat.first_level.design_matrix=x';
@@ -273,7 +275,7 @@ oat = osl_run_oat(oat);
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
-S2.first_level_contrasts=[1:3]; % list of first level contrasts to output
+S2.first_level_contrasts=[3]; % list of first level contrasts to output
 S2.stats_dir=[oat.source_recon.dirname '/' oat.first_level.name '_stats_dir'];
 clear statsdir;
 for ff=1:size(oat.first_level.tf_hilbert_freq_ranges,1),
@@ -285,7 +287,7 @@ end;
 
 % make sure you view results using fslview
 contrast_num=3;
-runcmd(['fslview ' statsdir{1} '/tstat' num2str(contrast_num) '_2mm &']);
+runcmd(['fslview ' statsdir{1} '/cope' num2str(contrast_num) '_2mm ' statsdir{1} '/tstat' num2str(contrast_num) '_2mm &']);
 
 %% CREATE AN ROI MASK
 % 
