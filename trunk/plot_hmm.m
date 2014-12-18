@@ -17,9 +17,11 @@ block=S.block;
 tres=S.tres;
 NK=S.NK;
 
-fig_handles(1)=figure; 
-fig_names{1}='hmm_state_courses';
-fig_titles{1}='HMM state time courses';
+fignum=1;
+
+fig_handles(fignum)=figure; 
+fig_names{fignum}='hmm_state_courses';
+fig_titles{fignum}='HMM state time courses';
 yticklab=[];
 yticks=[];
 for ii=1:NK,    
@@ -34,14 +36,15 @@ end;
 set(gca,'YTick', yticks);
 set(gca,'YTickLabel',yticklab);
 plot4paper('time(s)','');
-
+fignum=fignum+1;
+    
 if isfield(S,'hmm') && isfield(S,'Apca')
     Apca=S.Apca;
     hmm=S.hmm;
 
-    fig_handles(2)=sfigure; 
-    fig_names{2}='hmm_state_covs';
-    fig_titles{2}='HMM state data covs';
+    fig_handles(fignum)=sfigure; 
+    fig_names{fignum}='hmm_state_covs';
+    fig_titles{fignum}='HMM state data covs';
 
     for ii=1:NK,
 
@@ -50,6 +53,8 @@ if isfield(S,'hmm') && isfield(S,'Apca')
     %        subplot(NK,1,(ii-1)*2+2); imagesc(abs(hmm.state(ii).Mu), [0 1]); colorbar; 
 
     end;
+    fignum=fignum+1;
+    
 end;
 
 
@@ -68,9 +73,9 @@ end
 x=1:NK;
 
 % plots
-fig_handles(3)=sfigure; 
-fig_names{3}='hmm_state_stats';
-fig_titles{3}='HMM state stats';
+fig_handles(fignum)=sfigure; 
+fig_names{fignum}='hmm_state_stats';
+fig_titles{fignum}='HMM state stats';
 
 subplot(1,2,1);bar(x,FractionalOccupancy*range(ts));
 plot4paper('State #','Occupancy (s)');
