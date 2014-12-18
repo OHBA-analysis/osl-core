@@ -414,7 +414,7 @@ D = spm_eeg_load(S.fname);
 if strcmp(S.modality,'EEG')   % changed by DM
     chan_inds = find(any(strcmp(D.chantype,'EEG'),1));
 else
-    chan_inds = find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1));	
+    chan_inds = find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1));
 end
 
 badchannels    = D.badchannels;
@@ -436,64 +436,59 @@ end
 sm = S.ica_res.sm;
 tc = S.ica_res.tc;
 
-if ~isempty(bad_components)
-    if use_montage
-        dat_inv = pinv_plus(meg_dat', S.ica_res.ica_params.num_ics);
-        tra = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(:,bad_components)'))';
-        
-        montage             =  [];
-        montage.tra         =  tra;
-        montage.labelnew    =  D.chanlabels(chan_inds);
-        montage.labelorg    =  D.chanlabels(chan_inds);
-        
-        [~,locs] = ismember(montage.labelnew,D.sensors('MEG').label);
-        
-        
-        montage.chanunitnew =  D.sensors('MEG').chanunit(locs);
-        montage.chanunitorg =  D.sensors('MEG').chanunit(locs);
-        montage.chantypenew =  lower(D.sensors('MEG').chantype(locs));
-        montage.chantypeorg =  lower(D.sensors('MEG').chantype(locs));
-        
-        
-        if ~isempty(badchannels) % CHECK THIS!!
-            [~,bad_inds] = intersect(montage.labelorg,D.chanlabels(D.badchannels),'stable');
-            montage.tra(bad_inds,:) = 0;
-            for bi = bad_inds'
-                montage.tra(bi,bi) = 1;
-            end
+if use_montage
+    dat_inv = pinv_plus(meg_dat', S.ica_res.ica_params.num_ics);
+    tra = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(:,bad_components)'))';
+    
+    montage             =  [];
+    montage.tra         =  tra;
+    montage.labelnew    =  D.chanlabels(chan_inds);
+    montage.labelorg    =  D.chanlabels(chan_inds);
+    
+    [~,locs] = ismember(montage.labelnew,D.sensors('MEG').label);
+    
+    
+    montage.chanunitnew =  D.sensors('MEG').chanunit(locs);
+    montage.chanunitorg =  D.sensors('MEG').chanunit(locs);
+    montage.chantypenew =  lower(D.sensors('MEG').chantype(locs));
+    montage.chantypeorg =  lower(D.sensors('MEG').chantype(locs));
+    
+    
+    if ~isempty(badchannels) % CHECK THIS!!
+        [~,bad_inds] = intersect(montage.labelorg,D.chanlabels(D.badchannels),'stable');
+        montage.tra(bad_inds,:) = 0;
+        for bi = bad_inds'
+            montage.tra(bi,bi) = 1;
         end
-        
-        S_montage                =  [];
-        S_montage.D              =  fullfile(D.path,D.fname);
-        S_montage.montage        =  montage;
-        S_montage.keepothers     =  true;
-        S_montage.updatehistory  =  1;
-        
-        Dmontaged = spm_eeg_montage(S_montage);
-        
-        % rename montaged file
-        
-        S_copy         = [];
-        S_copy.D       = Dmontaged;
-        S_copy.outfile = fullfile(D.path, ['A' D.fname]);
-        Dclean = spm_eeg_copy(S_copy);
-
-        Dmontaged.delete;
-        
-    else
-        [dir,nam,~]=fileparts(fullfile(D.path,D.fname));
-        fname_out=[dir '/A' nam '.dat'];
-        meg_dat_clean=meg_dat-(sm(:,bad_components)*tc(bad_components,:));
-        
-        Dclean=clone(D,fname_out,size(D));
-        Dclean(chan_inds,:)=meg_dat_clean;   % changed by DM
-        Dclean.save;
     end
+    
+    S_montage                =  [];
+    S_montage.D              =  fullfile(D.path,D.fname);
+    S_montage.montage        =  montage;
+    S_montage.keepothers     =  true;
+    S_montage.updatehistory  =  1;
+    
+    Dmontaged = spm_eeg_montage(S_montage);
+    
+    % rename montaged file
+    
+    S_copy         = [];
+    S_copy.D       = Dmontaged;
+    S_copy.outfile = fullfile(D.path, ['A' D.fname]);
+    Dclean = spm_eeg_copy(S_copy);
+    
+    Dmontaged.delete;
+    
 else
-    Dclean=D;
-    msg = sprintf('\n%s\n%s\n%','No bad components have been selected. No de-noising has been applied to ', fullfile(D.path, D.fname));
-    fprintf(msg);
+    [dir,nam,~]=fileparts(fullfile(D.path,D.fname));
+    fname_out=[dir '/A' nam '.dat'];
+    meg_dat_clean=meg_dat-(sm(:,bad_components)*tc(bad_components,:));
+    
+    Dclean=clone(D,fname_out,size(D));
+    Dclean(chan_inds,:)=meg_dat_clean;   % changed by DM
+    Dclean.save;
 end
+
 
 res = fullfile(Dclean.path, Dclean.fname);
 
