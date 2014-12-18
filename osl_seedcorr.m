@@ -33,9 +33,9 @@ for trl = 1:D.ntrials
     Mem_max = 200*2^20;
     Mem_chan = 8*numel(D(1,samples2use,trl));
     blk_size = floor(Mem_max./Mem_chan);
-    blks = 1:blk_size:length(targetind);
+    blks = 0:blk_size:length(targetind);
     blks = unique([blks length(targetind)]);
-    blks = [blks(1:end-1); blks(2:end)]';
+    blks = [blks(1:end-1)+1; blks(2:end)]';
     
     seed_data = squeeze(D(seedind,samples2use,trl))';
     
