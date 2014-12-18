@@ -148,6 +148,9 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     S2.forward_meg  = source_recon.forward_meg;
     S2.fid_label    = source_recon.fid_label;
 
+    S2.use_rhino=source_recon.use_rhino;
+    S2.useCTFhack=1; % temp tweak if using rhino
+        
     D = osl_headmodel(S2);
 
     if(oat.do_plots)
