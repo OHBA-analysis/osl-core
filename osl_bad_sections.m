@@ -33,6 +33,7 @@ end%if
         
         switch output_format
             case 'logical'
+                Events = Events(strcmp({Events.type},'BadEpoch'));
                 badsections = false(1,D.nsamples);
                 for ev = 1:numel(Events)
                     badsections = badsections | D.time >= Events(ev).time & D.time < (Events(ev).time+Events(ev).duration);

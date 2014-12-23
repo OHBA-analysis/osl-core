@@ -48,10 +48,28 @@ switch options.mode
         
     case {'envelope','ds_envelope'}
         Denv = osl_hilbenv(struct('D',D,'winsize',0));
-        C = osl_cov(Denv);
-% S.winsize
-                
         
+        % Eigendecomposition:
+        C = osl_cov(Denv);
+        [allsvd,MixingMatrix] = eigdec(C,options.pcadim);
+        clear C
+        
+        % Whitening:
+        if options.whiten
+            MixingMatrix = diag(1./sqrt(allsvd)) * MixingMatrix';
+        end
+        
+        % Get PCA components:
+        hmmdata = zeros(size(MixingMatrix,1),Denv.nsamples);
+        blks = osl_memblocks(Denv,2);
+        for i = 1:size(blks,1)
+            hmmdata(:,blks(i,1):blks(i,2)) = MixingMatrix * Denv(:,blks(i,1):blks(i,2));
+        end
+        
+        % Infer HMM:
+        hmm = osl_hmm_infer(hmmdata,struct('K',options.K,'order',0,'Ninits',options.nreps,'Hz',D.fsample));
+        hmm.MixingMatrix = MixingMatrix;
+               
 end
         
 end

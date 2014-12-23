@@ -1,12 +1,5 @@
 % Runs group ICA analysis of 4-30 Hz band-limited source-space amplitude 
-% envelopes based on the data and methods described in:
-%
-% "Fast transient networks in spontaneous human brain activity", eLife 2014
-% Baker, A.P., Brookes, M.J., Rezek, I.A., Smith, S.M., Behrens, T., 
-% Probert Smith, P.J., Woolrich, M.W. 
-% DOI:10.7554/eLife.01867
-
-% Beamformed data (4-30 Hz)
+% envelopes.
 
 BFfiles = ABgetfilelist('/Users/abaker/Scratch/oxford_resting2/','fAOxRest*.mat');
            
