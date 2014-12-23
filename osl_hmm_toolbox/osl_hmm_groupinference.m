@@ -32,6 +32,7 @@ function [HMMresults,statemaps] = osl_hmm_groupinference(data_files,hmmdir,todo,
 %                            (default <hmmdir>/envelopes/<BFfiles{subnum}>.mat)
 %             
 %              .concat   - settings for temporal concatenation with fields:
+%                          .log        - apply log transform
 %                          .norm_subs  - apply subject variance normalisation [0/1]
 %                            (default 1)
 %                          .pcadim     - dimensionality to use 
@@ -151,6 +152,7 @@ try windowsize = options.envelope.windowsize; catch, windowsize = 0.1;  end
 try multiband  = options.envelope.multiband;  catch, multiband  = [];   end
 
 % Default concatenation settings
+try logtrans  = options.concat.log;        catch, logtrans   = 0;  end
 try norm_subs = options.concat.norm_subs;  catch, norm_subs  = 1;  end
 try pcadim    = options.concat.pcadim;     catch, pcadim     = 40; end
 try whiten    = options.concat.whiten;     catch, whiten     = 1;  end
@@ -244,7 +246,9 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             tbad = osl_bad_sections(D,'logical');
             samples2use = find(~tbad);
             env = D(:,samples2use); %#ok - SPM doesn't like logical indexing
-            env = log10(env);
+            if logtrans
+                env = log10(env);
+            end
             if norm_subs
                 env = demean(env,2)./std(env(:));
             end
