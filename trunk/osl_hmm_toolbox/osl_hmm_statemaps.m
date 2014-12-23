@@ -121,6 +121,8 @@ for v = 1:Nvoxels
   
     if size(voxeldata,1) == size(hmm.MixingMatrix,1)
         vdata = hmm.MixingMatrix(:,v)'*voxeldata;
+    else
+        vdata = voxeldata(v,:);
     end
     
   if use_abs
