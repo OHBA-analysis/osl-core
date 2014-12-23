@@ -118,10 +118,12 @@ hz = zoom(MainFig);
 
 % Set channel type
 channel_order = 'normal';
-if any(strcmp(D.chantype,'MEGPLANAR'))
-  channel_type = 'MEGPLANAR';
-elseif any(strcmp(D.chantype,'MEGGRAD'))
-  channel_type = 'MEGGRAD';
+if any(strcmp(D.chantype,'MEGMAG')) && any(strcmp(D.chantype,'MEGPLANAR')) % ELEKTA
+  channel_type = 'MEGPLANAR'; 
+elseif any(strcmp(D.chantype,'MEGMAG')) % 4D
+  channel_type = 'MEGMAG'; 
+elseif any(strcmp(D.chantype,'MEGGRAD')) % CTF
+  channel_type = 'MEGGRAD'; 
 elseif any(strcmp(D.chantype,'MEG'))
   channel_type = 'MEG';
 else % catch unrecognised case
@@ -131,7 +133,7 @@ channel_setup; % will also call redraw & redraw_Sidewindow
 
 % Disable save (and channel switching if CTF)
 set(uitools.save,'Enable','off');
-if strcmp(channel_type,'MEGGRAD')
+if ~strcmp(channel_type,'MEGPLANAR')
   set(uitools.switchchan,'Enable','off');
 end
 
