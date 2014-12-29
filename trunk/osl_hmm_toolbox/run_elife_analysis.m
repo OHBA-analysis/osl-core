@@ -29,8 +29,8 @@ osl_startup(osldir);
 
 %% Run HMM with the default settings:
 todo.envelope = 0;
-todo.concat   = 1;
-todo.infer    = 1;
+todo.concat   = 0;
+todo.infer    = 0;
 todo.output   = 1;
     
 options.envelope.windowsize = 0.1;
