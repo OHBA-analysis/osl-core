@@ -7,8 +7,7 @@ end
 if any(strcmp(get(get(hf,'children'),'type'),'axes'))
     [AZ,EL] = view;
 else
-    AZ = 90;
-    EL = 0;
+    [AZ,EL
 end
     
     ha = axes('parent',hf); hold on
@@ -34,8 +33,9 @@ patch(struct('faces',mesh_rhino.face,'vertices',mesh_rhino.vert),'FaceColor',[23
 
 patch(struct('faces',mesh_ctx.face,'vertices',mesh_ctx.vert),'FaceColor','b','EdgeColor','none','Parent',ha);
 
-view([AZ,EL]);
-
+if nargin < 2
+    view(90,0);
+end
 axis(ha,'image','off')
 material shiny
 lighting gouraud
