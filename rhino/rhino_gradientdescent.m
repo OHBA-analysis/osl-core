@@ -41,7 +41,7 @@ function M = rhino_gradientdescent(data1,data2)
         data2r  = Mr*[data2; ones(1,size(data2,2))];
         data2r  = data2r(1:3,:);
                             
-        err = sum(AB_ICPerror(data1,data2r));
+        err = sum(rhino_cperror(data1,data2r));
  
     end
     
