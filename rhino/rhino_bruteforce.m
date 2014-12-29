@@ -35,7 +35,7 @@ function Err = rhino_bruteforce(data1,data2)
                             data2r  = Mr*[data2; ones(1,size(data2,2))];
                             data2r  = data2r(1:3,:);
                             
-                            Err(gridRot==rx,gridRot==ry,gridRot==rz,gridTrans==tx,gridTrans==ty,gridTrans==tz) = sum(AB_ICPerror(data1,data2r,'point'));
+                            Err(gridRot==rx,gridRot==ry,gridRot==rz,gridTrans==tx,gridTrans==ty,gridTrans==tz) = sum(rhino_cperror(data1,data2r,'point'));
                             
                         end
                     end

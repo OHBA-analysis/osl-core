@@ -53,6 +53,9 @@ rhino_display(D,MainFig)
         D.inv{1}.mesh.tess_rhino.vert = p';
         cla, rhino_display(D,MainFig)
         rotate3d off
+        
+        % Display error 
+        set(MainFig,'name','RHINO - error = ' num2str(
 
     end
 
