@@ -513,9 +513,9 @@ if S.useheadshape,
     % Run ICP with multiple initialisations
     M_icp_inv = rhino_icp(headshape_coreg', headshape_polhemus', S.multistart, ha);
     M_icp     = inv(M_icp_inv);
-    headshape_icp = spm_eeg_inv_transform_points(M_icp, headshape_coreg);
     
-    Mgd = rhino_gradientdescent(headshape_icp,headshape_polhemus);
+%     headshape_icp = spm_eeg_inv_transform_points(M_icp, headshape_coreg); 
+%     Mgd = rhino_gradientdescent(headshape_icp,headshape_polhemus);
     
     % headshape_coreg = spm_eeg_inv_transform_points(M_icp,headshape_coreg);
     fid_coreg       = spm_eeg_inv_transform_points(M_icp, fid_coreg);
