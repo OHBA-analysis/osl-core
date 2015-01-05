@@ -15,3 +15,10 @@ osl2.0/spm12/external/fieldtrip/utilities/private/*.mexmaci64
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 
+% Problem: Fieldtrip’s implementation of local spheres does not correctly map coils to channels when tra matrix is modified. This was previously solved by reloading the raw tra matrix prior to running the forward model, but this was not robust to splitting the coregistration and forward model stages, since the sensor information is saved into D.inv during coregistration, and was an somewhat cumbersome hack.
+
+% Solution: save new field coilchan in D.sensors(‘MEG’) in osl_convert_script.m (which will in turn be a field in grad in ft_headmodel_localspheres). Modified ft_headmodel_localspheres.m to use this field instead of grad.tra if present.
+
+osl2.0/spm12/external/fieldtrip/forward/ft_headmodel_localspheres.m
+
+%%%%%%%%%%%%%%%%%%%%%%%%

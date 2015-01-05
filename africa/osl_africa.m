@@ -422,10 +422,8 @@ bad_components = unique(S.ica_res.bad_components);
 meg_dat        = D(chan_inds,:,:);
 meg_dat        = reshape(meg_dat,size(meg_dat,1),[]);
 
-%%%%%%%%%%%%%%%%% SAVE A COPY OF THE TRA MATRIX IF NEEDED %%%%%%%%%%%%%%%%%
-
 if strcmp(S.modality,'MEG')   % added by DM
-    D = save_raw_tra_to_D(D);
+    % D = save_raw_tra_to_D(D); replaced by D.sensors('MEG').coilchan
     use_montage = 1;
 elseif strcmp(S.modality,'EEG')
     use_montage = 0;
