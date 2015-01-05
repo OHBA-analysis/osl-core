@@ -68,6 +68,14 @@ S.mode='continuous';
 
 D = feval(convertfun,S);
 
+
+%% Add coil to channel mapping in D.sensors (used later for local spheres)
+if ~isempty(D.sensors('MEG'))
+    sens = D.sensors('MEG');
+    sens.coilchan = sens.tra==1;
+    D = sensors(D,'MEG',sens);
+end
+
 %%%%%%%%%%%%%%%%%%%%%
 %% MWW added back in from osl1.2.beta.15 - Oct 2013
 if 1,
