@@ -40,13 +40,12 @@ else
 end
 
 
-
 Denv = clone(montage(D,'switch',0),prefix(D.fnamedat,'h'),[D.nchannels,length(t_env),D.ntrials]);
 Denv = timeonset(Denv,t_env(1));
 Denv = fsample(Denv,Denv.fsample/ds_fac);
 
 % Loop over blocks and voxels and apply envelope averaging
-blks = blks = osl_memblocks(Denv,1);
+blks = osl_memblocks(D,1);
 
 ft_progress('init','eta')
 for iblk = 1:size(blks,1)
