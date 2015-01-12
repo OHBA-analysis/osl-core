@@ -194,18 +194,18 @@ if ~strcmp(deblank(smri_orient),deblank(std_orient))
 end
 
 % RUN FSLREORIENT2STD
-if ~S.useCTFhack
-    sMRI_reorient = fullfile(struct_path,[struct_name '_reorient.nii']);    
-    if exist(sMRI_reorient,'file') ~= 2
-        fslreorientCommand = ['fslreorient2std ' sMRI ' ' sMRI_reorient];
-        call_fsl_wrapper(fslreorientCommand, 1);
-        if exist([sMRI_reorient '.gz'],'file') == 2
-            gunzip([sMRI_reorient '.gz']);
-            dos(['rm ' sMRI_reorient '.gz'])
-        end
-    end
-    sMRI = sMRI_reorient;
-end
+% if ~S.useCTFhack
+%     sMRI_reorient = fullfile(struct_path,[struct_name '_reorient.nii']);    
+%     if exist(sMRI_reorient,'file') ~= 2
+%         fslreorientCommand = ['fslreorient2std ' sMRI ' ' sMRI_reorient];
+%         call_fsl_wrapper(fslreorientCommand, 1);
+%         if exist([sMRI_reorient '.gz'],'file') == 2
+%             gunzip([sMRI_reorient '.gz']);
+%             dos(['rm ' sMRI_reorient '.gz'])
+%         end
+%     end
+%     sMRI = sMRI_reorient;
+% end
 
 % CHECK IF SCALP EXTRACTION ALREADY DONE
 if exist(scalp_file,'file')~=2
@@ -384,13 +384,31 @@ end
 disp('Coregistering')
 
 % MAP INTO SCANNER COORDINATE SYSTEM
-[~,qform_native] = dos(['fslorient -getqform ' sMRI]);
+% Have to be really careful using qform & sform. Sometimes they are not
+% valid, or the wrong code is used meaning a different tranformation is
+% applied to the one used in FLIRT. If the output from RHINO looks silly 
+% then the qform/sform or qformcode/sformcode are likely causes. If in
+% doubt then check that the headshape points in all coordinate systems
+% correspond to those in FSLVIEW.
+qformcode = str2double(call_fsl_wrapper(['fslorient -getqformcode ' scalp_file], 1));
+sformcode = str2double(call_fsl_wrapper(['fslorient -getsformcode ' scalp_file], 1));
+% qform and/or sform need to be valid to keep orientation consistent:
+if any(qformcode == [1,2]) % code == 1 or 2 usually means voxels to anatomical units
+    [~,qform_native] = dos(['fslorient -getqform ' sMRI]);
+elseif any(sformcode == [1,2])
+    warning('qform code is not valid, using sform \n');
+    [~,qform_native] = dos(['fslorient -getsform ' sMRI]);
+else
+    warning('Neither sform or qform codes are valid... we''re in trouble...\n');
+    [~,qform_native] = dos(['fslorient -getqform ' sMRI]);
+end
 qform_native = str2num(qform_native);                                      
 qform_native = reshape(qform_native,4,4)';
 
 [x,y,z] = ind2sub(size(outline),find(outline == 1));
 headshape = [x y z];
 headshape_native = spm_eeg_inv_transform_points(qform_native,headshape);
+
 
 % GET TRANSFORM FROM MNI TO NATIVE
 [~,qform_mni] = dos(['fslorient -getqform ' std_brain]);
@@ -400,34 +418,18 @@ toMNI = load(trans_file);
 % trans seems to map from native (coords) to MNI (slices) so the correct
 % toMNI transformation is qform_mni*trans_file
 
-% qform and/or sform need to be valid to keep orientation consistent:
-qformcode = str2double(call_fsl_wrapper(['fslorient -getqformcode ' scalp_file], 1));
-sformcode = str2double(call_fsl_wrapper(['fslorient -getsformcode ' scalp_file], 1));
-
-if 0 == qformcode 
-    warning('qform code is not valid\n');
-end
-if 0 == sformcode
-    warning('sform code is not valid\n');
-end
-
-if 0 == qformcode && 0 == sformcode
-    warning('Neither sform or qform codes are valid... we''re in trouble...\n');
-    
+ 
+if S.useCTFhack
     % I think many of my issues are coming from the fact that the qform and
     % sform matrices contain different information, and "unknown" codes. This
     % is because the CTF .nii files have been poorly converted and have unknown
     % coordinate systems. This means that the orientation is not correctly
     % accounted for by FLIRT. For now, a solution is to hack in a flip about
     % the x-axis.
-    if S.useCTFhack
-        CTFhack = [-1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1];                   %#ok<UNRCH>
-        toMNI   = CTFhack * qform_mni * toMNI;
-    end%if
-    %headshape_MNI = spm_eeg_inv_transform_points(toMNI,headshape_native);
-    
+    CTFhack = [-1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1];                   %#ok<UNRCH>
+    toMNI   = CTFhack * qform_mni * toMNI;
 else
-    toMNI = qform_mni*toMNI*inv(qform_native);                            
+    toMNI = qform_mni*toMNI*inv(qform_native);
     %headshape_MNI = spm_eeg_inv_transform_points(toMNI,headshape_native);
 end
 

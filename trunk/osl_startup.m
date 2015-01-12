@@ -90,7 +90,7 @@ targetdir{6}='spm12/external/fieldtrip/utilities/private';
 filelist{7}='osl2/spm-changes/ptriproj.mexmaci64';
 targetdir{7}='spm12/external/fieldtrip/utilities/private';
 
-filelist{7} = 'osl2/spm-changes/ft_headmodel_localspheres';
+filelist{7} = 'osl2/spm-changes/ft_headmodel_localspheres.m';
 targetdir{7}='spm12/external/fieldtrip/forward/';
 
 for kk=1:length(filelist),
