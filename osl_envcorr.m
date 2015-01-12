@@ -1,13 +1,18 @@
 function C = osl_envcorr(D,seedind,targetind,winsize,samples2use)
-% Computes the Hilbert envelope of MEEG data
-% Dnew = osl_hilbenv(S)
+% Computes the envelope correlation between a seed coordinate and multiple
+% target coordinates.
 %
-% S.D       - MEEG object
-% S.winsize - window size (seconds)
+% C = osl_envcorr(S)
+% 
+% D       - MEEG object
+% 
+% winsize - window size (seconds)
 %
 % Adam Baker 2014
 
 S.orthogonalise = 0;
+
+D = spm_eeg_load(S.D);
 
 S.winsize = D.fsample;
 ds_fac = ceil(S.winsize/2);
@@ -34,7 +39,7 @@ end
 % Reference channel:
 
 % Compute Hilbert transform:
-seed_data = D(seedind,samples2use,trl)';
+seed_data = D(S.seedind,samples2use,trl)';
 seed_env = transpose(abs(hilbert(seed_data)));
 
 % Apply moving average:
