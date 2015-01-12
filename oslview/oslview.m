@@ -54,6 +54,7 @@ MainFig = figure('Name',                  ['OSLview - ' strtok(D.fname,'.')] ,..
                  'CloseRequestFcn',       @close_fig,...
                  'Visible',               'off');               
                
+             
 % Create plotting windows
 MainWindow = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
 PanWindow  = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
@@ -70,8 +71,16 @@ uitools.shrink     = uipushtool(uitools.toolbar,    'ClickedCallback',@dec_xwidt
 uitools.rect       = uitoggletool(uitools.toolbar,  'ClickedCallback',@mouse_mode,      'CData',icons.rect,           'TooltipString','Zoom to channels');  
 uitools.zoomin     = uipushtool(uitools.toolbar,    'ClickedCallback',@inc_scale,       'CData',icons.zoomin,         'TooltipString','Increase scale');           
 uitools.zoomout    = uipushtool(uitools.toolbar,    'ClickedCallback',@dec_scale,       'CData',icons.zoomout,        'TooltipString','Decrease scale');  
-uitools.switchchan = uipushtool(uitools.toolbar,    'ClickedCallback',@switch_chantype, 'CData',icons.plan,           'TooltipString','Switch channel type');
+%uitools.switchchan = uipushtool(uitools.toolbar,    'ClickedCallback',@switch_chantype, 'CData',icons.plan,           'TooltipString','Switch channel type');
 uitools.custom     = uipushtool(uitools.toolbar,    'ClickedCallback',@CustomFunction,  'CData',icons.customfunction, 'TooltipString','Apply custom function');
+
+% Create menu for channel selection
+uitools.menu_channels = uimenu('label','Channels');
+channel_types = unique(D.chantype);
+for chtype = 1:length(channel_types)
+    uimenu(uitools.menu_channels,'label',channel_types{chtype},'Callback',@switch_chantype)
+end
+    
 
 % Create Context Menu - Main Window
 ContextMenuM.Menu         = uicontextmenu('callback',@ContextMenuOn);
@@ -133,9 +142,9 @@ channel_setup; % will also call redraw & redraw_Sidewindow
 
 % Disable save (and channel switching if CTF)
 set(uitools.save,'Enable','off');
-if ~strcmp(channel_type,'MEGPLANAR')
-  set(uitools.switchchan,'Enable','off');
-end
+% if ~strcmp(channel_type,'MEGPLANAR')
+%   set(uitools.switchchan,'Enable','off');
+% end
 
 set(MainFig,'visible','on');
 
@@ -297,16 +306,17 @@ pointer_wait;
   end
 
 
-  function switch_chantype(varargin)
+  function switch_chantype(src,~)
     
-    switch channel_type
-      case 'MEGPLANAR';
-        channel_type = 'MEGMAG';
-        set(uitools.switchchan,'CData',icons.mag);
-      case 'MEGMAG'
-        channel_type = 'MEGPLANAR';
-        set(uitools.switchchan,'CData',icons.plan);
-    end
+      channel_type = get(src,'label');
+%     switch channel_type
+%       case 'MEGPLANAR';
+%         channel_type = 'MEGMAG';
+%         set(uitools.switchchan,'CData',icons.mag);
+%       case 'MEGMAG'
+%         channel_type = 'MEGPLANAR';
+%         set(uitools.switchchan,'CData',icons.plan);
+%     end
     
     channel_setup;
     
