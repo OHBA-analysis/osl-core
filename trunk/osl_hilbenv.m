@@ -40,7 +40,7 @@ else
 end
 
 
-Denv = clone(montage(D,'switch',0),add_fname_prefix(D.fnamedat, 'h'),[D.nchannels,length(t_env),D.ntrials]);
+Denv = clone(montage(D,'switch',0),prefix(D.fnamedat, 'h'),[D.nchannels,length(t_env),D.ntrials]);
 Denv = timeonset(Denv,t_env(1));
 Denv = fsample(Denv,Denv.fsample/ds_fac);
 
