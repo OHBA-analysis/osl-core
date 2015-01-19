@@ -121,7 +121,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
             
             disp('Working in sensor space');
             
-            source_recon_results.is_sensor_space=1;
+            is_sensor_space=1;
             
             chanindmeg = strmatch(modality_meeg, D.chantype);
             
@@ -133,7 +133,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
             
         else,
             
-            source_recon_results.is_sensor_space=0;
+            is_sensor_space=0;
             
             if(isfield(first_level,'mni_coords'))
                 
@@ -306,6 +306,8 @@ for subi_todo=1:length(first_level.sessions_to_do),
         first_level_results.pseudo_zstat_var = zeros([Nvoxels_out,1],'single');
         
     end; % end of if(sub==1)
+    
+    source_recon_results.is_sensor_space=is_sensor_space;
     
     disp(['Reconstruct time courses and computing stats for dataset ' source_recon_results.fname]);
     
