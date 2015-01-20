@@ -1,3 +1,4 @@
+
 function rhino_display(D,hf)
 
 if nargin < 2
@@ -19,11 +20,8 @@ rotate3d(hf);
 
 D = montage(D,'switch');
 
-mesh_rhino = D.inv{1}.mesh.tess_rhino;
-mesh_rhino = spm_eeg_inv_transform_mesh(D.inv{1}.datareg.fromMNI*D.inv{1}.mesh.Affine,mesh_rhino);
-
-mesh = spm_eeg_inv_transform_mesh(D.inv{1}.datareg.fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh);
-mesh_ctx = mesh.tess_ctx;
+mesh_rhino = spm_eeg_inv_transform_mesh(D.inv{1}.datareg.fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh.tess_rhino);
+mesh       = spm_eeg_inv_transform_mesh(D.inv{1}.datareg.fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh);
 
 headshape_polhemus = D.inv{1}.datareg.fid_eeg.pnt;
 fid_polhemus = D.inv{1}.datareg.fid_eeg.fid.pnt;
@@ -31,7 +29,8 @@ fid_mri = D.inv{1}.datareg.fid_mri.fid.pnt;
 
 patch(struct('faces',mesh_rhino.face,'vertices',mesh_rhino.vert),'FaceColor',[238,206,179]./255,'EdgeColor','none','FaceAlpha',0.7,'Parent',ha);
 
-patch(struct('faces',mesh_ctx.face,'vertices',mesh_ctx.vert),'FaceColor',[1 0.7 0.7],'EdgeColor','none','Parent',ha);
+patch(struct('faces',mesh.tess_ctx.face,'vertices',mesh.tess_ctx.vert),'FaceColor',[1 0.7 0.7],'EdgeColor','none','Parent',ha);
+%patch(struct('faces',mesh.tess_scalp.face,'vertices',mesh.tess_scalp.vert),'EdgeColor','g','FaceColor','none','Parent',ha);
 
 view([az,el]);
 
