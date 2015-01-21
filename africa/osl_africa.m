@@ -120,6 +120,9 @@ fig_titles  = [];
 if S.to_do(1)
     S.ica_res = perform_sensorspace_ica(S);
     if isfield(S,'ica_file')
+        if ~isdir(fileparts(S.ica_file))
+            mkdir(fileparts(S.ica_file));
+        end
         save(S.ica_file,'S');
         msg = sprintf('\n%s%s\n%','Saving ICA results to ', S.ica_file);
         fprintf(msg);
