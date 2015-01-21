@@ -13,6 +13,9 @@ osl2.0/spm12/external/fieldtrip/fileio/private/read_trigger_4osl.m
 
 osl2.0/spm12/external/fieldtrip/utilities/private/*.mexmaci64
 
+% Update: This fix did not work me (Adam) and should therefore not be in place as a general solution. Instead I would recommend reinstalling SPM12 and recompiling the fieldtrip mex files using ft_compile_mex(true). This eventually worked for me without having to copy any SPM12b files. The original solution has been removed.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 % Problem: Fieldtrip’s implementation of local spheres does not correctly map coils to channels when tra matrix is modified. This was previously solved by reloading the raw tra matrix prior to running the forward model, but this was not robust to splitting the coregistration and forward model stages, since the sensor information is saved into D.inv during coregistration, and was an somewhat cumbersome hack.
