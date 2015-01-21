@@ -235,7 +235,7 @@ if ~isempty(S.ident.artefact_chans) && ~isempty(S.ident.artefact_chans)
                 tc_bp = bandpass(tc(ic,samples_of_interest),[0.1 48],D.fsample);
                 %ac_corr(ic) = sum(abs(corr(tc_bp',artefact_data')));
                 for ac = 1:size(artefact_data,1)
-                    ac_corr(ic) = ac_corr(ic) + abs(nanmedian(ABmovcorr(tc_bp',artefact_data(ac,:)',D.fsample*10,0)));
+                    ac_corr(ic) = ac_corr(ic) + abs(nanmedian(osl_movcorr(tc_bp',artefact_data(ac,:)',D.fsample*10,0)));
                 end                    
             end
             ac_corr = ac_corr ./size(artefact_data,1);
