@@ -81,6 +81,9 @@ targetdir{end+1}='spm12/external/fieldtrip/fileio';
 filelist{end+1}='osl2/spm-changes/read_trigger_4osl.m';
 targetdir{end+1}='spm12/external/fieldtrip/fileio/private';
 
+filelist{end+1}='osl2/spm-changes/badsamples.m';
+targetdir{end+1}='spm12/@meeg';
+
 % filelist{end+1}='osl2/spm-changes/lmoutr.mexmaci64';
 % targetdir{end+1}='spm12/external/fieldtrip/utilities/private';
 % 

@@ -1,10 +1,17 @@
 function badsections = osl_bad_sections(D,output_format)
+% THIS FUNCTION WILL SOON BE REMOVED IN FAVOUR OF BADSAMPLES
 % output format: 'logical' or 'indexed'
 % AB 2013
 %
 % Changed by Giles Colclough 25 Nov 2013 to account for multiple trials. If
 % there is more than one trial, D.events is a cell array of structures, one
 % for each trial.
+
+error(['Please replace use of this function with the SPM badsamples method... ', ...
+      'e.g. badsamples(D,'':'','':'','':'')'])
+
+
+
 
 if nargin<2
     output_format = 'indexed';

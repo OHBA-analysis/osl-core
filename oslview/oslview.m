@@ -736,7 +736,7 @@ pointer_wait;
     BadEpochs = {};
     Events = D.events;
     for ev = 1:numel(Events)
-      if isfield(Events,'type') && strcmp(Events(ev).type,'BadEpoch')
+      if isfield(Events,'type') && strcmp(Events(ev).type,'artefact_oslview')
         BadEpochs{end+1}(1) = Events(ev).time;
         BadEpochs{end}(2) = Events(ev).time + Events(ev).duration;
       end
@@ -748,8 +748,8 @@ pointer_wait;
     BadEvents = struct([]);
     for ev = 1:numel(BadEpochs)
       if numel(BadEpochs{ev} == 2)
-        BadEvents(ev).type     = 'BadEpoch';
-        BadEvents(ev).value   = ev;
+        BadEvents(ev).type     = 'artefact_oslview';
+        BadEvents(ev).value   = 'all';
         BadEvents(ev).time     =  BadEpochs{ev}(1);
         BadEvents(ev).duration = diff(BadEpochs{ev});
         BadEvents(ev).offset = 0;
@@ -761,7 +761,7 @@ pointer_wait;
         
     % Remove previous bad epoch events
     if isfield(Events,'type')
-      Events(strcmp({Events.type},'BadEpoch')) = [];
+      Events(strcmp({Events.type},'artefact_oslview')) = [];
     end
     
     % Concatenate new and old events
