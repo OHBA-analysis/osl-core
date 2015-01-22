@@ -1,10 +1,16 @@
 function V = osl_source_variance(D)
 % Computes the variance of source reconstructed data
 % V = osl_source_variance(D)
-dat = D.montage('switch');
+currentMontage = montage(D,'getindex');
 
-tbad = osl_bad_sections(D,'logical');
-C = cov(dat(:,find(~tbad),:)'); %#ok - logical indexing didn't work...
-V = diag(D.montage('getmontage').tra * C * D.montage('getmontage').tra');
+if currentMontage == 0
+    error('No virtual montage applied!')
+else
+    
+    D = D.montage('switch');
+    tbad = any(badsamples(D,':',':',':'));
+    C = cov(D(:,find(~tbad))'); %#ok - logical indexing didn't work...
+    V = diag(D.montage('getmontage',currentMontage).tra * C * D.montage('getmontage',currentMontage).tra');
+end
 
 end

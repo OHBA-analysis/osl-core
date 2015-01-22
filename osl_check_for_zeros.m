@@ -30,7 +30,7 @@ function BadEpochs = load_meeg(D)
 BadEpochs = {};
 Events = D.events;
 for ev = 1:numel(Events)
-    if strcmp(Events(ev).type,'BadEpoch')
+    if strncmp({Events.type},'artefact',8)
         BadEpochs{end+1}(1) = Events(ev).time;
         BadEpochs{end}(2) = Events(ev).time + Events(ev).duration;
     end
@@ -42,7 +42,7 @@ Events = struct([]);
 % Save bad epochs using method meeg/events
 for ev = 1:numel(BadEpochs)
     if numel(BadEpochs{ev} == 2)
-        Events(ev).type     = 'BadEpoch';
+        Events(ev).type     = 'artefact_zeros';
         Events(ev).value   = ev;
         Events(ev).time     =  BadEpochs{ev}(1);
         Events(ev).duration = diff(BadEpochs{ev});
