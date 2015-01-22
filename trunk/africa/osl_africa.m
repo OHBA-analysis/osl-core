@@ -35,7 +35,7 @@
 %
 %
 % AfRICA ignores bad trials defined by D.badtrials and bad periods defined by
-% 'BadEpoch' events using OSLVIEW. Do not reset these periods to "good"
+% 'artefact' events using OSLVIEW. Do not reset these periods to "good"
 % after AfRICA.
 %
 % Written by Henry Luckhoo and Adam Baker
@@ -237,7 +237,7 @@ if D.ntrials==1;
     badsections = false(1,D.nsamples);
     Events = D.events;
     if ~isempty(Events)
-        Events = Events(strcmp({Events.type},'BadEpoch'));
+        Events = Events(strncmp({Events.type},'artefact',8)); % NOTE: Ideally we would overhaul the whole code to use badsamples correctly
         for ev = 1:numel(Events)
             badsections = badsections | t >= Events(ev).time & t < (Events(ev).time+Events(ev).duration);
         end
@@ -360,7 +360,7 @@ if D.ntrials==1;
     badsections = false(1,D.nsamples);
     Events = D.events;
     if ~isempty(Events)
-        Events = Events(strcmp({Events.type},'BadEpoch'));
+        Events = Events(strncmp({Events.type},'artefact',8));
         for ev = 1:numel(Events)
             badsections = badsections | t >= Events(ev).time & t < (Events(ev).time+Events(ev).duration);
         end

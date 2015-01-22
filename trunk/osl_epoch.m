@@ -19,7 +19,7 @@ function [ D_epoched goodtrials ] = osl_epoch( S )
 % MWW 2012
 
 if ~isfield(S,'bad_event_type')
-    S.bad_event_type='BadEpoch';
+    S.bad_event_type='artefact_OPT';
 end;
 
 if ~isfield(S,'reject_bad_epochs'),
