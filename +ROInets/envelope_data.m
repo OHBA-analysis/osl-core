@@ -22,6 +22,9 @@ function [envelopedData, t_ds] = envelope_data(dipoleMag, t, varargin)
 %    The passed frequency is 1.0/WINDOWLENGTH, resampled to a Nyquist 
 %    frequency of twice this. 
 %
+% ENV = ENVELOPE_DAT(..., 'takeLogs', true) returns the logarithm of the
+%    power envelopes, computed as 2*log(env).
+%
 % ENV = ENVELOPE_DATA(..., 'verbose', true) increases the volume of text
 %    written to stdout. 
 %
@@ -51,7 +54,8 @@ function [envelopedData, t_ds] = envelope_data(dipoleMag, t, varargin)
 %	Originally written on: GLNXA64 by Giles Colclough, 25-Oct-2013 12:43:45
 
 % inputs
-[windowLength, overlap, useHanningWindow, useFilter, verbose] = parse_inputs(varargin{:});
+[windowLength, overlap, useHanningWindow, useFilter, takeLogs, verbose] = ...
+    parse_inputs(varargin{:});
 
 % Demean
 signal = ROInets.demean(dipoleMag, 2);
@@ -81,6 +85,11 @@ else
     [envelopedData, t_ds] = filter_and_downsample(t, newMaxFreq);
     
 end%if useFilter
+
+% convert to logarithm of power
+if takeLogs,
+    envelopedData = 2 .* log(envelopedData);
+end%if
 
 if verbose, 
     fprintf('%s: complete\n', mfilename); 
@@ -237,13 +246,14 @@ P.addParamValue('overlap',          0,                   numericValidFcn);
 P.addParamValue('useHanningWindow', false,               @islogical);
 P.addParamValue('useFilter',        false,               @islogical);
 P.addParamValue('verbose',          false,               @islogical);
-
+P.addParamValue('takeLogs',         false,               @islogical);
 P.parse(varargin{:});
 
 varargout = {P.Results.windowLength,     ...
              P.Results.overlap,          ...
              P.Results.useHanningWindow, ...
              P.Results.useFilter,        ...
+             P.Results.takeLogs,         ...
              P.Results.verbose};
 end%parse_inputs
 
