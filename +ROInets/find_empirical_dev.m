@@ -83,7 +83,7 @@ for iIter = nIter:-1:1,
     clear filteredData
     
     % take covariance
-    rCov  = cov(testData);
+    rCov  = real(cov(testData));
     rCorr = corrcov(rCov,1);
     
     % we've had a weird error with infinities. catch that
