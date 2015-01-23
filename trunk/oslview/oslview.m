@@ -38,7 +38,7 @@ PanWindowData  = [];
 offsets        = [];
 tmp_line       = [];
 yzoom          = [0 1];
-BadEpochs      = {};   
+BadEpochs      = {};  
 get_bad;
 
 
@@ -136,15 +136,12 @@ elseif any(strcmp(D.chantype,'MEGGRAD')) % CTF
 elseif any(strcmp(D.chantype,'MEG'))
   channel_type = 'MEG';
 else % catch unrecognised case
-    channel_type = [];
+  channel_type = D.chantype(1);
 end
 channel_setup; % will also call redraw & redraw_Sidewindow
 
 % Disable save (and channel switching if CTF)
 set(uitools.save,'Enable','off');
-% if ~strcmp(channel_type,'MEGPLANAR')
-%   set(uitools.switchchan,'Enable','off');
-% end
 
 set(MainFig,'visible','on');
 
@@ -250,10 +247,10 @@ pointer_wait;
     % Add the movable pan box
     box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
     box_y = [ylim(1) ylim(1) ylim(2) ylim(2)];
-    if ismac
-    PanBox = patch(box_x,box_y,'r','parent',PanWindow); %'facealpha',0.5);
-    else
-    PanBox = patch(box_x,box_y,'r','parent',PanWindow,'facealpha',0.5);
+    try
+        PanBox = patch(box_x,box_y,'r','parent',PanWindow,'facealpha',0.5);
+    catch
+        PanBox = patch(box_x,box_y,'r','parent',PanWindow);
     end
     
     % Draw bad events
@@ -306,18 +303,9 @@ pointer_wait;
   end
 
 
-  function switch_chantype(src,~)
+  function switch_chantype(~,~)
     
-      channel_type = get(src,'label');
-%     switch channel_type
-%       case 'MEGPLANAR';
-%         channel_type = 'MEGMAG';
-%         set(uitools.switchchan,'CData',icons.mag);
-%       case 'MEGMAG'
-%         channel_type = 'MEGPLANAR';
-%         set(uitools.switchchan,'CData',icons.plan);
-%     end
-    
+    channel_type = get(uitools.menu_channels,'label');
     channel_setup;
     
   end
@@ -354,7 +342,8 @@ pointer_wait;
         
     cla(MainWindow);
     cla(SideWindow);
-    check_xs; redraw % must check xs still in bounds before redrawing, else may get errors (GC)
+    check_xs; 
+    redraw % must check xs still in bounds before redrawing, else may get errors (GC)
     redraw_SideWindow
     pointer_wait;
   end

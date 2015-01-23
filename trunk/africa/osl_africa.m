@@ -83,8 +83,20 @@ if not(isfield(S,'do_plots'))   % added by DM
     S.do_plots=0;
 end
 
-if ~isfield(S,'to_do');
-    S.to_do = [1 1 1]; 
+if ~isfield(S,'todo');
+    S.todo = struct; 
+end
+
+if ~isfield(S.todo,'ica');
+    S.todo.ica = 1; 
+end
+
+if ~isfield(S.todo,'ident');
+    S.todo.ident = 1; 
+end
+
+if ~isfield(S.todo,'remove');
+    S.todo.remove = 1; 
 end
 
 if ~isfield(S,'ident')
@@ -117,7 +129,7 @@ fig_titles  = [];
 
 %%%%%%%%%%%%%%%%%%%%%%%%% PERFORM SENSOR SPACE ICA %%%%%%%%%%%%%%%%%%%%%%%%
 
-if S.to_do(1)
+if S.todo.ica
     S.ica_res = perform_sensorspace_ica(S);
     if isfield(S,'ica_file')
         if ~isdir(fileparts(S.ica_file))
@@ -130,14 +142,15 @@ if S.to_do(1)
         msg = sprintf('\n%s\n%','Results not being saved.');
         fprintf(msg);
     end
-elseif any(S.to_do) % Load from file
+elseif any(structfun(@istrue,S.todo))
+    % Load from file
     if isfield(S,'ica_file') && exist(S.ica_file,'file')==2
         msg = sprintf('\n%s%s\n%','Loading previous ICA results from ', S.ica_file);
         fprintf(msg);
         icafile = load(S.ica_file);
         if isfield(S,'ident');    icafile.S.ident    = S.ident;    end
         if isfield(S,'do_plots'); icafile.S.do_plots = S.do_plots; end
-        if isfield(S,'to_do');    icafile.S.to_do    = S.to_do;    end
+        if isfield(S,'todo');    icafile.S.todo    = S.todo;    end
         S = icafile.S; clear icafile
     end 
 end
@@ -156,7 +169,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%% CLASSIFY BAD COMPONENTS %%%%%%%%%%%%%%%%%%%%%%%%
 
-if S.to_do(2)
+if S.todo.ident
     % Allow user-specified functions to be used to identify bad components.
 
     
@@ -179,7 +192,7 @@ if S.to_do(2)
         save(S.ica_file,'S');
 
     else
-        error('ICA decomposition needs to be run. Set S.to_do(1) = 1 and try again');
+        error('ICA decomposition needs to be run. Set S.todo.ica = 1 and try again');
     end
 end
 
@@ -187,7 +200,7 @@ end
 
 %%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS FROM THE DATA %%%%%%%%%%%%%%%%%%%%
 
-if S.to_do(3)
+if S.todo.remove
     if ~isfield(S,'ica_res')
         try
             load(S.ica_file);

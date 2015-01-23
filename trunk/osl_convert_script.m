@@ -161,9 +161,9 @@ if ~isctf
     end;
 
     D=events(D,1,eve);
-    D.save;
 end
 
+D.save;
 fname=[D.path '/' D.fname];
 
 end
