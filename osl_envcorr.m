@@ -1,33 +1,23 @@
-function C = osl_envcorr(D,seedind,targetind,winsize,samples2use)
+function C = osl_envcorr(S)
 % Computes the envelope correlation between a seed coordinate and multiple
 % target coordinates.
 %
 % C = osl_envcorr(S)
 % 
-% D       - MEEG object
-% 
-% winsize - window size (seconds)
+% D             - MEEG object containing the data
+% seedind       - index into channel/voxel in D for the seed
+% targetind     - indices into channel(s)/voxel(s) for the target
+% winsize       - moving average window size to use
+% orthogonalise - apply orthogonalisation to remove signal leakage [0/1]
 %
 % Adam Baker 2014
 
-S.orthogonalise = 0;
-
 D = spm_eeg_load(S.D);
-
-S.winsize = D.fsample;
-ds_fac = ceil(S.winsize/2);
 
 trl = 1; % TODO - fix for trialwise data
 
-if nargin < 5
-    samples2use = true(1,D.nsamples);
-end
+samples2use = find(~all(badsamples(D,':',':',':')));
 
-samples2use = samples2use(:)';
-
-samples2use = samples2use & ~osl_bad_sections(D,'logical');
-samples2use = find(samples2use);
-    
 % Check 
 try prcorr(1,1);
     useprcorr = 1;
@@ -36,61 +26,42 @@ catch
 end
 
 
-% Reference channel:
-
-% Compute Hilbert transform:
-seed_data = D(S.seedind,samples2use,trl)';
-seed_env = transpose(abs(hilbert(seed_data)));
-
-% Apply moving average:
-seed_env = fftfilt(repmat(ones(S.winsize,1),1,size(seed_env,1)),seed_env');
-seed_env = seed_env./S.winsize;
-seed_env = seed_env(S.winsize:end,:);
-seed_env = seed_env(1:end-rem(size(seed_env,1),ds_fac),:);
-
-% Downsample
-seed_env = resample(seed_env,1,ds_fac);
-seed_env(seed_env<0) = 0;
+% Compute Hilbert transform for seed:
+seed_data = D(S.seedind,samples2use,trl);
+seed_env  = hilbenv(seed_data,D.time,S.winsize,1);
 
 
 % Read data from file in blocks
-blks = osl_memblocks(Denv,1);
+blks = osl_memblocks(D,1);
 
-C = zeros(length(targetind),D.ntrials);
+C = zeros(length(S.targetind),D.ntrials);
 
 ft_progress('init','eta')
 for iblk = 1:size(blks,1)
     ft_progress(iblk/size(blks,1));
 
-    dat_blk = D(targetind(blks(iblk,1):blks(iblk,2)),samples2use,trl)';
+    dat_blk = D(S.targetind(blks(iblk,1):blks(iblk,2)),samples2use,trl);
 
     
     % Apply orthogonalisation
     if S.orthogonalise
-        for i = 1:size(dat_blk,2)
-            dat_blk(:,i) = dat_blk(:,i) - seed_data*(seed_data\dat_blk(:,i));
+        for i = 1:size(dat_blk,1)
+            dat_blk(i,:) = dat_blk(i,:)' - seed_data(:)*(seed_data(:)\dat_blk(i,:)');
         end
     end
-    % Compute Hilbert transform:
-    dat_blk = transpose(abs(hilbert(dat_blk)));
-  
-    % Apply moving average:
-    dat_blk = fftfilt(repmat(ones(S.winsize,1),1,size(dat_blk,1)),dat_blk');
-    dat_blk = dat_blk./S.winsize;
-    dat_blk = dat_blk(S.winsize:end,:);
-    dat_blk = dat_blk(1:end-rem(size(dat_blk,1),ds_fac),:);
     
-    % Downsample
-    dat_blk = resample(dat_blk,1,ds_fac);
-    dat_blk(dat_blk<0) = 0;
-
+    % Compute Hilbert transform:
+    dat_blk = hilbenv(dat_blk,D.time,S.winsize,1);
+    
     % Correlate
-    for i = 1:size(dat_blk,2)
+    for i = 1:size(dat_blk,1)
         if useprcorr
-            C(blks(iblk,1)+i-1,trl) = prcorr(seed_env,dat_blk(:,i));
+            C(blks(iblk,1)+i-1,trl) = prcorr(seed_env',dat_blk(i,:)');
         else
-            C(blks(iblk,1)+i-1,trl) = corr(seed_env,dat_blk(:,i));
+            C(blks(iblk,1)+i-1,trl) = corr(seed_env',dat_blk(i,:)');
         end
     end
 
 end
+ft_progress('close')
+
