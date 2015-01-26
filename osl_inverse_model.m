@@ -137,7 +137,7 @@ end
 
 % Check use_class_channel Specification:
 try
-    S = ft_checkopt(S,'use_class_channel','logical');
+    S = ft_checkopt(S,'use_class_channel',{'logical','doublescalar'});
 catch 
     S.use_class_channel = false;
 end
