@@ -2,16 +2,19 @@
 %
 % Matlab wrapper for calling FSLVIEW to view .nii files.
 %
-% Syntax: fslview(fnames, thresholds, colour_maps)
+% Syntax: fslview(fnames, thresholds, colour_maps,anatomical)
 %
 % e.g. fslview('/home/myfiles/tstats');
 % e.g. fslview({'tstats.nii.gz'; 'copes.nii.gz'}, [2.3 5; 0.2 0.5], [1 2]);
 % e.g. fslview({'tstats.nii.gz'; 'copes.nii.gz'}, [2.3 5; 0.2 0.5], {'Red-Yellow';'Blue-Lightblue'});
+% e.g. fslview({'tstats.nii.gz'; 'copes.nii.gz'}, [2.3 5; 0.2 0.5], 'mni_brain');%
+%
+% thresholds can be left empty, i.e. [], to allow adaptive setting of min max
 %
 % Version 1.0
 % 16.01.13
 
-function fslview(fnames,thresholds,colour_maps)
+function fslview(fnames,thresholds,colour_maps,anatomical)
 
 global OSLDIR
 
@@ -26,6 +29,10 @@ available_maps = {'Red-Yellow';
                   'Cool'; 
                   'Copper'};
 
+
+if nargin<4
+    anatomical='mni_brain';
+end;
 
 if nargin<3
    colour_maps = {'Red-Yellow'};
@@ -63,18 +70,25 @@ if numel(colour_maps)<numel(fnames)
 end
 
 % Pad out missing threshold values to match number of volumes
-if size(thresholds,1)<numel(fnames)
-    for f=size(thresholds,1):numel(fnames)
-        thresholds(f,:)=thresholds(end,:);
+if ~isempty(thresholds)
+    if size(thresholds,1)<numel(fnames)
+        for f=size(thresholds,1):numel(fnames)
+            thresholds(f,:)=thresholds(end,:);
+        end
     end
-end
+end;
 
 fnames_formatted = [];
 for f=1:numel(fnames)
   [~,~,scales,~,~] = read_avw(fnames{f});
   gs(f) = scales(1);
   colmap=[' -l "' colour_maps{f} '" '];
-  vals = [' -b ' num2str(thresholds(f,1)) ',' num2str(thresholds(f,2)) ' '];
+  if ~isempty(thresholds)
+    vals = [' -b ' num2str(thresholds(f,1)) ',' num2str(thresholds(f,2)) ' '];
+  else
+    vals = '';
+  end;
+  
   fnames_formatted = [fnames_formatted fnames{f} colmap vals];
 end
 
@@ -82,8 +96,15 @@ if numel(unique(gs)) ~= 1
   error('spatial maps must be of equal sizes')
 end
 
-runcmd(['fslview ' OSLDIR '/std_masks/MNI152_T1_' num2str(gs(1)) 'mm_brain ' fnames_formatted '&']);
+switch anatomical
+    case 'mni_brain'
+        anatomical_fname=[OSLDIR '/std_masks/MNI152_T1_' num2str(gs(1)) 'mm_brain'];
+    otherwise
+        anatomical_fname=anatomical;    
+end;
 
+runcmd(['fslview ' anatomical_fname ' ' fnames_formatted '&']);
+ 
 warning on
 end
 
