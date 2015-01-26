@@ -190,34 +190,10 @@ if isempty(source_recon_sess.time_range),
 end
 time_range = source_recon_sess.time_range;
 
-Events     = D.events; 
-GoodEpochs = [D.time(1) D.time(end)];
-
 if(D.ntrials==1),
-    
-    % if (ultimately) working on continuous data then use passed in time
-    % range (which applies to continuous time)
-    % BUT if (ultimately) working on continuous data, then work with full continuous data
-    % and then apply passed in time range after epoching later on.
-    if(do_epoching)
-        time_range = [D.time(1) D.time(end)];
-    end;
-    
-    % if continuous data then look for bad epochs and set time range accordingly
-    
-    for ev = 1:numel(Events)
-        if isfield(Events,'type') && strcmp(Events(ev).type,'BadEpoch')
-            GoodEpochs(end,2)=Events(ev).time;
-            GoodEpochs(end+1,1)=Events(ev).time+Events(ev).duration;
-            GoodEpochs(end,2)=D.time(end);
-        end
-    end
-    
-end
-
-good_samples=zeros(1,D.nsamples);
-for i=1:size(GoodEpochs,1),
-    good_samples(D.indsample(GoodEpochs(i, 1)):D.indsample(GoodEpochs(i, 2)))=1;
+    good_samples = ~all(badsamples(D,':',':',1));
+else
+    good_samples = true(1,D.nsamples); 
 end
 
 samples_of_interest=zeros(1,D.nsamples);
