@@ -108,8 +108,8 @@ if strcmp(S.modality,'EEG')   % changed by DM
     chan_inds=setdiff(find(any([strcmp(D.chantype,'EEG')],1)),D.badchannels);
     map_inds(find(any([strcmp(D.chantype,'EEG')],1))) = 1:numel(find(any([strcmp(D.chantype,'EEG')],1)));
 else
-    chan_inds=setdiff(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)),D.badchannels);
-    map_inds(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1))) = 1:numel(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)));
+    chan_inds=D.indchantype('MEG', 'Good');
+    map_inds(D.indchantype('MEG')) = 1:numel(D.indchantype('MEG'));
 end
 
 % Remove bad segments
@@ -308,16 +308,17 @@ data = [];
 global OSLDIR
 
 if strcmp(modality,'EEG')   % changed by DM
-    chan_inds=setdiff(find(any([strcmp(D.chantype,'EEG')],1)),D.badchannels);
-    map_inds(find(any([strcmp(D.chantype,'EEG')],1))) = 1:numel(find(any([strcmp(D.chantype,'EEG')],1)));
+    chan_inds=D.indchantype('EEG', 'good');
+    map_inds(D.indchantype('EEG')) = 1:numel(D.indchantype('EEG'));
 else
-    chan_inds=setdiff(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)),D.badchannels);
-    map_inds(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1))) = 1:numel(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)));
+    chan_inds=D.indchantype('MEG', 'Good');
+    map_inds(D.indchantype('MEG')) = 1:numel(D.indchantype('MEG'));
 end
 
-comp_full(map_inds(chan_inds),:)=comp;
-comp_full(D.badchannels) = 0;
-comp = comp_full;
+% SM already parsed for bad channels on line 134.
+% comp_full(map_inds(chan_inds),:)=comp;
+% comp_full(D.badchannels) = 0;
+% comp = comp_full;
 
 if (strcmp(modality,'MEGMAG')),
     cfg.channel     = {'MEGMAG'};
@@ -345,6 +346,15 @@ elseif (strcmp(modality,'MEGGRAD')),
     cfg.layout      = [OSLDIR '/layouts/CTF275.lay'];
     chanind = strmatch(cfg.channel, D.chantype);
     comp2view=comp;
+    
+elseif strcmp(modality, 'MEG'), 
+    % remaining option in use at OHBA is BTI 4D scanners for HCP data. If
+    % this changes, a more sensible parsing block will have to be included
+    cfg.channel = {'MEG'};
+    cfg.layout  = fullfile(OSLDIR, 'layouts', '4D248.mat');
+    chanind     = D.indchantype('MEG');
+    comp2view   = comp;
+    
     
     
     % elseif (strcmp(modality,'EEG')),
