@@ -63,15 +63,19 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %%%%%                   why set the default value of lambda to 1.0./mean(diag(SensorData.cov))?
 %%%%%                   why estimate source directions from the inverse
 %%%%%                   covariance?
+global DEBUG
+DEBUG = true;
 
 %% Input Checking
 % Sensor data covariance 
 SensorData.nSensors = ROInets.rows(SensorData.cov);
-validateattributes(SensorData.cov, {'numeric'}, {'2d', 'square', 'real'}, ...
-                   1, mfilename, 'SensorData.cov');
-assert(ROInets.isposdef(SensorData.cov),              ...
-       [mfilename ':SensorDataCovarianceNotPosDef'], ...
-       'Data covariance matrix SensorData.cov should be positive definite. \n');
+validateattributes(SensorData.cov, {'numeric'},                 ...
+                   {'2d', 'real', 'ncols', SensorData.nSensors}, ...
+                   mfilename, 'SensorData.cov', 1);
+% Check for positive definiteness? No - sensor data may not be full rank
+% assert(ROInets.isposdef(SensorData.cov),              ...
+%        [mfilename ':SensorDataCovarianceNotPosDef'], ...
+%        'Data covariance matrix SensorData.cov should be positive definite. \n');
 
 % lead fields
 D = 3; % dimensions in space
@@ -81,14 +85,16 @@ assert(isequal(LeadFields.nDims, D),                 ...
        'Lead field dimensionality should be for 3D space. \n');
 % check matrix size matches dimension fields and correct number of sensors
 validateattributes(LeadFields.lf, {'numeric'},                        ...
-                   {'2d', 'real', 'nrows', nSensors,                  ...
+                   {'2d', 'real', 'nrows', SensorData.nSensors,       ...
                     'ncols', LeadFields.nSources * LeadFields.nDims}, ...
                    mfilename, 'LeadFields.lf');
 
 
 %% Parse noise matrix
-% noise covariance can be specified as the identity, the diagonal of the data covariance, or passed in as a measured or estimated quantity
-% For the first two cases, a global scaling is possible with parameter lambda
+% noise covariance can be specified as the identity, the diagonal of the 
+% data covariance, or passed in as a measured or estimated quantity. 
+% For the first two cases, a global scaling is possible with parameter
+% lambda. 
 Noise = parse_noise(Noise, diag(SensorData.cov));
     
 %% Source model
@@ -107,15 +113,9 @@ end%switch
 
 %% Extract weights using Tikhonov regularised form
 % equation 13 from Wipf and Nagarajan (2009).
-if Options.ReduceRank.leadFields < 3,
-    % not full rank. Use pinv
-    W_3d = sourceCov * LeadFields.lf.' *                               ...
-           pinv(empirical_bayes_cov(Noise.cov, sourceCov, LeadFields), ...
-                Options.ReduceRank.leadFields*LeadFields.nSources); 
-else % full rank
-    W_3d = sourceCov * LeadFields.lf.' / ...                  % A / B = A * inv(B)
-            empirical_bayes_cov(Noise.cov, sourceCov, LeadFields); 
-end%if
+W_3d = sourceCov * LeadFields.lf.' / ...               % A / B = A * inv(B)
+       empirical_bayes_cov(Noise.cov, sourceCov, LeadFields.lf);
+   
 %% Parse into cell array and normalise weights
 for iVox = LeadFields.nSources:-1:1, % initialise matrices by looping backwards
     % Partition weights for this dipole
@@ -125,7 +125,7 @@ for iVox = LeadFields.nSources:-1:1, % initialise matrices by looping backwards
     if Options.ReduceRank.weights,
         % project onto direction of maximum variance using PCA. 
         dipCov         = Ws * SensorData.cov * Ws.';   % single-dipole covariance 3x3
-        [ns,~]         = eigs(dipCov, [], 1);          % ns is direction of maximum source variance. This code seems about as fast as [ns,~] = fast_svds(T, 1);
+        [ns,~]         = eigs(dipCov, [], 1);          % ns is direction of maximum source variance. This code seems about as fast as [ns,~] = fast_svds(dipCov, 1);
         W_nonorm{iVox} = ns.' * Ws;                    % weights     for this dipole projected onto direction of maximum variance
         lf{iVox}       = LeadFields.lf(:,dipInd) * ns; % lead fields for this dipole projected onto direction of maximum variance
     else
@@ -138,8 +138,9 @@ for iVox = LeadFields.nSources:-1:1, % initialise matrices by looping backwards
         case 'sloreta'
             % normalising constant for depth bias using sLORETA
             % Wens et al. sec 2.4
-            lambda_s = sqrt(W_nonorm{iVox}                                          ...
-                            * empirical_bayes_cov(Noise.cov, sourceCov, LeadFields) ...
+            lambda_s = sqrt(W_nonorm{iVox}                              ...
+                            * empirical_bayes_cov(Noise.cov, sourceCov, ...
+                                                  LeadFields.lf)        ...
                             * W_nonorm{iVox}.'); 
         case 'norm'
             % normalise by norm of weights
@@ -167,7 +168,7 @@ end%osl_inverse_mne_weights
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function sensorCov = empirical_bayes_cov(noiseCov, sourceCov, LeadFields)
+function sensorCov = empirical_bayes_cov(noiseCov, sourceCov, lf3d)
 %EMPIRICAL_BAYES_COV regularised estimate of data covariance in sensors
 %
 % SENSORCOV = EMPIRICAL_BAYES_COV(NOISECOV, SOURCECOV, 3D_LEADFIELDS)
@@ -175,7 +176,7 @@ function sensorCov = empirical_bayes_cov(noiseCov, sourceCov, LeadFields)
 %   the noise covariance matrix, the modelled source covariance matrix and
 %   the lead field matrix in 3D. 
 
-sensorCov = noiseCov + LeadFields.lf * sourceCov * LeadFields.lf.';
+sensorCov = noiseCov + lf3d * sourceCov * lf3d.';
 
 end%empirical_bayes_cov
 
@@ -187,8 +188,8 @@ end%empirical_bayes_cov
 function sourceCov = wens_estimate(SensorData, Noise, LeadFields)
 %WENS_ESTIMATE regularized source covariance by Vincent Wens' method
 % regularization parameter from Wens et al. Sec 2.4
-% use property sum(eig(B, A)) = trace(inv(A) * B)
 
+% use property sum(eig(B, A)) = trace(inv(A) * B)
 k = sum(eig(LeadFields.lf * LeadFields.lf.', Noise.cov)) ./ ...
      (sum(eig(SensorData.cov, Noise.cov)) - SensorData.nSensors); 
 
@@ -210,6 +211,7 @@ function sourceCov = mne_estimate(Data, Noise, LeadFields)
 % parameter, i.e. p(gamma) ~ 1/gamma, or p(log(gamma)) ~ 1.
 % Eq 7 from Wipf and Nagarajan (2009)
 % 1/gamma = 0.5 exp(-f(gamma)) => f(gamma) = log(gamma) - log(2)
+global DEBUG
 
 sourceCovFn     = @(logGamma) exp(logGamma) .* ...
                               eye(LeadFields.nDims * LeadFields.nSources);
@@ -218,11 +220,22 @@ optimise_target = @(logGamma) optimise_target_Jeffreys_prior(Data, Noise, ...
                                         LeadFields, logGamma, sourceCovFn);
                                     
 % variance of data can change by factor of e^5 relative to noise
-logGammaBound = median(log(diag(Noise.cov))) + [-5 5]; 
+noiseToLFScale = median(log(diag(Noise.cov))) - ...
+                 median(0.5.*log(sum(LeadFields.lf.^2)));
+logGammaBound  =noiseToLFScale + [-10 20]; 
 
 % optimise using a golden section search and parabolic interpolation
 logGamma      = fminbnd(optimise_target, logGammaBound(1), logGammaBound(2));
 sourceCov     = sourceCovFn(logGamma);
+
+if DEBUG,
+    lg = log(logspace(log10(exp(logGammaBound(1))), log10(exp(logGammaBound(2))), 50));
+    L  = arrayfun(optimise_target, lg);
+    figure('Color', 'w', 'Name', 'Optimisation target for log(gamma)');
+    plot(lg, L);
+    xlabel('Log (\gamma)');
+    ylabel('L');
+end%if DEBUG
 end%mne_Jeffreys_prior_estimate
 
 
@@ -245,11 +258,12 @@ sourceCovFn     = @(logGamma) diag(exp(logGamma));
 optimise_target = @(logGamma) optimise_target_Jeffreys_prior(Data, Noise, ...
                                         LeadFields, logGamma, sourceCovFn);
                                     
-% variance of data can be max e^7 above noise; suppression allowed
-logGammaBound = [-realmax, median(log(diag(Noise.cov))) + 7]; 
-
-% optimise using a golden section search and parabolic interpolation
-logGamma      = fminbnd(optimise_target, logGammaBound(1), logGammaBound(2));
+logGammaInit    = (median(log(diag(Noise.cov)))               ...
+                   - median(0.5.*log(sum(LeadFields.lf.^2)))) ...
+                  .* ones(LeadFields.nDims * LeadFields.nSources, 1);
+              
+% optimise using a multivariate nonlinear Nelder-Mead minimization
+logGamma      = fminsearch(optimise_target, logGammaInit);
 sourceCov     = sourceCovFn(logGamma);
 end%mne_Jeffreys_prior_estimate
 
@@ -258,15 +272,32 @@ end%mne_Jeffreys_prior_estimate
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function L = optimise_target_Jeffreys_prior(Data, Noise, LeadFields, logGamma, sourceCovFn)
+function L = optimise_target_Jeffreys_prior(Data, Noise, LeadFields, ...
+                                            logGamma, sourceCovFn)
 %OPTIMISE_TARGET_JEFFREYS_PRIOR
 % minimise L to find gamma-MAP solution
+global DEBUG
+persistent iTARGETCALL
 
-Sigma_EB = empirical_bayes_cov(Noise.cov, sourceCovFn(logGamma), LeadFields);
+Sigma_EB = empirical_bayes_cov(Noise.cov, sourceCovFn(logGamma), ...
+                               LeadFields.lf);
 
-L = sum(eig(Data.cov, Sigma_EB)) + ROInets.logdet(Sigma_EB, 'chol') ...
-    + sum(logGamma) ./ Data.nSamples; % - log(2) redundant constant ignored
+% use property sum(eig(B, A)) = trace(inv(A) * B)
+% or trace(AB) = sum(sum(A .* B')) (and covariance matrices are symmetric)
+L = trace(Data.cov * inverse(Sigma_EB, 'symmetric')) ...
+    + ROInets.logdet(Sigma_EB, 'chol')               ...
+    + (sum(logGamma) - log(2)) ./ Data.nSamples;                           % faster than elementwise product or sum(eig()). 
 
+
+if DEBUG,
+    if ~exist('iTARGETCALL', 'var') || isempty(iTARGETCALL),
+        iTARGETCALL = 1;
+    else
+        iTARGETCALL = iTARGETCALL + 1;
+    end%if
+    fprintf('Call to optim fn %4.0d: L = %0.8G, logGamma = %0.4G, logdet(Sigma_EB) = %0.6G. \n', ...
+            iTARGETCALL, L, logGamma, ROInets.logdet(Sigma_EB, 'chol'));
+end%if DEBUG
 end%optimise_target_Jeffreys_prior
 
 
@@ -284,8 +315,8 @@ function Noise = parse_noise(Noise, diagDataCov)
 % For the first two cases, a global scaling is possible with parameter
 % lambda. 
 
-methodMixWarning = ['You have passed in a noise covariance matrix but not ', ...
-                    'specified the empirical noise method. \n',              ...
+methodMixWarning = ['You have passed in a noise covariance matrix but ', ...
+                    'not specified the empirical noise method. \n',      ...
                     'The noise covariance matrix will be ignored. \n'];
 hasNoiseCov      = isfield(Noise, 'cov') && ~isempty(Noise.cov);
 
@@ -312,7 +343,7 @@ switch lower(Noise.model)
                    'covariance provided. \n']);
         end%if
         validateattributes(Noise.cov, {'numeric'},                ...
-                           {'square', 'real', 'nrows', nSensors}, ...
+                           {'real', 'size', [nSensors nSensors]}, ...
                            mfilename, 'Noise.cov');
         assert(ROInets.isposdef(Noise.cov), ...
                [mfilename ':NoiseCovNotPosDef'], ...
