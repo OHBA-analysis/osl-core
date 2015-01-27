@@ -235,7 +235,7 @@ D = spm_eeg_load(S.fname);
 if strcmp(S.modality,'EEG')
     chan_inds=setdiff(find(any(strcmp(D.chantype,'EEG'),1)),D.badchannels);
 else
-    chan_inds=indchantype(D, 'MEG', 'good');
+    chan_inds=indchantype(D, 'MEGANY', 'good');
 end
 
 meg_dat=D(chan_inds,:,:);
@@ -246,16 +246,8 @@ meg_dat = reshape(meg_dat,size(meg_dat,1),[]);
 
 % 3.) Remove bad segments
 if D.ntrials==1;
-    t = D.time;
-    badsections = false(1,D.nsamples);
-    Events = D.events;
-    if ~isempty(Events)
-        Events = Events(strncmp({Events.type},'artefact',8)); % NOTE: Ideally we would overhaul the whole code to use badsamples correctly
-        for ev = 1:numel(Events)
-            badsections = badsections | t >= Events(ev).time & t < (Events(ev).time+Events(ev).duration);
-        end
-    end
-    meg_dat(:,badsections)=[];
+    tbad = all(badsamples(D,':',':',1));
+    meg_dat(:,tbad)=[];
 end
 
 %%%%%%%%%%%%%%%%%%%% APPLY MAXFILTER SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%%%%
@@ -362,22 +354,14 @@ if strcmp(S.modality,'EEG')  % added by DM
     sm_full = zeros(numel(find(any(strcmp(D.chantype,'EEG'),1))),ica_res.ica_params.num_ics);
     map_inds(find(any(strcmp(D.chantype,'EEG'),1))) = 1:numel(find(any(strcmp(D.chantype,'EEG'),1)));
 else
-    sm_full = zeros(numel(D.indchantype('MEG')),ica_res.ica_params.num_ics);
-    map_inds(indchantype(D, 'MEG')) = 1:numel(indchantype(D, 'MEG'));
+    sm_full = zeros(numel(D.indchantype('MEGANY')),ica_res.ica_params.num_ics);
+    map_inds(indchantype(D, 'MEGANY')) = 1:numel(indchantype(D, 'MEGANY'));
 end
 sm_full(map_inds(chan_inds),:) = ica_res.sm;
 
 
 if D.ntrials==1;
-    t = D.time;
-    badsections = false(1,D.nsamples);
-    Events = D.events;
-    if ~isempty(Events)
-        Events = Events(strncmp({Events.type},'artefact',8));
-        for ev = 1:numel(Events)
-            badsections = badsections | t >= Events(ev).time & t < (Events(ev).time+Events(ev).duration);
-        end
-    end
+    badsections = all(badsamples(D,':',':',1));
 else
     badsections = false(1,D.ntrials*D.nsamples);
 end
@@ -404,7 +388,7 @@ excluded_timepoints(badsections)=true;
 if strcmp(S.modality,'EEG')  % added by DM
     excluded_data = D(indchantype(D, 'EEG'),:,:);
 else
-    excluded_data = D(indchantype(D, 'MEG'),:,:);
+    excluded_data = D(indchantype(D, 'MEGANY'),:,:);
 end
 excluded_data = reshape(excluded_data,size(excluded_data,1),[]); 
 
@@ -430,7 +414,7 @@ D = spm_eeg_load(S.fname);
 if strcmp(S.modality,'EEG')   % changed by DM
     chan_inds = find(any(strcmp(D.chantype,'EEG'),1));
 else
-    chan_inds = indchantype(D, 'MEG');
+    chan_inds = indchantype(D, 'MEGANY');
 end
 
 badchannels    = D.badchannels;
