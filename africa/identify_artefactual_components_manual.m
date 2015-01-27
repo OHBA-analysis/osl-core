@@ -108,8 +108,8 @@ if strcmp(S.modality,'EEG')   % changed by DM
     chan_inds=setdiff(find(any([strcmp(D.chantype,'EEG')],1)),D.badchannels);
     map_inds(find(any([strcmp(D.chantype,'EEG')],1))) = 1:numel(find(any([strcmp(D.chantype,'EEG')],1)));
 else
-    chan_inds=D.indchantype('MEG', 'Good');
-    map_inds(D.indchantype('MEG')) = 1:numel(D.indchantype('MEG'));
+    chan_inds=D.indchantype('MEGANY', 'Good');
+    map_inds(D.indchantype('MEGANY')) = 1:numel(D.indchantype('MEGANY'));
 end
 
 % Remove bad segments
@@ -311,8 +311,8 @@ if strcmp(modality,'EEG')   % changed by DM
     chan_inds=D.indchantype('EEG', 'good');
     map_inds(D.indchantype('EEG')) = 1:numel(D.indchantype('EEG'));
 else
-    chan_inds=D.indchantype('MEG', 'Good');
-    map_inds(D.indchantype('MEG')) = 1:numel(D.indchantype('MEG'));
+    chan_inds=D.indchantype('MEGANY', 'Good');
+    map_inds(D.indchantype('MEGANY')) = 1:numel(D.indchantype('MEGANY'));
 end
 
 % SM already parsed for bad channels on line 134.

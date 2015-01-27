@@ -78,7 +78,7 @@ uitools.custom     = uipushtool(uitools.toolbar,    'ClickedCallback',@CustomFun
 uitools.menu_channels = uimenu('label','Channels');
 channel_types = unique(D.chantype);
 for chtype = 1:length(channel_types)
-    uimenu(uitools.menu_channels,'label',channel_types{chtype},'Callback',@switch_chantype)
+    uimenu(uitools.menu_channels,'label',channel_types{chtype},'Callback',@switch_chantype);
 end
     
 
@@ -303,9 +303,9 @@ pointer_wait;
   end
 
 
-  function switch_chantype(~,~)
+  function switch_chantype(src,~)
     
-    channel_type = get(uitools.menu_channels,'label');
+    channel_type = get(src,'label');
     channel_setup;
     
   end

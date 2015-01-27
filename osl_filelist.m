@@ -26,10 +26,13 @@ function sortedList = osl_filelist(pathstr,filestr)
 %	$Revision$
 %	$LastChangedDate$
 
-
+if ~strcmp(pathstr(end),filesep)
+    pathstr = strcat(pathstr,filesep);
+end
 tmp        = dir(fullfile(pathstr,filestr));
 filelist   = {tmp(:).name};
-filelist   = fullfile(pathstr,filelist(:));
+filelist   = cellfun(@(x) strcat(pathstr,x),filelist,'uniformoutput',0);
 sortedList = sort_nat(filelist);
+sortedList = sortedList(:);
     
 end%osl_filelist
