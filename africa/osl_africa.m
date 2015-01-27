@@ -235,7 +235,7 @@ D = spm_eeg_load(S.fname);
 if strcmp(S.modality,'EEG')
     chan_inds=setdiff(find(any(strcmp(D.chantype,'EEG'),1)),D.badchannels);
 else
-    chan_inds=setdiff(find(any([strcmp(D.chantype,'MEGMAG'); strcmp(D.chantype,'MEGPLANAR'); strcmp(D.chantype,'MEGGRAD')],1)),D.badchannels);
+    chan_inds=indchantype(D, 'MEG', 'good');
 end
 
 meg_dat=D(chan_inds,:,:);
@@ -308,7 +308,7 @@ else
         norm_vec(strcmp(D.chantype(chan_inds),'MEGMAG'))    = mag_min_eig; 
         norm_vec(strcmp(D.chantype(chan_inds),'MEGPLANAR')) = plan_min_eig;
     else
-        norm_vec = norm_vec*min(svd(cov(meg_dat(strcmp(D.chantype(chan_inds),'MEGGRAD'),:)')));
+        norm_vec = norm_vec*min(svd(cov(meg_dat(:,:)')));
     end
     norm_vec = sqrt(norm_vec);
     
@@ -362,8 +362,8 @@ if strcmp(S.modality,'EEG')  % added by DM
     sm_full = zeros(numel(find(any(strcmp(D.chantype,'EEG'),1))),ica_res.ica_params.num_ics);
     map_inds(find(any(strcmp(D.chantype,'EEG'),1))) = 1:numel(find(any(strcmp(D.chantype,'EEG'),1)));
 else
-    sm_full = zeros(numel(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1))),ica_res.ica_params.num_ics);
-    map_inds(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1))) = 1:numel(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)));
+    sm_full = zeros(numel(D.indchantype('MEG')),ica_res.ica_params.num_ics);
+    map_inds(indchantype(D, 'MEG')) = 1:numel(indchantype(D, 'MEG'));
 end
 sm_full(map_inds(chan_inds),:) = ica_res.sm;
 
@@ -402,9 +402,9 @@ end
 excluded_timepoints(badsections)=true;
 
 if strcmp(S.modality,'EEG')  % added by DM
-    excluded_data = D(find(any([strcmp(D.chantype,'EEG')],1)),:,:);
+    excluded_data = D(indchantype(D, 'EEG'),:,:);
 else
-    excluded_data = D(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)),:,:);
+    excluded_data = D(indchantype(D, 'MEG'),:,:);
 end
 excluded_data = reshape(excluded_data,size(excluded_data,1),[]); 
 
@@ -430,7 +430,7 @@ D = spm_eeg_load(S.fname);
 if strcmp(S.modality,'EEG')   % changed by DM
     chan_inds = find(any(strcmp(D.chantype,'EEG'),1));
 else
-    chan_inds = find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1));
+    chan_inds = indchantype(D, 'MEG');
 end
 
 badchannels    = D.badchannels;
