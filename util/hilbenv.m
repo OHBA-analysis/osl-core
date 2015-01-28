@@ -46,22 +46,39 @@ env = transpose(abs(hilbert(dat')));
 
 % Apply moving average:
 if winsize > 1
-    env = fftfilt(repmat(ones(winsize,1),1,size(env,1)),env')./winsize;
-       
-    % Remove edge effects
-    env = env(winsize:end,:);
-    env = env(1:end-rem(size(env,1),ds_fac),:);
     
-    t = t(winsize:end);
-    t = t(1:end-rem(size(t,1),ds_fac));
+    if 0
+        % old code for doing moving averaging and downsampling
+        overlap = 0.7500;
+        clear env2;
+        for vox=1:size(env,1),
+            [tmp,t_avg] = osl_movavg(env(vox,:),t,winsize,overlap,0);
+            env2(vox,:)=tmp(~isnan(t_avg));
+            t_avg=t_avg(~isnan(t_avg));
+        end;
+        env=env2;
+        t_env=t_avg;
     
-    % Downsample the envelope
-    if downsample
-        env = resample(env,1,ds_fac)';
-        env(env<0) = 0;
     else
-        t_env = t;
-    end
+    
+        env = fftfilt(repmat(ones(winsize,1),1,size(env,1)),env')./winsize;
+
+        % Remove edge effects
+        env = env(winsize:end,:);
+        env = env(1:end-rem(size(env,1),ds_fac),:);
+
+        t = t(winsize:end);
+        t = t(1:end-rem(size(t,1),ds_fac));
+
+        % Downsample the envelope
+        if downsample
+            env = resample(env,1,ds_fac)';
+            env(env<0) = 0;
+        else
+            t_env = t;
+        end
+    end;
+    
 end
 
 end
