@@ -1,4 +1,4 @@
-function [HMMresults,statemaps] = osl_hmm_groupinference(data_files,hmmdir,todo,options)
+function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference(data_files,hmmdir,todo,options)
 % Runs a group HMM analysis on amplitude envelopes of source reconstructed
 % MEG data using the SPM12 beamformer OR any arbitrary data saved in .mat
 % data files.
@@ -69,7 +69,7 @@ function [HMMresults,statemaps] = osl_hmm_groupinference(data_files,hmmdir,todo,
 %
 % AB 2014
 
-%global OSLDIR
+% global OSLDIR
 
 HMMresults = [];
 statemaps  = [];
@@ -206,6 +206,7 @@ if todo.envelope
         S = [];
         S.D = fullfile(D.path,D.fname);
         S.winsize = fix(windowsize*D.fsample);
+        D = montage(D,'switch',2); D.save;
         
         D = osl_hilbenv(S);
         move(D,filenames.envelope{subnum});  
@@ -234,6 +235,7 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
         % Load subjects and concatenate:
         env_concat = [];
         subj_inds = [];
+        cond_inds = [];
         C = 0;
         
         for subnum = 1:length(data_files)
@@ -243,19 +245,31 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             else
                 D = spm_eeg_load(filenames.envelope{subnum});
             end
-            tbad = osl_bad_sections(D,'logical');
-            samples2use = find(~tbad);
-            env = D(:,samples2use); %#ok - SPM doesn't like logical indexing
-            if logtrans
-                env = log10(env);
-            end
-            if norm_subs
-                env = demean(env,2)./std(env(:));
-            end
             
-            env_concat = [env_concat,env];
-            subj_inds = [subj_inds,subnum*ones(1,size(env,2))];
-            C = C + env*permute(env,[2,1]);
+            % use all conditions
+            for condnum = 1:length(D.condlist),
+                
+                trials = D.indtrial(D.condlist{condnum},'good'); 
+
+                for trl=1:length(trials),                            
+                    tbad = all(badsamples(D,':',':',trl));
+                    samples2use = find(~tbad);
+                    env = D(:,samples2use,trl); %#ok - SPM doesn't like logical indexing
+
+                    if logtrans
+                        env = log10(env);
+                    end
+                    if norm_subs
+                        env = demean(env,2)./std(env(:));
+                    end
+
+                    env_concat = [env_concat,env];
+                    subj_inds = [subj_inds,subnum*ones(1,size(env,2))];            
+                    cond_inds = [cond_inds,condnum*ones(1,size(env,2))];
+
+                    C = C + env*permute(env,[2,1]); 
+                end;
+            end;
         end
         C = C ./ (length(subj_inds)-1);
         clear env
@@ -305,8 +319,19 @@ if todo.infer
         load(filenames.concat)
     end
     
+    %%%%%%%%%%%%%%%%
+    % Sort this OUT!
+    if 1
+        tilde='/Users/woolrich';
+        addpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));
+        hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
+        hmm.statepath = ABhmm_statepath(hmm);
+        rmpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));        
+    else
+        hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample));
+    end;
+    %%%%%%%%%%%%%%%%
     
-    hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample));
     hmm.MixingMatrix = MixingMatrix;
     hmm.fsample = fsample;
     
@@ -349,6 +374,9 @@ if todo.output
                 else
                     stat = zeros(size(hmm.MixingMatrix,2),hmm.K);
                 end
+                
+                subjstart_index=1;
+                epoched_statepath_sub=cell(length(data_files),1);
                 for subnum = 1:length(data_files)
                     
                     try
@@ -359,16 +387,49 @@ if todo.output
                         end
                         disp(['Computing ' output_method ' maps for ' D.fname]);
                         
-                        tbad = get_bad_sections(D,'logical');
-                        samples2use = find(~tbad);
-                        env = D(:,samples2use); %#ok - SPM doesn't like logical indexing
+                        env_concat_sub=[];
+                        
+                        epoched_statepath_sub{subnum}=zeros(1,D.nsamples,D.ntrials);
+                
+                        % use all conditions
+                        trialstart_index=1;
+                        for condnum = 1:length(D.condlist),
+
+                            trials = D.indtrial(D.condlist{condnum},'good'); 
+
+                            for trl=1:length(trials),                            
+                                tbad = all(badsamples(D,':',':',trl));
+                                samples2use = find(~tbad);
+                                env = D(:,samples2use,trl); %#ok - SPM doesn't like logical indexing                                                                
+                                
+                                if logtrans
+                                    env = log10(env);
+                                end
+                                if norm_subs
+                                    env = demean(env,2)./std(env(:));
+                                end
+
+                                env_concat_sub = [env_concat_sub,env];                                                                    
+                                
+                                epoched_statepath_sub{subnum}(1,samples2use,trl)=hmm.statepath(trialstart_index:trialstart_index+size(env,2)-1);
+                                trialstart_index=trialstart_index+size(env,2);
+                            end;
+                        end;                    
+                    
+                        hmm_sub = hmm; 
+                        from=subjstart_index;
+                        to=from+(trialstart_index-1)-1;
+                        hmm_sub.statepath = hmm.statepath(from:to);                    
+                        subjstart_index=to+1;
+                        
+                        stat = stat + osl_hmm_statemaps(hmm_sub,env_concat_sub,0,output_method);
+                    
                     catch
                         error([output_method ' currently only supported for OAT results'])
                     end
-                    
-                    hmm_sub = hmm; hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
-                    stat = stat + osl_hmm_statemaps(hmm_sub,env,0,output_method);
+                                
                 end
+                
                 stat = stat ./ length(unique(subj_inds));
                 disp(['Saving state spatial maps to ' statemaps])
                 statemaps = nii_quicksave(stat,statemaps,getmasksize(D.nchannels),2);
