@@ -18,7 +18,7 @@ elseif n == 228453;
 elseif n == 2
   s = 228453;
 else
-  disp('unknown mask size')
+  error('unknown mask size')
 end
 
 
