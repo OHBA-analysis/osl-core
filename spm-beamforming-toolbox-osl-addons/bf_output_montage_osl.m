@@ -86,7 +86,7 @@ for m  = 1:numel(modalities)
             montage.labelnew = lbl;
         end
 
-        montage.chantypenew = repmat({'VE'}, length(montage.labelnew), 1);
+        montage.chantypenew = repmat({'LFP'}, length(montage.labelnew), 1);
         montage.chanunitnew = repmat({'nA*m'}, length(montage.labelnew), 1);
 
         switch S.normalise
