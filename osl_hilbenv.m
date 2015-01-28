@@ -26,9 +26,7 @@ S.winsize = ft_getopt(S,'winsize');
 if isempty(S.winsize)
     S.winsize = 0; % No smoothing
 end
-
-trl = 1; % TODO - fix for trialwise data
-    
+  
 % Set up new MEEG object to hold downsampled envelope
 [~,t_env] = hilbenv(D.time,D.time,S.winsize);
 % ds_fac = ceil(S.winsize/2);
@@ -52,11 +50,13 @@ blks = osl_memblocks(D,1);
 ft_progress('init','eta')
 for iblk = 1:size(blks,1)
     ft_progress(iblk/size(blks,1));
-    
-    dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl);
-    env = hilbenv(dat_blk,D.time,S.winsize);   
-    Denv(blks(iblk,1):blks(iblk,2),:) = env;
+    for trl = 1:D.ntrials,    
+        dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl);
+        env = hilbenv(dat_blk,D.time,S.winsize);   
+        Denv(blks(iblk,1):blks(iblk,2),:,trl) = env;
+    end;  
 end
+
 ft_progress('close');
 
 Denv.save;
