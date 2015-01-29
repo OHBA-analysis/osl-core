@@ -231,24 +231,30 @@ function ica_res = perform_sensorspace_ica(S)
 
 D = spm_eeg_load(S.fname);
 
-% 1.) Select good channels
+% Good channels:
 if strcmp(S.modality,'EEG')
-    chan_inds=setdiff(find(any(strcmp(D.chantype,'EEG'),1)),D.badchannels);
+    chan_inds = indchantype(D, 'EEG', 'GOOD');
 else
-    chan_inds=indchantype(D, 'MEGANY', 'good');
+    chan_inds = indchantype(D, 'MEGANY', 'GOOD');
 end
 
-meg_dat=D(chan_inds,:,:);
-
-% 2.) Remove bad trials/any trial structure
-meg_dat = meg_dat(:,:,setdiff(1:D.ntrials, D.badtrials));
-meg_dat = reshape(meg_dat,size(meg_dat,1),[]);
-
-% 3.) Remove bad segments
-if D.ntrials==1;
-    tbad = all(badsamples(D,':',':',1));
-    meg_dat(:,tbad)=[];
+% Good samples:
+if D.ntrials == 1
+    sample_inds = find(~all(badsamples(D,':',':',1)));
+else
+    sample_inds = 1:D.nsamples;
 end
+
+% Good trials:
+trial_inds = indtrial(D,[D.condlist,'GOOD']);
+
+% Select data:
+icadata = D(chan_inds,sample_inds,trial_inds);
+
+% Remove trial structure:
+icadata = reshape(icadata,size(icadata,1),[]);
+
+
 
 %%%%%%%%%%%%%%%%%%%% APPLY MAXFILTER SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%%%%
 
@@ -272,61 +278,67 @@ if isfield(S,'ica_params')
     if isfield(S.ica_params,'stabilization');   stabilization = S.ica_params.stabilization;   else stabilization = 'on';            end
     if isfield(S.ica_params,'max_iterations');  max_iter      = S.ica_params.max_iterations;  else max_iter      = 1000;            end
 else
-    num_ics      = num_ics_default;
-    last_eig     = num_ics_default;
-    nonlinearity = 'tanh';
-    ica_approach = 'symm';
+    num_ics       = num_ics_default;
+    last_eig      = num_ics_default;
+    nonlinearity  = 'tanh';
+    ica_approach  = 'symm';
     stabilization = 'on';
-    max_iter     = 1000;
+    max_iter      = 1000;
 end
 
-num_ics  = min(num_ics,size(meg_dat,1));  % added by DM
-last_eig = min(last_eig,size(meg_dat,1)); % added by DM
+num_ics  = min(num_ics, size(icadata,1)); % added by DM
+last_eig = min(last_eig,size(icadata,1)); % added by DM
 
 
 %%%%%%%%%%%%%%%%%%%%  MINIMUM EIGENVALUE NORMALISATION %%%%%%%%%%%%%%%%%%%%
 
 if strcmp(S.modality,'EEG')  % added by DM
-    norm_vec = max(abs(meg_dat(:)))/1000*ones(size(meg_dat,1),1);
+    norm_vec = max(abs(icadata(:)))/1000*ones(size(icadata,1),1);
 else
     norm_vec = ones(numel(chan_inds),1);
     if any(strcmp(D.chantype,'MEGMAG')) && any(strcmp(D.chantype,'MEGPLANAR'))
-        mag_min_eig = svd(cov(meg_dat(strcmp(D.chantype(chan_inds),'MEGMAG'),:)')); 
+        mag_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGMAG'),:)')); 
         mag_min_eig = mean(mag_min_eig(mag_cutoff-2:mag_cutoff));
         
-        plan_min_eig = svd(cov(meg_dat(strcmp(D.chantype(chan_inds),'MEGPLANAR'),:)')); 
+        plan_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGPLANAR'),:)')); 
         plan_min_eig = mean(plan_min_eig(plan_cutoff-2:plan_cutoff));
         
         norm_vec(strcmp(D.chantype(chan_inds),'MEGMAG'))    = mag_min_eig; 
         norm_vec(strcmp(D.chantype(chan_inds),'MEGPLANAR')) = plan_min_eig;
     else
-        norm_vec = norm_vec*min(svd(cov(meg_dat(:,:)')));
+        norm_vec = norm_vec*min(svd(cov(icadata(:,:)')));
     end
     norm_vec = sqrt(norm_vec);
     
 end
 
-dat_in = meg_dat ./ repmat(norm_vec,1,size(meg_dat,2));
+
+eigs_preNorm  = svd(cov(icadata'));
+
+% Apply normalisation
+icadata = icadata ./ repmat(norm_vec,1,size(icadata,2));
+
+eigs_postNorm = svd(cov(icadata'));
 
 if S.do_plots
     figure; 
-    semilogy(svd(cov(meg_dat')));
+    semilogy(eigs_preNorm);
     ho;
-    semilogy(svd(cov(dat_in')),'r--');
+    semilogy(eigs_postNorm,'r--');
     title('Raw and normalised eigen spectra'); legend('Raw', 'Normalised');
 end
 
 %%%%%%%%%%%%%%%%%% AUTOMATIC DIMENSIONALITY ESTIMATION %%%%%%%%%%%%%%%%%%%%
-if 0 == num_ics,
-    num_ics = spm_pca_order(dat_in.');
-end%if
-if 0 == last_eig,
+if 0 == num_ics
+    num_ics = spm_pca_order(icadata');
+end
+if 0 == last_eig
     last_eig = num_ics;
-end%if
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% ICA DECOMPOSITION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[tc,sm,~] = fastica(dat_in,                            ...
+[tc,sm,~] = fastica(icadata,                           ...
                     'g',                nonlinearity,  ...
                     'lastEig',          last_eig,      ...
                     'numOfIC',          num_ics,       ...
