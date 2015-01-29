@@ -96,6 +96,9 @@ targetdir{end+1}='spm12/@meeg';
 filelist{end+1} = 'osl2/spm-changes/ft_headmodel_localspheres.m';
 targetdir{end+1}='spm12/external/fieldtrip/forward/';
 
+filelist{end+1}='osl2/spm-changes/path.m';
+targetdir{end+1}='spm12/@meeg';
+
 for kk=1:length(filelist),
     runcmd(['cp -f ' osldir '/' filelist{kk} ' ' osldir '/' targetdir{kk}]);
     rmpath([osldir '/' targetdir{kk}]);
