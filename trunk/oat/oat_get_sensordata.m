@@ -1,8 +1,19 @@
-function [ D ] = oat_get_sensordata( oat_results )
+function [ D ] = oat_get_sensordata( oat_results, oat )
 
 % [ D ] = oat_get_sensordata( oat_results )
+% [ D ] = oat_get_sensordata( oat_results_fname, oat )
 %
 % get D and update path in case OAT dir has been moved
+% 
+% MWW 2014
+
+if isstr(oat_results)
+    if nargin <2
+        error('Need to specify oat if passing in oat_results unloaded as a file name');
+    end;
+    
+    oat_results = oat_load_results(oat,oat_results);
+end;
 
 if(isfield(oat_results,'BF'))
     D=oat_results.BF.data.D;

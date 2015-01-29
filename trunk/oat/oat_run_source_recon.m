@@ -112,9 +112,7 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     else
         source_recon_sess.D_epoched = [];
     end;
-    
-    source_recon_sess.mri       = source_recon.mri{sessi};
-    
+        
     if length(source_recon.pca_dim)>1,
         source_recon_sess.pca_dim=source_recon.pca_dim(sessi);
     else
@@ -130,7 +128,7 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     source_recon_sess.report = report;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% Prepare data (bandpass filter, epoch, normalise sensors, HMM, map into PCA)
+    %% Prepare data (bandpass filter, epoch, normalise sensors, HMM)
     source_recon_results=[];
     [source_recon_sess source_recon_results report] = oat_prepare_source_recon(source_recon_sess, source_recon_results, report);
     D=source_recon_results.BF.data.D;
@@ -139,26 +137,24 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     %% DO CO-REGISTRATION AND HEAD MODEL
     % Need to re-do it now following any montaging done in osl_prepare_oat_source_recon
 
-    disp('Co-registration and setting up forward model...');
-
-    S2 = [];
-    S2.D            = [D.path '/' D.fname]; % requires .mat extension
-    S2.mri          = source_recon.mri{sessi};
-    S2.useheadshape = source_recon.useheadshape;
-    S2.forward_meg  = source_recon.forward_meg;
-    S2.fid_label    = source_recon.fid_label;
-
-    S2.use_rhino=source_recon.use_rhino;
-    S2.useCTFhack=1; % temp tweak if using rhino
+    if ~strcmp(oat.source_recon.normalise_method,'none')
         
-    D = osl_headmodel(S2);
+        disp('Co-registration and setting up forward model...');
 
-    if(oat.do_plots)
-        %spm_eeg_inv_checkmeshes(D);
-        spm_eeg_inv_checkdatareg(D);
-        %spm_eeg_inv_checkforward(D, 1);
+        S2 = [];
+        S2.D            = [D.path '/' D.fname]; % requires .mat extension
+        S2.forward_meg  = source_recon.forward_meg;
+
+        D = osl_forward_model(S2);
+
+        if(oat.do_plots)
+            %spm_eeg_inv_checkmeshes(D);
+            spm_eeg_inv_checkdatareg(D);
+            %spm_eeg_inv_checkforward(D, 1);
+        end;
+
     end;
-
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Run inverse
     
