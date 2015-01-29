@@ -69,32 +69,44 @@ end % if ~ isdeployed
 %% Copy changes to SPM code from osl
 filelist={};targetdir={};
 
-filelist{end+1}='osl2/spm-beamforming-toolbox-osl-addons/bf_output_montage_osl.m';
-targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
+filelist{1}='osl2/spm-beamforming-toolbox-osl-addons/bf_output_montage_osl.m';
+targetdir{1}='spm12/toolbox/spm-beamforming-toolbox';
 
-filelist{end+1}='osl2/spm-beamforming-toolbox-osl-addons/bf_write_spmeeg_osl.m';
-targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
+filelist{2}='osl2/spm-beamforming-toolbox-osl-addons/bf_write_spmeeg_osl.m';
+targetdir{2}='spm12/toolbox/spm-beamforming-toolbox';
 
-filelist{end+1}='osl2/spm-changes/ft_read_event_4osl.m';
-targetdir{end+1}='spm12/external/fieldtrip/fileio';
+filelist{3}='osl2/spm-changes/ft_read_event_4osl.m';
+targetdir{3}='spm12/external/fieldtrip/fileio';
 
-filelist{end+1}='osl2/spm-changes/read_trigger_4osl.m';
-targetdir{end+1}='spm12/external/fieldtrip/fileio/private';
+filelist{4}='osl2/spm-changes/read_trigger_4osl.m';
+targetdir{4}='spm12/external/fieldtrip/fileio/private';
 
-filelist{end+1}='osl2/spm-changes/badsamples.m';
-targetdir{end+1}='spm12/@meeg';
+filelist{5}='osl2/spm-changes/lmoutr.mexmaci64';
+targetdir{5}='spm12/external/fieldtrip/utilities/private';
 
-% filelist{end+1}='osl2/spm-changes/lmoutr.mexmaci64';
-% targetdir{end+1}='spm12/external/fieldtrip/utilities/private';
-% 
-% filelist{end+1}='osl2/spm-changes/mxSerialize.mexmaci64';
-% targetdir{end+1}='spm12/external/fieldtrip/utilities/private';
-% 
-% filelist{end+1}='osl2/spm-changes/ptriproj.mexmaci64';
-% targetdir{end+1}='spm12/external/fieldtrip/utilities/private';
+filelist{6}='osl2/spm-changes/mxSerialize.mexmaci64';
+targetdir{6}='spm12/external/fieldtrip/utilities/private';
 
-filelist{end+1} = 'osl2/spm-changes/ft_headmodel_localspheres.m';
-targetdir{end+1}='spm12/external/fieldtrip/forward/';
+filelist{7} = 'osl2/spm-changes/ft_headmodel_localspheres.m';
+targetdir{7}='spm12/external/fieldtrip/forward/';
+
+filelist{8} = 'osl2/spm-changes/undobalancing.m';
+targetdir{8}='spm12/external/fieldtrip/forward/private/';
+
+filelist{9} = 'osl2/spm-changes/undobalancing.m';
+targetdir{9}='spm12/external/fieldtrip/plotting/private/';
+
+filelist{10} = 'osl2/spm-changes/undobalancing.m';
+targetdir{10}='spm12/external/fieldtrip/fileio/private/';
+
+filelist{11} = 'osl2/spm-changes/undobalancing.m';
+targetdir{11}='spm12/external/fieldtrip/utilities/private/';
+
+filelist{12} = 'osl2/spm-changes/undobalancing.m';
+targetdir{12}='spm12/external/fieldtrip/private/';
+
+filelist{13}='osl2/spm-changes/ptriproj.mexmaci64';
+targetdir{13}='spm12/external/fieldtrip/utilities/private';
 
 filelist{end+1}='osl2/spm-changes/path.m';
 targetdir{end+1}='spm12/@meeg';
@@ -118,3 +130,6 @@ if ~isdeployed
         end;
     end;
 end % if ~ isdeployed
+
+
+
