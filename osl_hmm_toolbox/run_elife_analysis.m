@@ -8,37 +8,40 @@
 
 % Beamformed data (4-30 Hz)
 
+osldir = '/Users/abaker/Dropbox/Code/OSL2/osl2.0/';    
+addpath(osldir);
+osl_startup(osldir);
 
+%%
 spmdir      = '/Users/abaker/Data/notts_3state/spm12/';
 spm_files = strcat([spmdir 'subj'],num2str(sort(repmat(1:10,1,3))','%0.2d'),'_',repmat({'ec','eo','mov'},1,10)');
 
-%sessions2use = setdiff(1:30,[3:3:30,4:6,7:9,10:12]);
-sessions2use = setdiff(1:3:30,[4:6,7:9,10:12]);
+%sessions2use = setdiff(1:3:30,[4:6,7:9,10:12]);
+sessions2use = 1; %for test
+
 spm_files = spm_files(sessions2use);
 
 BFfiles = prefix(spm_files,'fA');
                   
 %hmmdir  = '/Users/abaker/Scratch/oxford_resting2/HMM/';
-hmmdir  = '/Users/abaker/Data/notts_3state/spm12/HMM';
+hmmdir  = '/Users/abaker/Scratch/oxford_resting2/HMMtest/';
 
 mkdir(hmmdir);
 
-osldir = '/Users/abaker/Dropbox/Code/OSL2/osl2.0/';    
-addpath(osldir);
-osl_startup(osldir);
+
 
 %% Run HMM with the default settings:
 todo.envelope = 0;
 todo.concat   = 0;
-todo.infer    = 0;
+todo.infer    = 1;
 todo.output   = 1;
     
 options.envelope.windowsize = 0.1;
-options.concat.log          = 1;
+options.concat.log          = 0;
 options.concat.norm_subs    = 1;
 options.concat.pcadim       = 40;
 options.hmm.nstates         = 8;
-options.hmm.nreps           = 1;
+options.hmm.nreps           = 5;
 options.output.method       = 'pcorr';
 
 [HMMresults,statemaps] = osl_hmm_groupinference(BFfiles,hmmdir,todo,options);

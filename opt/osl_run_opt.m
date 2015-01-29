@@ -871,7 +871,7 @@ function D=set_bad(D,BadEpochs)
 BadEvents = struct([]);
 for ev = 1:numel(BadEpochs)
   if numel(BadEpochs{ev} == 2)
-    BadEvents(ev).type     = 'artefact_OPT';
+    BadEvents(ev).type     = 'artefact_OSL';
     BadEvents(ev).value   = ev;
     BadEvents(ev).time     =  BadEpochs{ev}(1);
     BadEvents(ev).duration = diff(BadEpochs{ev});
@@ -884,7 +884,7 @@ Events = D.events;
 
 % Remove previous bad epoch events
 if isfield(Events,'type')
-  Events(strcmp({Events.type},'artefact_OPT')) = [];
+  Events(strcmp({Events.type},'artefact_OSL')) = [];
 end
 
 % Concatenate new and old events

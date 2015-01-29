@@ -321,14 +321,24 @@ if todo.infer
     
     %%%%%%%%%%%%%%%%
     % Sort this OUT!
-    if 1
-        tilde='/Users/woolrich';
-        addpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));
+    if 0
+        %tilde='/Users/woolrich';
+        %addpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));
+        global OSLDIR
+        rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox')));
+        addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
+
         hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
         hmm.statepath = ABhmm_statepath(hmm);
-        rmpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));        
+         addpath(genpath(OSLDIR));
+
+        %rmpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));        
     else
+        global OSLDIR
+        rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
+        addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox')));
         hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample));
+        addpath(genpath(OSLDIR));
     end;
     %%%%%%%%%%%%%%%%
     
