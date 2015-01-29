@@ -23,7 +23,10 @@ if ~isdeployed
     
     restoredpath=path;
     addpath(genpath(osldir));
-
+    
+    % remove spm-changes dir:
+    rmpath([osldir '/osl2/spm-changes']);
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % check fsl has been setup
     if isempty(getenv('FSLDIR')),
@@ -113,7 +116,6 @@ targetdir{end+1}='spm12/@meeg';
 
 for kk=1:length(filelist),
     runcmd(['cp -f ' osldir '/' filelist{kk} ' ' osldir '/' targetdir{kk}]);
-    rmpath([osldir '/' targetdir{kk}]);
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
