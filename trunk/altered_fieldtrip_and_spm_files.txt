@@ -33,3 +33,9 @@ osl2.0/spm12/external/fieldtrip/forward/ft_headmodel_localspheres.m
 osl2.0/spm12/@meeg/badsamples.m
 
 %%%%%%%%%%%%%%%%%%%%%%%%
+
+% Problem: path.m does not return "this" when the path is set. 
+
+% Solution: copy local correct copy to the SPM12 directory via spm-changes
+
+osl2.0/spm12/@meeg/path.m
