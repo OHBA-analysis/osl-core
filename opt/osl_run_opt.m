@@ -873,7 +873,7 @@ BadEvents = struct([]);
 for ev = 1:numel(BadEpochs)
   if numel(BadEpochs{ev} == 2)
     BadEvents(ev).type     = 'artefact_OSL';
-    BadEvents(ev).value   = ev;
+    BadEvents(ev).value    = 'all';
     BadEvents(ev).time     =  BadEpochs{ev}(1);
     BadEvents(ev).duration = diff(BadEpochs{ev});
     BadEvents(ev).offset = 0;
