@@ -135,7 +135,7 @@ oat.source_recon.gridstep=7; % in mm, using a lower resolution here than you wou
 oat.source_recon.mri=structural_files;
 do_hmm=1;
 if(do_hmm)
-    oat.source_recon.hmm_num_states=10;    
+    oat.source_recon.hmm_num_states=13;    
     oat.source_recon.hmm_num_starts=1;
     oat.first_level.hmm_do_glm_statewise=0;
 end;

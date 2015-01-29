@@ -90,7 +90,6 @@ try oat.source_recon.epochinfo=oatin.source_recon.epochinfo; oatin.source_recon 
 try oat.source_recon.method=oatin.source_recon.method; oatin.source_recon = rmfield(oatin.source_recon,'method'); oat.source_recon = ft_checkopt(oat.source_recon,'method','char',{'none','beamform','beamform_bilateral','mne_eye','mne_diag_datacov'}); catch,  oat.source_recon.method='beamform'; warning(['oat.source_recon.method either not specified or incorrectly specified, Setting it to: ' oat.source_recon.method]); end; % can be 'beamform' or 'none' or 'beamform_bilateral' (for a sensor space analysis)
 try oat.source_recon.bandstop_filter_mains=oatin.source_recon.bandstop_filter_mains; oatin.source_recon = rmfield(oatin.source_recon,'bandstop_filter_mains'); catch, oat.source_recon.bandstop_filter_mains = 0; end % defaults to applying a bandstop filter at 50Hz and higher harmonics
 try oat.source_recon.artefact_chanlabel = oatin.source_recon.artefact_chanlabel; oatin.source_recon = rmfield(oatin.source_recon,'artefact_chanlabel'); catch, oat.source_recon.artefact_chanlabel = []; end % the label of the channel in the input data which contains a vector picking out periods with blinks / artefact. If empty, assumed no artefact rejection desired.
-try oat.source_recon.use_rhino = oatin.source_recon.use_rhino; oatin.source_recon = rmfield(oatin.source_recon,'use_rhino'); catch, oat.source_recon.use_rhino = 1; end % Use RHINO coregistration
 
 try oat.source_recon.modalities=oatin.source_recon.modalities; oatin.source_recon = rmfield(oatin.source_recon,'modalities'); 
     oat.source_recon.modalities = ft_checkopt(oat.source_recon,'modalities','cell',{{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'}});      
@@ -124,23 +123,7 @@ try oat.source_recon.normalise_method=oatin.source_recon.normalise_method; oatin
 try oat.source_recon.regpc=oatin.source_recon.regpc; oatin.source_recon = rmfield(oatin.source_recon,'regpc'); catch, oat.source_recon.regpc=0; end; % data covariance regularisation
 try oat.source_recon.gridstep=oatin.source_recon.gridstep; oatin.source_recon = rmfield(oatin.source_recon,'gridstep'); catch, oat.source_recon.gridstep=7; end; % space between dipoles in beamformer grid in mm
 try oat.source_recon.mask_fname=oatin.source_recon.mask_fname; oatin.source_recon = rmfield(oatin.source_recon,'mask_fname'); catch, end;
-try oat.source_recon.useheadshape = oatin.source_recon.useheadshape; oatin.source_recon = rmfield(oatin.source_recon,'useheadshape'); catch, oat.source_recon.useheadshape=1; end
 try oat.source_recon.forward_meg = oatin.source_recon.forward_meg; oatin.source_recon = rmfield(oatin.source_recon,'forward_meg'); catch, oat.source_recon.forward_meg='Single Shell'; end % MEG head forward model set to 'Single Shell' or 'MEG Local Spheres'
-try oat.source_recon.mri = oatin.source_recon.mri; oatin.source_recon = rmfield(oatin.source_recon,'mri'); catch, for i=1:length(Ds), oat.source_recon.mri{i}=''; end; end
-try oat.source_recon.fid_label = oatin.source_recon.fid_label; oatin.source_recon = rmfield(oatin.source_recon,'fid_label'); 
-catch, 
-    switch datatype
-        case 'neuromag'
-            oat.source_recon.fid_label.nasion='Nasion'; oat.source_recon.fid_label.lpa='LPA'; oat.source_recon.fid_label.rpa='RPA'; 
-        case 'ctf' 
-            oat.source_recon.fid_label.nasion='nas'; oat.source_recon.fid_label.lpa='lpa'; oat.source_recon.fid_label.rpa='rpa'; 
-        case 'eeg' 
-            oat.source_recon.fid_label.nasion='Nasion'; oat.source_recon.fid_label.lpa='LPA'; oat.source_recon.fid_label.rpa='RPA'; 
-        otherwise
-            error('datatype not set properly. \n'); % should not be here
-    end;
-end; % To see what these should be look at: D.fiducials.fid.label
-try oat.source_recon.fid_mnicoords = oatin.source_recon.fid_mnicoords; oatin.source_recon = rmfield(oatin.source_recon,'fid_mnicoords'); catch, end; % fids in mni coords, e.g. fid_mnicoords.nasian=[4.1 84.1 -11.7];fid_mnicoords.rpa=[83.8 -9.1 -65.1];fid_mnicoords.lpa=[-84.6 -3.3 -66.8]; Leave field empty to use standard brain fid coords
   
 % pca_dim is a num_sessions vector with the rank for each session to be use for the pca
 % dimensionality reduction. If pca_dim=-1 then spm_pca_order is used to estimate pca_dim. 

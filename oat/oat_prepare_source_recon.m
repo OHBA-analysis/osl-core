@@ -235,30 +235,36 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Normalise modalities using, e.g., mean or smallest eigenvalues
 %% calculated using good channels and good trials, and over all woi
-disp('Establish dimensionality and Normalising modalities...');
 
-S2=source_recon_sess;
-S2.D = D;
-S2.samples2use=samples2use;
-S2.trials=trials;
-S2.do_plots=1;
-S2.normalise_method=source_recon_sess.normalise_method;
+if ~strcmp(source_recon_sess.normalise_method,'none'),
+    
+    disp('Establish dimensionality and Normalising modalities...');
+    S2=source_recon_sess;
+    S2.D = D;
+    S2.samples2use=samples2use;
+    S2.trials=trials;
+    S2.do_plots=1;
+    S2.normalise_method=source_recon_sess.normalise_method;
 
-%[ Dnew pcadims pcadim ] = normalise_sensor_data( S2 );
+    %[ Dnew pcadims pcadim ] = normalise_sensor_data( S2 );
 
-[ Dnew pcadims tmp norm_vec normalisation fig_handles fig_names] = normalise_sensor_data( S2 );
+    [ Dnew pcadims tmp norm_vec normalisation fig_handles fig_names] = normalise_sensor_data( S2 );
 
-% set pcadim to min:
-pcadim=min(pcadims);
+    % set pcadim to min:
+    pcadim=min(pcadims);
 
-if do_report
-    % diagnostic plot of design matrix    
-    report=osl_report_set_figs(report,fig_names,fig_handles);
-    report=osl_report_print_figs(report);
+    if do_report
+        % diagnostic plot of design matrix    
+        report=osl_report_set_figs(report,fig_names,fig_handles);
+        report=osl_report_print_figs(report);
+    end;
+
+    D.delete;
+    D=Dnew;
+else
+    pcadim=length(chanind);
+    normalisation=1;
 end;
-
-D.delete;
-D=Dnew;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% DO HMM
@@ -310,12 +316,18 @@ if(isfield(source_recon_sess,'hmm_num_states') && source_recon_sess.hmm_num_stat
         
         Sh.data=normalise(Sh.data);
         
-        Sh.NK=NK;
-        
-        Sh.num_starts=source_recon_sess.hmm_num_starts;
-        
-        [ hmm, block ]=run_multistart_hmm(Sh);
-        
+        if 1,
+            Sh.NK=NK;
+
+            Sh.num_starts=source_recon_sess.hmm_num_starts;
+
+            [ hmm, block ]=run_multistart_hmm(Sh);
+
+        else
+
+            hmm = osl_hmm_infer(Sh.data,struct('K',NK,'order',0,'Ninits',source_recon_sess.hmm_num_starts,'Hz',1/tres));
+
+        end;
         NK=hmm.K;
         
     end;
@@ -398,6 +410,7 @@ else,
     
     hmm_class(1,find(samples2use),trials)=1;
     hmm_class_probs(1,find(samples2use),trials)=1;
+    
 end;
 
 
