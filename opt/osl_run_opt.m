@@ -631,6 +631,7 @@ for subi=1:length(opt.sessions_to_do),
             end;                 
 
             D_continuous=set_bad(D_continuous,BadEpochs);
+            
         end;
         
         save(D_continuous);
@@ -892,7 +893,7 @@ if size(Events,1) < size(Events,2)
   BadEvents = BadEvents(:);
 end
 if ~isempty(BadEvents)
-  Events = [Events(:); BadEvents'];
+  Events = [Events(:); BadEvents];
 end
 
 % Save new events with previous
