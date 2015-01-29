@@ -17,7 +17,7 @@ function [D_epoched good_trial_starts] = osl_reject_bad_epoch_trials( S )
 % MWW 2012
 
 if ~isfield(S,'bad_event_type')
-    S.bad_epoch_type='artefact_OPT';
+    S.bad_epoch_type='artefact_OSL';
 end;
 
 epochinfo=S.D_epoched.epochinfo;
