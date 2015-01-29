@@ -328,7 +328,8 @@ if todo.infer
         rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox')));
         addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
 
-        hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
+        %hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
+        hmm = ABhmm_infer(hmmdata,nstates,nreps);
         hmm.statepath = ABhmm_statepath(hmm);
          addpath(genpath(OSLDIR));
 
@@ -344,16 +345,15 @@ if todo.infer
     
     hmm.MixingMatrix = MixingMatrix;
     hmm.fsample = fsample;
+    hmm.subj_inds=subj_inds;
     
     % Save results
-    disp(['Saving inferred HMM to ' filenames.hmm])
-    save(filenames.hmm,'hmm','subj_inds')
+    disp(['Saving inferred HMM to ' filenames.hmm])    
+    save(filenames.hmm,'hmm');
     
     HMMresults = filenames.hmm;
 
 end
-
-
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
@@ -443,6 +443,12 @@ if todo.output
                 stat = stat ./ length(unique(subj_inds));
                 disp(['Saving state spatial maps to ' statemaps])
                 statemaps = nii_quicksave(stat,statemaps,getmasksize(D.nchannels),2);
+               
+                % resave updated hmm
+                hmm.statemaps=statemaps;
+                hmm.epoched_statepath_sub=epoched_statepath_sub;
+                disp(['Saving updated hmm to ' filenames.hmm]);
+                save(filenames.hmm,'hmm');        
                 
             case 'cov'
                 cov_mats = osl_hmm_statemaps(hmm,[],[],'cov');
