@@ -871,7 +871,7 @@ pointer_wait;
     
     if ~strcmp(fullfile(D.path,D.fname),[CurrentPath,'/Dtmp.mat'])
       Dtmp = clone(D,[CurrentPath,'/Dtmp']);
-      copyfile(fullfile(D.path, D.fnamedat),fullfile(Dtmp.path, Dtmp.fnamedat), 'f');
+      copyfile(D.fnamedat,Dtmp.fnamedat, 'f');
     else
       Dtmp = D;
     end
@@ -879,7 +879,7 @@ pointer_wait;
     Dtmp = feval(str2func(strtok(FuncName,'.')),Dtmp);
     
     cd(CurrentPath)
-    if strcmp(class(D),'meeg')
+    if isa(D,'meeg')
       D = Dtmp;
     end
     
@@ -891,38 +891,6 @@ pointer_wait;
     
     
   end
-
-
-
-
-
-
-%   function ToolbarFunc(varargin)
-%     SelectedFunction = get(varargin{1},'SelectedItem');  
-%     switch SelectedFunction
-%       case 'Open custom function...'
-%        CurrentPath = pwd;
-%        [FuncName,FuncPath] = uigetfile('*.m'); 
-%        cd(FuncPath)
-%        Data = feval(str2func(strtok(FuncName,'.')),D,Data);
-%        cd(CurrentPath)
-%        
-%        if strcmp(class(Data),'meeg')
-%          D = Data;
-%          Data = D(:,:,:);
-%        end
-%        
-%       case 'Re-order channels by variance'
-%         channel_order = 'variance';
-%         channel_setup;
-%     end   
-%     pointer_wait
-%     redraw
-%     pointer_wait    
-%   end
-
-
-
 
 end % OSLview
 
