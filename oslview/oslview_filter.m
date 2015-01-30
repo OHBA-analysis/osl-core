@@ -10,14 +10,13 @@ fbands = [str2double(fspec{1}) str2double(fspec{2})];
 fbands = sort(fbands);
 
 S=[];
-S.D=D;
-S.filter.PHz=fbands;
-S.filter.band='bandpass';
-Dnew = spm_eeg_filter_v2(S);
-
+S.D    =  fullfile(D.path,D.fname);
+S.freq = fbands;
+S.band = 'bandpass';
+Dnew = spm_eeg_filter(S);
 
 D = clone(Dnew,fullfile(D.path,D.fname));
-copyfile(fullfile(Dnew.path, Dnew.fnamedat),fullfile(D.path, D.fnamedat), 'f');
+copyfile(Dnew.fnamedat,D.fnamedat, 'f');
 
 save(D);
 delete(Dnew);

@@ -1,5 +1,4 @@
-%% osl_africa.m
-%
+function [bad_components,fig_handles,fig_names,fig_titles] = identify_artefactual_components_manual(S)
 % AfRICA - ArteFact Rejection using Independent Component Analysis
 %
 % Syntax: [bad_components, fig_handles, fig_names, fig_titles] = identify_artefactual_components_manual(S)
@@ -15,17 +14,8 @@
 %   - bad_components: A list of the components identified as bad.
 % 
 % Adam Baker 2014
-%
-% adam.baker@ohba.ox.ac.uk
-%
-%
-% TODO: set default processing for ECG, EOG (blink), EOG (saccade)
-%
 
 
-function [bad_components, fig_handles, fig_names, fig_titles] = identify_artefactual_components_manual(S)
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set-Up
 
 % First check if metrics have already been computed:
@@ -93,45 +83,13 @@ fig_titles  = [];
 
 %% Select only good data for classification
 
-samples_of_interest = false(1,size(S.ica_res.tc,2));
+% Good samples/trials
+samples_of_interest = ~all(badsamples(D,':',':',':'));
+samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
 
-% Remove bad trials/any trial structure
-c=1;
-for i=1:D.ntrials
-    if ~ismember(i,D.badtrials)
-        samples_of_interest(:,c:c+D.nsamples-1)=true;
-    end
-    c=c+D.nsamples;
-end
-
-if strcmp(S.modality,'EEG')   % changed by DM
-    chan_inds=setdiff(find(any([strcmp(D.chantype,'EEG')],1)),D.badchannels);
-    map_inds(find(any([strcmp(D.chantype,'EEG')],1))) = 1:numel(find(any([strcmp(D.chantype,'EEG')],1)));
-else
-    chan_inds=D.indchantype('MEGANY', 'Good');
-    map_inds(D.indchantype('MEGANY')) = 1:numel(D.indchantype('MEGANY'));
-end
-
-% Remove bad segments
-if D.ntrials==1;
-    t = D.time;
-    badsections = false(1,D.nsamples);
-    Events = D.events;
-    if ~isempty(Events)
-        Events = Events(strcmp({Events.type},'BadEpoch'));
-        for ev = 1:numel(Events)
-            badsections = badsections | t >= Events(ev).time & t < (Events(ev).time+Events(ev).duration);
-        end
-    end
-    samples_of_interest(1,badsections)=false;
-end
-
-%%
 
 sm = S.ica_res.sm;
 tc = S.ica_res.tc;
-
-sm = sm(map_inds(chan_inds),:);
 
 num_ics = S.ica_res.ica_params.num_ics;
 
@@ -152,12 +110,9 @@ spec(:,1:minhz_ind) = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if do_mains && ~isfield(metrics,'mains')
-    
     spec_n = normalise(spec,2);
-    
     inds = freq_ax > S.ident.mains_frequency - 1 & freq_ax < S.ident.mains_frequency + 1;
     metrics.mains.value = max(spec_n(:,inds),[],2);
-    %metrics.mains.label = 'mains';
 elseif isfield(S.ident,'do_mains') && ~S.ident.do_mains && isfield(metrics,'mains')
     metrics = rmfield(metrics,'mains');
 end
@@ -168,12 +123,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if do_kurt && ~isfield(metrics,'kurtosis')
-
     kurt = kurtosis(tc(:,samples_of_interest),[],2);
     kurt_t = abs(demean(boxcox1(kurt))); % make distribution more normal to better balance low/high kurtosis
-    
     metrics.kurtosis.value = kurt_t(:);
-    %metrics.kurtosis.label = 'kurtosis';
 elseif isfield(S.ident,'do_kurt') && ~S.ident.do_kurt && isfield(metrics,'kurtosis')
     metrics = rmfield(metrics,'kurtosis');
 end
@@ -201,9 +153,7 @@ if do_cardiac_autocorrelation && ~isfield(metrics,'cardiac_autocorrelation')
     ac_max(ic) = max(ac(lags_range));
   end
   
-  
   metrics.cardiac_autocorrelation.value = ac_max(:);
-  %metrics.cardiac_autocorrelation.label = 'cardiac_autocorrelation';
   
 elseif isfield(S.ident,'do_cardiac') && ~S.ident.do_cardiac && isfield(metrics,'cardiac_autocorrelation')
     metrics = rmfield(metrics,'cardiac_autocorrelation');
@@ -307,91 +257,45 @@ data = [];
 
 global OSLDIR
 
-if strcmp(modality,'EEG')   % changed by DM
-    chan_inds=D.indchantype('EEG', 'good');
-    map_inds(D.indchantype('EEG')) = 1:numel(D.indchantype('EEG'));
-else
-    chan_inds=D.indchantype('MEGANY', 'Good');
-    map_inds(D.indchantype('MEGANY')) = 1:numel(D.indchantype('MEGANY'));
+comp(D.badchannels,:) = 0;
+comp2view = comp(indchantype(D,modality),:);
+
+if (strcmp(modality,'MEGPLANAR')) % Average gradiometers
+    comp2view = sqrt(comp2view(1:2:end,:).^2 + comp2view(2:2:end,:).^2);
 end
-
-% SM already parsed for bad channels on line 134.
-% comp_full(map_inds(chan_inds),:)=comp;
-% comp_full(D.badchannels) = 0;
-% comp = comp_full;
-
-if (strcmp(modality,'MEGMAG')),
+    
+if (strcmp(modality,'MEGMAG'))
     cfg.channel     = {'MEGMAG'};
     cfg.layout      = [OSLDIR '/layouts/neuromag306mag.lay'];
-    chanind = strmatch(cfg.channel, D.chantype);
-    comp2view = zeros(102,size(comp,2));
-    for ind=1:length(chanind),
-        indp=(ind-1)*3+3;
-        comp2view(ind,:)=comp(indp,:);
-    end
-    
-elseif (strcmp(modality,'MEGPLANAR')),
+elseif (strcmp(modality,'MEGPLANAR'))
     cfg.channel     = {'MEGMAG'};
     cfg.layout      = [OSLDIR '/layouts/neuromag306mag.lay'];
-    chanind = strmatch(cfg.channel, D.chantype);
-    comp2view = zeros(102,size(comp,2));
-    for ind=1:length(chanind),
-        indp=(ind-1)*3+1;
-        comp2view(ind,:)=comp(indp)+comp(indp+1,:); % is this okay??
-    end
-    
-    
-elseif (strcmp(modality,'MEGGRAD')),
+elseif (strcmp(modality,'MEGGRAD'))
     cfg.channel     = {'MEG'};
     cfg.layout      = [OSLDIR '/layouts/CTF275.lay'];
-    chanind = strmatch(cfg.channel, D.chantype);
-    comp2view=comp;
-    
-elseif strcmp(modality, 'MEG'), 
-    % remaining option in use at OHBA is BTI 4D scanners for HCP data. If
-    % this changes, a more sensible parsing block will have to be included
+elseif strcmp(modality, 'MEG')
     cfg.channel = {'MEG'};
     cfg.layout  = fullfile(OSLDIR, 'layouts', '4D248.mat');
-    chanind     = D.indchantype('MEG');
-    comp2view   = comp;
-    
-    
-    
-    % elseif (strcmp(modality,'EEG')),
-    %     cfg.channel     = {'EEG'};
-    %     A=sensors(D,'EEG');
-    %     pnt=A.chanpos;
-    %     elec = [];
-    %     elec.pnt = pnt(chan_inds,:);
-    %     elec.label = A.label(chan_inds);
-    %     cfg.elec  = elec;
-    %     %cfg.layout = ft_prepare_layout(cfg);
-    %     cfg.channel={'all'};
-    %
-    %     comp2view=comp;
-    %     data.dimord='chan_comp';
-    %     data.topo=comp2view;
-    %     data.topolabel = A.label(chan_inds);
-    %     data.label = A.label(chan_inds);
-    %     data.time = {1};
-else
-    
+elseif (strcmp(modality,'EEG')),
+    error('EEG not currently supported');
+else   
     error('Unsupported modality');
 end
 
-data.dimord = 'chan_comp';
-data.topo   = comp2view;
-data.topolabel = D.chanlabels(chanind);
-data.time = {1};
+data.dimord    = 'chan_comp';
+data.topo      = comp2view;
+data.topolabel = D.chanlabels(indchantype(D,cfg.channel));
+data.time      = {1};
 
-cfg.component = 1:setdiff(size(comp),length(chan_inds));
+cfg.component   = 1:size(comp,2);
 cfg.interactive = 'no';
 cfg.comment     = 'no';
-cfg.title     = modality{:};
+cfg.title       = modality{:};
 
 cfg.layout = ft_prepare_layout(cfg);
 
 [~] = evalc('ft_topoplotIC(cfg,data);');
 topos = get(gcf,'children');
+
 end
 
