@@ -1,53 +1,8 @@
-%% osl_africa.m
-%
+function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
 % AfRICA - ArteFact Rejection using Independent Component Analysis
 %
-% Syntax: fname_out=osl_africa(S)
-% S needs to contain:
-%   -  fname: full name of input SPM object (inc. path if not in present
-%      working directory) e.g. S.fname = '/home/data/spm8_mydata'.
-%    - ica_file: user specified file name for the the ICA decomposition. If
-%      ica_file does not exist then AfRICA will save the ICA decomposition
-%      here. If it does then AfRICA will attempt to read the existing
-%      result in.
-%
-% OPTIONAL inputs:
-%   -  do_plots: set to 1 to output summary plots of artefact components
-%      (in identify_artefactual_components_auto.m) DEFAULT = 0.
-%   -  ica_params: a matlab structure containing the following fields:
-%           - num_ics: Number of indpendent components sought: DEFAULT =
-%           150.
-%           - last_eig: order of PCA prewhitening: DEFAULT = num_ics.
-%           - nonlinearity: DEFAULT = 'tanh'
-%           - stabilisation: DEFAULT = 'on'
-%           - max_iterations: DEFAULT = 1000
-%           consult fastica documentation for more information on ica_params.
-%    - used_maxfilter: set to 1 if using Maxfiltered data. DEFAULT = 0;
-
-%    - ident.func: function handle for user-specified function for selecting
-%      bad components. Default @IDENTIFY_ARTEFACTUAL_COMPONENTS_MANUAL. Use
-%      this as a template ofr custom functions.
-%    - ident: contains all settings for ident.func
-% outputs
-%   - fname_out: the name of the output SPM object. The prefix 'A' is
-%     attached to any objects that have been cleaned up with AfRICA. 
-%     e.g. fname_out = '/home/data/Aspm8_mydata.dat'
-%
-%
-% AfRICA ignores bad trials defined by D.badtrials and bad periods defined by
-% 'artefact' events using OSLVIEW. Do not reset these periods to "good"
-% after AfRICA.
-%
 % Written by Henry Luckhoo and Adam Baker
-% Maintained by adam.baker@ohba.ox.ac.uk
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MAIN FUNCTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-function [fname_out, fig_handles, fig_names, fig_titles, S]=osl_africa(S)
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SETUP %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 try
     D=spm_eeg_load(S.fname);
@@ -128,7 +83,6 @@ fig_titles  = [];
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%% PERFORM SENSOR SPACE ICA %%%%%%%%%%%%%%%%%%%%%%%%
-
 if S.todo.ica
     S.ica_res = perform_sensorspace_ica(S);
     if isfield(S,'ica_file')
@@ -156,23 +110,8 @@ elseif any(structfun(@istrue,S.todo))
 end
 
 
-% AB comment: what's with the inconsistency between ica_file and ica_res?
-% Surely we only need ica_file (containing S.ica_res)?! I'm going to sort 
-% this out, if it breaks anything then too bad!
-
-
-
-
-
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%% CLASSIFY BAD COMPONENTS %%%%%%%%%%%%%%%%%%%%%%%%
-
 if S.todo.ident
-    % Allow user-specified functions to be used to identify bad components.
-
-    
     if isfield(S,'ica_res')
         if(S.do_plots)
             [bad_components, fig_handles, fig_names, fig_titles] = feval(S.ident.func,S);
@@ -190,16 +129,14 @@ if S.todo.ident
         msg = sprintf('\n%s%s\n%','Saving bad component selection to ', S.ica_file);
         fprintf(msg);
         save(S.ica_file,'S');
-
+        
     else
         error('ICA decomposition needs to be run. Set S.todo.ica = 1 and try again');
     end
 end
 
 
-
 %%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS FROM THE DATA %%%%%%%%%%%%%%%%%%%%
-
 if S.todo.remove
     if ~isfield(S,'ica_res')
         try
@@ -217,26 +154,26 @@ if isfield(S,'logfile') && S.logfile == 1,
     diary off;
 end
 
-end
+end % MAIN FUNCTION
 
 
 
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUB-FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% perform_sensorspace_ica - subfunction to decompose meg data using fastICA
 
 function ica_res = perform_sensorspace_ica(S)
 
 D = spm_eeg_load(S.fname);
 
-% Good channels:
 if strcmp(S.modality,'EEG')
-    chan_inds = indchantype(D, 'EEG', 'GOOD');
+    chantype = 'EEG';
 else
-    chan_inds = indchantype(D, 'MEGANY', 'GOOD');
+    chantype = 'MEGANY';
 end
+
+% Good channels:
+chan_inds = indchantype(D,chantype,'GOOD');
 
 % Good samples:
 if D.ntrials == 1
@@ -246,7 +183,7 @@ else
 end
 
 % Good trials:
-trial_inds = indtrial(D,[D.condlist,'GOOD']);
+trial_inds = indtrial(D,D.condlist,'GOOD');
 
 % Select data:
 icadata = D(chan_inds,sample_inds,trial_inds);
@@ -255,9 +192,7 @@ icadata = D(chan_inds,sample_inds,trial_inds);
 icadata = reshape(icadata,size(icadata,1),[]);
 
 
-
 %%%%%%%%%%%%%%%%%%%% APPLY MAXFILTER SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%%%%
-
 if isfield(S,'used_maxfilter') && S.used_maxfilter
     num_ics_default = 62;
     mag_cutoff      = 62;
@@ -269,7 +204,6 @@ else
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%% SET FASTICA PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%
-
 if isfield(S,'ica_params')
     if isfield(S.ica_params,'num_ics');         num_ics       = S.ica_params.num_ics;         else num_ics       = num_ics_default; end
     if isfield(S.ica_params,'last_eig');        last_eig      = S.ica_params.last_eig;        else last_eig      = num_ics_default; end
@@ -289,9 +223,7 @@ end
 num_ics  = min(num_ics, size(icadata,1)); % added by DM
 last_eig = min(last_eig,size(icadata,1)); % added by DM
 
-
 %%%%%%%%%%%%%%%%%%%%  MINIMUM EIGENVALUE NORMALISATION %%%%%%%%%%%%%%%%%%%%
-
 if strcmp(S.modality,'EEG')  % added by DM
     norm_vec = max(abs(icadata(:)))/1000*ones(size(icadata,1),1);
 else
@@ -311,7 +243,6 @@ else
     norm_vec = sqrt(norm_vec);
     
 end
-
 
 eigs_preNorm  = svd(cov(icadata'));
 
@@ -337,7 +268,6 @@ if 0 == last_eig
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% ICA DECOMPOSITION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 [tc,sm,~] = fastica(icadata,                           ...
                     'g',                nonlinearity,  ...
                     'lastEig',          last_eig,      ...
@@ -360,86 +290,54 @@ ica_res.D                       = S.fname;
 ica_res.tc                      = tc;
 ica_res.sm                      = sm .* repmat(norm_vec,1,num_ics);
 
-%%%%%%%%%%%%%%%%%%%%%%%%% ESTIMATE MISSING CHANNELS %%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%% ESTIMATE MISSING CHANNELS AND EPOCHS %%%%%%%%%%%%%%%%%% 
 
-if strcmp(S.modality,'EEG')  % added by DM
-    sm_full = zeros(numel(find(any(strcmp(D.chantype,'EEG'),1))),ica_res.ica_params.num_ics);
-    map_inds(find(any(strcmp(D.chantype,'EEG'),1))) = 1:numel(find(any(strcmp(D.chantype,'EEG'),1)));
-else
-    sm_full = zeros(numel(D.indchantype('MEGANY')),ica_res.ica_params.num_ics);
-    map_inds(indchantype(D, 'MEGANY')) = 1:numel(indchantype(D, 'MEGANY'));
-end
-sm_full(map_inds(chan_inds),:) = ica_res.sm;
+sm_full = zeros(numel(indchantype(D,chantype)),num_ics);
+sm_full(chan_inds,:) = ica_res.sm;
 
+bad_timepoints = all(badsamples(D,':',':',':'));
+bad_timepoints = reshape(bad_timepoints,1,D.nsamples*D.ntrials);
 
-if D.ntrials==1;
-    badsections = all(badsamples(D,':',':',1));
-else
-    badsections = false(1,D.ntrials*D.nsamples);
+if ~isempty(indchantype(D,chantype,'BAD'))
+    subdata = D(indchantype(D,chantype,'BAD'),:,:);
+    subdata = reshape(subdata,size(subdata,1),[]);
+    sm_full(indchantype(D,chantype,'BAD'),:) = subdata(:,~bad_timepoints)*pinv(ica_res.tc);
 end
 
-if ~isempty(D.badchannels)
-    excluded_data = D(find(D.badchannels),:,setdiff(1:D.ntrials, D.badtrials));
-    excluded_data = reshape(excluded_data,size(excluded_data,1),[]); 
-    excluded_data(:,badsections)=[];
-    sm_full(D.badchannels,:) = excluded_data*pinv(ica_res.tc);
-end
+subdata = D(indchantype(D,chantype),:,:);
+subdata = reshape(subdata,size(subdata,1),[]);
+subdata = subdata(:,bad_timepoints);
+tc_full = zeros(ica_res.ica_params.num_ics,D.ntrials*D.nsamples);
+tc_full(:,~bad_timepoints) = ica_res.tc;
+tc_full(:,bad_timepoints)  = (subdata'*pinv(sm_full'))';
 
 ica_res.sm = sm_full;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%% ESTIMATE MISSING EPOCHS %%%%%%%%%%%%%%%%%%%%%%%% 
-
-excluded_timepoints = false(1,D.ntrials*D.nsamples);
-for i=1:D.ntrials
-    if ismember(i,D.badtrials)
-        excluded_timepoints(1+(i-1)*D.nsamples:i*D.nsamples) = 1;
-    end
-end
-excluded_timepoints(badsections)=true;
-
-if strcmp(S.modality,'EEG')  % added by DM
-    excluded_data = D(indchantype(D, 'EEG'),:,:);
-else
-    excluded_data = D(indchantype(D, 'MEGANY'),:,:);
-end
-excluded_data = reshape(excluded_data,size(excluded_data,1),[]); 
-
-excluded_data = excluded_data(:,excluded_timepoints);
-
-tc_full = zeros(ica_res.ica_params.num_ics,D.ntrials*D.nsamples);
-tc_full(:,~excluded_timepoints) = ica_res.tc;
-
-tc_full(:,excluded_timepoints) = (excluded_data'*pinv(sm_full'))';
 ica_res.tc = tc_full;
 
 end
 
-%% remove_bad_components - function to subtract the bad components from the
-%% MEG data via spm_eeg_montage.m
 
-function res = remove_bad_components(S) % AB - amended montage to prevent channels shuffling. Should mean that we don't need to save the raw sensor labels as should be unchanged.
+function res = remove_bad_components(S)
 
 %%%%%%%%%%%%%%%%%%%%%%%% LOAD AND PREPARE MEG DATA %%%%%%%%%%%%%%%%%%%%%%%%
 
 D = spm_eeg_load(S.fname);
 
-if strcmp(S.modality,'EEG')   % changed by DM
-    chan_inds = find(any(strcmp(D.chantype,'EEG'),1));
+if strcmp(S.modality,'EEG')
+    chantype = 'EEG';
+    use_montage = 0;
 else
-    chan_inds = indchantype(D, 'MEGANY');
+    chantype = 'MEGANY';
+    use_montage = 1;
 end
+
+% Good channels:
+chan_inds = indchantype(D,chantype);
 
 badchannels    = D.badchannels;
 bad_components = unique(S.ica_res.bad_components);
-meg_dat        = D(chan_inds,:,:);
-meg_dat        = reshape(meg_dat,size(meg_dat,1),[]);
-
-if strcmp(S.modality,'MEG')   % added by DM
-    % D = save_raw_tra_to_D(D); replaced by D.sensors('MEG').coilchan
-    use_montage = 1;
-elseif strcmp(S.modality,'EEG')
-    use_montage = 0;
-end
+megdata        = D(chan_inds,:,:);
+megdata        = reshape(megdata,size(megdata,1),[]);
 
 %%%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS USING MONTAGE %%%%%%%%%%%%%%%%%%%
 
@@ -447,7 +345,7 @@ sm = S.ica_res.sm;
 tc = S.ica_res.tc;
 
 if use_montage
-    dat_inv = pinv_plus(meg_dat', S.ica_res.ica_params.num_ics);
+    dat_inv = pinv_plus(megdata', S.ica_res.ica_params.num_ics);
     tra = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(:,bad_components)'))';
     
     montage             =  [];
@@ -455,19 +353,19 @@ if use_montage
     montage.labelnew    =  D.chanlabels(chan_inds);
     montage.labelorg    =  D.chanlabels(chan_inds);
     
-    [~,locs] = ismember(montage.labelnew,D.sensors('MEG').label);
+    [~,indx] = ismember(montage.labelnew,D.sensors('MEG').label);
     
     
-    montage.chanunitnew =  D.sensors('MEG').chanunit(locs);
-    montage.chanunitorg =  D.sensors('MEG').chanunit(locs);
-    montage.chantypenew =  lower(D.sensors('MEG').chantype(locs));
-    montage.chantypeorg =  lower(D.sensors('MEG').chantype(locs));
+    montage.chanunitnew =  D.sensors('MEG').chanunit(indx);
+    montage.chanunitorg =  D.sensors('MEG').chanunit(indx);
+    montage.chantypenew =  lower(D.sensors('MEG').chantype(indx));
+    montage.chantypeorg =  lower(D.sensors('MEG').chantype(indx));
     
     
-    if ~isempty(badchannels) % CHECK THIS!!
-        [~,bad_inds] = intersect(montage.labelorg,D.chanlabels(D.badchannels),'stable');
-        montage.tra(bad_inds,:) = 0;
-        for bi = bad_inds'
+    if ~isempty(badchannels)
+        [~,indx] = ismember(D.sensors('MEG').label,montage.labelnew);
+        montage.tra(indx,:) = 0;
+        for bi = indx'
             montage.tra(bi,bi) = 1;
         end
     end
@@ -481,7 +379,6 @@ if use_montage
     Dmontaged = spm_eeg_montage(S_montage);
     
     % rename montaged file
-    
     S_copy         = [];
     S_copy.D       = Dmontaged;
     S_copy.outfile = fullfile(D.path, ['A' D.fname]);
@@ -492,10 +389,10 @@ if use_montage
 else
     [dir,nam,~]=fileparts(fullfile(D.path,D.fname));
     fname_out=[dir '/A' nam '.dat'];
-    meg_dat_clean=meg_dat-(sm(:,bad_components)*tc(bad_components,:));
+    meg_dat_clean=megdata-(sm(:,bad_components)*tc(bad_components,:));
     
     Dclean=clone(D,fname_out,size(D));
-    Dclean(chan_inds,:)=meg_dat_clean;   % changed by DM
+    Dclean(chan_inds,:) = meg_dat_clean;   % changed by DM
     Dclean.save;
 end
 
