@@ -1,4 +1,4 @@
-function [ results_fnames ] = osl_run_subject_level( oat  )
+function [ results_fnames ] = osl_run_subject_level( oat )
 
 % [ results_fnames ] = osl_run_subject_level( oat )
 %
@@ -74,8 +74,8 @@ for subi=1:length(oat.subject_level.subjects_to_do),
 
                 if(isfield(oat.first_level,'mni_coords'))
                     
-                    current_level_mni_coord         = oat.first_level.mni_coords;
-                    subject_level_results.mni_coord = first_level_results.mni_coord;
+                    current_level_mni_coords         = oat.first_level.mni_coords;
+                    subject_level_results.mni_coords = first_level_results.mni_coords;
                     
                 else
                     
@@ -87,10 +87,10 @@ for subi=1:length(oat.subject_level.subjects_to_do),
                     S.current_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' oat.subject_level.name '_mask'];
                     
                     S.current_level=oat.subject_level;
-                    S.lower_level_mni_coord=first_level_results.mni_coord;
+                    S.lower_level_mni_coord=first_level_results.mni_coords;
                     S.lower_level_gridstep=first_level_results.gridstep;
                     
-                    [subject_level_results.mask_indices_in_lower_level,subject_level_results.mni_coord]=setup_mask_indices(S);
+                    [subject_level_results.mask_indices_in_lower_level,subject_level_results.mni_coords]=setup_mask_indices(S);
                     
                     clear S
                 end;

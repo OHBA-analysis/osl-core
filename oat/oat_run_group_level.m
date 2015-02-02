@@ -77,7 +77,7 @@ for subi=1:length(current_level.subjects_to_do),
                     current_level_mni_coord = oat.first_level.mni_coords;
                 end
                 
-                lower_level_mni_coord=lower_level_results.mni_coord;
+                lower_level_mni_coord=lower_level_results.mni_coords;
                 
                 [~, iA, mask_indices]=intersect(current_level_mni_coord, lower_level_mni_coord,'rows');
                 
@@ -86,7 +86,7 @@ for subi=1:length(current_level.subjects_to_do),
                 indices_in_lower_level=mask_indices(gg);
                 
                 current_level_results.mask_indices_in_lower_level = indices_in_lower_level;
-                current_level_results.mni_coord = lower_level_mni_coord(indices_in_lower_level,:);
+                current_level_results.mni_coords = lower_level_mni_coord(indices_in_lower_level,:);
                 
                 % the mni coordinates from the specified list
                 str=['Desired MNI coordinates ' ];
@@ -112,10 +112,10 @@ for subi=1:length(current_level.subjects_to_do),
                 S.current_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' lower_level.name '_' current_level.name '_mask'];
                 
                 S.current_level=current_level;
-                S.lower_level_mni_coord=lower_level_results.mni_coord;
+                S.lower_level_mni_coord=lower_level_results.mni_coords;
                 S.lower_level_gridstep=lower_level_results.gridstep;
                 
-                [current_level_results.mask_indices_in_lower_level,current_level_results.mni_coord,currmask]=setup_mask_indices(S);
+                [current_level_results.mask_indices_in_lower_level,current_level_results.mni_coords,currmask]=setup_mask_indices(S);
                 
                 % group level mask for doing spatial averaging
                 stdbrain_fname  = S.current_level_mask_fname;
@@ -241,7 +241,7 @@ Nvoxels_out=length(current_level_results.mask_indices_in_lower_level);
 if(current_level.space_average),
     Nvoxels_out=1;
     if ~strcmp(current_level_results.recon_method,'none'),
-        current_level_results.mni_coord=mean(current_level_results.mni_coord,1);
+        current_level_results.mni_coords=mean(current_level_results.mni_coords,1);
     end;
 end;
 
