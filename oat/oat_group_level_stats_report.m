@@ -269,7 +269,7 @@ else
         % stats plots at max voxel
         S2=[];
         S2.stats=stats;
-        S2.vox_coord=stats.mni_coord(vox_ind_max,:); % can change to this setting to plot the time courses at the voxel with the max t-stat
+        S2.vox_coord=stats.mni_coords(vox_ind_max,:); % can change to this setting to plot the time courses at the voxel with the max t-stat
         S2.first_level_cons_to_do=first_level_cons_to_do; % plots all of these contrasts
         S2.group_level_cons_to_do=group_level_cons_to_do; % plots all of these contrasts
         [fig_handle fig_name fig_title] = oat_plot_vox_stats(S2);
@@ -387,7 +387,7 @@ else
             S2=[];                
             S2.percrange=[96 99.9];
             %S2.percrange=[70 99.9];
-            S2.mni_coord=group_level_results.mni_coord(vox_ind_max,:);
+            S2.mni_coord=group_level_results.mni_coords(vox_ind_max,:);
             S2.title='';
 
             for gconi=1:length(group_level_cons_to_do),  
@@ -455,7 +455,7 @@ else
                     S2=[];                
                     S2.percrange=[96 99.9];
                     %S2.percrange=[70 99.9];
-                    S2.mni_coord=group_level_results.mni_coord(vox_ind_max,:);
+                    S2.mni_coord=group_level_results.mni_coords(vox_ind_max,:);
                     S2.title='';
                     S2.fname=[statsdir '/cope' num2str(con) '_' num2str(resamp_gridstep) 'mm'];                              
                     ortho_overlay_act( S2 ); 
