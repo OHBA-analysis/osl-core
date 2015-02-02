@@ -1,4 +1,5 @@
 function osl_hmm_plotstatepath(hmm,options)
+
 % Plots the HMM statepath
 % osl_hmm_plotstatepath(hmm)
 % osl_hmm_plotstatepath(hmm,options)
@@ -19,7 +20,7 @@ mode=options.mode;
 try t0=options.t0; catch t0 = 0; end; % start time point in secs
 try bc=options.bc; catch bc = []; end; % baseline correct epoched states using this time range
 try win=options.win; catch win = []; end; % smoothing 
-try epoched_statepath_sub=options.epoched_statepath_sub; catch epoched_statepath_sub = []; end; 
+try epoched_statepath_sub=hmm.epoched_statepath_sub; catch epoched_statepath_sub = []; end; 
 
 if ~isfield(hmm,'fsample') || isempty(hmm.fsample)
     fs = 1;
@@ -29,50 +30,64 @@ end
 
 cla(gca); hold(gca,'on')
 
-k = max(hmm.statepath);
-
 col = colormap(gca,'lines');
 
-leg=[];
-for s = 1:k
-  
-  if isempty(epoched_statepath_sub)
-    tmp=double(logical(hmm.statepath==s));
-  else
-    count=0;
-    tmp=zeros(1,size(epoched_statepath_sub{1},2));
-    for sub = 1:length(epoched_statepath_sub)
-        stateinds=double(logical(epoched_statepath_sub{sub}==s));
-        tmp=tmp+sum(stateinds,3);
-        count=count+size(stateinds,3);
-    end;
-    tmp=tmp/count;
-  end;
-  
-  if ~isempty(win)
-    FO = conv(tmp,rectwin(fs*win),'same')./ (fs*win);
-  else
-    FO=tmp;
-  end;
-  
-  ts=linspace(t0,t0+length(FO)/fs,length(FO));
+k = max(hmm.statepath);
 
-  if ~isempty(bc)
-    FO=FO-mean(FO(intersect(ts>bc(1),ts < bc(2))))
-  end;
-  
-  if strcmp(mode,'separate'),      
-    plot(ts,0.8*FO + s - 0.4,'color',col(s,:));
-    xlabel('Time (s)'); ylabel('State #')
-  else
-    plot(ts,FO,'color',col(s,:));  
-    xlabel('Time (s)'); ylabel('FO')
-    leg=[leg; 's' num2str(s)];
+num_conds=size(epoched_statepath_sub,2);
+
+for condnum = 1:num_conds,
+    if 1,%num_conds>1, 
+        figure;
+        subplot(1,num_conds,condnum);
+        cla(gca); hold(gca,'on')
+
+        title(['Cond ' num2str(condnum)]);
+    end;
     
-  end;  
-  
-  %plot((1:length(hmm.statepath))/fs, 0.8*double(hmm.statepath==s)+ s - 0.4,'color',col(s,:));
-end
+    leg=[];
+    for s = 1:k
+
+      if isempty(epoched_statepath_sub)
+        tmp=double(logical(hmm.statepath==s));
+      else
+        count=0;
+
+        tmp=zeros(1,size(epoched_statepath_sub{1,condnum},2));
+        for sub = 1:length(epoched_statepath_sub)                           
+            stateinds=double(logical(epoched_statepath_sub{sub,condnum}==s));
+            tmp=tmp+sum(stateinds,3);
+            count=count+size(stateinds,3);
+        end;            
+
+        tmp=tmp/count;
+      end;
+
+      if ~isempty(win)
+        FO = conv(tmp,rectwin(fs*win),'same')./ (fs*win);
+      else
+        FO=tmp;
+      end;
+
+      ts=linspace(t0,t0+length(FO)/fs,length(FO));
+
+      if ~isempty(bc)
+        FO=FO-mean(FO(intersect(ts>bc(1),ts < bc(2))))
+      end;
+
+      if strcmp(mode,'separate'),      
+        plot(ts,0.8*FO + s - 0.4,'color',col(s,:),'LineWidth',2);
+        xlabel('Time (s)'); ylabel('State #')
+      else
+        plot(ts,FO,'color',col(s,:),'LineWidth',2);  
+        xlabel('Time (s)'); ylabel('FO')
+        leg=[leg; 's' num2str(s)];
+
+      end;  
+
+      %plot((1:length(hmm.statepath))/fs, 0.8*double(hmm.statepath==s)+ s - 0.4,'color',col(s,:));
+    end
+end;
 
 legend(leg);
 

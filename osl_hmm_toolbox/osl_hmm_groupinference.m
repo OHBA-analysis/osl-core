@@ -321,7 +321,7 @@ if todo.infer
     
     %%%%%%%%%%%%%%%%
     % Sort this OUT!
-    if 0
+    if 1
         %tilde='/Users/woolrich';
         %addpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));
         global OSLDIR
@@ -386,7 +386,20 @@ if todo.output
                 end
                 
                 subjstart_index=1;
-                epoched_statepath_sub=cell(length(data_files),1);
+                
+                %%%% find out number of conditions
+                subnum=1;
+                if ~isempty(multiband)
+                    D = spm_eeg_load(strrep(filenames.envelope{subnum},'.mat',['_',strrep(num2str(multiband{f}),'  ','_') 'Hz.mat']));
+                else
+                    D = spm_eeg_load(filenames.envelope{subnum});
+                end
+                num_conds=length(D.condlist);
+                clear D;
+                %%%%%
+                
+                epoched_statepath_sub=cell(length(data_files),num_conds);
+                
                 for subnum = 1:length(data_files)
                     
                     try
@@ -397,18 +410,18 @@ if todo.output
                         end
                         disp(['Computing ' output_method ' maps for ' D.fname]);
                         
-                        env_concat_sub=[];
+                        env_concat_sub=[];                                                
                         
-                        epoched_statepath_sub{subnum}=zeros(1,D.nsamples,D.ntrials);
-                
                         % use all conditions
                         trialstart_index=1;
-                        for condnum = 1:length(D.condlist),
-
+                        for condnum = 1:num_conds,
                             trials = D.indtrial(D.condlist{condnum},'good'); 
-
+                            
+                            epoched_statepath_sub{subnum, condnum}=zeros(1,D.nsamples,length(trials));
+                                                      
                             for trl=1:length(trials),                            
                                 tbad = all(badsamples(D,':',':',trl));
+                                
                                 samples2use = find(~tbad);
                                 env = D(:,samples2use,trl); %#ok - SPM doesn't like logical indexing                                                                
                                 
@@ -421,8 +434,9 @@ if todo.output
 
                                 env_concat_sub = [env_concat_sub,env];                                                                    
                                 
-                                epoched_statepath_sub{subnum}(1,samples2use,trl)=hmm.statepath(trialstart_index:trialstart_index+size(env,2)-1);
+                                epoched_statepath_sub{subnum, condnum}(1,samples2use,trl)=hmm.statepath(trialstart_index:trialstart_index+size(env,2)-1);
                                 trialstart_index=trialstart_index+size(env,2);
+                                                    
                             end;
                         end;                    
                     
@@ -440,7 +454,7 @@ if todo.output
                                 
                 end
                 
-                stat = stat ./ length(unique(subj_inds));
+                stat = stat ./ length(data_files);
                 disp(['Saving state spatial maps to ' statemaps])
                 statemaps = nii_quicksave(stat,statemaps,getmasksize(D.nchannels),2);
                
