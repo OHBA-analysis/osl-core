@@ -338,7 +338,7 @@ for cc=1:length(current_level.first_level_contrasts_to_do),
                     
                 else
                     
-                    f = fftshift(mwgauss(current_level.time_smooth_std/tres,1,length(datstd))');
+                    f = fftshift(osl_gauss(current_level.time_smooth_std/tres,1,length(datstd))');
                     
                     dat2 = fftconv(dat,f);
                     dat2std = fftconv(datstd,f);
@@ -466,7 +466,7 @@ for cc=1:length(current_level.first_level_contrasts_to_do),
                     
                     st=current_level.group_varcope_time_smooth_std;
                     
-                    fc = fftshift(mwgauss(st/tres,1,length(dat))');
+                    fc = fftshift(osl_gauss(st/tres,1,length(dat))');
                     dat2 = fftconv(dat,fc);
                     current_level_results.stdcope(vox,:,c,f,gc)=dat2;
                     
