@@ -1,10 +1,10 @@
 function D = osl_inverse_model(S)
-% NOSL_INVERSE_MODEL runs MEG forward model in SPM12
+% OSL_INVERSE_MODEL runs MEG forward model in SPM12
 %
 % This function passes a limited set of parameters to SPM batch and returns
 % an SPM object containing the inverse solution in an online montage.
 %
-% D = nosl_inverse_model(S)
+% D = osl_inverse_model(S)
 % 
 % REQUIRED INPUTS:
 %
@@ -36,7 +36,7 @@ function D = osl_inverse_model(S)
 %                     (default is 0)
 %
 % S.inverse_method - inverse method to use
-%                     (default is to use 'nosl')
+%                     (default is to use 'beamform')
 %
 % S.conditions     - conditions to use
 %                     (default is to use all)
@@ -129,10 +129,10 @@ end
 
 % Check inverse_method Specification:
 try
-    S = ft_checkopt(S,'inverse_method','char',{'nosl','beamform','beamform_bilateral','mne_eye','mne_diag_datacov'});
+    S = ft_checkopt(S,'inverse_method','char',{'beamform','beamform_bilateral','mne_eye','mne_diag_datacov'});
 catch 
     warning('inverse_method specification not recognised or incorrect, assuming fuse=no for now')
-    S = ft_setopt(S,'inverse_method','nosl');
+    S = ft_setopt(S,'inverse_method','beamform');
 end
 
 % Check use_class_channel Specification:
@@ -235,10 +235,6 @@ switch S.inverse_method,
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.noise_cov_type = 'eye';    
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.lambda         = mne_lambda;
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.type           = S.type;
-    case 'nosl'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.pca_order         = S.pca_order;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.keeplf            = true;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_nosl.type              = S.type;
     otherwise 
         disp('Inversion method unknown!');        
 end

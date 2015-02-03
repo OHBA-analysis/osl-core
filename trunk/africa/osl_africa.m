@@ -387,9 +387,9 @@ if use_montage
     Dmontaged.delete;
     
 else
-    [dir,nam,~]=fileparts(fullfile(D.path,D.fname));
-    fname_out=[dir '/A' nam '.dat'];
-    meg_dat_clean=megdata-(sm(:,bad_components)*tc(bad_components,:));
+    [dir,nam,~] = fileparts(fullfile(D.path,D.fname));
+    fname_out = [dir '/A' nam '.dat'];
+    meg_dat_clean = megdata-(sm(:,bad_components)*tc(bad_components,:));
     
     Dclean=clone(D,fname_out,size(D));
     Dclean(chan_inds,:) = meg_dat_clean;   % changed by DM

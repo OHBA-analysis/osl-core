@@ -8,7 +8,7 @@ if currentMontage == 0
 else
     
     D = D.montage('switch');
-    tbad = any(badsamples(D,':',':',':'));
+    tbad = all(badsamples(D,':',':',':'));
     C = cov(D(:,find(~tbad))'); %#ok - logical indexing didn't work...
     V = diag(D.montage('getmontage',currentMontage).tra * C * D.montage('getmontage',currentMontage).tra');
 end
