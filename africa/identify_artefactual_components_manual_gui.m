@@ -36,6 +36,8 @@ specWindow   = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
 metricWindow = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
 covWindow    = axes('parent',MainFig, 'units', 'pixels','DrawMode','fast');
 topoWindow = [];
+
+
 for m = 1:size(topos,2)
     topoWindow(m) = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
 end
@@ -252,6 +254,9 @@ uiwait(MainFig)
         currentbar = barh(currentbar);  set(currentbar, 'FaceColor', currentcolor) 
         axis(metricWindow,'tight','off')
         set(metricWindow,'ydir','reverse')
+        
+        linkaxes([tICWindow,covWindow],'x');
+
     end
 
 

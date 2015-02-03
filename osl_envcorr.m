@@ -7,7 +7,7 @@ function C = osl_envcorr(S)
 % D             - MEEG object containing the data
 % seedind       - index into channel/voxel in D for the seed
 % targetind     - indices into channel(s)/voxel(s) for the target
-% winsize       - moving average window size to use
+% winsize       - moving average window size to use (samples)
 % orthogonalise - apply orthogonalisation to remove signal leakage [0/1]
 %
 % Adam Baker 2014
