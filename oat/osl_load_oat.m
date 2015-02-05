@@ -19,9 +19,9 @@ else
         
         oat=oatdir;
         oatdir=oat.source_recon.dirname;
-        first_level_name=oat.first_level.name;
-        subject_level_name=oat.subject_level.name;
-        group_level_name=oat.group_level.name;
+        try, first_level_name=oat.first_level.name; catch first_level_name='first_level'; end;
+        try, subject_level_name=oat.subject_level.name; catch subject_level_name='sub_level'; end;
+        try, group_level_name=oat.group_level.name; catch group_level_name='group_level'; end;
         
     else
         
