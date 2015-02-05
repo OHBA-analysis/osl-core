@@ -1,41 +1,78 @@
 function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
 % AfRICA - ArteFact Rejection using Independent Component Analysis
+% performs ICA denoising of MEG data using either semi-manual or automated 
+% identification artefact components.
+%
+% [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
+%
+% REQUIRED INPUTS:
+%
+% S.D           - SPM MEG object filename
+%
+% S.ica_file    - .mat file in which to save ica results
+%
+%
+% OPTIONAL INPUTS 
+%
+% S.todo        - structure with fields:
+%                   .ica    - [0/1] to run ica decomposition
+%                   .ident  - [0/1] to run artefact identification
+%                   .remove - [0/1] to run artefact removal
+%
+% S.ident       - structure with fields:
+%                   .func - function handle to identification function
+%                           e.g. @identify_artefactual_components_manual
+%                   .{extra fields depending on .func}                   
+%
+% S.logfile     - write logfile [0/1], default = 1
+%
+% S.modality    - modality to use, default = 'MEG'
+%
+% S.do_plots    - produce diagnostic plots, default = 0
+%
+% S.used_maxfilter - [0/1] if Maxfilter has been used, default = 0
 %
 % Written by Henry Luckhoo and Adam Baker
 
 
+
+% Check SPM File Specification:
 try
-    D=spm_eeg_load(S.fname);
-    S.D=D;
+    S.D = char(S.D);
+    [pathstr,filestr] = fileparts(S.D);
+    S.D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
+    D = spm_eeg_load(S.D);
 catch
-    error('Can not find SPM file from S.fname')
+    if isfield(S,'fname')
+        warning('S.fname is deprecated, please use S.D instead')
+    end
+    error('SPM file specification not recognised or incorrect');
 end
 
 if ~isfield(S,'ica_file') || isempty(S.ica_file)
     error('No file specified in S.ica_file for saving AFRICA results')
 end
 
+[pathstr,name] = fileparts(S.ica_file);
+if isempty(pathstr)
+    pathstr = D.path;
+end
+S.ica_file = fullfile(pathstr,[name '.mat']);
 
-[dir,nam]=fileparts(S.fname);
-fname_out=[dir '/A' nam '.dat'];
-
-if isfield(S,'ica_file')
-  [pathstr, name, ext] = fileparts(S.ica_file);
-    if isempty(pathstr)
-        pathstr = dir;
-    end
-    if isempty(ext)
-        ext = '.mat';
-    end
-    S.ica_file = fullfile(pathstr,[name ext]);      
+if isfield(S,'logfile') && S.logfile == 1
+    logfile = fullfile(pathstr,D.fname,'_log.txt');
+  if exist(logfile,'file')
+    unix(['rm ' logfile]);
+  end
+  	diary(logfile);
 end
 
 if not(isfield(S,'modality'))   % added by DM
-    S.modality='MEG';
+    S.modality = 'MEG';
 end
 
 if not(isfield(S,'do_plots'))   % added by DM
-    S.do_plots=0;
+    S.do_plots = 0;
 end
 
 if ~isfield(S,'todo');
@@ -61,17 +98,6 @@ end
 if ~isfield(S.ident,'func')
     S.ident.func = @identify_artefactual_components_manual;
 end
-
-
-if isfield(S,'logfile') && S.logfile == 1
-  logdir = [dir '/Africa_logs/'];
-  if ~isdir(logdir), mkdir(logdir); end
-  if exist([logdir nam '_log.txt'],'file')
-    unix(['rm ' logdir nam '_log.txt']);
-  end
-  	diary([logdir nam '_log.txt']);
-end
-
 
 if ~isfield(S,'used_maxfilter'); 
     S.used_maxfilter = 0;
@@ -164,7 +190,7 @@ end % MAIN FUNCTION
 
 function ica_res = perform_sensorspace_ica(S)
 
-D = spm_eeg_load(S.fname);
+D = spm_eeg_load(S.D);
 
 if strcmp(S.modality,'EEG')
     chantype = 'EEG';
@@ -286,7 +312,7 @@ ica_res = [];
 ica_res.ica_params.num_ics      = num_ics;
 ica_res.ica_params.last_eig     = last_eig;
 ica_res.ica_params.nonlinearity = nonlinearity;
-ica_res.D                       = S.fname;
+ica_res.D                       = S.D;
 ica_res.tc                      = tc;
 ica_res.sm                      = sm .* repmat(norm_vec,1,num_ics);
 
@@ -321,7 +347,7 @@ function res = remove_bad_components(S)
 
 %%%%%%%%%%%%%%%%%%%%%%%% LOAD AND PREPARE MEG DATA %%%%%%%%%%%%%%%%%%%%%%%%
 
-D = spm_eeg_load(S.fname);
+D = spm_eeg_load(S.D);
 
 if strcmp(S.modality,'EEG')
     chantype = 'EEG';
