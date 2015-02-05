@@ -252,9 +252,9 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
                 trials = D.indtrial(D.condlist{condnum},'good'); 
 
                 for trl=1:length(trials),                            
-                    tbad = all(badsamples(D,':',':',trl));
+                    tbad = all(badsamples(D,':',':',trials(trl)));
                     samples2use = find(~tbad);
-                    env = D(:,samples2use,trl); %#ok - SPM doesn't like logical indexing
+                    env = D(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing
 
                     if logtrans
                         env = log10(env);
@@ -420,10 +420,10 @@ if todo.output
                             epoched_statepath_sub{subnum, condnum}=zeros(1,D.nsamples,length(trials));
                                                       
                             for trl=1:length(trials),                            
-                                tbad = all(badsamples(D,':',':',trl));
+                                tbad = all(badsamples(D,':',':',trials(trl)));
                                 
                                 samples2use = find(~tbad);
-                                env = D(:,samples2use,trl); %#ok - SPM doesn't like logical indexing                                                                
+                                env = D(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing                                                                
                                 
                                 if logtrans
                                     env = log10(env);
@@ -434,7 +434,7 @@ if todo.output
 
                                 env_concat_sub = [env_concat_sub,env];                                                                    
                                 
-                                epoched_statepath_sub{subnum, condnum}(1,samples2use,trl)=hmm.statepath(trialstart_index:trialstart_index+size(env,2)-1);
+                                epoched_statepath_sub{subnum, condnum}(1,samples2use,trials(trl))=hmm.statepath(trialstart_index:trialstart_index+size(env,2)-1);
                                 trialstart_index=trialstart_index+size(env,2);
                                                     
                             end;
