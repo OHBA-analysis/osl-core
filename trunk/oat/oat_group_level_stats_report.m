@@ -298,8 +298,8 @@ else
                 fig_name{coni}=['lower_level_cope_ts_at_maxt_c' num2str(con) '_gc' num2str(con)];  
                 fig_title{coni}=['Lower level COPEs for c' num2str(con) ' [' oat.first_level.contrast_name{con} '], at t=' num2str(group_level_results.times(time_ind_max)) 'secs, f=' mat2str(group_level_results.frequency_ranges(freq_ind_max,:)) 'Hz'];  
                 fig_title{coni}=[fig_title{coni} ' (Max found using c' num2str(first_level_cons_to_do(1)) ', gc' num2str(group_level_cons_to_do(1)) ')'];
-                plot(time_range,permute(group_level_results.lower_level_copes{con}(vox_ind_max,:,:),[2,3,1,4]),'LineWidth',2);ho;
-                plot(time_range,squeeze(mean(group_level_results.lower_level_copes{con}(vox_ind_max,:,:),2)),'LineWidth',4);
+                plot(time_range,permute(group_level_results.lower_level_copes{con}(vox_ind_max,:,time_idx),[2,3,1,4]),'LineWidth',2);ho;
+                plot(time_range,squeeze(mean(group_level_results.lower_level_copes{con}(vox_ind_max,:,time_idx),2)),'LineWidth',4);
                 plot4paper('time (secs)','1st level cope'); 
                     
             end;
