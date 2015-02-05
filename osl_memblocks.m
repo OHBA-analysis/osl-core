@@ -10,7 +10,7 @@ if nargin < 3
     MaxMem = 200*2^20; % bytes
 end
 
-Mem_blk = 8*size(X,setxor(dim,[1,2]));
+Mem_blk = 8*prod(size(X,setxor(dim,1:length(size(X))))); %#ok
 
 blk_size = floor(MaxMem./Mem_blk);
 blks     = 0:blk_size:size(X,dim);
