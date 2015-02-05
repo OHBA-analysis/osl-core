@@ -34,7 +34,11 @@ col = colormap(gca,'lines');
 
 k = max(hmm.statepath);
 
-num_conds=size(epoched_statepath_sub,2);
+if isempty(epoched_statepath_sub)
+    num_conds=1;
+else
+    num_conds=size(epoched_statepath_sub,2);
+end;
 
 for condnum = 1:num_conds,
     if 1,%num_conds>1, 
@@ -89,14 +93,14 @@ for condnum = 1:num_conds,
     end
 end;
 
-legend(leg);
-
 if strcmp(mode,'separate'),
     ylabel('State #')
  
     set(gca,'ylim',[0 hmm.K]+0.5)
 else
     ylabel('FO')
+    
+    legend(leg);
 end;
 
 if ~isfield(hmm,'fsample') || isempty(hmm.fsample)
