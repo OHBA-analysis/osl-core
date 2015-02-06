@@ -176,7 +176,7 @@ else % default
 end%if
 
 % Check Plotting Specification:
-S.do_plots   = ft_getopt(S,'do_plots',   1);
+S.do_plots   = ft_getopt(S,'do_plots',   0);
 S.multistart = ft_getopt(S,'multistart', 10);
 
 if isfield(S,'useCTFhack') && S.useCTFhack == 1; % To be removed once my nottingham structurals have been converted correctly...
