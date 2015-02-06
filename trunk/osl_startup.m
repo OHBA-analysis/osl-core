@@ -78,34 +78,34 @@ targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 filelist{end+1}='osl2/spm-beamforming-toolbox-osl-addons/bf_write_spmeeg_osl.m';
 targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
-filelist{end+1}='osl2/spm-changes/ft_read_event_4osl.m';
+filelist{end+1}='osl2/spm-changes/private/ft_read_event_4osl.m';
 targetdir{end+1}='spm12/external/fieldtrip/fileio';
 
-filelist{end+1}='osl2/spm-changes/read_trigger_4osl.m';
+filelist{end+1}='osl2/spm-changes/private/read_trigger_4osl.m';
 targetdir{end+1}='spm12/external/fieldtrip/fileio/private';
 
-filelist{end+1}='osl2/spm-changes/badsamples.m';
+filelist{end+1}='osl2/spm-changes/private/badsamples.m';
 targetdir{end+1}='spm12/@meeg';
 
-filelist{end+1} = 'osl2/spm-changes/undobalancing.m';
+filelist{end+1} = 'osl2/spm-changes/private/undobalancing.m';
 targetdir{end+1}='spm12/external/fieldtrip/forward/private/';
 
-filelist{end+1} = 'osl2/spm-changes/undobalancing.m';
+filelist{end+1} = 'osl2/spm-changes/private/undobalancing.m';
 targetdir{end+1}='spm12/external/fieldtrip/plotting/private/';
 
-filelist{end+1} = 'osl2/spm-changes/undobalancing.m';
+filelist{end+1} = 'osl2/spm-changes/private/undobalancing.m';
 targetdir{end+1}='spm12/external/fieldtrip/fileio/private/';
 
-filelist{end+1} = 'osl2/spm-changes/undobalancing.m';
+filelist{end+1} = 'osl2/spm-changes/private/undobalancing.m';
 targetdir{end+1}='spm12/external/fieldtrip/utilities/private/';
 
-filelist{end+1} = 'osl2/spm-changes/undobalancing.m';
+filelist{end+1} = 'osl2/spm-changes/private/undobalancing.m';
 targetdir{end+1}='spm12/external/fieldtrip/private/';
 
-filelist{end+1} = 'osl2/spm-changes/ft_headmodel_localspheres.m';
+filelist{end+1} = 'osl2/spm-changes/private/ft_headmodel_localspheres.m';
 targetdir{end+1}='spm12/external/fieldtrip/forward/';
 
-filelist{end+1}='osl2/spm-changes/path.m';
+filelist{end+1}='osl2/spm-changes/private/path.m';
 targetdir{end+1}='spm12/@meeg';
 
 for kk=1:length(filelist),
