@@ -58,13 +58,8 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %	Contact: giles.colclough@magd.ox.ac.uk
 %	Originally written on: GLNXA64 by Giles Colclough, 19-Jan-2015 14:40:17
 
-%%%%% Questions for mark:
-%%%%%                   why demean the covariance matrices?
-%%%%%                   why set the default value of lambda to 1.0./mean(diag(SensorData.cov))?
-%%%%%                   why estimate source directions from the inverse
-%%%%%                   covariance?
 global DEBUG
-DEBUG = true;
+DEBUG = false;
 
 %% Input Checking
 % Sensor data covariance 
@@ -105,6 +100,8 @@ switch lower(Options.sourceModel)
         sourceCov = mne_estimate(SensorData, Noise, LeadFields);
     case 'sparsebayes'
         sourceCov = sparse_bayes_estimate(SensorData, Noise, LeadFields);
+    case 'noisescaling'
+        sourceCov = mne_double_search_estimate(SensorData, Noise, LeadFields);
     otherwise
         error([mfilename ':InvalidSourceMethod'], ...
               'The chosen source method %s is not recognised. \n', ...
@@ -113,8 +110,8 @@ end%switch
 
 %% Extract weights using Tikhonov regularised form
 % equation 13 from Wipf and Nagarajan (2009).
-W_3d = sourceCov * LeadFields.lf.' / ...               % A / B = A * inv(B)
-       empirical_bayes_cov(Noise.cov, sourceCov, LeadFields.lf);
+W_3d = sourceCov * LeadFields.lf.' * inverse( ...      % A / B = A * inv(B)
+       empirical_bayes_cov(Noise.cov, sourceCov, LeadFields.lf));
    
 %% Parse into cell array and normalise weights
 for iVox = LeadFields.nSources:-1:1, % initialise matrices by looping backwards
@@ -178,6 +175,9 @@ function sensorCov = empirical_bayes_cov(noiseCov, sourceCov, lf3d)
 
 sensorCov = noiseCov + lf3d * sourceCov * lf3d.';
 
+% ensure real - sometimes goes a bit off. 
+sensorCov = real(sensorCov);
+
 end%empirical_bayes_cov
 
 
@@ -194,7 +194,7 @@ k = sum(eig(LeadFields.lf * LeadFields.lf.', Noise.cov)) ./ ...
      (sum(eig(SensorData.cov, Noise.cov)) - SensorData.nSensors); 
 
 % In our formulation, gamma = 1/k and C = I
-sourceCov = (1.0 ./ k) * eye(LeadFields.nDims * LeadFields.nSources);
+sourceCov = (1.0 ./ real(k)) * eye(LeadFields.nDims * LeadFields.nSources);
 
 end%wens_estimate
 
@@ -213,7 +213,7 @@ function sourceCov = mne_estimate(Data, Noise, LeadFields)
 % 1/gamma = 0.5 exp(-f(gamma)) => f(gamma) = log(gamma) - log(2)
 global DEBUG
 
-sourceCovFn     = @(logGamma) exp(logGamma) .* ...
+sourceCovFn     = @(logGamma) exp(real(logGamma)) .* ...
                               eye(LeadFields.nDims * LeadFields.nSources);
                           
 optimise_target = @(logGamma) optimise_target_Jeffreys_prior(Data, Noise, ...
@@ -222,7 +222,7 @@ optimise_target = @(logGamma) optimise_target_Jeffreys_prior(Data, Noise, ...
 % variance of data can change by factor of e^5 relative to noise
 noiseToLFScale = median(log(diag(Noise.cov))) - ...
                  median(0.5.*log(sum(LeadFields.lf.^2)));
-logGammaBound  =noiseToLFScale + [-10 20]; 
+logGammaBound  = noiseToLFScale + [-10 20]; 
 
 % optimise using a golden section search and parabolic interpolation
 logGamma      = fminbnd(optimise_target, logGammaBound(1), logGammaBound(2));
@@ -239,8 +239,64 @@ end%if DEBUG
 end%mne_Jeffreys_prior_estimate
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function sourceCov = mne_double_search_estimate(Data, Noise, LeadFields)
+%MNE_DOUBLE_SEARCH_ESIMATE regularized source covariance with noise scaling
+%
+% Estimates source covariance for MNE, using a white covariance matrix,
+% with a single scaling parameter. Places a Jeffrey's prior on the scale
+% parameter, i.e. p(gamma) ~ 1/gamma, or p(log(gamma)) ~ 1.
+% Allows an additional parameter to control scaling between noise and data
+% Eq 7 from Wipf and Nagarajan (2009)
+% 1/gamma = 0.5 exp(-f(gamma)) => f(gamma) = log(gamma) - log(2)
+global DEBUG
 
+sourceCovFn     = @(logGamma) exp(real(logGamma)) .* ...
+                              eye(LeadFields.nDims * LeadFields.nSources);
+                          
+optimise_target = @(params) optimise_target_double_Jeffreys_prior(Data, ...
+                                   Noise, LeadFields, params, sourceCovFn);
+                                    
+% put noise and sources are on same scale
+noiseToLFScale = median(log(diag(Noise.cov))) - ...
+                 median(0.5.*log(sum(LeadFields.lf.^2)));
+logGammaInit   = noiseToLFScale; 
 
+% put data and noise on scale set by smallest eigenvalue
+dataEigVals  = eig(Data.cov);
+noiseEigVals = eig(Noise.cov);
+
+NoiseToDataScale = log(noiseEigVals(end)) - log(dataEigVals(end));
+logRhoInit       = NoiseToDataScale;
+
+paramsInit     = [logGammaInit; logRhoInit];
+
+% optimise using a multivariate nonlinear Nelder-Mead minimization
+params    = fminsearch(optimise_target, paramsInit);
+logGamma  = params(1);
+sourceCov = sourceCovFn(logGamma);
+
+if DEBUG,
+    lrBound = real(log10(exp(logRhoInit))) + [-7 7];
+    lgBound = real(log10(exp(logGammaInit))) + [-15 15];
+    nR      = 40;
+    nG      = 60;
+    lr      = log(logspace(lrBound(1), lrBound(2), nR));
+    lg      = log(logspace(lgBound(1), lgBound(2), nG));
+    for iR = length(lr):-1:1,
+        for iG = length(lg):-1:1,
+            L(iG,iR) = optimise_target([lg(iG), lr(iR)]);
+        end%for
+    end%for
+    
+    figure('Color', 'w', 'Name', 'Optimisation target for log(gamma)');
+    surfl(real(lr), real(lg), real(L));
+    colormap pink
+    xlabel('Log (\rho)');
+    ylabel('Log (\gamma)');
+    zlabel('L');
+end%if DEBUG
+end%mne_Jeffreys_prior_estimate
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function sourceCov = sparse_bayes_estimate(Data, Noise, LeadFields)
@@ -253,7 +309,7 @@ function sourceCov = sparse_bayes_estimate(Data, Noise, LeadFields)
 % Eq 7 from Wipf and Nagarajan (2009)
 %  f(gamma) = log(gamma) - log(2)
 
-sourceCovFn     = @(logGamma) diag(exp(logGamma));
+sourceCovFn     = @(logGamma) diag(exp(real(logGamma)));
 
 optimise_target = @(logGamma) optimise_target_Jeffreys_prior(Data, Noise, ...
                                         LeadFields, logGamma, sourceCovFn);
@@ -295,8 +351,47 @@ if DEBUG,
     else
         iTARGETCALL = iTARGETCALL + 1;
     end%if
-    fprintf('Call to optim fn %4.0d: L = %0.8G, logGamma = %0.4G, logdet(Sigma_EB) = %0.6G. \n', ...
+    fprintf(['Call to optim fn %4.0d: L = %0.8G, logGamma = %0.4G, ', ...
+             'logdet(Sigma_EB) = %0.6G. \n'],                         ...
             iTARGETCALL, L, logGamma, ROInets.logdet(Sigma_EB, 'chol'));
+end%if DEBUG
+end%optimise_target_Jeffreys_prior
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function L = optimise_target_double_Jeffreys_prior(Data, Noise, LeadFields, ...
+                                                   params, sourceCovFn)
+%OPTIMISE_TARGET_DOUBLE_JEFFREYS_PRIOR
+% minimise L to find gamma-MAP solution
+global DEBUG
+persistent iTARGETCALL
+
+logGamma = real(params(1));
+logRho   = real(params(2));
+
+Sigma_EB = empirical_bayes_cov(Noise.cov, sourceCovFn(logGamma), ...
+                               LeadFields.lf);
+
+% use property sum(eig(B, A)) = trace(inv(A) * B)
+% or trace(AB) = sum(sum(A .* B')) (and covariance matrices are symmetric)
+L = exp(logRho) * trace(Data.cov * inverse(Sigma_EB, 'symmetric')) ...
+    + ROInets.logdet(Sigma_EB, 'chol')                             ...
+    + (logGamma + logRho - 2*log(2)) ./ Data.nSamples;                     % faster than elementwise product or sum(eig()). 
+
+
+if DEBUG,
+    if ~exist('iTARGETCALL', 'var') || isempty(iTARGETCALL),
+        iTARGETCALL = 1;
+    else
+        iTARGETCALL = iTARGETCALL + 1;
+    end%if
+    fprintf(['Call to optim fn %4.0d: L = %0.8G, logGamma = %0.4G, ', ...
+             'logRho = %0.4G, logdet(Sigma_EB) = %0.6G. \n'],         ...
+            iTARGETCALL, L, logGamma, logRho,                         ...
+            ROInets.logdet(Sigma_EB, 'chol'));
 end%if DEBUG
 end%optimise_target_Jeffreys_prior
 
