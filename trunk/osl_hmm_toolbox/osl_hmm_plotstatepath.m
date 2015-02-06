@@ -85,7 +85,7 @@ for condnum = 1:num_conds,
       else
         plot(ts,FO,'color',col(s,:),'LineWidth',2);  
         xlabel('Time (s)'); ylabel('FO')
-        leg=[leg; 's' num2str(s)];
+        leg{s}=['s' num2str(s)];
 
       end;  
 
