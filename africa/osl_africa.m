@@ -195,7 +195,7 @@ D = spm_eeg_load(S.D);
 if strcmp(S.modality,'EEG')
     chantype = 'EEG';
 else
-    chantype = 'MEGANY';
+    chantype = {'MEG','MEGANY'}; % need both flags to capture MEG, MEGMAG, MEGGRAD and MEGPLANAR channel types.
 end
 
 % Good channels:
