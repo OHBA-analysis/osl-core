@@ -281,6 +281,10 @@ else
         %%%%%%%%%%%%%%%%%%%
         %% lower level cope plots
         if(oat.group_level.report.show_lower_level_copes && length(group_level_results.frequencies)==1)
+            if(isempty(oat.group_level.time_range))    
+                oat.group_level.time_range=[group_level_results.lower_level_times(1) group_level_results.lower_level_times(end)];
+            end;
+
             fig_handle=[];
             fig_name={};
             fig_title={};
