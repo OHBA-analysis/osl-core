@@ -34,6 +34,18 @@ osl2.0/spm12/@meeg/badsamples.m
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 
+% Problem: Fieldtrip undoes TOG corrections on CTF data during source recon and data conversion
+
+% Solution: replace undobalancing.m with a file which takes no action, but issues an informative warning. 
+
+osl2.0/spm12/external/fieldtrip/forward/private/undobalancing.m
+osl2.0/spm12/external/fieldtrip/plotting/private/undobalancing.m
+osl2.0/spm12/external/fieldtrip/fileio/private/undobalancing.m
+osl2.0/spm12/external/fieldtrip/utilities/private/undobalancing.m
+osl2.0/spm12/external/fieldtrip/private/undobalancing.m
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Problem: path.m does not return "this" when the path is set. 
 
 % Solution: copy local correct copy to the SPM12 directory via spm-changes
