@@ -318,7 +318,8 @@ ica_res.sm                      = sm .* repmat(norm_vec,1,num_ics);
 
 %%%%%%%%%%%%%%%%%%% ESTIMATE MISSING CHANNELS AND EPOCHS %%%%%%%%%%%%%%%%%% 
 
-sm_full = ica_res.sm;
+sm_full              = zeros(D.nchannels, size(sm,2));
+sm_full(chan_inds,:) = ica_res.sm;
 
 bad_timepoints = all(badsamples(D,':',':',':'));
 bad_timepoints = reshape(bad_timepoints,1,D.nsamples*D.ntrials);
@@ -334,7 +335,7 @@ subdata = reshape(subdata,size(subdata,1),[]);
 subdata = subdata(:,bad_timepoints);
 tc_full = zeros(ica_res.ica_params.num_ics,D.ntrials*D.nsamples);
 tc_full(:,~bad_timepoints) = ica_res.tc;
-tc_full(:,bad_timepoints)  = (subdata'*pinv(sm_full'))';
+tc_full(:,bad_timepoints)  = (subdata'*inverse(sm_full(chan_inds,:)'))';
 
 ica_res.sm = sm_full;
 ica_res.tc = tc_full;
@@ -371,7 +372,7 @@ tc = S.ica_res.tc;
 
 if use_montage
     dat_inv = pinv_plus(megdata', S.ica_res.ica_params.num_ics);
-    tra = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(:,bad_components)'))';
+    tra = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(chan_inds,bad_components)'))';
     
     montage             =  [];
     montage.tra         =  tra;
@@ -414,7 +415,7 @@ if use_montage
 else
     [dir,nam,~] = fileparts(fullfile(D.path,D.fname));
     fname_out = [dir '/A' nam '.dat'];
-    meg_dat_clean = megdata-(sm(:,bad_components)*tc(bad_components,:));
+    meg_dat_clean = megdata-(sm(chan_inds,bad_components)*tc(bad_components,:));
     
     Dclean=clone(D,fname_out,size(D));
     Dclean(chan_inds,:) = meg_dat_clean;   % changed by DM
