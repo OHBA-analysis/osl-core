@@ -79,9 +79,32 @@ clear spm_files;
 % each participant
 spm_files={[workingdir '/dsubject1.mat']};
          
-structural_files = {[workingdir '/subject1_struct.nii']};      
+%structural_files = {[workingdir '/subject1_struct.nii']};      
+structural_files = {[workingdir '/subject1_struct_canon.nii']};      
 
 cleanup_files=0; % flag to indicate that you want to clean up files that are no longer needed
+
+%% Run coregistration & forward model
+for f = 1:length(spm_files)
+    
+    S = [];
+    S.D             = prefix(spm_files{f},'');
+    S.mri           = structural_files{f};
+    S.fid_label     = struct('nasion','nas','lpa','lpa','rpa','rpa');
+    S.useheadshape  = 1;
+    S.use_rhino     = 1;
+    S.useCTFhack    = 0;
+    S.forward_meg   = 'Single Shell';
+    osl_headmodel(S);
+    
+end
+
+%% Check & correct coregistration:
+for f = 1:length(spm_files)
+    D = spm_eeg_load(prefix(spm_files{f},''));
+    rhino_manual(D)
+    waitfor(gcf)
+end
 
 %% LOAD AND VIEW RAW DATA
 %
@@ -132,8 +155,7 @@ oat.source_recon.time_range=[300,32*30];
 % beamformer parameters.
 oat.source_recon.method='beamform';
 oat.source_recon.gridstep=7; % in mm, using a lower resolution here than you would normally, for computational speed
-oat.source_recon.mri=structural_files;
-do_hmm=1;
+do_hmm=0;
 if(do_hmm)
     oat.source_recon.hmm_num_states=13;    
     oat.source_recon.hmm_num_starts=1;
@@ -141,6 +163,8 @@ if(do_hmm)
 end;
 
 oat.source_recon.dirname=[workingdir '/subj1_results_beta_hmm' num2str(do_hmm) '_' oat.source_recon.method];
+
+oat.source_recon.normalise_method='none';
 
 oat = osl_check_oat(oat);
 
