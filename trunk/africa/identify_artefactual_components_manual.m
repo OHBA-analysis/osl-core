@@ -75,7 +75,7 @@ else
 end
 
 
-D = spm_eeg_load(S.fname);
+D = spm_eeg_load(S.D);
 
 fig_handles = [];
 fig_names   = [];
