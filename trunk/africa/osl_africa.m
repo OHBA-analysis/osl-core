@@ -60,7 +60,7 @@ end
 S.ica_file = fullfile(pathstr,[name '.mat']);
 
 if isfield(S,'logfile') && S.logfile == 1
-    logfile = fullfile(pathstr,D.fname,'_log.txt');
+    logfile = fullfile(pathstr,[name '_log.txt']);
   if exist(logfile,'file')
     unix(['rm ' logfile]);
   end
@@ -318,8 +318,7 @@ ica_res.sm                      = sm .* repmat(norm_vec,1,num_ics);
 
 %%%%%%%%%%%%%%%%%%% ESTIMATE MISSING CHANNELS AND EPOCHS %%%%%%%%%%%%%%%%%% 
 
-sm_full = zeros(numel(indchantype(D,chantype)),num_ics);
-sm_full(chan_inds,:) = ica_res.sm;
+sm_full = ica_res.sm;
 
 bad_timepoints = all(badsamples(D,':',':',':'));
 bad_timepoints = reshape(bad_timepoints,1,D.nsamples*D.ntrials);
@@ -358,7 +357,7 @@ else
 end
 
 % Good channels:
-chan_inds = indchantype(D,chantype);
+chan_inds = indchantype(D,chantype, 'GOOD');
 
 badchannels    = D.badchannels;
 bad_components = unique(S.ica_res.bad_components);
