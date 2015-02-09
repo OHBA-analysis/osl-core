@@ -9,11 +9,13 @@ function [D, montage] = osl_montage(S)
 %
 % MWW & AB 2015
 
-D_inv=S.D.inv;
+D = spm_eeg_load(S.D);
 
-[D, montage] = spm_eeg_montage(S);
+D_inv = D.inv;
 
-D.inv=D_inv;
+[D,montage] = spm_eeg_montage(S);
+
+D.inv = D_inv;
 
 for ii=1:length(D.inv)
     D.inv{ii}=rmfield(D.inv{ii},'forward');
