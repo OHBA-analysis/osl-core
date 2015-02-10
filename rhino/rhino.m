@@ -118,6 +118,11 @@ catch
     S = ft_setopt(S, 'useheadshape', 1);
 end%try
 
+% Check headshape points exist
+if S.useheadshape == 1 && isempty(D.fiducials.pnt)
+    error('SPM file doesn''t contain any headshape points!')
+end
+
 % Check Fiducial Label Specification:
 try
     S = ft_checkopt(S,'fid_label','struct');
