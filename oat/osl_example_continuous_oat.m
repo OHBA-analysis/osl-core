@@ -33,11 +33,7 @@ global OSLDIR;
     
 % This cell sets the Matlab paths to include OSL. Change the osldir path so
 % that it corresponds to the setup on your computer before running the cell. 
-practical_dir='/Users/woolrich';
-osldir=[practical_dir '/homedir/matlab/osl2.0'];    
 
-addpath(osldir);
-osl_startup(osldir);
 
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 %
@@ -46,7 +42,7 @@ osl_startup(osldir);
 % running the cell.
 
 % directory where the data is:
-datadir=['/Users/woolrich/homedir/matlab/osl2_testdata_dir']; % directory where the data is
+datadir=['/Users/abaker/Data/']; % directory where the data is
 workingdir=[datadir '/ctf_fingertap_subject1_data_osl2']; % this is the directory where the SPM files will be stored in
 
 cmd = ['mkdir ' workingdir]; if ~exist(workingdir, 'dir'), unix(cmd); end % make dir to put the results in
@@ -82,7 +78,45 @@ spm_files={[workingdir '/dsubject1.mat']};
 %structural_files = {[workingdir '/subject1_struct.nii']};      
 structural_files = {[workingdir '/subject1_struct_canon.nii']};      
 
+pos_files = {[workingdir '/subject1_Motorcon.pos']};      
+
+
 cleanup_files=0; % flag to indicate that you want to clean up files that are no longer needed
+
+
+%% Sort out fiducials:
+for f = 1:length(spm_files)
+    
+    spm_file = prefix(spm_files{f},'');
+    D = spm_eeg_load(spm_file);
+    
+    fID = fopen(pos_files{f});
+    fid_data = textscan(fID, '%s %f %f %f');
+    fclose(fID);
+    
+    fid_new = [];
+    
+    % Fiducials:
+    fid_inds = [find(strcmpi(fid_data{1},'nasion'))
+        find(strcmpi(fid_data{1},'left'))
+        find(strcmpi(fid_data{1},'right'))];
+    
+    fid_new.fid.pnt = [fid_data{2}(fid_inds) fid_data{3}(fid_inds) fid_data{4}(fid_inds)] * 10;
+    fid_new.fid.label = {'nas';'lpa';'rpa'};
+    
+    % Headshape:
+    hs_inds = setdiff(2:length(fid_data{1}),fid_inds);
+    fid_new.pnt = [fid_data{2}(hs_inds) fid_data{3}(hs_inds) fid_data{4}(hs_inds)] * 10;   
+    fid_new.unit = 'mm';
+    
+    % Labels:
+    fid_labels = fid_data{1};
+        
+    D = fiducials(D,fid_new);
+    D.save;
+    
+end
+
 
 %% Run coregistration & forward model
 for f = 1:length(spm_files)
@@ -119,7 +153,6 @@ end
 subnum = 1;             
 D = spm_eeg_load(spm_files{subnum});
 
-D
 
 % check data in oslview
 oslview(D);
