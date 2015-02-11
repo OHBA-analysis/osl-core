@@ -28,14 +28,14 @@ end;
 
 K=size(B_p,1);
 
-%DBq=det(B_q);
-%DBp=det(B_p);
+Lq = -logdet(B_q) + K * log(2);
+Lp = -logdet(B_p) + K * log(2);
 
-Lq = -logdet(B_q);
-Lp = -logdet(B_p);
+lZq = log(2) * (alpha_q*K/2)  - Lq * (-alpha_q/2) + K*(K-1)/4 * log(pi); 
+lZp = log(2) * (alpha_p*K/2)  - Lp * (-alpha_p/2) + K*(K-1)/4 * log(pi); 
 
-lZq = log(2) * (alpha_q*K/2)  - Lq * (-alpha_q/2) + K*(K-1)/4; % * log(pi);
-lZp = log(2) * (alpha_p*K/2)  - Lp * (-alpha_p/2) + K*(K-1)/4; % * log(pi);
+Lq = Lq + K * log(2);
+Lp = Lp + K * log(2);
 
 for k=1:K
     lZq = lZq + gammaln(alpha_q/2+0.5-0.5*k);
@@ -44,7 +44,8 @@ for k=1:K
     Lp = Lp + psi(alpha_p/2+0.5-0.5*k);
 end
 
-D = (alpha_q/2-0.5-0.5*K)*Lq - (alpha_p/2-0.5-0.5*K)*Lp - alpha_q * K / 2 + alpha_q * trace(B_p*inv(B_q)) / 2 + lZp - lZq;
+D = (alpha_q/2-0.5-0.5*K)*Lq - (alpha_p/2-0.5-0.5*K)*Lp ...
+    - alpha_q * K / 2 + alpha_q * trace(B_p*inv(B_q)) / 2 + lZp - lZq;
 
 return;
 
