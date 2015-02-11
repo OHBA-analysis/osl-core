@@ -583,9 +583,9 @@ for subi=1:length(opt.sessions_to_do),
         %%%%
         % do dummy epoching
         S3=[];
+        S3 = epochinfo;
         S3.D = D_continuous;     
-        S3.epochinfo=epochinfo;
-        [D_dummy good_trial_start_times] = osl_epoch(S3);
+        D_dummy = osl_epoch(S3);
         
         %%%%
         % detect outliers      
@@ -722,9 +722,9 @@ for subi=1:length(opt.sessions_to_do),
         %%%%
         % do epoching
         S3=[];
+        S3 = epochinfo;
         S3.D = D_continuous;     
-        S3.epochinfo=epochinfo;
-        [D good_trial_start_times] = osl_epoch(S3);
+        D = osl_epoch(S3);
         
         spm_files_epoched_basenames{subnum}=['e' spm_files_basenames{subnum}];
 
