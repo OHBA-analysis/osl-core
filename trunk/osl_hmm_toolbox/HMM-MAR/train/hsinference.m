@@ -1,4 +1,4 @@
-function [Gamma,Gammasum,Xi]=hsinference(data,T,hmm,residuals)
+function [Gamma,Gammasum,Xi,LL]=hsinference(data,T,hmm,residuals)
 %
 % inference engine for HMMs.
 %
@@ -14,16 +14,17 @@ function [Gamma,Gammasum,Xi]=hsinference(data,T,hmm,residuals)
 % Gamma     Probability of hidden state given the data
 % Gammasum  sum of Gamma over t
 % Xi        joint Prob. of child and parent states given the data
+% LL        Log-likelihood
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford
 
 
 N = length(T);
-if hmm.train.order > 0, order = 1:hmm.train.timelag:hmm.train.order; order = order(end); 
-else order = 0; end 
+
+[~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
 
 K=hmm.K;
-Gamma=[];
+Gamma=[]; LL = [];
 Gammasum=zeros(N,K);
 Xi=[];
 
@@ -33,8 +34,8 @@ for in=1:N
     C = data.C(t0+1:t0+T(in),:);
     R = [zeros(order,size(residuals,2));  residuals(s0+1:s0+T(in)-order,:)];
     % we jump over the fixed parts of the chain
-    t = order+1; 
-    xi = []; gamma = []; gammasum = zeros(1,K);
+    t = order+1;
+    xi = []; gamma = []; gammasum = zeros(1,K); ll = [];
     while t<=T(in)
         if isnan(C(t,1)), no_c = find(~isnan(C(t:T(in),1)));
         else no_c = find(isnan(C(t:T(in),1)));
@@ -49,9 +50,9 @@ for in=1:N
             end;
         end
         if isnan(C(t,1))
-            [gammat,xit]=nodecluster(X(slice,:),K,hmm,R(slicer,:));
-        else            
-            gammat = zeros(length(slicer),K); 
+            [gammat,xit,Bt]=nodecluster(X(slice,:),K,hmm,R(slicer,:));
+        else
+            gammat = zeros(length(slicer),K);
             if t==order+1, gammat(1,:) = C(slicer(1),:); end
             xit = zeros(length(slicer)-1, K^2);
             for i=2:length(slicer)
@@ -59,30 +60,34 @@ for in=1:N
                 xitr = gammat(i-1,:)' * gammat(i,:) ;
                 xit(i-1,:) = xitr(:)';
             end
+            if nargout==4, Bt = obslike(X(slice,:),hmm,R(slicer,:)); end
         end
-        if t>order+1, gammat = gammat(2:end,:); end
+        if t>order+1,
+            gammat = gammat(2:end,:);
+        end
         xi = [xi; xit];
         gamma = [gamma; gammat];
-        gammasum = gammasum + sum(gammasum);
+        gammasum = gammasum + sum(gamma);
+        if nargout==4, ll = [ll; log(sum(Bt(order+1:end,:) .* gammat,2)) ]; end
         if isempty(no_c), break;
-        else t = no_c(1)+t-1; 
+        else t = no_c(1)+t-1;
         end;
     end
     Gamma=[Gamma;gamma];
     Gammasum(in,:)=gammasum;
+    if nargout==4, LL = [LL;ll]; end
     Xi=cat(1,Xi,reshape(xi,T(in)-order-1,K,K));
 end;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [Gamma,Xi]=nodecluster(X,K,hmm,residuals)
+function [Gamma,Xi,B]=nodecluster(X,K,hmm,residuals)
 % inference using normal foward backward propagation
 
 T = size(X,1);
 P=hmm.P;
 Pi=hmm.Pi;
-if hmm.train.order > 0, order = 1:hmm.train.timelag:hmm.train.order; order = order(end); 
-else order = 0; end 
+[~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
 
 B = obslike(X,hmm,residuals);
 

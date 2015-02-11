@@ -11,40 +11,37 @@ function [B] = obslike (X,hmm,residuals)
 % B          Likelihood of N data points
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford
-
-
+ 
 [T,ndim]=size(X);
 K=hmm.K;
-if hmm.train.order > 0, orders = 1:hmm.train.timelag:hmm.train.order; order = orders(end);
-else orders = []; order = 0; end
+[orders,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
 
 B=zeros(T,K);
-
-ltpi= ndim/2 * log(2*pi);
-
-XX = zeros(T-order,length(orders)*ndim);
-for i=1:length(orders)
-    o = orders(i);
-    XX(:,(1:ndim) + (i-1)*ndim) = X(order-o+1:T-o,:);
-end;
+ltpi= ndim/2 * log(2*pi) - ndim/2; 
+XX = formautoregr(X,size(X,1),orders,order,hmm.train.zeromean);
+Sind = hmm.train.Sind==1; 
+if ~hmm.train.zeromean, Sind = [true(1,size(X,2)); Sind]; end
+S = hmm.train.S==1;
+regressed = sum(S,1)>0;
 
 switch hmm.train.covtype,
     case 'uniquediag'
         ldetWishB=0;
         PsiWish_alphasum=0;
         for n=1:ndim,
+            if ~regressed(n), continue; end
             ldetWishB=ldetWishB+0.5*log(hmm.Omega.Gam_rate(n));
             PsiWish_alphasum=PsiWish_alphasum+0.5*psi(hmm.Omega.Gam_shape);
         end;
-        icov = hmm.Omega.Gam_shape ./ hmm.Omega.Gam_rate;
+        C = hmm.Omega.Gam_shape ./ hmm.Omega.Gam_rate;
     case 'uniquefull'
-        ldetWishB=0.5*logdet(hmm.Omega.Gam_rate);
+        ldetWishB=0.5*logdet(hmm.Omega.Gam_rate(regressed,regressed));
         PsiWish_alphasum=0;
-        for d=1:ndim,
-            PsiWish_alphasum=PsiWish_alphasum+psi(hmm.Omega.Gam_shape/2+0.5-d/2); % /2 ??
+        for n=1:sum(regressed),
+            PsiWish_alphasum=PsiWish_alphasum+psi(hmm.Omega.Gam_shape/2+0.5-n/2); 
         end;
         PsiWish_alphasum=PsiWish_alphasum*0.5;
-        icov = hmm.Omega.Gam_shape * hmm.Omega.Gam_irate;
+        C = hmm.Omega.Gam_shape * hmm.Omega.Gam_irate;
 end;
 
 for k=1:K
@@ -55,62 +52,55 @@ for k=1:K
             ldetWishB=0;
             PsiWish_alphasum=0;
             for n=1:ndim,
+                if ~regressed(n), continue; end
                 ldetWishB=ldetWishB+0.5*log(hs.Omega.Gam_rate(n));
                 PsiWish_alphasum=PsiWish_alphasum+0.5*psi(hs.Omega.Gam_shape);
             end;
-            icov = hs.Omega.Gam_shape ./ hs.Omega.Gam_rate;
+            C = hs.Omega.Gam_shape ./ hs.Omega.Gam_rate;
         case 'full'
-            ldetWishB=0.5*logdet(hs.Omega.Gam_rate);
+            ldetWishB=0.5*logdet(hs.Omega.Gam_rate(regressed,regressed));
             PsiWish_alphasum=0;
-            for d=1:ndim,
-                PsiWish_alphasum=PsiWish_alphasum+psi(hs.Omega.Gam_shape/2+0.5-d/2);  % /2 ??
+            for n=1:sum(regressed),
+                PsiWish_alphasum=PsiWish_alphasum+psi(hs.Omega.Gam_shape/2+0.5-n/2);  
             end;
             PsiWish_alphasum=PsiWish_alphasum*0.5;
-            icov = hs.Omega.Gam_shape * hs.Omega.Gam_irate;
+            C = hs.Omega.Gam_shape * hs.Omega.Gam_irate;
     end;
-    
-    meand = XX * hs.W.Mu_W;
-    d = residuals - meand;
+
+    meand = zeros(size(XX,1),ndim);
+    if order>0 || ~hmm.train.zeromean
+        meand = XX * hs.W.Mu_W(:,regressed);
+    end
+    d = residuals(:,regressed) - meand;    
     if strcmp(hmm.train.covtype,'diag') || strcmp(hmm.train.covtype,'uniquediag')
-        Cd =  repmat(icov',1,T-order) .* d';
+        Cd =  repmat(C(regressed)',1,T-order) .* d';
     else
-        Cd = icov * d';
+        Cd = C(regressed,regressed) * d';
     end
     
     dist=zeros(T-order,1);
-    for n=1:ndim,
+    for n=1:sum(regressed),
         dist=dist-0.5*d(:,n).*Cd(n,:)';
     end
+    
     NormWishtrace=zeros(T-order,1);
-    if order>0
+    if order>0 || ~hmm.train.zeromean
         switch hmm.train.covtype,
-            case 'diag'
+            case {'diag','uniquediag'}
                 for n=1:ndim,
-                    NormWishtrace = NormWishtrace + 0.5 * (hs.Omega.Gam_shape / hs.Omega.Gam_rate(n)) * ...
-                        sum( (XX * permute(hs.W.S_W(n,:,:),[2 3 1])) .* XX, 2);
+                    if ~regressed(n), continue; end
+                    NormWishtrace = NormWishtrace + 0.5 * C(n) * ...
+                        sum( (XX(:,Sind(:,n)) * permute(hs.W.S_W(n,Sind(:,n),Sind(:,n)),[2 3 1])) .* XX(:,Sind(:,n)), 2);
                 end;
                 
-            case 'uniquediag'
-                for n=1:ndim,
-                    NormWishtrace = NormWishtrace + 0.5 * (hmm.Omega.Gam_shape / hmm.Omega.Gam_rate(n)) * ...
-                        sum( (XX * permute(hs.W.S_W(n,:,:),[2 3 1])) .* XX, 2);
-                end;
-                
-            case 'full'
+            case {'full','uniquefull'}
                 for n1=1:ndim
-                    for n2=n1:ndim
-                        index1 = (0:length(orders)*ndim-1) * ndim + n1;
-                        index2 = (0:length(orders)*ndim-1) * ndim + n2;
-                        NormWishtrace = NormWishtrace + 0.5 * icov(n1,n2) * sum( (XX * hs.W.S_W(index1,index2)) .* XX, 2);
-                    end
-                end
-                
-            case 'uniquefull'
-                for n1=1:ndim
-                    for n2=n1:ndim
-                        index1 = (0:length(orders)*ndim-1) * ndim + n1;
-                        index2 = (0:length(orders)*ndim-1) * ndim + n2;
-                        NormWishtrace = NormWishtrace + 0.5 * icov(n1,n2) * sum( (XX * hs.W.S_W(index1,index2)) .* XX, 2);
+                    for n2=1:ndim
+                        if ~regressed(n1) || ~regressed(n2), continue; end       
+                        index1 = (0:length(orders)*ndim+(~hmm.train.zeromean)-1) * ndim + n1;
+                        index2 = (0:length(orders)*ndim+(~hmm.train.zeromean)-1) * ndim + n2;                      
+                        index1 = index1(Sind(:,n1)); index2 = index2(Sind(:,n2));
+                        NormWishtrace = NormWishtrace + 0.5 * C(n1,n2) * sum( (XX * hs.W.S_W(index1,index2)) .* XX, 2);
                     end
                 end
         end
@@ -119,3 +109,4 @@ for k=1:K
     B(order+1:T,k)= + PsiWish_alphasum - ldetWishB-ltpi + dist - NormWishtrace; %-meanS
 end;
 B=exp(B);
+

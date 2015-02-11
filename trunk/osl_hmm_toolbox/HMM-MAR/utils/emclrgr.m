@@ -1,4 +1,4 @@
-function [p,LL] = emclrgr(X,Y,C,K,nu,diagcov,tol,maxit,trace)
+function [p,LL] = emclrgr(X,Y,C,ind,K,nu,tol,maxit,trace)
 % An EM algorithm for clusterwise regression in time series.
 %
 % The initial cluster values are sampled according to the following stochastic process:
@@ -12,9 +12,9 @@ function [p,LL] = emclrgr(X,Y,C,K,nu,diagcov,tol,maxit,trace)
 % X: inputs, TxN matrix
 % Y: outputs, TxM matrix
 % C: a class vector, TX1. Only those with NaN will be clusterized 
+% ind: NxM logical matrix specificying which features participate on each output variable 
 % K: number of clusters
 % nu: initialisation parameter; default T/100
-% diagcov: use a diagonal covariance matrix? 
 % tol: an effective zero; default 0.01
 % maxit: maximum number of iterations; default 100
 % trace: if TRUE, shows progress
@@ -32,23 +32,14 @@ p = zeros(T,K);
 K0 = size(C,2); if isnan(K0), K0 = 0; end
 unknown = isnan(C(:,1));
 Tnan = sum(unknown);
+allind1 = all(ind(:));
+predicting = find(sum(ind)>0);
 
-if nargin<5
-    nu = T/100;
-end
-if nargin<6
-    diagcov = 1;
-end
-if nargin<7
-    tol = 0.00001;
-end
-if nargin<8
-    maxit = 100;
-end
-if nargin<9
-    trace = 0;
-end
-
+if nargin<5, nu = T/100; end
+if nargin<6, tol = 0.00001; end
+if nargin<7, maxit = 100; end
+if nargin<8, trace = 0; end
+ 
 % random init
 t=1;
 while t<=T
@@ -64,105 +55,119 @@ end
 if N>0
     beta = zeros(N,M,K);
 else
-    mu = zeros(M,K);
+    beta = [];
 end
-if diagcov, omega = zeros(M,K);
-else omega = zeros(M,M,K);
-end
+omega = zeros(M,K);
 for k=1:K
     if N>0
-        beta(:,:,k) = pinv(X .* repmat(sqrt(p(:,k)),1,N)) * Y; 
-        %beta(:,:,k) = ( ((X' .* repmat(p(:,k)',N,1) ) * X)  + 0.001 * eye(size(X,2))  ) \ ( (X' .* repmat(p(:,k)',N,1) ) * Y );
-        er = sqrt(repmat(p(:,k),1,M)) .* (Y - X * beta(:,:,k));
+        if allind1
+            beta(:,:,k) = pinv(X .* repmat(sqrt(p(:,k)),1,N)) * Y; 
+        else
+            for m=predicting
+                beta(ind(:,m),m,k) = pinv(X(:,ind(:,m)) .* repmat(sqrt(p(:,k)),1,sum(ind(:,m)))) * Y(:,m); 
+            end
+        end
+        %beta(:,:,k) = ( ((X' .* repmat(p(:,k)',N,1) ) * X) + 0.001 * eye(size(X,2)) ) \ ( (X' .* repmat(p(:,k)',N,1) ) * Y );
+        er = sqrt(repmat(p(:,k),1,length(predicting) )) .* (Y(:,predicting) - X * beta(:,predicting,k));
     else
-        mu = sum(repmat(p(:,k),1,M) .* Y) / sum(p(:,k));
-        er = sqrt(repmat(p(:,k),1,M)) .* (Y - repmat(mu,T,1));
+        er = sqrt(repmat(p(:,k),1,M)) .* Y;
     end
-    if diagcov, omega(:,k) = sum(er.^2 ) / sum(p(:,k));
-    else omega(:,:,k) = er' * er / sum(p(:,k));
-    end
+    omega(predicting,k) = sum(er.^2 ) / sum(p(:,k));
 end
-pi = ones(1,K)/K;
+pi = sum(p) / sum(p(:));
 
 LL0 = -Inf;
-LL = zeros(T,K);
-for k = 1:K
-    if N>0
-        pred = X * beta(:,:,k);
-    else
-        pred = zeros(T,M);
-    end
-    if diagcov, LL(:,k) = logmvnpdf(Y,pred,diag(omega(:,k)))';
-    else LL(:,k) = logmvnpdf(Y,pred,omega(:,:,k))';
-    end
-end
-LL = sum(logsumexp(LL + repmat(log(pi),T,1),2));
+LL = getLL(X,Y(:,predicting),beta(:,predicting,:),omega(predicting,:),pi);
 
-it = 0;
+ 
+it = 0; p0 = p;
 % EM   
-while LL-LL0 > tol*abs(LL) 
-  
-    if LL0>LL
-        warning('error in the initialization - likelihood decreasing\n')
-    end
+while 1
     
-    if trace
-        fprintf('Iteration %d, LL: %f \n',it,LL)
-    end
+    %if it>2 && LL-LL0 > tol*abs(LL), break; end
+  
+    if it>2 && LL0>LL, warning('error in the initialization - likelihood decreasing\n'); end
+    
+    if trace==1, fprintf('Iteration %d, LL: %f \n',it,LL); end
     LL0 = LL;
     
     % E step
     for k=1:K
         if N>0
-            pred = X(unknown,:) * beta(:,:,k);
+            pred = X(unknown,:) * beta(:,predicting,k);
         else
             pred = zeros(Tnan,M);
         end
-        if diagcov, p(unknown,k) = pi(k) * prod(normpdf( Y(unknown,:) , pred, repmat( sqrt(omega(:,k)'), length(unknown), 1)  ), 2) ;
-        else p(unknown,k) = pi(k) * mvnpdf(  Y(unknown,:), pred, omega(:,:,k) );
-        end   
+        p(unknown,k) = pi(k) * prod(normpdf( Y(unknown,predicting) , pred,  ...
+                repmat( sqrt(omega(predicting,k)'), length(unknown), 1)  ), 2) ; 
     end
     p = p ./ repmat(sum(p,2),1,K);
-    if any(isnan(p(:,1)))
-        warning('There may be numerical precision issues');
-        p(isnan(p(:,1)),:) = 1/K; 
+    if any(isnan(p(:)))
+        %warning(sprintf('There may be numerical precision issues - a proportion of %f are NaN\n',sum(isnan(p(:))) / length(p(:))));
+        warning('There may be numerical precision issues')
+        p(isnan(p(:))) = 1/K; 
     end
+    pi = mean(p);
+    
     
     % M step
     for k=1:K
         if N>0
-            beta(:,:,k) = ( ((X' .* repmat(p(:,k)',N,1) ) * X) + 0.001 * eye(size(X,2)) ) \ ( (X' .* repmat(p(:,k)',N,1) ) * Y );
-            er = sqrt(repmat(p(:,k),1,M)) .* (Y - X * beta(:,:,k));
+            if allind1
+                beta(:,:,k) = ( ((X' .* repmat(p(:,k)',N,1) ) * X) ) \ ( (X' .* repmat(p(:,k)',N,1) ) * Y );
+            else
+                for m=predicting
+                    beta(ind(:,m),m,k) = ( ((X(:,ind(:,m))' .* repmat(p(:,k)',sum(ind(:,m)),1) ) * X(:,ind(:,m))) ) \ ...
+                        ( (X(:,ind(:,m))' .* repmat(p(:,k)',sum(ind(:,m)),1) ) * Y(:,m) );
+                end
+            end
+            er = sqrt(repmat(p(:,k),1,length(predicting))) .* (Y(:,predicting) - X * beta(:,predicting,k));
         else
-            mu = sum(repmat(p(:,k),1,M) .* Y) / sum(p(:,k));
-            er = sqrt(repmat(p(:,k),1,M)) .* (Y - repmat(mu,T,1));
+            %mu = sum(repmat(p(:,k),1,M) .* Y) / sum(p(:,k));
+            er = sqrt(repmat(p(:,k),1,M)) .* Y;
         end
-        if diagcov, omega(:,k) = sum( er.^2 ) / sum(p(:,k));
-        else omega(:,:,k) = er' * er / sum(p(:,k));
-        end
+        omega(predicting,k) = sum( er.^2 ) / sum(p(:,k));
     end
-    pi = sum(p) / sum(p(:));
-    
+  
+        
     % LL calculation
-    LL = zeros(T,K);
-    for k = 1:K
-        if N>0
-            pred = X * beta(:,:,k);
-        else
-            pred = zeros(T,M);
-        end
-        if diagcov, LL(:,k) = logmvnpdf(Y,pred,diag(omega(:,k)))';
-        else LL(:,k) = logmvnpdf(Y,pred,omega(:,:,k))';
-        end
-    end
-    LL = sum(logsumexp(LL + repmat(log(pi),T,1),2));
-
-    %plot( p(:,1));
-    
+    LL = getLL(X,Y(:,predicting),beta(:,predicting,:),omega(predicting,:),pi);
+        
     it = it + 1;
-    if it>maxit
+    if it>maxit || LL-LL0<tol
         break
     end
     
-    
 end
+end
+
+
+function LL = getLL(X,Y,beta,omega,pi)
+T = size(X,1); K = size(omega,2);
+LL = zeros(T,K); 
+for k = 1:K
+    if ~isempty(beta)
+        pred = X * beta(:,:,k);
+    else
+        pred = zeros(size(Y));
+    end
+    LL(:,k) = logmvnpdf(Y,pred,diag(omega(:,k)))';
+end
+LL = sum(logsumexp(LL + repmat(log(pi),T,1),2));
+end
+
+
+% function LL = getLL(X,Y,beta,omega,pi)
+% [T N] = size(X); K = size(beta,3); q = size(Y,2);
+% LL = zeros(T,1);
+% for k = 1:K
+%     pred = X * beta(:,:,k);
+%     LLk = ones(T,1);
+%     for d = 1:q
+%         LLk = LLk .* normpdf(Y(:,d),pred(:,d),sqrt(omega(d,k)));
+%     end
+%     LLk = pi(k) * LLk;
+%     LL = LL + LLk;
+% end
+% LL = sum(log(LL));
+% end
