@@ -252,9 +252,9 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
                 trials = D.indtrial(D.condlist{condnum},'good'); 
 
                 for trl=1:length(trials),                            
-                    tbad = all(badsamples(D,':',':',trl));
+                    tbad = all(badsamples(D,':',':',trials(trl)));
                     samples2use = find(~tbad);
-                    env = D(:,samples2use,trl); %#ok - SPM doesn't like logical indexing
+                    env = D(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing
 
                     if logtrans
                         env = log10(env);
@@ -331,13 +331,13 @@ if todo.infer
         %hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
         hmm = ABhmm_infer(hmmdata,nstates,nreps);
         hmm.statepath = ABhmm_statepath(hmm);
-         addpath(genpath(OSLDIR));
+        addpath(genpath(OSLDIR));
 
-        %rmpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));        
     else
         global OSLDIR
         rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
         addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox')));
+        options.initcyc = 10;
         hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample));
         addpath(genpath(OSLDIR));
     end;
@@ -420,10 +420,10 @@ if todo.output
                             epoched_statepath_sub{subnum, condnum}=zeros(1,D.nsamples,length(trials));
                                                       
                             for trl=1:length(trials),                            
-                                tbad = all(badsamples(D,':',':',trl));
+                                tbad = all(badsamples(D,':',':',trials(trl)));
                                 
                                 samples2use = find(~tbad);
-                                env = D(:,samples2use,trl); %#ok - SPM doesn't like logical indexing                                                                
+                                env = D(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing                                                                
                                 
                                 if logtrans
                                     env = log10(env);
