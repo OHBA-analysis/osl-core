@@ -1,31 +1,55 @@
 function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Noise, Options)
 %OSL_INVERSE_MNE_WEIGHTS creates weights for source reconstruction using MNE
 %
-% W = OSL_INVERSE_MNE_WEIGHTS(SensorData, LeadFields, NOISE, RESTRICTRANK)
-%   calculates cell array
+% W = OSL_INVERSE_MNE_WEIGHTS(SensorData, LeadFields, NOISE, OPTIONS)
+%   calculates cell array of weights, W, for source reconstruction. Sources
+%   at dipole i are estimated with W{i}*B. 
 %
-% SensorData.cov
-%           .nSamples
+% [W, W_NONORM, LF] = OSL_MNE_WEIGHTS(...) also returns the un-normalised
+%   weights W_NONORM and a cell array of lead fields for each dipole, LF. 
 %
-% LeadFields.nSources
-%           .nDims
-%           .lf
-% Noise.model
-%      .lambda
-%      .cov
+% The inputs should be formatted as a set of data structures:
 %
-% Options.ReduceRank.weights    - Boolean [1] converts to scalar weights
+% SensorData.cov       - covariance of the sensor data (nChans x nChans)
+%           .nSamples  - number of time samples used to compute covariance
+%                        matrix. 
+%
+% LeadFields.nSources  - number of sources to estimate
+%           .nDims     - dimensionality of each source (expected to be 3 at
+%                        the moment)
+%           .lf        - matrix of lead fields, nChans x (nDims x
+%                        nSources). Fields for x, y and z components of the
+%                        same dipole should appear in consecutive columns. 
+%
+% Noise.model          - determines specification of the noise covariance.
+%                        Choices are {'empirical', 'white',
+%                        'diag_datacov'}. For the first option, a noise
+%                        covariance matrix must be passed in. For the
+%                        second two, a scaling factor lambda should be
+%                        provided, or is assumed unity. 
+%      .lambda         - scaling factor on the noise covariance
+%      .cov            - empirical noise covariance (nChans x nChans)
+%
+% Further algorithm choices are set in the subfields of the Options
+% structure. 
+%
+% Options.ReduceRank.weights    - Boolean [true] converts to scalar weights
 %                   .leadFields - Integer [3] dimensionality of lead fields
-%        .sourceModel     - Wens (based on paper referenced below), 
-%                           MNE (which uses gamma-MAP estimation), 
-%                           MNE-INA (integrated nested approximation for
+%                                 (ignored at the moment)
+%
+%        .sourceModel     - Choose the estimation method using a string, from:
+%                           'Wens' (based on paper referenced below), 
+%                           'MNE' (which uses gamma-MAP estimation of a white covariance matrix), 
+%                           'MNE-INA' (integrated nested approximation for
 %                           averaging over the prior on gamma)
-%                           MNE-scaled-noise (also estimates a parameter
+%                           'MNE-scaled-noise' (also estimates a parameter
 %                           rho for the scaling between sensor data and
 %                           noise)
-%                           sparseBayes (gamma-MAP estimation of a
-%                           sparseBayes solution)
+%                           'sparse-Baye's (gamma-MAP estimation of a
+%                           sparse Bayes solution)
+%
 %        .normalise       - sLoreta, [norm], none
+%
 %        .gammaPrior - form of prior on source variance parameters. Can
 %                      be 'uniform-sd   - flat on sqrt(gamma) [Default].
 %                         'uniform-variance' - flat on gamma.
@@ -41,6 +65,9 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %                        lp(gamma) = sum_i (log p(gamma_i))
 %                      which returns the log of a normalised prior density 
 %                      for any scalar or vector gamma >= 0.
+%
+
+
 % References:
 %  Wipf and Nagarajan. A unified Bayesian framework for MEG/EEG source imaging. Neuroimage (2009) vol. 44 (3) pp. 947-66
 %
@@ -131,9 +158,9 @@ switch lower(Options.sourceModel)
     case 'mne-scaled-noise'
         W_3d = mne_estimate_scale_noise(SensorData, Noise, LeadFields, ...
                                         Options.gammaPrior.fn);
-    case 'sparsebayes'
+    case 'sparse-bayes'
         W_3d = sparse_bayes_estimate(SensorData, Noise, LeadFields, ...
-                                     Options.gammaPrior.fn);
+                                     Options.gammaPrior);
     otherwise
         error([mfilename ':InvalidSourceMethod'], ...
               'The chosen source method %s is not recognised. \n', ...
@@ -205,7 +232,8 @@ function sensorCov = empirical_bayes_cov(noiseCov, sourceCov, lf3d)
 sensorCov = noiseCov + lf3d * sourceCov * lf3d.';
 
 % ensure real - sometimes goes a bit off. 
-sensorCov = real(sensorCov);
+% sensorCov = real(sensorCov);
+sensorCov = (sensorCov + sensorCov')./2.0;
 
 end%empirical_bayes_cov
 
@@ -282,8 +310,8 @@ global DEBUG
 [~, logGammaPeak] = mne_estimate(Data, Noise, LeadFields, prior);
 gammaPeak         = exp(logGammaPeak);
 % or:
-% noiseToLFScale = median(log(diag(Noise.cov))) - ...
-%                  median(log(sum(LeadFields.lf.^2)));
+noiseToLFScale = mean(log(diag(Noise.cov))) - ...
+                 mean(log(sum(LeadFields.lf.^2)));
 % gammaPeak      = exp(noiseToLFScale);
 
 % define inverse weights function 
@@ -292,50 +320,93 @@ weights         = @(g) estimate_weights(Noise.cov,                 ...
                                         g.*speye(nSourceElements), ...
                                         LeadFields.lf);
 
-% define p(gamma|B)
-logDetNoise = logdet(Noise.cov, 'chol');
-noiseInv    = inverse(Noise.cov);
-
-p_g_on_B = @(g) exp(logp_g_on_B(g));
+% if the prior has a scale, set it to be about e^7 above noise
+scale       = exp(noiseToLFScale + 7);
+sourceCovFn = @(logGamma) exp(real(logGamma)) .* speye(nSourceElements);
 
 % integrate with clenshaw-curtis integration in 3 bands
-nOuter = 2^14+1;
-nInner = 2^19+1;
-N      = nOuter*2 + nInner;
-gammaBounds = [eps(gammaPeak), gammaPeak./1e5, gammaPeak*1e5, gammaPeak*1e50];
+nOuter = 2^6+1;
+nInner = 2^12+1;
+gammaBounds = [gammaPeak./1e40, gammaPeak./1e8, gammaPeak*1e6, gammaPeak*1e30];
 [x1, w1] = clen_curt_points(nOuter, gammaBounds(1), gammaBounds(2)*0.9999);
 [x2, w2] = clen_curt_points(nInner, gammaBounds(2), gammaBounds(3)*0.9999);
 [x3, w3] = clen_curt_points(nOuter, gammaBounds(3), gammaBounds(4));
-x = cat(1, x1, x2, x3);
-w = cat(1, w1, w2, w3);
+x      = cat(1, x1, x2, x3);
+[x,is] = sort(x);
+w      = cat(1, flipud(w1), flipud(w2), flipud(w3));
+w      = w(is);
 
-Exp_W  = [];
-Exp_pg = [];
-for iInt = 1:N,
-    if DEBUG && ~mod(iInt, 1000), 
-        fprintf('%s: INA contribution %d of %d. \n', mfilename. iInt, N);
+% we want to avoid exact zeros in x when working in log-space
+exactZeros = 0 == x;
+x(exactZeros) = [];
+w(exactZeros) = [];
+N = length(x);
+
+% set up tracking plot
+if DEBUG,
+    fprintf('Finding values of logp(g|B). \n');
+    flowBound = eps(min(x));
+    logPrior = arrayfun(@(lx) prior(lx, scale), log(x+flowBound));
+    
+    figure('Name', 'p(g)', 'Color', 'w');
+    plot(log(x), exp(logPrior - log_sum_exp(logPrior)), 'r');
+    xlabel('Log(\gamma)');
+    hold on;
+end%if
+
+% declare memory
+W      = zeros(nSourceElements, Data.nSensors);
+log_pg = zeros(N,1);
+
+% find coefficients for expected weights at each x
+for i = 1:N,
+    if ~mod(i, 100), 
+        fprintf('%s: marginal contribution %d of %d. \n', ...
+                mfilename, i, N);
     end%if
-    wpg = w(iInt) * p_g_on_B(x(iInt));
-    Exp_W  = Exp_W  + wpg * weights(x(iInt));
-    Exp_pg = Exp_pg + wpg;
+    log_pg(i) = -0.5*optimise_target_single_prior(Data, Noise, ...
+                          LeadFields, log(x(i)), prior, scale, sourceCovFn); %logp_g_on_B(x(i));
+end%for
+log_wpg    = log_pg + log(w);
+log_Exp_pg = log_sum_exp(log_wpg);
+
+if DEBUG,
+    figure('Name', 'p(g|B)', 'Color', 'w');
+    plot(log(x), log_pg - log_Exp_pg, 'k');
+    xlabel('Log(\gamma)');
+end%if
+
+% loop over integration points, accumulating result
+for iInt = 1:N,
+    W = W + exp(log_wpg(iInt) - log_Exp_pg) .* weights(x(iInt));
+    % write out progress
+    if DEBUG 
+        if ~mod(iInt, 100), 
+            fprintf('%s: INA contribution %d of %d. \n', ...
+                    mfilename, iInt, N);
+        end%if
+    end%if
 end%for
 
-W = Exp_W ./ Exp_pg;
-
-    function logp = logp_g_on_B(g)
-        %LOGP_G_ON_B
-        weightsCov = weights(g)'*weights(g);
-        IminusLW = (speye(nSourceElements) - LeadFields.lf*weights(g));
-        logp     = - 0.5 * Data.nSamples * Data.nSensors * log(2*pi)                          ...
-                   - 0.5 * Data.nSamples * logDetNoise                                        ...
-                   - 0.5 * trace(IminusLW * Data.cov * IminusLW.' * noiseInv) * Data.nSamples ...
-                   - 0.5 * Data.nSamples * nSourceElements * log(2*pi*g)                      ...
-                   - 0.5 * sum(sum(weightsCov .* Data.cov)) * Data.nSamples ./ g              ...
-                   + prior(log(g),scale);
-    end%logp_g_on_B
-
+if DEBUG,
+    fprintf('%s: normalisation check: sum of weighting factors: %0.3g. \n', ...
+            mfilename, exp(log_sum_exp(log_wpg - log_Exp_pg)));
+end%if
 end%mne_estimate_ina
-
+%{
+% % Previously used a nested function:
+%     function logp = logp_g_on_B(g)
+%         %LOGP_G_ON_B
+%         weightsCov = weights(g)'*weights(g);
+%         IminusLW = (speye(Data.nSensors) - LeadFields.lf*weights(g));
+%         logp     = - 0.5 * Data.nSamples * Data.nSensors * log(2*pi)                          ...
+%                    - 0.5 * Data.nSamples * logDetNoise                                        ...
+%                    - 0.5 * trace(IminusLW * Data.cov * IminusLW.' * noiseInv) * Data.nSamples ...
+%                    - 0.5 * Data.nSamples * nSourceElements * log(2*pi*g)                      ...
+%                    - 0.5 * sum(sum(weightsCov .* Data.cov)) * Data.nSamples ./ g              ...
+%                    + prior(log(g),scale);
+%     end%logp_g_on_B
+%}
 
 
 
@@ -360,9 +431,9 @@ sourceCovFn     = @(logGamma) exp(real(logGamma)) .* ...
 % space
 % note that for priors flat in log-space, which create improper posteriors,
 % the inference can be quite sensitive to the lower bound used here.
-noiseToLFScale = median(log(diag(Noise.cov))) - ...
-                 median(log(sum(LeadFields.lf.^2)));
-logGammaBound  = noiseToLFScale + [-10 20]; 
+noiseToLFScale = mean(log(diag(Noise.cov))) - ...
+                 mean(log(sum(LeadFields.lf.^2)));
+logGammaBound  = noiseToLFScale + [-20 50]; 
 
 % if the prior has a scale, set it to be about e^7 above noise
 scale = exp(noiseToLFScale + 7);
@@ -379,19 +450,30 @@ W = estimate_weights(Noise.cov, sourceCov, LeadFields.lf);
 
 
 if DEBUG,
+    % plot
     lg = log(logspace(log10(exp(logGammaBound(1))), log10(exp(logGammaBound(2))), 50));
     L  = arrayfun(optimise_target, lg);
     figure('Color', 'w', 'Name', 'Optimisation target for log(gamma)');
-    plot(lg, L);
+    semilogy(lg, L);
     xlabel('Log (\gamma)');
-    ylabel('L');
+    ylabel('L');    
+    
+    % display result
+    fprintf('\nBounds on logGamma: %0.2g, %0.2g. \n', logGammaBound);
+    fprintf('Chosen logGamma: %0.6g. \n', logGamma);
+    
 end%if DEBUG
 end%mne_Jeffreys_prior_estimate
 
 
+
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function W = mne_estimate_scale_noise(Data, Noise, ...
-                                                     LeadFields, priorFn)
+function W = mne_estimate_scale_noise(Data, Noise, LeadFields, priorFn)
 %MNE_DOUBLE_SEARCH_ESIMATE regularized source estimates with noise scaling
 %
 % Estimates source covariance for MNE, using a white covariance matrix,
@@ -404,35 +486,41 @@ sourceCovFn     = @(logGamma) exp(real(logGamma)) .* ...
                               speye(LeadFields.nDims * LeadFields.nSources);
                                     
 % put noise and sources are on same scale
-noiseToLFScale = median(log(diag(Noise.cov))) - ...
-                 median(log(sum(LeadFields.lf.^2)));
+noiseToLFScale = mean(log(diag(Noise.cov))) - ...
+                 mean(log(sum(LeadFields.lf.^2)));
 
-% put data and noise on scale set by smallest eigenvalue
+% put data and noise on scale set by mean eigenvalue
 dataEigVals      = eig(Data.cov);
 noiseEigVals     = eig(Noise.cov);
-NoiseToDataScale = log(noiseEigVals(end)) - log(dataEigVals(end));
+NoiseToDataScale = log(mean(noiseEigVals)) - log(mean(dataEigVals));
 
 % set initial values
 logGammaInit = noiseToLFScale; 
-logRhoInit   = NoiseToDataScale;
+logRhoInit   = NoiseToDataScale./2;
 paramsInit   = [logGammaInit; logRhoInit];
 
 % priors forms are the same for rho and gamma
-priors = [priorFn; priorFn];
+priors = {priorFn; priorFn};
 
 % If there is a scale on the priors, we want to constrain the space to
 % moderately sensible values
 % If we reckon our initial guesses are any good, let's constrain the
-% variance parameters to be within a factor of 50=exp(4).
-scales = exp(paramsInit + 4);
+% variance parameters to be within a factor of exp(7).
+scales = exp(paramsInit + 7);
 
 optimise_target = @(params) optimise_target_double_prior(Data, Noise,        ...
                                                          LeadFields, params, ...
                                                          priors, scales,     ...
                                                          sourceCovFn);
 
+% set optimisation params
+maxIter = 4000;
+                                                     
 % optimise using a multivariate nonlinear Nelder-Mead minimization
-params    = fminsearch(optimise_target, paramsInit);
+[params, fval, success] = fminsearch(optimise_target, paramsInit,     ...
+                                     optimset('MaxFunEvals', maxIter, ...
+                                              'MaxIter', maxIter));
+
 logGamma  = params(1);
 sourceCov = sourceCovFn(logGamma);
 rho       = exp(params(2));
@@ -440,11 +528,12 @@ rho       = exp(params(2));
 % Extract weights for 3d sources
 W = estimate_weights(Noise.cov, sourceCov, LeadFields.lf, rho);
 
-if DEBUG,
-    lrBound = real(log10(exp(logRhoInit))) + [-7 7];
-    lgBound = real(log10(exp(logGammaInit))) + [-15 15];
-    nR      = 40;
-    nG      = 60;
+if DEBUG || ~success,
+    % use a grid search
+    lrBound = real(log10(rho)) + [-7 7];
+    lgBound = real(log10(exp(logGamma))) + [-10 10];
+    nR      = 20;
+    nG      = 30;
     lr      = log(logspace(lrBound(1), lrBound(2), nR));
     lg      = log(logspace(lgBound(1), lgBound(2), nG));
     for iR = length(lr):-1:1,
@@ -459,8 +548,26 @@ if DEBUG,
     xlabel('Log (\rho)');
     ylabel('Log (\gamma)');
     zlabel('L');
+    
+    % best gamma and rho?
+    [searchFval, iMin] = min(L(:));
+    if searchFval < fval,
+        fprintf('%s: Using best parameters from grid search. \n', mfilename);
+        [iG,iR]   = ind2sub(size(L), iMin);
+        logGamma  = lg(iG);
+        sourceCov = sourceCovFn(logGamma);
+        rho       = exp(lr(iR));
+        
+        W = estimate_weights(Noise.cov, sourceCov, LeadFields.lf, rho);
+    end%if
 end%if DEBUG
-end%mne_Jeffreys_prior_estimate
+end%mne_estimate_scale_noise
+
+
+
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function W = sparse_bayes_estimate(Data, Noise, LeadFields, ...
@@ -487,6 +594,7 @@ oldGamma   = exp(logGammaInit);
 nIterMax   = 1000;
 iIter      = 1;
 deltaGamma = NaN(nIterMax);
+gamma      = zeros(size(oldGamma));
 
 HALT_CONDITION = 1e-5; %fractional change in norm(gamma) to class as convergence
 
@@ -497,9 +605,10 @@ while iIter <= nIterMax,
     
     iIter = iIter + 1;
     
+    sigmaB = empirical_bayes_cov(Noise.cov, sourceCovFn(oldGamma), LeadFields.lf);
+    
     % update rules
     for i = nSourceElements:-1:1,
-        sigmaB   = empirical_bayes_cov(Noise.cov, Data.cov, LeadFields.lf);
         gamma(i) = oldGamma(i) ./ sqrt(Data.nSamples) ...
                    *  1            ...
                    * sqrt(trace(LeadFields.lf(:,i).' * inverse(sigmaB) * LeadFields.lf(:,i) ...
@@ -540,6 +649,10 @@ if DEBUG
     plot(deltaGamma, 'r', 'LineWidth', 2);
     xlabel('Iteration', 'FontSize', 14);
     ylabel('Fractional change in norm(\gamma)', 'FontSize', 14);
+    
+    figure('Name', 'Gamma estimates', 'Color', 'w');
+    hist(log(gamma), 1000);
+    xlabel('Log(\gamma)');
 end%if
 end%sparse_bayes_estimate
 
@@ -561,11 +674,25 @@ Sigma_EB = empirical_bayes_cov(Noise.cov, sourceCovFn(logGamma), ...
 % we want to maximise
 % log p(g|B) = -0.5 Tr(BB' Sigma_b^{-1}) - n/2 logdet Sigma_b + log p(g).
 
+try
+    logDetSigma = ROInets.logdet(Sigma_EB, 'chol');
+    
+catch ME
+    % some errors with non pos def matrices occuring, which is surprising. 
+    if strcmp(ME.identifier, 'MATLAB:posdef'),
+        warning([mfilename ':OptimTarget:posdef'], ...
+                'Regularised covariance not positive defninite. \n');
+        
+        logDetSigma = ROInets.logdet(Sigma_EB);        
+    else
+        rethrow(ME);
+    end%if
+end%try
+
 % use property sum(eig(B, A)) = trace(inv(A) * B)
 % or trace(AB) = sum(sum(A .* B')) (and covariance matrices are symmetric)
-L = (trace(Data.cov * inverse(Sigma_EB, 'symmetric'))    ...               % faster than elementwise product or sum(eig()). 
-     + ROInets.logdet(Sigma_EB, 'chol')) * Data.nSamples ...
-    + 2 * prior(logGamma, scale);                           
+L = real((trace(Data.cov * inverse(Sigma_EB, 'symmetric')) ...                  % faster than elementwise product or sum(eig()). 
+     + logDetSigma) * Data.nSamples - 2 * prior(logGamma, scale));       
 
 
 if DEBUG,
@@ -576,7 +703,7 @@ if DEBUG,
     end%if
     fprintf(['Call to optim fn %4.0d: L = %0.8G, logGamma = %0.4G, ', ...
              'logdet(Sigma_EB) = %0.6G. \n'],                         ...
-            iTARGETCALL, L, logGamma, ROInets.logdet(Sigma_EB, 'chol'));
+            iTARGETCALL, L, logGamma, logDetSigma);
 end%if DEBUG
 end%optimise_target_single_prior
 
@@ -595,12 +722,27 @@ persistent iTARGETCALL
 
 logGamma = real(params(1));
 logRho   = real(params(2));
-pg       = priors(1);
-pr       = priors(2);
+pg       = priors{1};
+pr       = priors{2};
 
 Sigma_EB = empirical_bayes_cov(Noise.cov, sourceCovFn(logGamma), ...
                                LeadFields.lf);
 
+try
+    logDetSigma = ROInets.logdet(Sigma_EB, 'chol');
+    
+catch ME
+    % some errors with non pos def matrices occuring, which is surprising. 
+    if strcmp(ME.identifier, 'MATLAB:posdef'),
+        warning([mfilename ':OptimTarget:posdef'], ...
+                'Regularised covariance not positive defninite. \n');
+        
+        logDetSigma = ROInets.logdet(Sigma_EB);        
+    else
+        rethrow(ME);
+    end%if
+end%try
+                           
 % we want to maximise
 % log p(r,g|B) = -0.5 r^2 Tr(BB' Sigma_b^{-1}) - n/2 logdet Sigma_b  
 %                + n*log(r) + log p(r) + log p(g).
@@ -608,7 +750,7 @@ Sigma_EB = empirical_bayes_cov(Noise.cov, sourceCovFn(logGamma), ...
 % use property sum(eig(B, A)) = trace(inv(A) * B)
 % or trace(AB) = sum(sum(A .* B')) (and covariance matrices are symmetric)
 L = (exp(2*logRho) * trace(Data.cov * inverse(Sigma_EB, 'symmetric')) ...  % faster than elementwise product or sum(eig()). 
-     + ROInets.logdet(Sigma_EB, 'chol') - 2*logRho) .* Data.nSamples  ...
+     + logDetSigma - 2*logRho) .* Data.nSamples  ...
     - 2*pg(logGamma, priorScales(1)) - 2*pr(logRho, priorScales(2)); 
 
 
@@ -621,7 +763,7 @@ if DEBUG,
     fprintf(['Call to optim fn %4.0d: L = %0.8G, logGamma = %0.4G, ', ...
              'logRho = %0.4G, logdet(Sigma_EB) = %0.6G. \n'],         ...
             iTARGETCALL, L, logGamma, logRho,                         ...
-            ROInets.logdet(Sigma_EB, 'chol'));
+            logDetSigma);
 end%if DEBUG
 end%optimise_target_double_prior
 
@@ -656,7 +798,7 @@ switch lower(priorChoice)
         lp      = @(log_g,~) - 0.5 * sum(log_g); % ignore additive constant
         diff_lp = @(g,~)     - 0.5 ./ sum(g);
         
-    case 'log-uniform'
+    case 'uniform-log'
         % p(g) ~ 1/g
         lp      = @(log_g,~) - sum(log_g); % ignore additive constants as improper unless bounded
         diff_lp = @(g,~)     - 1.0 ./ sum(g);
@@ -718,7 +860,7 @@ switch lower(Noise.model)
         end%if
 
     case 'diag_datacov'
-        Noise.cov = Noise.lamdba .* diag(diagDataCov);
+        Noise.cov = Noise.lambda .* diag(diagDataCov);
         if hasNoiseCov,
             warning([mfilename ':noiseMethodMix'], methodMixWarning);
         end%if
@@ -786,11 +928,11 @@ IP.KeepUnmatched = false; % If true, accept unexpected inputs
 % declare allowed options
 test = @(x) isstruct(x)         &&                         ...
        isfield(x, 'weights')    && islogical(x.weights) && ...
-       isfield(x, 'leadFields') && isscalar(leadFields);
+       isfield(x, 'leadFields') && isscalar(x.leadFields);
 IP.addParamValue('ReduceRank', [], test);
 test = @(x) ischar(validatestring(x,                                   ...
                                   {'Wens', 'MNE', 'MNE-INA',           ...
-                                   'MNE-scaled-noise', 'sparseBayes'}, ...
+                                   'MNE-scaled-noise', 'sparse-Bayes'}, ...
                                   mfilename, ...
                                   'Options.sourceModel'));
 IP.addParamValue('sourceModel', 'MNE', test);
@@ -800,7 +942,7 @@ test = @(x) ischar(validatestring(x, {'sLoreta', 'norm', 'none'}, ...
 IP.addParamValue('normalise', 'norm', test);
 test = @(x) isa(x, 'function_handle') || ...
             ischar(validatestring(x, {'uniform-sd', 'uniform-variance', ...
-                                      'log-uniform', 'cauchy',          ...
+                                      'uniform-log', 'cauchy',          ...
                                       'normal', 'log-normal'},          ...
                                   mfilename, 'Options.gammaPrior'));
 IP.addParamValue('gammaPrior', 'uniform-sd', test);
@@ -811,7 +953,7 @@ IP.parse(Options);
 ParsedOptions = IP.Results;
 
 % set prior functions
-[ParsedOptions.gamaPrior.fn, ...
+[ParsedOptions.gammaPrior.fn, ...
  ParsedOptions.gammaPrior.diff_fn] = parse_priors(ParsedOptions.gammaPrior);
 end%parse_options
 
@@ -828,7 +970,7 @@ function [x,w] = clen_curt_points(N1,a,b)
 %    can be approximated using Sum_(i=1)^N w_i * f(x_i). 
 %
 % The algorithm is most efficient for choices of N = 2^p + 1
-% Jörg Waldvogel, "Fast construction of the Fejér and Clenshaw-Curtis 
+% Jï¿½rg Waldvogel, "Fast construction of the Fejï¿½r and Clenshaw-Curtis 
 % quadrature rules", BIT Numerical Mathematics 43 (1), p. 001-018 (2004).
 %
 % Adapted from code written by: Greg von Winckel - 02/12/2005
@@ -846,4 +988,41 @@ f = real(ifft([c(1:N1,:);c(N:-1:2,:)]));
 w = bma * ([f(1,1); 2*f(2:N,1); f(N1,1)])./2;
 x = 0.5 * ((b + a) + N * bma * f(1:N1,2));
 end%clen_curt_points
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function S = log_sum_exp(x, dim)
+%LOG_SUM_EXP avoids numerical underflow
+%
+% S = LOG_SUM_EXP(A) returns S = log(sum(exp(A)))
+% 
+% Default behaviour is to sum down columns. Use S = LOG_SUM_EXP(A,2) to sum
+%   over rows instead. 
+
+if nargin == 1,
+    if(ROInets.rows(x) > 1)
+      dim = 1;
+    elseif(ROInets.cols(x) > 1)
+      dim = 2;
+    elseif isscalar(x)
+        S = x; 
+        return
+    else
+        dim = find(size(x), 1, 'first');
+    end%if
+end%if dim not provided
+
+% find max in each column and subtract
+maxVals = max(x(isfinite(x)), [], dim);
+a       = bsxfun(@minus, x, maxVals);
+S       = maxVals + log(sum(exp(a), dim));
+
+% if elements of maxVals are infinite, use them in place
+dodgyInds    = ~isfinite(maxVals);
+S(dodgyInds) = maxVals(dodgyInds);
+
+end%log_sum_exp
 % [EOF]
