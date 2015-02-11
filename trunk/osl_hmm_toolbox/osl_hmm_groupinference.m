@@ -337,7 +337,7 @@ if todo.infer
         global OSLDIR
         rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
         addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox')));
-        options.initcyc = 10;
+        
         hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample));
         addpath(genpath(OSLDIR));
     end;
