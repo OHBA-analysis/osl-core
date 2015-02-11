@@ -246,9 +246,9 @@ for i=1:length(spm_files), % iterates over subjects
     %%%%
     % do epoching
     S3=[];
+    S3 = epochinfo;
     S3.D = D_continuous;     
-    S3.epochinfo=epochinfo;
-    [D good_trial_start_times] = osl_epoch(S3);
+    D = osl_epoch(S3);
             
 end;
 
