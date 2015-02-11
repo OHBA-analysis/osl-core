@@ -59,6 +59,10 @@ if isempty(pathstr)
 end
 S.ica_file = fullfile(pathstr,[name '.mat']);
 
+if ~isdir(pathstr) % Create directory if it doesn't exist
+    mkdir(pathstr);
+end
+
 if isfield(S,'logfile') && S.logfile == 1
     logfile = fullfile(pathstr,[name '_log.txt']);
   if exist(logfile,'file')
@@ -112,9 +116,6 @@ fig_titles  = [];
 if S.todo.ica
     S.ica_res = perform_sensorspace_ica(S);
     if isfield(S,'ica_file')
-        if ~isdir(fileparts(S.ica_file))
-            mkdir(fileparts(S.ica_file));
-        end
         save(S.ica_file,'S');
         msg = sprintf('\n%s%s\n%','Saving ICA results to ', S.ica_file);
         fprintf(msg);
@@ -201,22 +202,18 @@ end
 % Good channels:
 chan_inds = indchantype(D,chantype,'GOOD');
 
-% Good samples:
-if D.ntrials == 1
-    sample_inds = find(~all(badsamples(D,':',':',1)));
-else
-    sample_inds = 1:D.nsamples;
-end
-
-% Good trials:
-trial_inds = indtrial(D,D.condlist,'GOOD');
+% Good timepoints/trials
+good_samples = ~all(badsamples(D,':',':',':'));
+good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
 
 % Select data:
-icadata = D(chan_inds,sample_inds,trial_inds);
+icadata = D(chan_inds,:,:);
 
 % Remove trial structure:
 icadata = reshape(icadata,size(icadata,1),[]);
 
+% Select good timepoints
+icadata = icadata(:,good_samples);
 
 %%%%%%%%%%%%%%%%%%%% APPLY MAXFILTER SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%%%%
 if isfield(S,'used_maxfilter') && S.used_maxfilter
@@ -330,7 +327,7 @@ if ~isempty(indchantype(D,chantype,'BAD'))
     sm_full(indchantype(D,chantype,'BAD'),:) = subdata(:,~bad_timepoints)*pinv(ica_res.tc);
 end
 
-subdata = D(indchantype(D,chantype),:,:);
+subdata = D(chan_inds,:,:);
 subdata = reshape(subdata,size(subdata,1),[]);
 subdata = subdata(:,bad_timepoints);
 tc_full = zeros(ica_res.ica_params.num_ics,D.ntrials*D.nsamples);
