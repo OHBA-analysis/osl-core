@@ -129,9 +129,9 @@ end
 
 % Check inverse_method Specification:
 try
-    S = ft_checkopt(S,'inverse_method','char',{'beamform','beamform_bilateral','mne_eye','mne_diag_datacov'});
+    S = ft_checkopt(S,'inverse_method','char',{'beamform','beamform_bilateral','mne_eye','mne_diag_datacov','mne_adaptive'});
 catch 
-    warning('inverse_method specification not recognised or incorrect, assuming fuse=no for now')
+    warning('inverse_method specification not recognised or incorrect, assuming beamform for now')
     S = ft_setopt(S,'inverse_method','beamform');
 end
 
@@ -235,6 +235,9 @@ switch S.inverse_method,
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.noise_cov_type = 'eye';    
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.lambda         = mne_lambda;
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.type           = S.type;
+    case 'mne_adaptive'
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise          = S.MNE.Noise;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = S.MNE.Options;
     otherwise 
         disp('Inversion method unknown!');        
 end
