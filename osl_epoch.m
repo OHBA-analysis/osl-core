@@ -12,11 +12,10 @@ function D_epoched = osl_epoch(S)
 %
 % Adam Baker 2015
 
+D = spm_eeg_load(S.D);
 
 if ~isfield(S,'bad_event_type')
     S.bad_event_type = 'artefact_OSL';
-else
-    S.bad_event_type = [];
 end
 
 D_epoched = spm_eeg_epochs(S);
@@ -29,7 +28,9 @@ if ~isempty(S.bad_event_type)
         bs = badsamples(D,':',round(tpts*D.fsample),1);
         Badtrials(trl) = any(all(bs));
     end
-        
+    
+    D_epoched = badtrials(D_epoched,find(Badtrials),1);
+    
 end
 
 D_epoched.save;
