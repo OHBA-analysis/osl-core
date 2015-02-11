@@ -17,8 +17,7 @@ function [hmm]=hsupdate(Xi,Gamma,T,hmm)
 
 N = length(T);
 K=hmm.K;
-if hmm.train.order > 0, order = 1:hmm.train.timelag:hmm.train.order; order = order(end); 
-else order = 0; end 
+[~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
 % transition matrix
 sxi=squeeze(sum(Xi,1));   % counts over time
 
@@ -26,11 +25,10 @@ hmm.Dir2d_alpha=sxi+hmm.prior.Dir2d_alpha;
 PsiSum=psi(sum(hmm.Dir2d_alpha(:),1));
 for j=1:K,
     for i=1:K,
-        P(j,i)=exp(psi(hmm.Dir2d_alpha(j,i))-PsiSum);
+        hmm.P(j,i)=exp(psi(hmm.Dir2d_alpha(j,i))-PsiSum);
     end;
-    P(j,:)=P(j,:)./sum(P(j,:));
+    hmm.P(j,:)=hmm.P(j,:)./sum(hmm.P(j,:));
 end;
-hmm.P=P;
 
 % initial state
 hmm.Dir_alpha=hmm.prior.Dir_alpha;
@@ -40,7 +38,7 @@ for in=1:N
 end
 PsiSum=psi(sum(hmm.Dir_alpha,2));
 for i=1:K,
-    Pi(i)=exp(psi(hmm.Dir_alpha(i))-PsiSum);
+    hmm.Pi(i)=exp(psi(hmm.Dir_alpha(i))-PsiSum);
 end
 hmm.Pi=hmm.Pi./sum(hmm.Pi);
 

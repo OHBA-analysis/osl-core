@@ -35,6 +35,7 @@ end;
 %DSq=det(sigma_q);
 %DSp=det(sigma_p);
 K=size(sigma_q,1);
+isigmap = inv(sigma_p);
 
-D=logdet(sigma_p) - logdet(sigma_q) -K+trace(sigma_q*inv(sigma_p))+(mu_q-mu_p)'*inv(sigma_p)*(mu_q-mu_p);
+D=logdet(sigma_p) - logdet(sigma_q) -K+trace(isigmap*sigma_q)+(mu_q-mu_p)'*isigmap*(mu_q-mu_p);
 D=D*0.5;

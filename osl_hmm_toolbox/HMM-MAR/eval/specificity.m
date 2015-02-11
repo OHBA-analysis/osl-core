@@ -13,19 +13,18 @@ function sp = specificity(X,T,hmm,Gamma)
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford
 
-order = hmm.train.order;
-timelag = hmm.train.timelag;
-hmm.orderGL = 0;
-
-var0 = sum( (X - repmat(mean(X),size(X,1),1)).^2 );
+regressed = sum(hmm.train.S==1,1)>0;
+var0 = sum( (X(:,regressed) - repmat(mean(X(:,regressed)),size(X,1),1)).^2 );
+orders = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
+Sind = formindexes(orders,hmm.train.S);
 
 % get global residuals
-[~,~,~,r0] = mlmar(X,T,order,timelag);
-e0 = sum(sum( r0.^2 ) ./ var0);
+[~,~,~,r0] = mlmar(X,T,Sind==1,hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag,hmm.train.zeromean);
+e0 = sum(sum( r0(:,regressed).^2 ) ./ var0);
 
 % get local residuals
 [~,~,gcovm] = mlhmmmar(X,T,hmm,Gamma);
-nsamples = sum(T) - length(T)*order;
+nsamples = sum(T) - length(T)*hmm.train.order;
 e2 = sum( (diag(gcovm)' * nsamples) ./ var0);
 sp = e2/e0;
 

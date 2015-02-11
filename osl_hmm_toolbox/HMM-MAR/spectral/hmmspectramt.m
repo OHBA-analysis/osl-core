@@ -34,35 +34,25 @@ function fit = hmmspectramt(X,T,options)
 % fit.state(k).phase: phase of the coherence, in degrees (Nf x N x N)
 % fit.state(k).psderr: interval of confidence for the cross-spectral density (2 x Nf x N x N)
 % fit.state(k).coherr: interval of confidence for the coherence (2 x Nf x N x N)
+% fit.state(k).pcoherr: interval of confidence for the partial coherence (2 x Nf x N x N)
 % fit.state(k).pdcerr: interval of confidence for the partial directed coherence (2 x Nf x N x N)
 % fit.state(k).sdphase: jackknife standard deviation of the phase
 % fit.state(k).f: frequencies (Nf x 1)
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford (2014)
 
-ndim = size(X,2); 
-if ~isfield(options,'Gamma'), Gamma = ones(sum(T),1); 
-else Gamma = options.Gamma; end
-if ~isfield(options,'p'), options.p = 0; end
-if ~isfield(options,'removezeros'), options.removezeros = 0; end
-if ~isfield(options,'rlowess'), options.rlowess = 0; end
-if ~isfield(options,'numIterations'), options.numIterations = 100; end
-if ~isfield(options,'tol'), options.tol = 1e-18; end
-if ~isfield(options,'pad'), options.pad = 0; end;
-if ~isfield(options,'Fs'), options.Fs=1; end;
-if ~isfield(options,'fpass'),  options.fpass=[0 options.Fs/2]; end;
-if ~isfield(options,'tapers'), options.tapers = [4 7]; end;
-if ~isfield(options,'win'), win = min(T); else win = options.win; end
+ndim = size(X,2);
+[options,Gamma] = checkoptions_spectra(options,ndim,T);
 K = size(Gamma,2);
 
 if options.p>0, options.err = [2 options.p]; end
 Fs = options.Fs;
 fit = {};
 
-nfft = max(2^(nextpow2(win)+options.pad),win);
+nfft = max(2^(nextpow2(options.win)+options.pad),options.win);
 [f,findx]=getfgrid(Fs,nfft,options.fpass);
-Nf = length(f);
-tapers=dpsschk(options.tapers,win,Fs); % check tapers
+Nf = length(f); options.Nf = Nf;
+tapers=dpsschk(options.tapers,options.win,Fs); % check tapers
 ntapers = options.tapers(2);
 
 % remove the exceeding part of X (with no attached Gamma)
@@ -73,36 +63,25 @@ for in=1:length(T),
     X2 = [X2; X(t0+1+order:t0+T(in),:)];
     T(in) = T(in) - order;
 end
-X = X2; clear X2; 
+X = X2; clear X2;
 
 for k=1:K
     
     Xk = X .* repmat(Gamma(:,k),1,ndim);
-    if options.removezeros
-        nonzero = Gamma~=0;
-        Xk = Xk(nonzero,:);
-        Tk = T;
-        for in=1:length(T),
-            t0 = sum(T(1:in-1));
-            Tk(in) = sum(Gamma(t0+1:t0+T(in))~=0);
-        end
-    else
-        Tk = T;
-    end
     
     % Multitaper Cross-frequency matrix calculation
-    psdc = zeros(Nf,ndim,ndim,length(Tk)*ntapers);
-    for in=1:length(Tk)
-        Nwins=round(Tk(in)/win); % that means that a piece of data is going to be included as a window only if it's long enough
-        t0 = sum(Tk(1:in-1));
-        Xki = Xk(t0+1:t0+Tk(in),:);
+    psdc = zeros(Nf,ndim,ndim,length(T)*ntapers);
+    for in=1:length(T)
+        Nwins=round(T(in)/options.win); % that means that a piece of data is going to be included as a window only if it's long enough
+        t0 = sum(T(1:in-1));
+        Xki = Xk(t0+1:t0+T(in),:);
         for iwin=1:Nwins,
-            ranget = (iwin-1)*win+1:iwin*win;
-            if ranget(end)>Tk(in),
-                nzeros = ranget(end) - Tk(in);
-                nzeros2 = floor(nzeros/2) * ones(2,1);
+            ranget = (iwin-1)*options.win+1:iwin*options.win;
+            if ranget(end)>T(in),
+                nzeros = ranget(end) - T(in);
+                nzeros2 = floor(double(nzeros)/2) * ones(2,1);
                 if sum(nzeros2)<nzeros, nzeros2(1) = nzeros2(1)+1; end
-                ranget = ranget(1):Tk(in);
+                ranget = ranget(1):T(in);
                 Xwin=[zeros(nzeros2(1),ndim); Xki(ranget,:); zeros(nzeros2(2),ndim)]; % padding with zeroes
             else
                 Xwin=Xki(ranget,:);
@@ -112,112 +91,90 @@ for k=1:K
                 Jik=J(findx,tp,:);
                 for j=1:ndim,
                     for l=1:ndim,
-                        psdc(:,j,l,(in-1)*ntapers+tp) = psdc(:,j,l,(in-1)*ntapers+tp) + mean(conj(Jik(:,:,j)).*Jik(:,:,l),2) / Nwins;
+                        psdc(:,j,l,(in-1)*ntapers+tp) = psdc(:,j,l,(in-1)*ntapers+tp) + mean(conj(Jik(:,:,j)).*Jik(:,:,l),2) / double(Nwins);
+                    end
+                end
+            end
+        end
+    end
+    psd = mean(psdc,4); ipsd = zeros(Nf,ndim,ndim);
+    for ff=1:Nf, ipsd(ff,:,:) = inv(permute(psd(ff,:,:),[3 2 1])); end
+    
+    % coherence
+    coh = []; pcoh = []; phase = []; pdc = [];
+    if (options.to_do(1)==1)
+        coh = zeros(Nf,ndim,ndim); phase = zeros(Nf,ndim,ndim);
+        for j=1:ndim,
+            for l=1:ndim,
+                cjl = psd(:,j,l)./sqrt(psd(:,j,j) .* psd(:,l,l));
+                coh(:,j,l) = abs(cjl);
+                pcoh(:,j,l) = -ipsd(:,j,l)./sqrt(ipsd(:,j,j) .* ipsd(:,l,l));
+                phase(:,j,l) = angle(cjl); %atan(imag(rkj)./real(rkj));
+            end
+        end
+    end
+    
+    if (options.to_do(2)==1)
+        pdc = subrutpdc(psd,options.numIterations,options.tol);
+    end
+    
+    if options.p>0 % jackknife
+        [psderr,coherr,pcoherr,pdcerr,sdphase] = spectrerr(psdc,[],coh,pcoh,pdc,options);
+    end
+    
+    if options.rlowess,
+        for j=1:ndim,
+            psd(:,j,j) = mslowess(f', psd(:,j,j));
+            if options.p>0
+                psderr(1,:,j,j) = mslowess(f', squeeze(psderr(1,:,j,j))');
+                psderr(2,:,j,j) = mslowess(f', squeeze(psderr(2,:,j,j))');
+            end
+            for l=1:ndim,
+                if (options.to_do(1)==1),
+                    coh(:,j,l) = mslowess(f', coh(:,j,l));
+                    pcoh(:,j,l) = mslowess(f', pcoh(:,j,l));
+                end
+                if (options.to_do(2)==1),
+                    pdc(:,j,l) = mslowess(f', pdc(:,j,l));
+                end
+                if options.p>0
+                    if (options.to_do(1)==1),
+                        coherr(1,:,j,l) = mslowess(f', squeeze(coherr(1,:,j,l))');
+                        coherr(2,:,j,l) = mslowess(f', squeeze(coherr(2,:,j,l))');
+                        pcoherr(1,:,j,l) = mslowess(f', squeeze(pcoherr(1,:,j,l))');
+                        pcoherr(2,:,j,l) = mslowess(f', squeeze(pcoherr(2,:,j,l))');
+                    end
+                    if (options.to_do(2)==1),
+                        pdcerr(1,:,j,l) = mslowess(f', squeeze(pdcerr(1,:,j,l))');
+                        pdcerr(2,:,j,l) = mslowess(f', squeeze(pdcerr(2,:,j,l))');
                     end
                 end
             end
         end
     end
     
-    % coherence
-    psd = mean(psdc,4); ipsd = zeros(Nf,ndim,ndim);
-    for ff=1:Nf, ipsd(ff,:,:) = inv(permute(psd(ff,:,:),[3 2 1])); end
-    coh = zeros(Nf,ndim,ndim); phase = zeros(Nf,ndim,ndim);
-    for j=1:ndim, 
-        for l=1:ndim,
-            cjl = psd(:,j,l)./sqrt(psd(:,j,j) .* psd(:,l,l));
-            coh(:,j,l) = cjl;
-            pcoh(:,j,l) = -ipsd(:,j,l)./sqrt(ipsd(:,j,j) .* ipsd(:,l,l));
-            phase(:,j,l) = angle(cjl); %atan(imag(rkj)./real(rkj));
-        end
-    end
-    
-    pdc = subrutpdc(psd,options.numIterations,options.tol);
-    psderr = []; coherr = []; pdcerr = [];
-    
-    if options.p>0 % jackknife
-        if length(Tk)*options.tapers(2)<5,  error('You need at least 5 trials*tapers to compute error bars\n'); end
-        jksamples = size(psdc,4);
-        SA = []; cohA = []; pdcA = []; dcA = [];
-        atanhcohA = [];
-        atanhpdcA = [];
-        phasefactorA = [];
-        for in=1:jksamples;
-            %fprintf('%d of %d \n',in,size(psdc,4))
-            indxk=setdiff(1:jksamples,in);
-            Si = mean(psdc(:,:,:,indxk),4);
-            cohi = zeros(Nf,ndim,ndim);
-            atanhcohi = zeros(Nf,ndim,ndim);
-            atanhpdci = zeros(Nf,ndim,ndim);
-            phasefactori = zeros(Nf,ndim,ndim);
-            pdci = subrutpdc(Si,options.numIterations,options.tol);
-            for j=1:ndim,
-                for l=1:ndim,
-                    cjl = Si(:,j,l)./sqrt(Si(:,j,j) .* Si(:,l,l));
-                    cohi(:,j,l) = abs(cjl);
-                    atanhcohi(:,j,l) = sqrt(2*jksamples-2)*atanh(cohi(:,j,l));
-                    atanhpdci(:,j,l) = sqrt(2*jksamples-2)*atanh(pdci(:,j,l));
-                    phasefactori(:,j,l)=cjl./cohi(:,j,l);
-                end
-            end
-            SA = cat(4,SA,Si); cohA = cat(4,cohA,cohi);
-            atanhcohA = cat(4,atanhcohA,atanhcohi);
-            atanhpdcA = cat(4,atanhpdcA,atanhpdci);
-            phasefactorA = cat(4,phasefactorA,phasefactori);
-            pdcA = cat(4,pdcA,pdci); dcA = cat(4,pdcA,pdci);
-        end
-        dof = jksamples-1;
-        tcrit=tinv(1-options.p/2,dof); % Inverse of Student's T cumulative distribution function
-        % psd errors
-        sigmaS = tcrit * sqrt(dof)*std(log(SA),1,4);
-        psderr = zeros([2 size(psd)]);
-        psderr(1,:,:,:) = psd .* exp(-sigmaS);
-        psderr(2,:,:,:) = psd .* exp(sigmaS);
-        % coh errors
-        atanhcoh=sqrt(2*jksamples-2)*atanh(coh); % z
-        sigma12=sqrt(jksamples-1)*std(atanhcohA,1,4); % Jackknife estimate std(z)=sqrt(dim-1)*std of 1-drop estimates
-        Cu=atanhcoh+tcrit*sigma12;
-        Cl=atanhcoh-tcrit*sigma12;
-        coherr = zeros([2 size(coh)]);
-        coherr(1,:,:,:) = max(tanh(Cl/sqrt(2*jksamples-2)),0); % This ensures that the lower confidence band remains positive
-        coherr(2,:,:,:) = tanh(Cu/sqrt(2*jksamples-2));
-        % pdc errors
-        atanhpdc=sqrt(2*jksamples-2)*atanh(pdc); % z
-        sigma12=sqrt(jksamples-1)*std(atanhpdcA,1,4); % Jackknife estimate std(z)=sqrt(dim-1)*std of 1-drop estimates
-        Cu=atanhpdc+tcrit*sigma12;
-        Cl=atanhpdc-tcrit*sigma12;
-        pdcerr = zeros([2 size(pdc)]);
-        pdcerr(1,:,:,:) = max(tanh(Cl/sqrt(2*jksamples-2)),0); % This ensures that the lower confidence band remains positive
-        pdcerr(2,:,:,:) = tanh(Cu/sqrt(2*jksamples-2));
-        % std of the phase
-        sdphase = sqrt( (2*jksamples-2)*(1-abs(mean(phasefactorA,4))) );
-    end
-    
-    if options.rlowess,
-        for j=1:ndim,
-            psd(:,j,j) = mslowess(f', psd(:,j,j));
-            psderr(1,:,j,j) = mslowess(f', squeeze(psderr(1,:,j,j))');
-            psderr(2,:,j,j) = mslowess(f', squeeze(psderr(2,:,j,j))');
-            for l=1:ndim,
-                coh(:,j,l) = mslowess(f', coh(:,j,l));
-                coherr(1,:,j,l) = mslowess(f', squeeze(coherr(1,:,j,l))');
-                coherr(2,:,j,l) = mslowess(f', squeeze(coherr(2,:,j,l))');
-                pdc(:,j,l) = mslowess(f', pdc(:,j,l));
-                pdcerr(1,:,j,l) = mslowess(f', squeeze(pdcerr(1,:,j,l))');
-                pdcerr(2,:,j,l) = mslowess(f', squeeze(pdcerr(2,:,j,l))');
-            end
-        end
-    end
-    
+    fit.state(k).f = f;
     fit.state(k).psd = psd;
-    fit.state(k).psderr = psderr;
-    fit.state(k).coh = coh;
-    fit.state(k).coherr = coherr;
-    fit.state(k).pdc = pdc;
-    fit.state(k).pdcerr = pdcerr;    
-    fit.state(k).phase = phase;
-    fit.state(k).sdphase = sdphase;  
-    fit.state(k).f = f;  
+    fit.state(k).ipsd = ipsd;
+    if (options.to_do(1)==1),
+        fit.state(k).coh = coh;
+        fit.state(k).pcoh = pcoh;
+        fit.state(k).phase = phase;
+    end
+    if (options.to_do(2)==1),
+        fit.state(k).pdc = pdc;
+    end
+    if options.p>0
+        fit.state(k).psderr = psderr;
+        if (options.to_do(1)==1),
+            fit.state(k).coherr = coherr;
+            fit.state(k).pcoherr = pcoherr;
+            fit.state(k).sdphase = sdphase;
+        end
+        if (options.to_do(2)==1),
+            fit.state(k).pdcerr = pdcerr;
+        end
+    end
 end
 
 end
@@ -307,145 +264,3 @@ J=fft(data_proj,nfft)/Fs;   % fft of projected data
 end
 
 %-------------------------------------------------------------------
-function pdc = subrutpdc(S,numIterations,tol)
-% obtains approximated pdc and dc from cross-spectral information
-
-Nf = size(S,1); N = size(S,2);
-% Wilson factorization
-H = wilsonfact(permute(S,[2 3 1]),numIterations,tol);
-% Computing the PDC
-G = zeros(size(H));
-pdc = zeros(size(H));
-for f=1:Nf
-    G(:,:,f) = inv(H(:,:,f));
-    for i=1:N
-        for j=1:N
-            if i~=j
-                pdc(i,j,f) = abs(G(i,j,f)) / sqrt(sum( abs(G(:,j,f)).^2 )) ;
-            end
-        end
-    end
-end
-pdc = permute(pdc,[3 1 2]);
-end
-
-%-------------------------------------------------------------------
-function [H, Z, S] = wilsonfact(S,Niterations,tol)
-%
-% This function is an implemention of Wilson's algorithm (Eq. 3.1)
-% for spectral matrix factorization
-%
-% Inputs : S (1-sided, 3D-spectral matrix in the form of Channel x Channel x frequency)
-%        : fs (sampling frequency in Hz)
-%        : freq (a vector of frequencies) at which S is given
-% Outputs: H (transfer function)
-%        : Z (noise covariance)
-%        : psi (left spectral factor)
-%
-% Ref: G.T. Wilson,"The Factorization of Matricial Spectral Densities,"
-% SIAM J. Appl. Math.23,420-426(1972).
-% Modification over the function sfactorization_wilson (fieldtrip),
-% implemented by  M. Dhamala & G. Rangarajan, UF, Aug 3-4, 2006.
-
-% number of channels
-m   = size(S,1);
-N   = size(S,3)-1;
-N2  = 2*N;
-
-% preallocate memory for efficiency
-Sarr   = zeros(m,m,N2) + 1i.*zeros(m,m,N2);
-gam    = zeros(m,m,N2);
-gamtmp = zeros(m,m,N2);
-psi    = zeros(m,m,N2);
-I      = eye(m); % Defining m x m identity matrix
-
-%Step 1: Forming 2-sided spectral densities for ifft routine in matlab
-for f_ind = 1:N+1
-    Sarr(:,:,f_ind) = S(:,:,f_ind);
-    if(f_ind>1)
-        Sarr(:,:,2*N+2-f_ind) = S(:,:,f_ind).';
-    end
-end
-
-%Step 2: Computing covariance matrices
-for k1 = 1:m
-    for k2 = 1:m
-        gam(k1,k2,:) = real(ifft(squeeze(Sarr(k1,k2,:))));
-    end
-end
-
-%Step 3: Initializing for iterations
-gam0 = gam(:,:,1);
-[h, dum] = chol(gam0);
-if dum
-    warning('initialization for iterations did not work well, using arbitrary starting condition');
-    h = rand(m,m); h = triu(h); %arbitrary initial condition
-end
-
-for ind = 1:N2
-    psi(:,:,ind) = h;
-end
-
-%Step 4: Iterating to get spectral factors
-for iter = 1:Niterations
-    for ind = 1:N2
-        invpsi     = inv(psi(:,:,ind));
-        g(:,:,ind) = invpsi*Sarr(:,:,ind)*invpsi'+I;%Eq 3.1
-    end
-    gp = PlusOperator(g,m,N+1); %gp constitutes positive and half of zero lags
-    psi_old = psi;
-    leaveloop = 0;
-    for k = 1:N2
-        psi(:,:,k) = psi(:,:,k)*gp(:,:,k);
-        %if isnan(rcond(psi(:,:,k))),
-        %   leaveloop=1;
-        %   break
-        %end
-        psierr(k)  = norm(psi(:,:,k)-psi_old(:,:,k),1);
-    end
-    %if leaveloop,
-    %    psi = psi_old;
-    %    break
-    %end
-    psierrf = mean(psierr);
-    if(psierrf<tol),
-        break;
-    end; % checking convergence
-end
-
-%Step 5: Getting covariance matrix from spectral factors
-for k1 = 1:m
-    for k2 = 1:m
-        gamtmp(k1,k2,:) = real(ifft(squeeze(psi(k1,k2,:))));
-    end
-end
-
-%Step 6: Getting noise covariance & transfer function (see Example pp. 424)
-A0    = gamtmp(:,:,1);
-A0inv = inv(A0);
-Z     = A0*A0.'; %Noise covariance matrix not multiplied by sampling frequency
-
-H = zeros(m,m,N+1) + 1i*zeros(m,m,N+1);
-for k = 1:N+1
-    H(:,:,k) = psi(:,:,k)*A0inv;       %Transfer function
-    %S(:,:,k) = psi(:,:,k)*psi(:,:,k)'; %Updated cross-spectral density
-end
-end
-
-%---------------------------------------------------------------------
-function gp = PlusOperator(g,nchan,nfreq)
-
-g   = transpose(reshape(g, [nchan^2 2*(nfreq-1)]));
-gam = ifft(g);
-
-% taking only the positive lags and half of the zero lag
-gamp  = gam;
-beta0 = 0.5*gam(1,:);
-
-gamp(1,          :) = reshape(triu(reshape(beta0, [nchan nchan])),[1 nchan^2]);
-gamp(nfreq+1:end,:) = 0;
-
-% reconstituting
-gp = fft(gamp);
-gp = reshape(transpose(gp), [nchan nchan 2*(nfreq-1)]);
-end
