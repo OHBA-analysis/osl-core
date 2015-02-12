@@ -329,10 +329,10 @@ end
 
 subdata = D(chan_inds,:,:);
 subdata = reshape(subdata,size(subdata,1),[]);
-subdata = subdata(:,bad_timepoints);
+subdata = subdata(:,bad_timepoints); % why is subdat aempty?
 tc_full = zeros(ica_res.ica_params.num_ics,D.ntrials*D.nsamples);
 tc_full(:,~bad_timepoints) = ica_res.tc;
-tc_full(:,bad_timepoints)  = (subdata'*inverse(sm_full(chan_inds,:)'))';
+tc_full(:,bad_timepoints)  = (subdata'*pinv(sm_full(chan_inds,:)'))';
 
 ica_res.sm = sm_full;
 ica_res.tc = tc_full;
@@ -387,6 +387,7 @@ if use_montage
     
     if ~isempty(badchannels)
         [~,indx] = ismember(D.sensors('MEG').label,montage.labelnew);
+        indx(0 == indx) = [];
         montage.tra(indx,:) = 0;
         for bi = indx'
             montage.tra(bi,bi) = 1;
