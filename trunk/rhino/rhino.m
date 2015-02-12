@@ -33,14 +33,23 @@ function D = rhino(S)
 %                        .lpa    - [1 x 3]
 %                        .rpa    - [1 x 3]
 %                        (omit field to use SPM defaults)
+%
 % 
 % OR:
 %
-% S.fid_nativecoords - Specify native MNI coordinates with fields:
+% S.fid_nativecoords - Specify native coordinates with fields:
 %                        .nasion - [1 x 3]
 %                        .lpa    - [1 x 3]
 %                        .rpa    - [1 x 3]
 %                        (omit field to use MNI defaults)
+%
+%
+% S.fid_headcastcoords  - Specify headcast native coordinates with fields:
+%                           .LB - [1 x 3]
+%                           .LF - [1 x 3]
+%                           .RB - [1 x 3]
+%                           .RF - [1 x 3]
+%
 %
 %                            ,-.             __
 %                          ,'   `---.___.---'  `.
@@ -124,22 +133,28 @@ if S.useheadshape == 1 && isempty(D.fiducials.pnt)
 end
 
 % Check Fiducial Label Specification:
-try
-    S = ft_checkopt(S,'fid_label','struct');
-    assert(isfield(S.fid_label, 'nasion') &&        ...
-           isfield(S.fid_label, 'lpa')    &&        ...
-           isfield(S.fid_label, 'rpa'),             ...
-           [mfilename ':fid_labelIncorrectFields'], ...
-           'Incorrect fields in S.fid_label\n');
-catch
-    warning('Fiducial label specification not recognised or incorrect, assigning Elekta defaults\n')
-    % default
-    S = ft_setopt(S,'fid_label',struct('nasion','Nasion', ...
-                                       'lpa','LPA',       ...
-                                       'rpa','RPA'));
-end%try
-fid_labels = {S.fid_label.nasion, S.fid_label.rpa, S.fid_label.lpa};
+if ~isfield(S,'fid_headcastcoords')
+    try
+        S = ft_checkopt(S,'fid_label','struct');
+        assert(isfield(S.fid_label, 'nasion') &&        ...
+            isfield(S.fid_label, 'lpa')    &&        ...
+            isfield(S.fid_label, 'rpa'),             ...
+            [mfilename ':fid_labelIncorrectFields'], ...
+            'Incorrect fields in S.fid_label\n');
+    catch
+        warning('Fiducial label specification not recognised or incorrect, assigning Elekta defaults\n')
+        % default
+        S = ft_setopt(S,'fid_label',struct('nasion','Nasion', ...
+            'lpa','LPA',       ...
+            'rpa','RPA'));
+    end%try
+end
 
+if numel(fieldnames(S.fid_label)) == 3
+    fid_labels = {S.fid_label.nasion, S.fid_label.rpa, S.fid_label.lpa};
+else
+    fid_labels = fieldnames(S.fid_label)';
+end
 
 % Check Fiducial MNI Coordinate Specification:
 if isfield(S,'fid_mnicoords')
@@ -174,6 +189,12 @@ elseif isfield(S,'fid_nativecoords')
     assert(3 == m && 3 == n, ...
            [mfilename ':NativeCoordsWrongDim'], ...
            'fid_nativecoords should each be a 1x3 vector. \n');     
+elseif isfield(S,'fid_headcastcoords')
+    fid_native = [S.fid_headcastcoords.LB;  ...
+                  S.fid_headcastcoords.LF;  ...
+                  S.fid_headcastcoords.RB; ...
+                  S.fid_headcastcoords.RF];
+    fid_MNI = []; % will be used later to determine coordinate space to use
 else % default
     fid_MNI = [  1   85  -41;
                 83  -20  -65;
@@ -484,13 +505,9 @@ if ~isempty(fid_MNI)
 end
 
 % MATCH FIDUCIALS
-[~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x}(1:3))}, 1:length(fid_labels)),...
-                         arrayfun(@(x) {lower(     fid_labels{x}(1:3))}, 1:length(fid_labels)));                     
+[~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x}(1:end))}, 1:length(fid_labels)),...
+                         arrayfun(@(x) {lower(     fid_labels{x}(1:end))}, 1:length(fid_labels)));                     
                      
-% check that all labels were written in correctly
-assert(3 == length(fid_order), ...
-       [mfilename ':FiducialLabelsNoMatch'], ...
-       'Fiducial labels don''t match D.fiducials.fid.label. \n');
 fid_labels = fid_labels(fid_order);
 fid_native = fid_native(fid_order, :);
 
