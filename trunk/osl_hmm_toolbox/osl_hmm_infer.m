@@ -34,6 +34,9 @@ end
 if ~isfield(options,'order')
     options.order = 0;
 end
+if ~isfield(options,'zeromean')
+    options.zeromean = 0;
+end
 
 
 % Check data dimensions
@@ -44,13 +47,11 @@ end
 T = size(data,1);
 
 
-
 % Run HMM inference with multiple initialisations
 FrEn = Inf;
 for i = 1:Ninits
     options.inittype='EM';
     %options.initcyc = 10;
-    options.zeromean=0;
     [hmm_new, Gamma, Xi, vpath, GammaInit, residuals, fehist] = hmmmar(data,T,options);
     % keep inference if Free Energy is lower
     if fehist(end) < FrEn

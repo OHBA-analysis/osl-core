@@ -196,9 +196,14 @@ else
     matlabbatch{3}.spm.tools.beamforming.features.whatconditions.condlabel      = S.conditions;
 end
 
-if ~S.use_class_channel,
-    matlabbatch{3}.spm.tools.beamforming.features.plugin.contcov                = struct([]);
-    matlabbatch{3}.spm.tools.beamforming.features.woi                           = S.timespan;
+if ~S.use_class_channel
+    if D.ntrials == 1
+        matlabbatch{3}.spm.tools.beamforming.features.plugin.contcov            = struct([]);
+        matlabbatch{3}.spm.tools.beamforming.features.woi                       = S.timespan;
+    else
+        matlabbatch{3}.spm.tools.beamforming.features.plugin.cov                = struct([]);
+        matlabbatch{3}.spm.tools.beamforming.features.woi                       = S.timespan;
+    end
 else
     matlabbatch{3}.spm.tools.beamforming.features.plugin.cov_bysamples          = struct([]);
     matlabbatch{3}.spm.tools.beamforming.features.woi                           = S.timespan;
