@@ -48,10 +48,11 @@ for cycle=1:max_cyc
                 break
             end
         end
-%         as1 = find(actstates==1);
-%         [as,hmm,Gamma,Xi] = getactivestates(data.X,hmm,Gamma,Xi);
-%         if any(as==0), cyc_to_go = hmm.train.cycstogoafterevent; end
-%         actstates(as1(as==0)) = 0;
+        % any state to remove? 
+        as1 = find(actstates==1);
+        [as,hmm,Gamma,Xi] = getactivestates(data.X,hmm,Gamma,Xi);
+        if any(as==0), cyc_to_go = hmm.train.cycstogoafterevent; end
+        actstates(as1(as==0)) = 0;
         
         %%%% Free energy computation
         fehist = [fehist; sum(evalfreeenergy(data.X,T,Gamma,Xi,hmm,residuals))];
@@ -79,8 +80,8 @@ for cycle=1:max_cyc
     end
     
     %%%% M STEP
+       
     % Observation model
-    
     hmm=obsupdate(data.X,T,Gamma,hmm,residuals);
     
     if hmm.train.updateGamma,
