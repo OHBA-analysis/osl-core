@@ -1,132 +1,71 @@
 function hmm = osl_hmm_subjectinference(S)
 
-if nargin < 2
-    options = [];
-end
-
 if ~isfield(S,'D') || ~isa(spm_eeg_load(S.D),'meeg')
     error('S.D should contain a valid SPM object!');
 end
-    
-    
-options.mode        = ft_getopt(S,'mode','raw');
-options.pcadim      = ft_getopt(S,'pcadim',40);
-options.whiten      = ft_getopt(S,'whiten',1);
-options.normalise   = ft_getopt(S,'normalise',1);
-options.K           = ft_getopt(S,'K',8);
-options.nreps       = ft_getopt(S,'nreps',1);
 
+
+S.mode        = ft_getopt(S,'mode','raw');
+S.pcadim      = ft_getopt(S,'pcadim',40);
+S.whiten      = ft_getopt(S,'whiten',1);
+S.normalise   = ft_getopt(S,'normalise',1);
 
 trl = 1; % can make this compatible with trialwise data later...
 
+options.K     = ft_getopt(S,'K',8);
+options.nreps = ft_getopt(S,'nreps',1);
 
-switch options.mode
+
+switch S.mode
     
     case 'raw'
-        
-        
-        
-        C = osl_cov(D(:,:,trl));
+        D = spm_eeg_load(S.D);
+        options.zeromean = 1;
         
     case {'envelope','ds_envelope'}
-        D = osl_hilbenv(struct('D',D,'winsize',0));
-             
+        D = osl_hilbenv(struct('D',S.D,'winsize',0));
+        options.zeromean = 0;
+        
 end
 
-[allsvd,MixingMatrix] = eigdec(C,options.pcadim);
+C = osl_cov(D);
+
+% Normalisation:
+if S.normalise
+    % cov(Ax+a) = A*cov(x)*A'
+    % xn = (x - mu)/sigma;
+    % => cov(xn) = (1/sigma)*cov(x)*(1/sigma)';
+    sigma = sqrt(osl_source_variance(D));
+    C = diag(1./sigma)*C*diag(1./sigma);
+end
+
+[allsvd,MixingMatrix] = eigdec(C,S.pcadim);
+MixingMatrix = MixingMatrix';
+
 clear C
 
 % Whitening:
-if options.whiten
-    MixingMatrix = diag(1./sqrt(allsvd)) * MixingMatrix';
+if S.whiten
+    MixingMatrix = diag(1./sqrt(allsvd)) * MixingMatrix;
 end
 
 % Get PCA components:
-hmmdata = zeros(size(MixingMatrix,1),Denv.nsamples);
-blks = osl_memblocks(Denv,2);
+hmmdata = zeros(size(MixingMatrix,1),D.nsamples);
+blks = osl_memblocks(D,2);
 for i = 1:size(blks,1)
-    hmmdata(:,blks(i,1):blks(i,2)) = MixingMatrix * Denv(:,blks(i,1):blks(i,2));
+    datblk = D(:,blks(i,1):blks(i,2),trl);
+    if S.normalise
+        datblk = normalise(datblk,2);
+    end
+    hmmdata(:,blks(i,1):blks(i,2)) = MixingMatrix * datblk;
 end
 
 % Infer HMM:
-hmm = osl_hmm_infer(hmmdata,struct('K',options.K,'order',0,'Ninits',options.nreps,'Hz',D.fsample));
+options.Hz      = D.fsample;
+options.order   = 0;
+hmm = osl_hmm_infer(hmmdata,options);
 hmm.MixingMatrix = MixingMatrix;
-        
-        
+
+
 end
 
-
-
-
-
-
-switch options.mode
-    
-    case 'raw'
-        
-        current_montage = montage(D,'getindex');
-        mont = montage(D,'getmontage',current_montage);
-        
-        D = montage(D,'switch',0);
-        
-        trl = 1;
-        
-        % Sensor space covariance:
-        C = osl_cov(D(:,:,trl));
-        
-        % Apply weights:
-        C = mont.tra*C*mont.tra';
-        
-        % Eigendecomposition:
-        [allsvd,MixingMatrix] = eigdec(C,options.pcadim);
-        clear C
-        
-        % Whitening:
-        if options.whiten
-            MixingMatrix = MixingMatrix * diag(1./sqrt(allsvd));
-        end
-        
-        if options.normalise
-            MixingMatrix = diag(sqrt(diag(C))) * MixingMatrix;
-        end
-        
-        MixingMatrix = MixingMatrix';
-        
-        % Apply beamformer and eigenvectors in one shot:
-        hmmdata =  (MixingMatrix * mont.tra) * D(:,:,:);
-        
-        % Infer HMM:
-        hmm = osl_hmm_infer(hmmdata,struct('K',options.K,'order',0,'Ninits',options.nreps,'Hz',D.fsample));
-        hmm.MixingMatrix = MixingMatrix;
-        
-    case {'envelope','ds_envelope'}
-        Denv = osl_hilbenv(struct('D',D,'winsize',0));
-        
-        % Eigendecomposition:
-        C = osl_cov(Denv);
-        [allsvd,MixingMatrix] = eigdec(C,options.pcadim);
-        clear C
-        
-        % Whitening:
-        if options.whiten
-            MixingMatrix = diag(1./sqrt(allsvd)) * MixingMatrix';
-        end
-        
-        % Get PCA components:
-        hmmdata = zeros(size(MixingMatrix,1),Denv.nsamples);
-        blks = osl_memblocks(Denv,2);
-        for i = 1:size(blks,1)
-            hmmdata(:,blks(i,1):blks(i,2)) = MixingMatrix * Denv(:,blks(i,1):blks(i,2));
-        end
-        
-        % Infer HMM:
-        hmm = osl_hmm_infer(hmmdata,struct('K',options.K,'order',0,'Ninits',options.nreps,'Hz',D.fsample));
-        hmm.MixingMatrix = MixingMatrix;
-               
-end
-        
-end
-
-
-
-%maps = osl_hmm_statemaps(hmm,hmmdata,1,'pcorr');
