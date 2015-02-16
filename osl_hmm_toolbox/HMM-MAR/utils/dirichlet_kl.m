@@ -15,20 +15,7 @@ if length(alpha_q)~=length(alpha_p),
   error('Distributions must have equal dimensions');
 end;
 
-% K=length(alpha_q);
-% 
-% aqtot=sum(alpha_q);
-% aptot=sum(alpha_p);
-% Psiqtot=psi(aqtot); % Psiptot = digamma(aptot) ???
-% 
-% D=gammaln(aqtot)-gammaln(aptot);
-% for k=1:K,
-%   D=D+gammaln(alpha_p(k))-gammaln(alpha_q(k))+...
-%       +(alpha_q(k)-alpha_p(k))*(psi(alpha_q(k))-Psiqtot);
-% end;
-
-
-D = gammaln(sum(alpha_q)) - gammaln(sum(alpha_p)) - sum(gammaln(alpha_q)) +  sum(gammaln(alpha_p)) + ...
+D = gammaln(sum(alpha_q)) - gammaln(sum(alpha_p)) - sum(gammaln(alpha_q)) + sum(gammaln(alpha_p)) + ...
     (alpha_q - alpha_p) * (psi(alpha_q) - psi(sum(alpha_q)))';
 
 
