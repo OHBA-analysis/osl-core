@@ -12,8 +12,8 @@ S.normalise   = ft_getopt(S,'normalise',1);
 
 trl = 1; % can make this compatible with trialwise data later...
 
-options.K     = ft_getopt(S,'K',8);
-options.nreps = ft_getopt(S,'nreps',1);
+options.K      = ft_getopt(S,'K',8);
+options.Ninits = ft_getopt(S,'nreps',1);
 
 
 switch S.mode
