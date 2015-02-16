@@ -33,7 +33,9 @@ K0 = size(C,2); if isnan(K0), K0 = 0; end
 unknown = isnan(C(:,1));
 Tnan = sum(unknown);
 allind1 = all(ind(:));
-predicting = find(sum(ind)>0);
+if isempty(ind), predicting = 1:M;
+else predicting = find(sum(ind)>0);
+end
 
 if nargin<5, nu = T/100; end
 if nargin<6, tol = 0.00001; end
@@ -77,9 +79,12 @@ end
 pi = sum(p) / sum(p(:));
 
 LL0 = -Inf;
-LL = getLL(X,Y(:,predicting),beta(:,predicting,:),omega(predicting,:),pi);
+if isempty(beta)
+    LL = getLL(X,Y(:,predicting),[],omega(predicting,:),pi);
+else
+    LL = getLL(X,Y(:,predicting),beta(:,predicting,:),omega(predicting,:),pi);
+end
 
- 
 it = 0; p0 = p;
 % EM   
 while 1
@@ -128,11 +133,15 @@ while 1
         end
         omega(predicting,k) = sum( er.^2 ) / sum(p(:,k));
     end
-  
-        
-    % LL calculation
-    LL = getLL(X,Y(:,predicting),beta(:,predicting,:),omega(predicting,:),pi);
-        
+    
+    
+    % LL calculation    
+    if isempty(beta)
+        LL = getLL(X,Y(:,predicting),[],omega(predicting,:),pi);
+    else
+        LL = getLL(X,Y(:,predicting),beta(:,predicting,:),omega(predicting,:),pi);
+    end
+    
     it = it + 1;
     if it>maxit || LL-LL0<tol
         break
