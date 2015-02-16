@@ -205,11 +205,6 @@ end%if
 S.do_plots   = ft_getopt(S,'do_plots',   0);
 S.multistart = ft_getopt(S,'multistart', 10);
 
-if isfield(S,'useCTFhack') && S.useCTFhack == 1; % To be removed once my nottingham structurals have been converted correctly...
-  warning('USING CTF HACK!!!')
-else
-    S.useCTFhack = 0;
-end
 
 %%%%%%%%%%%%%%%%   G E T   S C A L P   U S I N G   F S L   %%%%%%%%%%%%%%%%
 
@@ -223,11 +218,9 @@ trans_file = fullfile(struct_path,[struct_name '_trans.txt']);
 bet_file   = fullfile(struct_path,[struct_name '_outskin_mesh.nii.gz']);
 scalp_file = fullfile(struct_path,[struct_name '_scalp.nii.gz']);
 std_brain  = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz'];
-%std_brain  = '/Users/abaker/Scratch/Rhino_testing/MNI152_T1_1mm_padded.nii';
 
 % SWITCH ORIENTATION OF SCALP FILE IF IT'S NOT THE SAME AS STD_BRAIN
 % (RADIOLOGICAL)
-
 std_orient  = call_fsl_wrapper(['fslorient -getorient ' std_brain ],1);
 smri_orient = call_fsl_wrapper(['fslorient -getorient ' sMRI      ],1);
 if ~strcmp(deblank(smri_orient),deblank(std_orient))
@@ -241,9 +234,7 @@ try
     gunzip([sMRI '.gz']);
     dos(['rm ' sMRI '.gz'])
 catch ME
-    if ~S.useCTFhack
-        rethrow(ME)
-    end
+    rethrow(ME)
 end
 
 % CHECK IF SCALP EXTRACTION ALREADY DONE
@@ -473,21 +464,8 @@ qform_mni = reshape(qform_mni,4,4)';
 toMNI = load(trans_file);
 % trans seems to map from native (coords) to MNI (slices) so the correct
 % toMNI transformation is qform_mni*trans_file
+toMNI = qform_mni*toMNI*inv(qform_native);
 
- 
-if S.useCTFhack
-    % I think many of my issues are coming from the fact that the qform and
-    % sform matrices contain different information, and "unknown" codes. This
-    % is because the CTF .nii files have been poorly converted and have unknown
-    % coordinate systems. This means that the orientation is not correctly
-    % accounted for by FLIRT. For now, a solution is to hack in a flip about
-    % the x-axis.
-    CTFhack = [-1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1];                   %#ok<UNRCH>
-    toMNI   = CTFhack * qform_mni * toMNI;
-else
-    toMNI = qform_mni*toMNI*inv(qform_native);
-    %headshape_MNI = spm_eeg_inv_transform_points(toMNI,headshape_native);
-end
 
 % GET POLHEMUS FIDUCIALS
 fid_polhemus       = D.fiducials.fid.pnt;
