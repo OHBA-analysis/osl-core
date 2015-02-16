@@ -455,7 +455,6 @@ for subi=1:length(opt.sessions_to_do),
         S.forward_meg = 'Single Shell';
 
         S.use_rhino=opt.coreg.use_rhino;
-        S.useCTFhack=1;
 
         if(isfield(opt.coreg,'fid_mnicoords')),
             S.fid_mnicoords=opt.coreg.fid_mnicoords; 
