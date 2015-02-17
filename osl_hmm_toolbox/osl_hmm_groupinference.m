@@ -150,6 +150,7 @@ try todo.hmm      = todo.hmm;      catch, todo.hmm      = 1; end
 % Default envelope settings
 try windowsize = options.envelope.windowsize; catch, windowsize = 0.1;  end
 try multiband  = options.envelope.multiband;  catch, multiband  = [];   end
+try envelope_do  = options.envelope.do;  catch, envelope_do  = 1;   end
 
 % Default concatenation settings
 try logtrans  = options.concat.log;        catch, logtrans   = 0;  end
@@ -192,7 +193,7 @@ if todo.envelope
             
             S = [];
             S.D = fullfile(D.path,D.fname);
-            S.winsize = fix(windowsize*D.fsample);
+            S.winsize = windowsize;
             
             D = osl_hilbenv(S);
             move(D,strrep(filenames.envelope{subnum},'.mat',['_',strrep(num2str(multiband{f}),'  ','_') 'Hz.mat']));
@@ -205,13 +206,27 @@ if todo.envelope
         D = spm_eeg_load(data_files{subnum});
         S = [];
         S.D = fullfile(D.path,D.fname);
-        S.winsize = fix(windowsize*D.fsample);
+        %S.winsize = fix(windowsize*D.fsample);
+        S.winsize = windowsize;
         D = montage(D,'switch',2); D.save;
         
-        D = osl_hilbenv(S);
-        move(D,filenames.envelope{subnum});  
-        disp(['Saving envelope data for ' filestr ' to ' filenames.envelope{subnum}])
-        clear D
+        S2=[];
+        S2.D=S.D;
+        S2.outfile=prefix(D.fnamedat,'raw');
+        Draw=spm_eeg_copy(S2);
+
+        if envelope_do
+            Denv = osl_hilbenv(S);          
+            move(Denv,filenames.envelope{subnum});  
+            disp(['Saving envelope data for ' filestr ' to ' filenames.envelope{subnum}])
+        end;
+        
+        [pth fname ext]=fileparts(filenames.envelope{subnum});
+        newrawname=[pth '/' fname '_raw' ext];
+        move(Draw,newrawname);  
+        disp(['Saving raw data for ' filestr ' to ' newrawname])
+
+        clear D Denv Draw
     end
     % ---8<---8<---8<---8<---8<---8<---8<---8<---8<---8<---8<---8<---8<---
     
@@ -233,9 +248,8 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
     for f = 1:max(numel(multiband),1)
         
         % Load subjects and concatenate:
-        env_concat = [];
-        subj_inds = [];
-        cond_inds = [];
+        dat_concat = [];
+        subj_inds=[];
         C = 0;
         
         for subnum = 1:length(data_files)
@@ -243,55 +257,98 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             if ~isempty(multiband)
                 D = spm_eeg_load(strrep(filenames.envelope{subnum},'.mat',['_',strrep(num2str(multiband{f}),'  ','_') 'Hz.mat']));
             else
-                D = spm_eeg_load(filenames.envelope{subnum});
-            end
-            
-            % use all conditions
-            for condnum = 1:length(D.condlist),
+                [pth fname ext]=fileparts(filenames.envelope{subnum});
+                newrawname=[pth '/' fname '_raw' ext];      
+                Draw = spm_eeg_load(newrawname);
                 
-                trials = D.indtrial(D.condlist{condnum},'good'); 
+                if envelope_do
+                    Denv = spm_eeg_load(filenames.envelope{subnum});
+                    Ddat = Denv;
+                    Dcov = Denv;
+                else
+                    Ddat = Draw;
+                    Dcov = Draw;                    
+                end;
+                clear Denv D Draw;
+                
+            end
+          
+            % use all conditions
+            for condnum = 1:length(Ddat.condlist),
+                
+                trials = Ddat.indtrial(Ddat.condlist{condnum},'good'); 
 
                 for trl=1:length(trials),                            
-                    tbad = all(badsamples(D,':',':',trials(trl)));
+                                       
+                    tbad = all(badsamples(Ddat,':',':',trials(trl)));
                     samples2use = find(~tbad);
-                    env = D(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing
+                    dat = Ddat(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing
 
-                    if logtrans
-                        env = log10(env);
+                    tbad = all(badsamples(Dcov,':',':',trials(trl)));
+                    samples2use = find(~tbad);
+                    cov_dat = Dcov(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing
+
+                    if logtrans && envelope_do
+                        dat = log10(dat);
                     end
+                    
                     if norm_subs
-                        env = demean(env,2)./std(env(:));
+                       
+                        if envelope_do
+                            dat = demean(dat,2)./std(dat(:));
+                            %cov_dat = demean(cov_dat,2)./std(cov_dat(:));
+                            
+                            %dat = normalise(dat,2);
+                            cov_dat = normalise(cov_dat,2);
+                        else
+                            %dat = demean(dat,2)./std(dat(:));
+                            %cov_dat = demean(cov_dat,2)./std(cov_dat(:));
+                    
+                            dat = normalise(dat,2);
+                            cov_dat = normalise(cov_dat,2);
+                            
+                        end;
                     end
 
-                    env_concat = [env_concat,env];
-                    subj_inds = [subj_inds,subnum*ones(1,size(env,2))];            
-                    cond_inds = [cond_inds,condnum*ones(1,size(env,2))];
+                    dat_concat = [dat_concat,dat];
 
-                    C = C + env*permute(env,[2,1]); 
+                    subj_inds = [subj_inds,subnum*ones(1,size(cov_dat,2))];            
+                    %cond_inds = [cond_inds,condnum*ones(1,size(dat,2))];
+
+                    C = C + cov_dat*permute(cov_dat,[2,1]); 
                 end;
             end;
         end
         C = C ./ (length(subj_inds)-1);
-        clear env
-        
+        clear cov_dat dat subj_inds;
         
         % PCA + whitening - below is equivalent to fastica whitening code but much faster
         [allsvd,MixingMatrix] = eigdec(C,pcadim);
         if whiten
             MixingMatrix = diag(1./sqrt(allsvd)) * MixingMatrix';
         end
-        hmmdata =  (MixingMatrix * env_concat)';
-        fsample = D.fsample;
+        hmmdata =  (MixingMatrix * dat_concat)';
+        fsample = Ddat.fsample;
         
         if ~isempty(multiband)
             savestr = strrep(filenames.concat,'.mat',['_',strrep(num2str(multiband{f}),'  ','_') 'Hz.mat']);
             disp(['Saving concatenated envelope data to ' savestr])
-            save(savestr,'hmmdata','MixingMatrix','fsample','subj_inds')
+            save(savestr,'hmmdata','MixingMatrix','fsample')
         else
             disp(['Saving concatenated envelope data to ' filenames.concat])
-            save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds')
+            save(filenames.concat,'hmmdata','MixingMatrix','fsample')
         end
         
+        % save mixing matrix to nii
+        [pth nm ext]=fileparts(filenames.concat);
+        pc_maps=[pth '/' nm '_pc_maps'];
+        pc_maps = nii_quicksave(MixingMatrix',pc_maps,getmasksize(Dcov.nchannels),2);
+        disp(['PCA maps saved to ' pc_maps]);   
+        
+        [pth nm ext]=fileparts(filenames.concat);
+        mean_pc_maps=[pth '/' nm '_mean_pc_maps'];
+        mean_pc_maps = nii_quicksave(mean(abs(MixingMatrix),1)',mean_pc_maps,getmasksize(Dcov.nchannels),2);
+        disp(['mean of PCA maps saved to ' mean_pc_maps]);  
     end
 end
 
@@ -313,7 +370,7 @@ if todo.infer
             hmmdata = [hmmdata tmp.hmmdata];
             MixingMatrix{f} = tmp.MixingMatrix;
         end
-        subj_inds = tmp.subj_inds;
+
         fsample = tmp.fsample;
     else
         load(filenames.concat)
@@ -328,8 +385,11 @@ if todo.infer
         rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox')));
         addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
 
-        %hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
-        hmm = ABhmm_infer(hmmdata,nstates,nreps);
+        if ~envelope_do
+            hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
+        else
+            hmm = ABhmm_infer(hmmdata,nstates,nreps);
+        end;
         hmm.statepath = ABhmm_statepath(hmm);
         addpath(genpath(OSLDIR));
 
@@ -338,14 +398,14 @@ if todo.infer
         rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
         addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox')));
         
-        hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample));
+        hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',~envelope_do));
         addpath(genpath(OSLDIR));
     end;
     %%%%%%%%%%%%%%%%
     
     hmm.MixingMatrix = MixingMatrix;
     hmm.fsample = fsample;
-    hmm.subj_inds=subj_inds;
+
     
     % Save results
     disp(['Saving inferred HMM to ' filenames.hmm])    
@@ -392,7 +452,13 @@ if todo.output
                 if ~isempty(multiband)
                     D = spm_eeg_load(strrep(filenames.envelope{subnum},'.mat',['_',strrep(num2str(multiband{f}),'  ','_') 'Hz.mat']));
                 else
-                    D = spm_eeg_load(filenames.envelope{subnum});
+                    if envelope_do
+                        D = spm_eeg_load(filenames.envelope{subnum});
+                    else
+                        [pth fname ext]=fileparts(filenames.envelope{subnum});
+                        newrawname=[pth '/' fname '_raw' ext];      
+                        D = spm_eeg_load(newrawname);
+                    end;             
                 end
                 num_conds=length(D.condlist);
                 clear D;
@@ -402,15 +468,22 @@ if todo.output
                 
                 for subnum = 1:length(data_files)
                     
-                    try
+                    %try
                         if ~isempty(multiband)
                             D = spm_eeg_load(strrep(filenames.envelope{subnum},'.mat',['_',strrep(num2str(multiband{f}),'  ','_') 'Hz.mat']));
                         else
-                            D = spm_eeg_load(filenames.envelope{subnum});
+                            if envelope_do
+                                D = spm_eeg_load(filenames.envelope{subnum});
+                            else
+                                [pth fname ext]=fileparts(filenames.envelope{subnum});
+                                newrawname=[pth '/' fname '_raw' ext];      
+                                D = spm_eeg_load(newrawname);                
+                            end;
+                              
                         end
                         disp(['Computing ' output_method ' maps for ' D.fname]);
                         
-                        env_concat_sub=[];                                                
+                        dat_concat_sub=[];                                                
                         
                         % use all conditions
                         trialstart_index=1;
@@ -423,19 +496,25 @@ if todo.output
                                 tbad = all(badsamples(D,':',':',trials(trl)));
                                 
                                 samples2use = find(~tbad);
-                                env = D(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing                                                                
+                                dat = D(:,samples2use,trials(trl)); %#ok - SPM doesn't like logical indexing                                                                
                                 
                                 if logtrans
-                                    env = log10(env);
+                                    dat = log10(dat);
                                 end
                                 if norm_subs
-                                    env = demean(env,2)./std(env(:));
+                                    if envelope_do
+                                        %dat = normalise(dat,2);                                        
+                                        dat = demean(dat,2)./std(dat(:));
+                                    else
+                                        dat = normalise(dat,2);   
+                                        %dat = demean(dat,2)./std(dat(:));
+                                    end;
                                 end
 
-                                env_concat_sub = [env_concat_sub,env];                                                                    
+                                dat_concat_sub = [dat_concat_sub,dat];                                                                    
                                 
-                                epoched_statepath_sub{subnum, condnum}(1,samples2use,trl)=hmm.statepath(trialstart_index:trialstart_index+size(env,2)-1);
-                                trialstart_index=trialstart_index+size(env,2);
+                                epoched_statepath_sub{subnum, condnum}(1,samples2use,trl)=hmm.statepath(trialstart_index:trialstart_index+size(dat,2)-1);
+                                trialstart_index=trialstart_index+size(dat,2);
                                                     
                             end;
                         end;                    
@@ -446,11 +525,11 @@ if todo.output
                         hmm_sub.statepath = hmm.statepath(from:to);                    
                         subjstart_index=to+1;
                         
-                        stat = stat + osl_hmm_statemaps(hmm_sub,env_concat_sub,0,output_method);
+                        stat = stat + osl_hmm_statemaps(hmm_sub,dat_concat_sub,~envelope_do,output_method);
                     
-                    catch
-                        error([output_method ' currently only supported for OAT results'])
-                    end
+                    %catch
+                    %    error([output_method ' currently only supported for OAT results'])
+                    %end
                                 
                 end
                 
