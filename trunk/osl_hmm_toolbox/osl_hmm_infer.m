@@ -38,7 +38,6 @@ if ~isfield(options,'zeromean')
     options.zeromean = 0;
 end
 
-
 % Check data dimensions
 if size(data,1) < size(data,2)
     data = transpose(data);
