@@ -457,10 +457,11 @@ for subi=1:length(opt.sessions_to_do),
         S.use_rhino=opt.coreg.use_rhino;
 
         if(isfield(opt.coreg,'fid_mnicoords')),
-            S.fid_mnicoords=opt.coreg.fid_mnicoords; 
+            S.fid.coords = opt.coreg.fid_mnicoords; 
+            S.fid.coordsys = 'MNI';
             % flirt -in /Users/woolrich/Desktop/GN170_anatomy_test.nii -ref /usr/local/fsl/data/standard/MNI152_T1_2mm -out /Users/woolrich/Desktop/anat_mne2;
         end;
-        S.fid_label=opt.coreg.fid_label
+        S.fid.label = opt.coreg.fid_label;
         
         D=osl_headmodel(S);
         clc

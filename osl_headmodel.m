@@ -23,22 +23,22 @@ function D = osl_headmodel(S)
 %
 % S.forward_meg     - 'Single Shell' or 'MEG Local Spheres' (default)
 %
-% S.fid_label       - Fiducial labels with fields:
-%                       .nasion (Neuromag default 'Nasion')
-%                       .lpa    (Neuromag default 'LPA')
-%                       .rpa    (Neuromag default 'RPA')
+% S.fid              - Fiducial definition: [] for manual placement, or
+%                      define coordinates using the following fields:
 %
-% S.fid_mnicoords   - Specify fiducual MNI coordinates with fields:
-%                       .nasion - [1 x 3]
-%                       .lpa    - [1 x 3]
-%                       .rpa    - [1 x 3]
-%                       (omit field to use SPM defaults)
-% OR:
+%                      .label    - Fiducial labels with fields:
+%                                   .nasion (Neuromag default 'Nasion')
+%                                   .lpa    (Neuromag default 'LPA')
+%                                   .rpa    (Neuromag default 'RPA')
 %
-% S.fid_nativecoords - Specify native MNI coordinates with fields:
-%                        .nasion - [1 x 3]
-%                        .lpa    - [1 x 3]
-%                        .rpa    - [1 x 3]
+%                      .coords   - Specify fiducual coordinates with fields:
+%                                   .nasion - [1 x 3]
+%                                   .lpa    - [1 x 3]
+%                                   .rpa    - [1 x 3]
+%                                   (leave empty to use SPM defaults)
+%
+%                      .coordsys - Specify fiducial coordinate system as:
+%                                  'Native' or 'MNI' (default 'MNI')
 %
 % Adam Baker 2014
 
@@ -53,7 +53,7 @@ try
     D = spm_eeg_load(S.D);
 catch
     error('SPM file specification not recognised or incorrect');
-end%try
+end
 
 % Check Headmodel Specification:
 try
@@ -61,7 +61,7 @@ try
 catch
     warning('Forward model specification not recognised or incorrect, assigning default: "Single Shell"')
     S = ft_setopt(S,'forward_meg','Single Shell');
-end%try
+end
 
 % Check RHINO Specification:
 try
@@ -96,22 +96,6 @@ try
 catch
     warning('Headshape specification not recognised or incorrect, assigning default: "1"')
     S = ft_setopt(S, 'useheadshape', 1);
-end%try
-
-% Check Fiducial Label Specification:
-try
-    S = ft_checkopt(S,'fid_label','struct');
-    assert(isfield(S.fid_label, 'nasion') &&        ...
-           isfield(S.fid_label, 'lpa')    &&        ...
-           isfield(S.fid_label, 'rpa'),             ...
-           [mfilename ':fid_labelIncorrectFields'], ...
-           'Incorrect fields in S.fid_label\n');
-catch
-    warning('Fiducial label specification not recognised or incorrect, assigning Elekta defaults\n')
-    % default
-    S = ft_setopt(S,'fid_label',struct('nasion','Nasion', ...
-                                       'lpa','LPA',       ...
-                                       'rpa','RPA'));
 end
 
 

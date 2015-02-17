@@ -23,25 +23,23 @@ function D = rhino(S)
 % S.useheadshape     - used headshape points for the coregistration (0 or 1)
 %                        (default = 1)
 %
-% S.fid_label        - Fiducial labels with fields:
-%                        .nasion (Neuromag default 'Nasion')
-%                        .lpa    (Neuromag default 'LPA')
-%                        .rpa    (Neuromag default 'RPA')
+% S.fid              - Fiducial definition: [] for manual placement, or
+%                      define coordinates using the following fields:
 %
-% S.fid_mnicoords    - Specify fiducual MNI coordinates with fields:
-%                        .nasion - [1 x 3]
-%                        .lpa    - [1 x 3]
-%                        .rpa    - [1 x 3]
-%                        (omit field to use SPM defaults)
+%                      .label    - Fiducial labels with fields:
+%                                   .nasion (Neuromag default 'Nasion')
+%                                   .lpa    (Neuromag default 'LPA')
+%                                   .rpa    (Neuromag default 'RPA')
 %
-% 
-% OR:
+%                      .coords   - Specify fiducual coordinates with fields:
+%                                   .nasion - [1 x 3]
+%                                   .lpa    - [1 x 3]
+%                                   .rpa    - [1 x 3]
+%                                   (leave empty to use SPM defaults)
 %
-% S.fid_nativecoords - Specify native coordinates with fields:
-%                        .nasion - [1 x 3]
-%                        .lpa    - [1 x 3]
-%                        .rpa    - [1 x 3]
-%                        (omit field to use MNI defaults)
+%                      .coordsys - Specify fiducial coordinate system as:
+%                                  'Native' or 'MNI' (default 'MNI')
+%
 %
 %
 % S.fid_headcastcoords  - Specify headcast native coordinates with fields:
@@ -132,74 +130,78 @@ if S.useheadshape == 1 && isempty(D.fiducials.pnt)
     error('SPM file doesn''t contain any headshape points!')
 end
 
-% Check Fiducial Label Specification:
-if ~isfield(S,'fid_headcastcoords')
-    try
-        S = ft_checkopt(S,'fid_label','struct');
-        assert(isfield(S.fid_label, 'nasion') &&        ...
-            isfield(S.fid_label, 'lpa')    &&        ...
-            isfield(S.fid_label, 'rpa'),             ...
-            [mfilename ':fid_labelIncorrectFields'], ...
-            'Incorrect fields in S.fid_label\n');
-    catch
-        warning('Fiducial label specification not recognised or incorrect, assigning Elekta defaults\n')
-        % default
-        S = ft_setopt(S,'fid_label',struct('nasion','Nasion', ...
-            'lpa','LPA',       ...
-            'rpa','RPA'));
-    end%try
-end
 
-if numel(fieldnames(S.fid_label)) == 3
-    fid_labels = {S.fid_label.nasion, S.fid_label.rpa, S.fid_label.lpa};
+
+% Check Fiducial Specification:
+if ~isfield(S,'fid') || isempty(S.fid)  
+    S.fid = struct;
+    manual_fid_selection = 1;
 else
-    fid_labels = fieldnames(S.fid_label)';
+    manual_fid_selection = 0;
 end
 
-% Check Fiducial MNI Coordinate Specification:
-if isfield(S,'fid_mnicoords')
+try
+    S = ft_checkopt(S,'fid','struct');
+catch
+    error('Fiducial specification should be a structure. \n');
+end
+
+if ~isfield(S.fid,'coordsys') || isempty(S.fid.coordsys)
+    S.fid.coordsys = 'MNI';
+end
+
+if ~isfield(S.fid,'coords') || isempty(S.fid.coords)
+    if ~strcmpi(S.fid.coordsys,'mni')
+        warning('No coordinates specified, using default MNI coordinates')
+        S.fid.coordsys = 'mni';
+    end
+    S.fid.coords.nasion = [  1   85  -41];
+    S.fid.coords.rpa    = [ 83  -20  -65];
+    S.fid.coords.lpa    = [-83  -20  -65];
+else
     try
-        S = ft_checkopt(S,'fid_mnicoords','struct');
+        S.fid = ft_checkopt(S.fid,'coords','struct');
     catch
-        error('Fiducial MNI coordinate specification should be a structure. \n');
-    end%try
-    fid_MNI = [S.fid_mnicoords.nasion; ...
-               S.fid_mnicoords.rpa;    ...
-               S.fid_mnicoords.lpa];
-    % check size
-    [m, n] = size(fid_MNI);
-    assert(3 == m && 3 == n,[mfilename ':MNICoordsWrongDim'], ...
-           'fid_mnicoords should each be a 1x3 vector. \n');
-    % warning if both mni & native fiducials are specified
-    if isfield(S,'fid_nativecoords')
-        warning('Both MNI and native fiducials specified, using MNI fiducials')
-    end   
-elseif isfield(S,'fid_nativecoords')
-    try
-        S = ft_checkopt(S,'fid_nativecoords','struct');
-    catch
-        error('Fiducial native coordinate specification should be a structure. \n');
-    end%try
-    fid_native = [S.fid_nativecoords.nasion; ...
-                  S.fid_nativecoords.rpa;    ...
-                  S.fid_nativecoords.lpa];
-    fid_MNI = []; % will be used later to determine coordinate space to use
-    % check size
-    [m, n] = size(fid_native);
-    assert(3 == m && 3 == n, ...
-           [mfilename ':NativeCoordsWrongDim'], ...
-           'fid_nativecoords should each be a 1x3 vector. \n');     
-elseif isfield(S,'fid_headcastcoords')
-    fid_native = [S.fid_headcastcoords.LB;  ...
-                  S.fid_headcastcoords.LF;  ...
-                  S.fid_headcastcoords.RB; ...
-                  S.fid_headcastcoords.RF];
-    fid_MNI = []; % will be used later to determine coordinate space to use
-else % default
-    fid_MNI = [  1   85  -41;
-                83  -20  -65;
-               -83  -20  -65];
-end%if
+        error('Fiducial coordinate specification should be a structure. \n');
+    end
+end
+
+try
+    S.fid = ft_checkopt(S.fid,'label','struct');
+    assert(isfield(S.fid.label, 'nasion') &&        ...
+           isfield(S.fid.label, 'lpa')    &&        ...
+           isfield(S.fid.label, 'rpa'),             ...
+           [mfilename ':fid.labelIncorrectFields'], ...
+        'Incorrect fields in S.fid.label\n');
+catch
+    warning('Fiducial label specification not recognised or incorrect, assigning Elekta defaults\n')
+    S.fid = ft_setopt(S.fid,'label',struct('nasion','Nasion','lpa','LPA','rpa','RPA'));
+end
+
+if numel(fieldnames(S.fid.label)) == 3
+    fid_labels = {S.fid.label.nasion, S.fid.label.rpa, S.fid.label.lpa};
+else
+    fid_labels = fieldnames(S.fid.label)';
+end
+
+switch lower(S.fid.coordsys)
+    case 'native'
+       fid_native  = [S.fid.coords.nasion; ...
+                      S.fid.coords.rpa;    ...
+                      S.fid.coords.lpa];
+    case 'mni'
+       fid_MNI     = [S.fid.coords.nasion; ...
+                      S.fid.coords.rpa;    ...
+                      S.fid.coords.lpa];
+    case 'headcast'
+       fid_native  = [S.fid.coords.LB;  ...
+                      S.fid.coords.LF;  ...
+                      S.fid.coords.RB;  ...
+                      S.fid.coords.RF];
+    otherwise
+        error('S.fid.coordsys must be either ''Native'' or ''MNI''')
+end
+
 
 % Check Plotting Specification:
 S.do_plots   = ft_getopt(S,'do_plots',   0);
@@ -408,15 +410,27 @@ else
     
 end
 
-%%%%%%%%%%%%%%%%%%
+
 if isfield(D,'inv')
     D = rmfield(D,'inv');
 end
 
-% COMPUTE MESHES
+% COMPUTE SPM MESHES
 disp('Computing SPM meshes')
 D.inv{1}.mesh = spm_eeg_inv_mesh(sMRI,2);
-%%%%%%%%%%%%%%%%%%
+
+
+% CREATE SURFACE MESH ON WHICH TO OVERLAY ICP FIT
+mask = outline; mask(~isnan(mask)) = 1; mask(isnan(mask)) = 0;
+%mask = permute(mask,[2 1 3]); % no idea why I need to permute this...
+[x,y,z] = meshgrid(1:size(mask,1), 1:size(mask,2), 1:size(mask,3));
+x = permute(x,[2 1 3]);
+y = permute(y,[2 1 3]);
+z = permute(z,[2 1 3]);
+
+mask = smooth3(mask,'gaussian',[9,9,9]);
+mesh_rhino = isosurface(x,y,z,mask);
+mesh_rhino = reducepatch(mesh_rhino,0.1);
 
 
 %%%%%%%%%%%%%%%   P E R F O R M   R E G I S T R A T I O N   %%%%%%%%%%%%%%%
@@ -455,6 +469,7 @@ qform_native = reshape(qform_native,4,4)';
 [x,y,z] = ind2sub(size(outline),find(outline == 1));
 headshape = [x y z];
 headshape_native = spm_eeg_inv_transform_points(qform_native,headshape);
+mesh_rhino.vertices = spm_eeg_inv_transform_points(qform_native,mesh_rhino.vertices);
 
 
 % GET TRANSFORM FROM MNI TO NATIVE
@@ -489,25 +504,22 @@ end
 fid_labels = fid_labels(fid_order);
 fid_native = fid_native(fid_order, :);
 
+% REFINE FIDUCIALS MANUALLY
+if manual_fid_selection
+    fid_native = rhino_select(mesh_rhino,fid_native,fid_labels);
+end
+
+
 
 % RIGID BODY TRANSFORMATION USING FIDUCIALS
 M_rigid         = spm_eeg_inv_rigidreg(fid_polhemus',   fid_native');
 headshape_coreg = spm_eeg_inv_transform_points(M_rigid, headshape_native);
 fid_coreg       = spm_eeg_inv_transform_points(M_rigid, fid_native);
 
-% CREATE SURFACE MESH ON WHICH TO OVERLAY ICP FIT
-mask = outline; mask(~isnan(mask)) = 1; mask(isnan(mask)) = 0;
-%mask = permute(mask,[2 1 3]); % no idea why I need to permute this...
-[x,y,z] = meshgrid(1:size(mask,1), 1:size(mask,2), 1:size(mask,3));
-x = permute(x,[2 1 3]);
-y = permute(y,[2 1 3]);
-z = permute(z,[2 1 3]);
 
-mask = smooth3(mask,'gaussian',[9,9,9]);
-scalp_rhino = isosurface(x,y,z,mask);
-scalp_rhino = reducepatch(scalp_rhino,0.1);
-scalp_rhino.vertices = spm_eeg_inv_transform_points(qform_native,scalp_rhino.vertices);
-scalp_rhino.vertices = spm_eeg_inv_transform_points(M_rigid,scalp_rhino.vertices);
+
+% APPLY TRANSFORMATION TO SCALP MESH
+mesh_rhino.vertices = spm_eeg_inv_transform_points(M_rigid,mesh_rhino.vertices);
 
 
 
@@ -515,8 +527,8 @@ scalp_rhino.vertices = spm_eeg_inv_transform_points(M_rigid,scalp_rhino.vertices
 if S.do_plots
     hf       = figure; 
     ha       = axes('parent',hf);
-    patch(struct('faces',    scalp_rhino.faces,     ...
-                 'vertices', scalp_rhino.vertices), ...
+    patch(struct('faces',    mesh_rhino.faces,     ...
+                 'vertices', mesh_rhino.vertices), ...
           'FaceColor', [238,206,179]./255,          ...
           'EdgeColor', 'none',                      ...
           'FaceAlpha', 0.5,                         ...
@@ -558,7 +570,7 @@ else
 end%if
 
 % APPLY TO SURFACE MESH VERTICES
-scalp_rhino.vertices = spm_eeg_inv_transform_points(M_icp,scalp_rhino.vertices);
+mesh_rhino.vertices = spm_eeg_inv_transform_points(M_icp,mesh_rhino.vertices);
 
 if S.do_plots
     clear close_hf
@@ -582,8 +594,8 @@ Mgifti = M_icp * M_rigid; % Assumes SPM MNI-native transform is okay
 
 
 % APPEND RHINO MESH TO SPM OBJECT
-D.inv{1}.mesh.tess_rhino.face = scalp_rhino.faces;
-D.inv{1}.mesh.tess_rhino.vert = scalp_rhino.vertices;
+D.inv{1}.mesh.tess_rhino.face = mesh_rhino.faces;
+D.inv{1}.mesh.tess_rhino.vert = mesh_rhino.vertices;
 
 %mesh_rhino = spm_eeg_inv_transform_mesh(D.inv{1}.datareg.fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh.tess_rhino);
 %mesh       = spm_eeg_inv_transform_mesh(Mgifti, D.inv{1}.mesh);
