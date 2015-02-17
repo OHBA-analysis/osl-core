@@ -61,7 +61,7 @@ if winsize > 1
     
     else
     
-        env = fftfilt(repmat(ones(winsize,1),1,size(env,1)),env')./winsize;
+        env = fftfilt(ones(1,winsize),env.', nextpow2(length(env)+1))./winsize;
 
         % Remove edge effects
         env = env(winsize:end,:);
