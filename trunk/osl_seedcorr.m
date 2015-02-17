@@ -23,7 +23,7 @@ end
 
 samples2use = samples2use(:)';
 
-samples2use = samples2use & ~osl_bad_sections(D,'logical');
+samples2use = samples2use & ~any(badsamples(D,':',':',':'));
 samples2use = find(samples2use);
 
 C = zeros(length(targetind),D.ntrials);
