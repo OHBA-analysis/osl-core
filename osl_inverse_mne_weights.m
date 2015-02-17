@@ -45,10 +45,23 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %                           'MNE-scaled-noise' (also estimates a parameter
 %                           rho for the scaling between sensor data and
 %                           noise)
-%                           'sparse-Baye's (gamma-MAP estimation of a
+%                           'sparse-Bayes' (gamma-MAP estimation of a
 %                           sparse Bayes solution)
+%                           'rvm-beamformer' - beamformer solution using
+%                           the regularised data covariance estimated using
+%                           the sparse Bayes model. 
 %
-%        .normalise       - sLoreta, [norm], none
+%        .Normalise.weights - sLoreta, norm, noise-proj, none: normalises
+%                             reconstruction weights using a variety of
+%                             methods. sLoreta uses normalisation from the
+%                             Wens paper. 'norm' normalised the 2-norm of
+%                             the weights. 'noise-proj' normalises by the
+%                             projection of the noise:
+%                             sqrt(tr[W*noiseCov*W]), e.g. for constructing
+%                             pseudo-z-stats (see Vrba and Robinson 2001). 
+%                             'none' applies no normalisation
+%        .Normalise.leadFields - [true] or false normalises lead fields as
+%                                a compensation for depth bias. 
 %
 %        .gammaPrior - form of prior on source variance parameters. Can
 %                      be 'uniform-sd   - flat on sqrt(gamma) [Default].
@@ -83,6 +96,12 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %   functionally constrained minimum-norm estimates." In Hansen, P.C.,
 %   Kringelbach, M.L. & Salmelin, R. (ed.) "MEG: an introduction to
 %   methods," Oxford University Press, Oxford, UK, pp. 186--215.
+%
+%   Wipf and Nagarajan (2007). Beamforming using the relevance vector
+%   machine. Proc. 24th Int. Conf. on Machine Learning
+%
+%   Vrba and Robinson (2001). Signal processing in magnetoencephalography.
+%   Methods 25(2), 249--271. 
 %
 %   Wens, V. et al. (2015) "A geometric correction scheme for spatial leakage effects in MEG/EEG seed-based functional connectivity mapping," Hum. Brain. Mapp. (In review)
 
@@ -144,8 +163,17 @@ Options = parse_options(Options);
 % For the first two cases, a global scaling is possible with parameter
 % lambda. 
 Noise = parse_noise(Noise, diag(SensorData.cov));
+
+%% Lead field normalisation
+% normalisation of the leadfields is often performed to compensate to some
+% extent for the depth bias. 
+LeadFields = normalise_leadfields(LeadFields, Options);
+
     
 %% Source model and weights
+fprintf('%s: computing weights using model %s. \n', ...
+        mfilename, Options.sourceModel);
+    
 switch lower(Options.sourceModel)
     case 'wens'
         W_3d = wens_estimate(SensorData, Noise, LeadFields);
@@ -161,6 +189,9 @@ switch lower(Options.sourceModel)
     case 'sparse-bayes'
         W_3d = sparse_bayes_estimate(SensorData, Noise, LeadFields, ...
                                      Options.gammaPrior);
+    case 'rvm-beamformer'
+        W_3d = rvm_beamformer(SensorData, Noise, LeadFields, ...
+                              Options.gammaPrior);
     otherwise
         error([mfilename ':InvalidSourceMethod'], ...
               'The chosen source method %s is not recognised. \n', ...
@@ -187,24 +218,29 @@ for iVox = LeadFields.nSources:-1:1, % initialise matrices by looping backwards
     end%if
     
     % apply weights normalisation
-    switch lower(Options.normalise)
+    switch lower(Options.Normalise.weights)
         case 'sloreta'
             % normalising constant for depth bias using sLORETA
             % Wens et al. sec 2.4
-            lambda_s = sqrt(W_nonorm{iVox}                              ...
-                            * empirical_bayes_cov(Noise.cov, sourceCov, ...
-                                                  LeadFields.lf)        ...
-                            * W_nonorm{iVox}.'); 
+            lambda_s = sqrt(trace(W_nonorm{iVox}                       ...
+                                  * empirical_bayes_cov(Noise.cov,     ...
+                                                        sourceCov,     ...
+                                                        LeadFields.lf) ...
+                                  * W_nonorm{iVox}.')); 
         case 'norm'
-            % normalise by norm of weights
+            % Normalise by norm of weights
             lambda_s = norm(W_nonorm{iVox});
+            
+        case 'noise-proj'
+            % Normalise by projected noise power. 
+            lambda_s = sqrt(trace(W_nonorm{iVox} * Noise.cov * W_nonorm{iVox}.'));
         case 'none'
             % apply no normalisation
             lambda_s = 1.0;
         otherwise
             error([mfilename ':InvalidNormalisationMethod'], ...
                   'Normalisation method %s is invalid. \n',  ...
-                  Options.normalise);
+                  Options.Normalise);
     end%switch
     
     W{iVox} = W_nonorm{iVox} ./ lambda_s; % normalised scalar weights vector for this dipole
@@ -273,6 +309,34 @@ end%estimate_weights
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function W_3d = beamformer_weights(noiseCov, sourceCov, lf3d, rho)
+%ESTIMATE_WEIGHTS for reconstruction of 3d sources
+%
+% W = BEAMFORMER_WEIGHTS(NOISECOV, SOURCECOV, 3D_LEADFIELDS) estimates
+%   weights W for estimating sources S = W*B in 3d. 
+%
+% W = BEAMFORMER_WEIGHTS(NOISECOV, SOURCECOV, 3D_LEADFIELDS, RHO) estimates
+%   weights W for estimating sources S = W*B in 3d when there is an
+%   additional scaling factor rho between the measured noise and measured
+%   data.
+%
+% Vrba and Robinson 2001
+
+% set default rho as identity
+if nargin < 4 || ~exist('rho', 'var') || isempty(rho),
+    rho = 1;
+end%if
+
+invDataCov = inverse(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
+
+W_3d = rho .* lf3d.' * invDataCov ./ trace(lf3d.' * invDataCov * lf3d);   
+end%estimate_weights
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function W = wens_estimate(SensorData, Noise, LeadFields)
 %WENS_ESTIMATE reconstruction weights by Vincent Wens' method
 % regularization parameter from Wens et al. Sec 2.4
@@ -288,128 +352,6 @@ sourceCov = (1.0 ./ real(k)) * speye(LeadFields.nDims * LeadFields.nSources);
 W = estimate_weights(Noise.cov, sourceCov, LeadFields.lf);
 
 end%wens_estimate
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function W = mne_estimate_ina(Data, Noise, LeadFields, prior)
-%MNE_ESTIMATE_INA regularized source estimates
-%
-% Estimates source distribution using mean of marginal distribution on
-% sources. Marginal distribution is approximated by averaging over several
-% discrete points in gamma-space, rather than taking the MAP estimate of
-% gamma. This is the integrated nested approximation. 
-% Returns weight W to estimate sources as S = W*B. 
-
-global DEBUG
-
-% Find or estimate peak of marginal gamma distribution
-% either:
-[~, logGammaPeak] = mne_estimate(Data, Noise, LeadFields, prior);
-gammaPeak         = exp(logGammaPeak);
-% or:
-noiseToLFScale = mean(log(diag(Noise.cov))) - ...
-                 mean(log(sum(LeadFields.lf.^2)));
-% gammaPeak      = exp(noiseToLFScale);
-
-% define inverse weights function 
-nSourceElements = LeadFields.nDims * LeadFields.nSources;
-weights         = @(g) estimate_weights(Noise.cov,                 ...
-                                        g.*speye(nSourceElements), ...
-                                        LeadFields.lf);
-
-% if the prior has a scale, set it to be about e^7 above noise
-scale       = exp(noiseToLFScale + 7);
-sourceCovFn = @(logGamma) exp(real(logGamma)) .* speye(nSourceElements);
-
-% integrate with clenshaw-curtis integration in 3 bands
-nOuter = 2^6+1;
-nInner = 2^12+1;
-gammaBounds = [gammaPeak./1e40, gammaPeak./1e8, gammaPeak*1e6, gammaPeak*1e30];
-[x1, w1] = clen_curt_points(nOuter, gammaBounds(1), gammaBounds(2)*0.9999);
-[x2, w2] = clen_curt_points(nInner, gammaBounds(2), gammaBounds(3)*0.9999);
-[x3, w3] = clen_curt_points(nOuter, gammaBounds(3), gammaBounds(4));
-x      = cat(1, x1, x2, x3);
-[x,is] = sort(x);
-w      = cat(1, flipud(w1), flipud(w2), flipud(w3));
-w      = w(is);
-
-% we want to avoid exact zeros in x when working in log-space
-exactZeros = 0 == x;
-x(exactZeros) = [];
-w(exactZeros) = [];
-N = length(x);
-
-% set up tracking plot
-if DEBUG,
-    fprintf('Finding values of logp(g|B). \n');
-    flowBound = eps(min(x));
-    logPrior = arrayfun(@(lx) prior(lx, scale), log(x+flowBound));
-    
-    figure('Name', 'p(g)', 'Color', 'w');
-    plot(log(x), exp(logPrior - log_sum_exp(logPrior)), 'r');
-    xlabel('Log(\gamma)');
-    hold on;
-end%if
-
-% declare memory
-W      = zeros(nSourceElements, Data.nSensors);
-log_pg = zeros(N,1);
-
-% find coefficients for expected weights at each x
-for i = 1:N,
-    if ~mod(i, 100), 
-        fprintf('%s: marginal contribution %d of %d. \n', ...
-                mfilename, i, N);
-    end%if
-    log_pg(i) = -0.5*optimise_target_single_prior(Data, Noise, ...
-                          LeadFields, log(x(i)), prior, scale, sourceCovFn); %logp_g_on_B(x(i));
-end%for
-log_wpg    = log_pg + log(w);
-log_Exp_pg = log_sum_exp(log_wpg);
-
-if DEBUG,
-    figure('Name', 'p(g|B)', 'Color', 'w');
-    plot(log(x), log_pg - log_Exp_pg, 'k');
-    xlabel('Log(\gamma)');
-end%if
-
-% loop over integration points, accumulating result
-for iInt = 1:N,
-    W = W + exp(log_wpg(iInt) - log_Exp_pg) .* weights(x(iInt));
-    % write out progress
-    if DEBUG 
-        if ~mod(iInt, 100), 
-            fprintf('%s: INA contribution %d of %d. \n', ...
-                    mfilename, iInt, N);
-        end%if
-    end%if
-end%for
-
-if DEBUG,
-    fprintf('%s: normalisation check: sum of weighting factors: %0.3g. \n', ...
-            mfilename, exp(log_sum_exp(log_wpg - log_Exp_pg)));
-end%if
-end%mne_estimate_ina
-%{
-% % Previously used a nested function:
-%     function logp = logp_g_on_B(g)
-%         %LOGP_G_ON_B
-%         weightsCov = weights(g)'*weights(g);
-%         IminusLW = (speye(Data.nSensors) - LeadFields.lf*weights(g));
-%         logp     = - 0.5 * Data.nSamples * Data.nSensors * log(2*pi)                          ...
-%                    - 0.5 * Data.nSamples * logDetNoise                                        ...
-%                    - 0.5 * trace(IminusLW * Data.cov * IminusLW.' * noiseInv) * Data.nSamples ...
-%                    - 0.5 * Data.nSamples * nSourceElements * log(2*pi*g)                      ...
-%                    - 0.5 * sum(sum(weightsCov .* Data.cov)) * Data.nSamples ./ g              ...
-%                    + prior(log(g),scale);
-%     end%logp_g_on_B
-%}
-
-
-
 
 
 
@@ -481,6 +423,12 @@ function W = mne_estimate_scale_noise(Data, Noise, LeadFields, priorFn)
 % Allows an additional parameter to control scaling between noise and data
 % as rho*B = LS + e
 global DEBUG
+
+% It seems as though this functionality will not work well. No minimum for
+% rho, unless forced by prior?
+warning([mfilename ':scale_noise'],                    ...
+        ['The scale-noise mne estimate is unstable. ', ...
+         'It may not find a minimum for rho. \n']);
 
 sourceCovFn     = @(logGamma) exp(real(logGamma)) .* ...
                               speye(LeadFields.nDims * LeadFields.nSources);
@@ -570,20 +518,209 @@ end%mne_estimate_scale_noise
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function W = sparse_bayes_estimate(Data, Noise, LeadFields, ...
-                                                GammaPrior)
-%SPARSE_BAYES_ESIMATE regularized source covariance 
+function W = mne_estimate_ina(Data, Noise, LeadFields, prior)
+%MNE_ESTIMATE_INA regularized source estimates
+%
+% Estimates source distribution using mean of marginal distribution on
+% sources. Marginal distribution is approximated by averaging over several
+% discrete points in gamma-space, rather than taking the MAP estimate of
+% gamma. This is the integrated nested approximation. 
+% Returns weight W to estimate sources as S = W*B. 
+
+global DEBUG
+
+% Find or estimate peak of marginal gamma distribution
+% either:
+[~, logGammaPeak] = mne_estimate(Data, Noise, LeadFields, prior);
+gammaPeak         = exp(logGammaPeak);
+% or:
+noiseToLFScale = mean(log(diag(Noise.cov))) - ...
+                 mean(log(sum(LeadFields.lf.^2)));
+% gammaPeak      = exp(noiseToLFScale);
+
+% define inverse weights function 
+nSourceElements = LeadFields.nDims * LeadFields.nSources;
+weights         = @(g) estimate_weights(Noise.cov,                 ...
+                                        g.*speye(nSourceElements), ...
+                                        LeadFields.lf);
+
+% if the prior has a scale, set it to be about e^7 above noise
+scale       = exp(noiseToLFScale + 7);
+sourceCovFn = @(logGamma) exp(real(logGamma)) .* speye(nSourceElements);
+
+% integrate with clenshaw-curtis integration in 3 bands
+nLower = 2^7  + 1;
+nInner = 2^12 + 1;
+nUpper = 2^6  + 1;
+gammaBounds = [gammaPeak./1e40, gammaPeak./1e9, gammaPeak*1e6, gammaPeak*1e30];
+[g1, w1] = clen_curt_points(nLower, gammaBounds(1), gammaBounds(2)*0.9999);
+[g2, w2] = clen_curt_points(nInner, gammaBounds(2), gammaBounds(3)*0.9999);
+[g3, w3] = clen_curt_points(nUpper, gammaBounds(3), gammaBounds(4));
+g      = cat(1, g1, g2, g3);
+w      = cat(1, w1, w2, w3);
+[g,is] = sort(g);
+w      = w(is);
+
+% we want to avoid exact zeros in x when working in log-space
+exactZeros = 0 == g;
+g(exactZeros) = [];
+w(exactZeros) = [];
+N = length(g);
+
+% set up tracking plot
+if DEBUG,
+    fprintf('Finding values of logp(g|B). \n');
+    flowBound = eps(min(g));
+    logPrior = arrayfun(@(lx) prior(lx, scale), log(g+flowBound));
+    
+    figure('Name', 'p(g)', 'Color', 'w');
+    plot(log(g), exp(logPrior - log_sum_exp(logPrior)), 'r');
+    xlabel('Log(\gamma)');
+    hold on;
+end%if
+
+% declare memory
+W      = zeros(nSourceElements, Data.nSensors);
+log_pg = zeros(N,1);
+
+% find coefficients for expected weights at each x
+for i = 1:N,
+    if ~mod(i, 100), 
+        fprintf('%s: marginal contribution %d of %d. \n', ...
+                mfilename, i, N);
+    end%if
+    log_pg(i) = -0.5*optimise_target_single_prior(Data, Noise, ...
+                          LeadFields, log(g(i)), prior, scale, sourceCovFn); %logp_g_on_B(x(i));
+end%for
+log_wpg    = log_pg + log(w);
+log_Exp_pg = log_sum_exp(log_wpg);
+
+if DEBUG,
+    figure('Name', 'p(g|B)', 'Color', 'w');
+    plot(log(g), log_pg - log_Exp_pg, 'k');
+    xlabel('Log(\gamma)');
+end%if
+
+% loop over integration points, accumulating result
+for iInt = 1:N,
+    W = W + exp(log_wpg(iInt) - log_Exp_pg) .* weights(g(iInt));
+    
+    % write out progress
+    if DEBUG 
+        if ~mod(iInt, 100), 
+            fprintf('%s: INA contribution %d of %d. \n', ...
+                    mfilename, iInt, N);
+        end%if
+    end%if
+end%for
+
+if DEBUG,
+    fprintf('%s: normalisation check: sum of weighting factors: %0.3g. \n', ...
+            mfilename, exp(log_sum_exp(log_wpg - log_Exp_pg)));
+        
+    gammaMapW             = weights(gammaPeak);
+    fractionalImprovement = norm(W - gammaMapW)./norm(W) * 100;
+    
+    gammaMean = sum(exp(log_wpg - log_Exp_pg) .* g);
+        
+    fprintf('%s: difference between INA estimate and gamma-MAP: %0.2g%%. \n', ...
+            mfilename, fractionalImprovement);
+    fprintf(['%s: gamma-MAP = %0.4g,\tE[gamma] = %0.4g,', ...
+             '\tdifference: %0.3g%%. \n'],                ...
+            mfilename, gammaPeak, gammaMean,              ...
+            (gammaMean - gammaPeak)./gammaMean * 100);
+end%if
+end%mne_estimate_ina
+%{
+% % Previously used a nested function:
+%     function logp = logp_g_on_B(g)
+%         %LOGP_G_ON_B
+%         weightsCov = weights(g)'*weights(g);
+%         IminusLW = (speye(Data.nSensors) - LeadFields.lf*weights(g));
+%         logp     = - 0.5 * Data.nSamples * Data.nSensors * log(2*pi)                          ...
+%                    - 0.5 * Data.nSamples * logDetNoise                                        ...
+%                    - 0.5 * trace(IminusLW * Data.cov * IminusLW.' * noiseInv) * Data.nSamples ...
+%                    - 0.5 * Data.nSamples * nSourceElements * log(2*pi*g)                      ...
+%                    - 0.5 * sum(sum(weightsCov .* Data.cov)) * Data.nSamples ./ g              ...
+%                    + prior(log(g),scale);
+%     end%logp_g_on_B
+%}
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function W = sparse_bayes_estimate(Data, Noise, LeadFields, GammaPrior)
+%SPARSE_BAYES_ESIMATE weights for sparse bayes source reconstruction
 %
 % Estimates source covariance using sparse Bayes estimate: allow for
 % source variance at each location and in each orientation in space. 
 %
 % To use this algorithm, -log p(gamma) MUST BE CONCAVE for each gamma.
+%
+% Ref: Wipf and Nagarajan, 2009
+
+% estimate regularized covariance
+sourceCov = sparse_bayes_covariance(Data, Noise, LeadFields, GammaPrior);
+
+% Extract weights for 3d sources
+W = estimate_weights(Noise.cov, sourceCov, LeadFields.lf);
+end%sparse_bayes_estimate
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function W = rvm_beamformer(Data, Noise, LeadFields, GammaPrior)
+%RVM_BEAMFORMER weights for relevance vector machine beamforming
+%
+% Estimates source covariance using sparse Bayes estimate: allow for
+% source variance at each location and in each orientation in space,
+% according to Wipf and Nagarajan 2007, but updated to use a full noise
+% covariance estimate. 
+%
+% MAP optimisation of source variances occurs using formulae from Wipf and
+% Nagarajan, 2009. 
+%
+% To use this algorithm, -log p(gamma) MUST BE CONCAVE for each gamma.
+
+% estimate regularized covariance
+% Wipf and Nagarajan 2007 eq 10
+sourceCov = sparse_bayes_covariance(Data, Noise, LeadFields, GammaPrior);
+
+% Extract weights for 3d sources
+% Wipf and Nagarajan 2007 Eq 7
+W = beamformer_weights(Noise.cov, sourceCov, LeadFields.lf);
+end%rvm_beamformer
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function sourceCov = sparse_bayes_covariance(Data, Noise, LeadFields, ...
+                                             GammaPrior)
+%SPARSE_BAYES_COVARIANCE regularized source covariance 
+%
+% Estimates source covariance using sparse Bayes estimate: allow for
+% source variance at each location and in each orientation in space. 
+%
+% To use this algorithm, -log p(gamma) MUST BE CONCAVE for each gamma.
+%
+% Ref: Wipf and Nagarajan, 2009
 global DEBUG
 nSourceElements = LeadFields.nDims * LeadFields.nSources;
 sourceCovFn     = @(gamma) spdiags(real(gamma), ...
                                    0, nSourceElements, nSourceElements);
-logGammaInit    = (median(log(diag(Noise.cov)))          ...
-                   - median(log(sum(LeadFields.lf.^2)))) ...
+logGammaInit    = (mean(log(diag(Noise.cov)))          ...
+                   - mean(log(sum(LeadFields.lf.^2)))) ...
                   .* ones(nSourceElements, 1);
               
 % set scale for priors on gamma
@@ -592,31 +729,34 @@ scale = exp(logGammaInit + 5);
 % use updates from gamma-MAP in Wipf and Nagarajan (2009)
 oldGamma   = exp(logGammaInit);
 nIterMax   = 1000;
-iIter      = 1;
+iIter      = 0;
 deltaGamma = NaN(nIterMax);
 gamma      = zeros(size(oldGamma));
 
 HALT_CONDITION = 1e-5; %fractional change in norm(gamma) to class as convergence
 
 while iIter <= nIterMax,
-    if DEBUG && ~mod(iIter, 10),
-        fprintf('%s: SB g-MAP iteration no %d.\n', mfilename, iIter);
+    if DEBUG && (~mod(iIter, 5) || 1 == iIter) && 0 ~= iIter,
+        fprintf('%s: SB g-MAP iteration no %4d, deltaGamma %0.5g.\n', mfilename, iIter, deltaGamma(iIter));
     end%if
     
     iIter = iIter + 1;
     
-    sigmaB = empirical_bayes_cov(Noise.cov, sourceCovFn(oldGamma), LeadFields.lf);
+    % use Factorize object to hold inverse of regularized covariance
+    % without computation
+    invSigmaB = inverse(empirical_bayes_cov(Noise.cov, sourceCovFn(oldGamma), LeadFields.lf));
     
     % update rules
+    % Wipf and Nagarajan 2009 Eq. 31
     for i = nSourceElements:-1:1,
-        gamma(i) = oldGamma(i) ./ sqrt(Data.nSamples) ...
-                   *  1            ...
-                   * sqrt(trace(LeadFields.lf(:,i).' * inverse(sigmaB) * LeadFields.lf(:,i) ...
-                          - GammaPrior.diff_fn(oldGamma(i), scale) ./ Data.nSamples));
-    end%for
+        gamma(i) = oldGamma(i)                                                                                   ...
+                   *  sqrt(trace(LeadFields.lf(:,i).' * invSigmaB * Data.cov * invSigmaB *  LeadFields.lf(:,i))) ... % Frobenius norm term
+                   ./ sqrt(trace(LeadFields.lf(:,i).' * invSigmaB * LeadFields.lf(:,i)                           ...
+                                 - GammaPrior.diff_fn(oldGamma(i), scale) ./ Data.nSamples));                        % Final trace term
+    end%for 
     
     % monitor change
-    deltaGamma(iIter) = norm(gamma - oldGamma)./norm(oldGamma);
+    deltaGamma(iIter) = norm(gamma - oldGamma) ./ norm(oldGamma);
     
     % test for convergence
     isConverged = deltaGamma(iIter) < HALT_CONDITION;
@@ -641,8 +781,6 @@ end%if
 % final result
 sourceCov = sourceCovFn(gamma);
 
-% Extract weights for 3d sources
-W = estimate_weights(Noise.cov, sourceCov, LeadFields.lf);
 
 if DEBUG
     figure('Name', 'Sparse-Bayes convergence', 'Color', 'w');
@@ -654,7 +792,7 @@ if DEBUG
     hist(log(gamma), 1000);
     xlabel('Log(\gamma)');
 end%if
-end%sparse_bayes_estimate
+end%sparse_bayes_covariance
 
 
 
@@ -777,7 +915,7 @@ function [lp, diff_lp] = parse_priors(priorChoice)
 %parameters. 
 %
 % Some priors require scales, so lp takes two arguments, lp(loggamma, scale).
-% May also require d(lp)/dg. 
+% May also require d(lp)/dg. (= - df(g)/dg in Wipf and Nagarajan)
 
 % pass on any passed-in functions
 if isa(priorChoice, 'function_handle'),
@@ -829,6 +967,37 @@ switch lower(priorChoice)
               priorChoice);
 end%switch
 end%parse_priors
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function LeadFields = normalise_leadfields(LeadFields, Options)
+%NORMALISE_LEADFIELDS
+%
+% LEADFIELDS = NORMALISE_LEADFIELDS(LEADFIELDS, OPTIONS) normalises lead
+% fields if Options.Normalise.leadFields is true. 
+
+if Options.Normalise.leadFields,
+    LeadFields.isNormalised = true;
+    
+    % loop over sources and normalise each lead field
+    for iSource = LeadFields.nSources:-1:1,
+        % extract relevant lead field
+        sourceXYZ = ((iSource-1) * LeadFields.nDims + 1):(iSource * LeadFields.nDims);
+        lf        = LeadFields.lf(:,sourceXYZ);
+        
+        % take magnitude
+        LeadFields.lfMag(iSource)  = norm(lf);
+        
+        % normalise
+        LeadFields.lf(:,sourceXYZ) = lf ./ LeadFields.lfMag(iSource);
+    end%for
+else
+    LeadFields.isNormalised = false;
+end%if
+end%normalise_leadfields
 
 
 
@@ -906,7 +1075,7 @@ function ParsedOptions = parse_options(Options)
 %                           noise)
 %                           sparseBayes (gamma-MAP estimation of a
 %                           sparseBayes solution)
-%        .normalise       - sLoreta, [norm], none
+%        .Normalise       - sLoreta, [norm], none
 %        .gammaPrior - form of prior on source variance parameters. Can
 %                      be 'uniform'     - flat on gamma [Default].
 %                         'log-uniform' - flat on log-gamma (this is the 
@@ -932,14 +1101,20 @@ test = @(x) isstruct(x)         &&                         ...
 IP.addParamValue('ReduceRank', [], test);
 test = @(x) ischar(validatestring(x,                                   ...
                                   {'Wens', 'MNE', 'MNE-INA',           ...
-                                   'MNE-scaled-noise', 'sparse-Bayes'}, ...
+                                   'MNE-scaled-noise', 'sparse-Bayes', ...
+                                   'rvm-beamformer'},                  ...
                                   mfilename, ...
                                   'Options.sourceModel'));
 IP.addParamValue('sourceModel', 'MNE', test);
-test = @(x) ischar(validatestring(x, {'sLoreta', 'norm', 'none'}, ...
-                                  mfilename, ...
-                                  'Options.normalise'));
-IP.addParamValue('normalise', 'norm', test);
+test = @(x) isstruct(x) &&                                                                     ...
+            isfield(x, 'weights')    && ischar(validatestring(x.weights,                       ...
+                                                              {'sLoreta', 'norm',              ...
+                                                               'noise-proj', 'none'},          ...
+                                                              mfilename,                       ...
+                                                              'Options.Normalise.weights')) && ...
+            isfield(x, 'leadFields') && islogical(x.leadFields);
+        
+IP.addParamValue('Normalise', 'norm', test);
 test = @(x) isa(x, 'function_handle') || ...
             ischar(validatestring(x, {'uniform-sd', 'uniform-variance', ...
                                       'uniform-log', 'cauchy',          ...
