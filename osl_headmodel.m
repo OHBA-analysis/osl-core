@@ -107,7 +107,7 @@ if S.use_rhino
     if isfield(S_coreg, 'forward_meg'),
         S_coreg = rmfield(S_coreg, 'forward_meg');
     end%if
-    S_coreg.do_plots = 1;
+    S_coreg.do_plots = 0;
     rhino(S_coreg);
     close all
     
