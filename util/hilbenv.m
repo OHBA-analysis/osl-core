@@ -47,7 +47,7 @@ env = transpose(abs(hilbert(dat')));
 % Apply moving average:
 if winsize > 1
     
-    if 0
+    if 1 % This code seems to work ~20x faster for big datasets - should probably put a flag in to allow switching at some point
         % old code for doing moving averaging and downsampling
         overlap = 0.7500;
         clear env2;
