@@ -31,7 +31,7 @@ if isempty(S.winsize)
 end
   
 % Set up new MEEG object to hold downsampled envelope
-[~,t_env] = hilbenv(D.time,D.time,S.winsize*D.fsample);
+[~,t_env] = hilbenv(D.time,D.time,round(S.winsize*D.fsample));
 
 
 Denv = clone(montage(D,'switch',0),prefix(D.fnamedat,S.prefix),[D.nchannels,length(t_env),D.ntrials]);
@@ -43,14 +43,15 @@ Denv = fsample(Denv,fsampleNew);
 % Loop over blocks and voxels and apply envelope averaging
 blks = osl_memblocks(D,1);
 
-ft_progress('init','eta')
+ft_progress('init','etf')
 for iblk = 1:size(blks,1)
     ft_progress(iblk/size(blks,1));
-    for trl = 1:D.ntrials,    
+
+    for trl = 1:D.ntrials
         dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl);
-        env = hilbenv(dat_blk,D.time,S.winsize*D.fsample);   
+        env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample));   
         Denv(blks(iblk,1):blks(iblk,2),:,trl) = env;
-    end;  
+    end
 end
 
 ft_progress('close');
