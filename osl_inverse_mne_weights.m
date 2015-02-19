@@ -730,16 +730,41 @@ scale = exp(logGammaInit + 5);
 oldGamma   = exp(logGammaInit);
 nIterMax   = 1000;
 iIter      = 0;
-deltaGamma = NaN(nIterMax);
+deltaGamma = NaN(nIterMax,1);
 gamma      = zeros(size(oldGamma));
+L          = NaN(nIterMax,1);
 
-HALT_CONDITION = 1e-5; %fractional change in norm(gamma) to class as convergence
+HALT_CONDITION = 1e-4; %fractional change in norm(gamma) to class as convergence
 
 while iIter <= nIterMax,
-    if DEBUG && (~mod(iIter, 5) || 1 == iIter) && 0 ~= iIter,
-        fprintf('%s: SB g-MAP iteration no %4d, deltaGamma %0.5g.\n', mfilename, iIter, deltaGamma(iIter));
+    % some monitoring behaviour
+    if DEBUG,
+        % monitor cost function Eq 18 in Wipf and Nagarajan
+        if iIter > 0,
+            L(iIter) = optimise_target_single_prior(Data, Noise, LeadFields,           ...
+                                                    log(oldGamma), GammaPrior.fn,      ...
+                                                    scale, @(lg) sourceCovFn(exp(lg)), ...
+                                                    true);
+        end%if
+                                   
+        if (~mod(iIter, 5) || 1 == iIter) && 0 ~= iIter,
+        fprintf('%s: SB g-MAP iteration no %4d, deltaGamma %0.5g, L %0.6g.\n', mfilename, iIter, deltaGamma(iIter), L(iIter));
+        end%if
+        if  0 == iIter,
+            ff   = figure('Color', 'w', 'Name', 'Updating gamma estimates');
+            rmFF = onCleanup(@() close(ff));
+            hist(log(gamma), 3000);
+            xlabel('Log(\gamma)');
+        elseif ~mod(iIter, 5) || (1 == iIter),
+            nzg = gamma~=0;
+            hist(log(gamma(nzg)), 3000);
+            title(sprintf('fraction non-zero: %0.2f%%', ...
+                          sum(nzg)./nSourceElements * 100));
+            drawnow;
+        end%if
     end%if
-    
+        
+    % start of loop proper
     iIter = iIter + 1;
     
     % use Factorize object to hold inverse of regularized covariance
@@ -783,13 +808,24 @@ sourceCov = sourceCovFn(gamma);
 
 
 if DEBUG
+    delete(rmFF); % delete old figure
+    
     figure('Name', 'Sparse-Bayes convergence', 'Color', 'w');
-    plot(deltaGamma, 'r', 'LineWidth', 2);
+    semilogy(deltaGamma, 'r', 'LineWidth', 2);
     xlabel('Iteration', 'FontSize', 14);
     ylabel('Fractional change in norm(\gamma)', 'FontSize', 14);
     
     figure('Name', 'Gamma estimates', 'Color', 'w');
-    hist(log(gamma), 1000);
+    width  = 0.8;
+    nzg = gamma~=0;
+    [n,x] = hist(log(gamma(nzg)), 3000);
+    hh    = bar(x, n, width);
+    set(get(hh, 'Children'),              ...
+        'FaceColor', [120, 120, 120]/255, ... % set to be grey
+        'FaceAlpha', 0.4,                 ...
+        'EdgeColor', 'none');
+    title(sprintf('fraction non-zero: %0.2f%%', ...
+                  sum(nzg)./nSourceElements * 100));
     xlabel('Log(\gamma)');
 end%if
 end%sparse_bayes_covariance
@@ -800,11 +836,15 @@ end%sparse_bayes_covariance
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function L = optimise_target_single_prior(Data, Noise, LeadFields, ...
-                                       logGamma, prior, scale, sourceCovFn)
+                                          logGamma, prior, scale,  ...
+                                          sourceCovFn, quiet)
 %OPTIMISE_TARGET_single_PRIOR
 % minimise L to find gamma-MAP solution
 global DEBUG
 persistent iTARGETCALL
+if nargin < 8 || ~exist('quiet', 'var'),
+    quiet = false;
+end%if
 
 Sigma_EB = empirical_bayes_cov(Noise.cov, sourceCovFn(logGamma), ...
                                LeadFields.lf);
@@ -833,7 +873,7 @@ L = real((trace(Data.cov * inverse(Sigma_EB, 'symmetric')) ...                  
      + logDetSigma) * Data.nSamples - 2 * prior(logGamma, scale));       
 
 
-if DEBUG,
+if DEBUG && ~quiet,
     if ~exist('iTARGETCALL', 'var') || isempty(iTARGETCALL),
         iTARGETCALL = 1;
     else
