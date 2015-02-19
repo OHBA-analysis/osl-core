@@ -41,7 +41,7 @@ fsampleNew = 1./(diff(t_env([1,end]))/length(t_env));
 Denv = fsample(Denv,fsampleNew);
 
 % Loop over blocks and voxels and apply envelope averaging
-blks = osl_memblocks(D,1);
+blks = osl_memblocks(D,1,50*2^20);
 
 ft_progress('init','etf')
 for iblk = 1:size(blks,1)
