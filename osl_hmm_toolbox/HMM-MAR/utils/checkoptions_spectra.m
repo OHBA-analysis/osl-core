@@ -5,7 +5,6 @@ if nargin==3,
         Gamma = ones(sum(T),1);
     else
         Gamma = options.Gamma;
-        Gamma = Gamma .* repmat( size(Gamma,1) ./ sum(Gamma), size(Gamma,1), 1);
     end
 else
     Gamma = [];

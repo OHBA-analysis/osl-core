@@ -42,6 +42,9 @@ for cycle=1:max_cyc
         %%%% E step
         if hmm.K>1 || cycle==1    
             [Gamma,Gammasum,Xi]=hsinference(data,T,hmm,residuals);
+            %if cycle==1 
+            %    load('shit.mat'); 
+            %end
             if size(Gammasum,1)>1, Gammasum = sum(Gammasum); end
             if (hmm.K>1 && any(round(Gammasum) == sum(T)-N*order))
                 fprintf('cycle %i: All the points collapsed in one state \n',cycle)
