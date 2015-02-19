@@ -43,6 +43,7 @@ function fit = hmmspectramt(X,T,options)
 
 ndim = size(X,2);
 [options,Gamma] = checkoptions_spectra(options,ndim,T);
+Gamma = Gamma .* repmat( sqrt(size(Gamma,1) ./ sum(Gamma)), size(Gamma,1), 1);
 K = size(Gamma,2);
 
 if options.p>0, options.err = [2 options.p]; end
@@ -68,7 +69,7 @@ X = X2; clear X2;
 for k=1:K
     
     Xk = X .* repmat(Gamma(:,k),1,ndim);
-    
+       
     % Multitaper Cross-frequency matrix calculation
     psdc = zeros(Nf,ndim,ndim,length(T)*ntapers);
     for in=1:length(T)

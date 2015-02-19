@@ -40,7 +40,9 @@ for in=1:length(T);
     Entr = Entr + sum(Gammajj(:).*logGamma(:));
 end
 sXi = Xi(:); 
-Entr = Entr - sum(sXi .* log(sXi));
+logsXi = log(sXi);
+logsXi(isinf(-logsXi)) = log(eps);
+Entr = Entr - sum(sXi .* logsXi);
 
 % Xi(Xi==0)=eps;				% avoid log(0)
 % Psi=zeros(size(Xi));			% P(S_t|S_t-1)
@@ -252,6 +254,9 @@ for k=1:K,
     end
     
     KLdiv=[KLdiv OmegaKL sigmaKL alphaKL WKL];
+    
+    if any(isnan([OmegaKL sigmaKL alphaKL WKL])), keyboard; end
+    
 end;
 
 % [errY]=hmmerror(X,T,hmm,Gamma,ones(sum(T),1),residuals);
