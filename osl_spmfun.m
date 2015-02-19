@@ -1,6 +1,6 @@
 function D = osl_spmfun(fun,S)
 % Apply SPM function to MEEG object without creating a new file
-% FORMAT D = osl_spmfun(S,fun)
+% FORMAT D = osl_spmfun(fun,S)
 %
 % INPUTS:
 % fun         - function handle to a valid SPM function
