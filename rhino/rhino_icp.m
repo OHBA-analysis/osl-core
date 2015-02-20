@@ -26,15 +26,16 @@ function M = rhino_icp(data1,data2,Ninits,ax)
 if nargin < 3
     Ninits = 10;
 end
-if nargin < 4
+
+if nargin < 4 || isempty(ax)
     do_plots = 0;
 else
     do_plots = 1;
-    if isempty(ax)
+    if ~ishandle(ax)
         ax = axes;
     end
 end
-  
+
 
             
 err_old = Inf;
