@@ -378,7 +378,7 @@ if todo.infer
     
     %%%%%%%%%%%%%%%%
     % Sort this OUT!
-    if 1
+    if 0
         %tilde='/Users/woolrich';
         %addpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));
         global OSLDIR
