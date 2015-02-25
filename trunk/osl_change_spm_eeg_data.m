@@ -6,10 +6,10 @@ function [ D2 ] = osl_change_spm_eeg_data( Sc )
 % data. Needs:
 % Sc.D 
 % Sc.newdata (3D matrix of data (channels, samples, trials))
-% Sc.time (vector of time points)
 % Sc.newname (filename - should end with suffix .dat)
 %
 % Optional:
+% Sc.time (vector of time points)
 % Sc.cond_list
 % Sc.frequencies (vector of freqs)
 % Sc.modalities ('MEG' or 'EEG')
@@ -17,7 +17,8 @@ function [ D2 ] = osl_change_spm_eeg_data( Sc )
 % MWW
 
 try, tmp=Sc.cond_list; catch, Sc.cond_list=Sc.D.condlist; end;
-try, modalities=Sc.modalities; catch, modalities=[]; disp('Will copy all chans'); end;
+try, modalities=Sc.modalities; catch, modalities=[];  end;
+try, Sc.time=Sc.time; catch, Sc.time=Sc.D.time; end;
 
 if(size(Sc.newdata,4)==1)
     %TF    
@@ -25,6 +26,9 @@ if(size(Sc.newdata,4)==1)
 else
     D2=clone(Sc.D,Sc.newname,[size(Sc.D,1),size(Sc.newdata,4),size(Sc.newdata,2),size(Sc.newdata,3)],2);
 end;
+
+% remove montages
+D2=montage(D2,'remove',1:montage(D2,'getnumber'));
 
 D2=timeonset(D2,Sc.time(1));
 
@@ -55,8 +59,7 @@ if(size(Sc.newdata,4)>1)
     D2(chanind,:,:,:)=permute(Sc.newdata,[1 4 2 3]);
 
 else
-    D2(chanind,:,:)=Sc.newdata;
-    
+    D2(chanind,:,:)=Sc.newdata;    
 end;
 
 for coni=1:length(Sc.cond_list),

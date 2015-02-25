@@ -25,7 +25,6 @@ else
   use_hanning = 0;
 end
 
-
 if isempty(t) 
   t = 1:length(data);
 end
