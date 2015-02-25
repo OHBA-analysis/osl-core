@@ -136,8 +136,9 @@ end
 %% Check & correct coregistration:
 for f = 1:length(spm_files)
     D = spm_eeg_load(prefix(spm_files{f},''));
-    rhino_manual(D)
-    waitfor(gcf)
+    %rhino_manual(D)
+    rhino_display(D)
+    %waitfor(gcf)
 end
 
 %% LOAD AND VIEW RAW DATA
@@ -195,7 +196,7 @@ if(do_hmm)
     oat.first_level.hmm_do_glm_statewise=0;
 end;
 
-oat.source_recon.dirname=[workingdir '/subj1_results_beta_hmm' num2str(do_hmm) '_' oat.source_recon.method];
+oat.source_recon.dirname=[workingdir '/subj1_results_beta_rhino_hmm' num2str(do_hmm) '_' oat.source_recon.method];
 
 oat.source_recon.normalise_method='none';
 
@@ -287,7 +288,7 @@ figure;plot(D.time,x);
 % we have set "oat.first_level.tf_freq_range=[13 30];"
 
 
-oat.source_recon.dirname=[workingdir '/subj1_results_beta_hmm' num2str(do_hmm) '_' oat.source_recon.method];
+oat.source_recon.dirname=[workingdir '/subj1_results_beta_rhino_hmm' num2str(do_hmm) '_' oat.source_recon.method];
 oat=osl_load_oat(oat.source_recon.dirname, oat.first_level.name,'sub_level','group_level');
 
 oat.first_level.name=['first_level'];

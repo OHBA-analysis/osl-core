@@ -754,6 +754,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
             end;  
         end;
         S2.D_block.size=min(500,Nvoxels_out);
+        first_level_results.sensor_D_tf=D_tf;
         
         for indind=1:Nvoxels_out, % indexes brain space
 
