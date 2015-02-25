@@ -191,7 +191,7 @@ S1.D = D;
 S1.montage = montage;
 S1.keepothers = 'yes';
 S1.updatehistory  = 0;
-Dnew = spm_eeg_montage(S1);
+Dnew = osl_montage(S1);
 
 %% establish dim of ALL normalised data
 

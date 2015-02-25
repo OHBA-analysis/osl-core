@@ -70,7 +70,12 @@ ntpts=S.D.nsamples;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% does S.D contain a Class channel?
-classchanind=find(strcmp(S.D.chanlabels,'Class'));
+if ~isfield(S,'classchanind')
+    classchanind=find(strcmp(S.D.chanlabels,'Class'));
+    S.classchanind=classchanind;
+else
+    classchanind=S.classchanind;
+end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% if needed setup the S.class_timeinds
@@ -95,8 +100,7 @@ if ~isempty(classchanind),
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% if S.index is outside the current block then create S.D_block from will 
-%% be created from S.D
+%% if S.index is outside the current block then create S.D_block from S.D
 
 % is S.index outside the current block
 use_current_block=0;
@@ -119,7 +123,7 @@ if ~use_current_block
     D=montage(S.D,'switch',S.montage_index); 
     to=min(S.D_block.from+S.D_block.size-1,size(D,1));
     
-    if 1,%isempty(classchanind),  
+    if isempty(classchanind),  
         %% there is no Class channel - so do a straightforward recon       
         S.D_block.data=D(S.D_block.from:to,:,:,:);
     else
