@@ -74,7 +74,7 @@ source_recon_report=osl_report_setup(report_dir,['Source recon (epoched)']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-disp(['Using ' source_recon.method ' for source recontruction']);  % changed dy DM
+disp(['Using ' source_recon.method ' for source recontruction']);  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Loop over sessions
