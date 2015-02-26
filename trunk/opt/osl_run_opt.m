@@ -188,7 +188,7 @@ for subi=1:length(opt.sessions_to_do),
                             vect_bch(bad_list)=1;
                             vect_bch(list_bch)=1;
 
-                            D=badchannels(D,[],vect_bch);
+                            D = D.badchannels(cat(2,bad_list,list_bch),1);
                             D.save;
                         end;
                     
@@ -289,8 +289,8 @@ for subi=1:length(opt.sessions_to_do),
                 opt_results.maxfilter.sss_autobad_off(subnum)=1;
                 % set all chans good
                 D=spm_eeg_load(spm_file);
-                chans=D.meegchannels;
-                D = badchannels(D,chans,zeros(size(chans)));
+                chans=D.indchantype('MEEG');
+                D = D.badchannels(1:size(chans),0);
                 save(D);
         
                 Smf.autobad_off=1;
@@ -610,7 +610,7 @@ for subi=1:length(opt.sessions_to_do),
         % mark bad chans
         bad_channels=D_dummy.badchannels;
         if ~isempty(bad_channels)
-            D_continuous = badchannels(D_continuous, bad_channels, ones(length(bad_channels),1));
+            D_continuous = D_continuous.badchannels(bad_channels,1);
         end;
         
         %%%%
@@ -859,8 +859,8 @@ if(0)
         D = badtrials(D, tmp, trlsel); 
         rejected=sum(D.badtrials)
 
-        chans=D.meegchannels;
-        D = badchannels(D,chans,zeros(size(chans)));
+        chans=D.indchantype('MEEG');
+        D = D.badchannels(1:size(chans),0);
         save(D);
     end;
 end;
