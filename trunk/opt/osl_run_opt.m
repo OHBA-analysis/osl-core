@@ -500,19 +500,19 @@ for subi=1:length(opt.sessions_to_do),
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Perform AfRICA - ICA denoising
 
-    if(opt.africa.do)
+    if(opt.africa.todo.ica) || (opt.africa.todo.ident) || (opt.africa.todo.remove)
             
         disp(['%%%%%%%%%%%%%%%%%%%%%%%  AFRICA, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
         S=opt.africa;
         
         spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
-        S.fname=spm_file;                    
+        S.D=spm_file;                    
         S.logfile = 0;                                 
-        S.ica_file = [S.fname '_africa_results'];           
+        S.ica_file = [S.D '_africa_results'];           
         S.do_plots=1;                                          
         S.just_ica=0;       % set to 1 if want to run ICA only and not other two stages as well  
 
-        S.to_do=[1 1 1];    %  here define which ICA stage to be run 1 = ICA only, 2 = component classification, 3 = component removal 
+        S.todo = opt.africa.todo;
                  
         [spm_files_new{subnum}, fig_handles, fig_names, fig_titles, S]=osl_africa(S);
         opt_results.africa=S.ica_res;
