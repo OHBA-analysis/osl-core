@@ -71,7 +71,7 @@ if ~isfield(S.ident,'max_num_artefact_comps')
 end
 
 
-D = spm_eeg_load(S.fname);
+D = spm_eeg_load(S.D);
 
 modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3))));  % changed by DM
 
