@@ -155,7 +155,10 @@ try, opt.bad_segments.wthresh_chan=optin.bad_segments.wthresh_chan; optin.bad_se
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% africa settings
 
-try, opt.africa.do=optin.africa.do; optin.africa = rmfield(optin.africa,'do'); catch, opt.africa.do=1; end; % flag to do or not do africa
+try, opt.africa.todo.ica=optin.africa.todo.ica; optin.africa.todo = rmfield(optin.africa.todo,'ica'); catch, opt.africa.todo.ica=1; end; % flag to do or not do africa
+try, opt.africa.todo.ident=optin.africa.todo.ident; optin.africa.todo = rmfield(optin.africa.todo,'ident'); catch, opt.africa.todo.ident=1; end; % flag to do or not do africa
+try, opt.africa.todo.remove=optin.africa.todo.remove; optin.africa.todo = rmfield(optin.africa.todo,'remove'); catch, opt.africa.todo.remove=1; end; % flag to do or not do africa
+
 try, opt.africa.used_maxfilter=optin.africa.used_maxfilter; optin.africa = rmfield(optin.africa,'used_maxfilter'); 
 catch, 
     switch opt.datatype
@@ -342,6 +345,7 @@ end % if ~isempty(wierdfields)
 end;
 
 try, optin.africa = rmfield(optin.africa,'ident');catch, end;
+try, optin.africa = rmfield(optin.africa,'todo');catch, end;
 if isfield(optin,'africa'),
 wierdfields = fieldnames(optin.africa);
 if ~isempty(wierdfields)
