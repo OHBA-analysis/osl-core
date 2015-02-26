@@ -1,5 +1,4 @@
-function fileNameOut = nii_parcel_quicksave(data, parcelFlag, filename, ...
-                                               varargin)
+function fileNameOut = nii_parcel_quicksave(data, parcelFlag, filename, varargin)
 %NII_PARCEL_QUICKSAVE	Saves data in parcels as nifti
 % NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, SPATIALRES) saves
 %   DATA in nifti file FILENAME using spatial resolution SPATIALRES. The
@@ -78,7 +77,7 @@ end%loop over parcels
 
 if ROInets.cols(rePackedData) < NII_MAX_SIZE,
     % save using osl function
-    nii_quicksave(rePackedData, filename, varargin{:});
+    fileNameOut=nii_quicksave(rePackedData, filename, varargin{:});
     
 else
     fprintf('Nii file limit exceeded, saving as .mat \n');
