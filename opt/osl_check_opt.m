@@ -117,6 +117,10 @@ try, opt.convert.bad_epochs=optin.convert.bad_epochs; optin.convert = rmfield(op
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% maxfilter settings
+try, opt.maxfilter.remote_port=optin.maxfilter.remote_port; optin.maxfilter = rmfield(optin.maxfilter,'remote_port'); 
+catch
+    opt.maxfilter.remote_port = 0;
+end
 
 try, opt.maxfilter.do=optin.maxfilter.do; optin.maxfilter = rmfield(optin.maxfilter,'do'); 
 catch, 

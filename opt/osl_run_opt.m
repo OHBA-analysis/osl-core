@@ -112,8 +112,12 @@ for subi=1:length(opt.sessions_to_do),
         
         Smf.bad_epochs=opt.maxfilter.bad_epochs{subnum};
         
-        Smf.nosss=1;        
-        fif_sss=osl_call_maxfilter(Smf);
+        Smf.nosss=1;
+        if opt.maxfilter.remote_port ~= 0
+            fif_sss=osl_call_maxfilter_remote(Smf,opt.maxfilter.remote_port);
+        else
+            fif_sss=osl_call_maxfilter(Smf);
+        end
         runcmd(['cat ' fif_sss '_log.txt']);
         
         if(~exist([fif_sss '.fif'],'file'))
@@ -274,7 +278,11 @@ for subi=1:length(opt.sessions_to_do),
             
             Smf.bad_epochs=opt.maxfilter.bad_epochs{subnum};
         
-            fif_sss=osl_call_maxfilter(Smf);
+            if opt.maxfilter.remote_port ~= 0
+            	fif_sss=osl_call_maxfilter_remote(Smf,opt.maxfilter.remote_port);
+            else
+                fif_sss=osl_call_maxfilter(Smf);
+            end
             runcmd(['cat ' fif_sss '_log.txt']);
             
             opt_results.maxfilter.sss_autobad_off(subnum)=0;
@@ -293,8 +301,12 @@ for subi=1:length(opt.sessions_to_do),
                 D = D.badchannels(1:size(chans),0);
                 save(D);
         
-                Smf.autobad_off=1;
-                fif_sss=osl_call_maxfilter(Smf);
+                Smf.autobad_off=1;            
+                if opt.maxfilter.remote_port ~= 0
+                    fif_sss=osl_call_maxfilter_remote(Smf,opt.maxfilter.remote_port);
+                else
+                    fif_sss=osl_call_maxfilter(Smf);
+                end
                 runcmd(['cat ' fif_sss '_log.txt']);
 
                 % check if Maxfilter has worked
