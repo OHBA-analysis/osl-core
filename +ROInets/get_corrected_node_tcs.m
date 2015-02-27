@@ -32,19 +32,23 @@ function [nodeData, voxelWeightings] = get_corrected_node_tcs(voxelData,    ...
 %                       with ROI time-courses in a random order. 
 %
 %   METHOD chooses how the ROI time-course is created. It can be:
-%     'PCA'   - take 1st PC of variance-normalised voxels 
+%     'PCA'   - take 1st PC of voxels 
 %     'mean'  - mean voxel time-course.
 %     'peakVoxel' - voxel with the maximum variance
 %
-% NODEDATA = GET_CORRECTED_NODE_TCS(VOXELDATA, SPATIALBASIS, 'spatialBasis', METHOD)
+% NODEDATA = GET_CORRECTED_NODE_TCS(VOXELDATA, SPATIALBASIS, PROTOCOL, METHOD)
 %   it is also possible to use a spatial basis set (e.g. from group ICA) to
 %   infer parcel time-courses. Each spatial map (held in columns) is a
 %   whole-brain map - each map can be non-binary and maps may overlap.
-%   SPATIALBASIS is therefore an (nVoxels x nSamples) matrix. The ROI
-%   time-course for each spatial map is the 1st PC from all
-%   variance-normalised voxels, weighted by the spatial map. 
+%   SPATIALBASIS is therefore an (nVoxels x nSamples) matrix. 
 %
-% [NODEDATA, VOXEL_WEIGHTINGS] = GET_CORRECTED_NODE_TCS(VOXELDATA, SPATIALBASIS, 'spatialBasis', METHOD)
+%   Options for METHOD are 
+%      'spatialBasis' - The ROI time-course for each spatial map is the 1st 
+%                       PC from all voxels, weighted by the spatial map. 
+%      'weightedMean' - The ROI time-courses are the mean time-coures
+%                       weighted by the spatial map. 
+%
+% [NODEDATA, VOXEL_WEIGHTINGS] = GET_CORRECTED_NODE_TCS(VOXELDATA, SPATIALBASIS, PROTOCOL, METHOD)
 %    will return the relative weighting of voxels over the brain, used to
 %    construct the time-course for each ROI. 
 
@@ -292,7 +296,9 @@ switch lower(timeCourseGenMethod)
             temporalSTD = max(std(voxelData, [], 2), eps);
             
             % variance-normalise all voxels to remove influence of
-            % outliers. - remove this step 20 May 2014 for MEG
+            % outliers. - remove this step 20 May 2014 for MEG as data are
+            % smooth and little risk of high-power outliers. Also, power is
+            % a good indicator of sensible signal. 
             % Weight all voxels by the spatial map in question
             weightedTS  = ROInets.scale_rows(voxelData, thisMap);
             
@@ -338,6 +344,67 @@ switch lower(timeCourseGenMethod)
             end%if
             
             nodeDataOrig(iParcel, :) = nodeTS;
+            
+        end%loop over parcels
+        
+        clear voxelData 
+        
+        case 'weightedmean'
+        % scale group maps so all have a positive peak of height 1
+        % in case there is a very noisy outlier, choose the sign from the
+        % top 5% of magnitudes
+        top5pcInd = abs(spatialBasis) >=                        ...
+                         repmat(prctile(abs(spatialBasis), 95), ...
+                                [ROInets.rows(spatialBasis), 1]);
+        for iParcel = nParcels:-1:1,
+            mapSign(iParcel) = sign(mean(...
+                              spatialBasis(top5pcInd(:,iParcel), iParcel)));
+        end%for
+        scaledSpatialMaps = ROInets.scale_cols(spatialBasis, ...
+                                   mapSign ./                ...
+                                   max(max(abs(spatialBasis), [], 1), eps));
+        
+        % find time-course for each spatial basis map
+        for iParcel = nParcels:-1:1, % allocate memory on the fly
+            progress = nParcels - iParcel + 1;
+            ft_progress(progress / nParcels, ...
+                        [mfilename ...
+                         ':    Finding mean time course for ROI %d out of %d'], ...
+                        iParcel, nParcels);
+            
+            % extract the spatial map of interest
+            thisMap     = scaledSpatialMaps(:, iParcel);
+            
+            % threshold
+            maskThresh  = 0.5; % 0.5 is a decent arbitrary threshold chosen by Steve Smith and MJ after playing with various maps.
+            thisMask    = thisMap > maskThresh;  
+            
+            % weight TS by the maps, scaled to be a measure which sums to 1
+            vw = thisMap(thisMask) ./ sum(thisMap(thisMask));
+            voxelWeightings(thisMask, iParcel) = vw;
+            
+            weightedTS  = ROInets.scale_rows(voxelData(thisMask,:), vw);
+            
+               
+            
+            if any(thisMask), 
+                nodeTS = nanmean(weightedTS, 1);
+            else
+                warning([mfilename ':EmptySpatialComponentMask'],          ...
+                        ['%s: When calculating ROI time-courses, ',        ...
+                         'an empty spatial component mask was found for ', ...
+                         'component %d. \n',                               ...
+                         'The ROI will have a flat zero time-course. \n',  ...
+                         'Check this does not cause further problems ',    ...
+                         'with the analysis. \n'],                         ...
+                         mfilename, iParcel);
+                     
+                nodeTS = zeros(1, ROInets.cols(weightedTS));
+                voxelWeightings(~thisMask, iParcel) = zeros(length(thisMask), 1);
+            end%if
+            
+            nodeDataOrig(iParcel, :) = nodeTS;
+            
         end%loop over parcels
         
         clear voxelData 
