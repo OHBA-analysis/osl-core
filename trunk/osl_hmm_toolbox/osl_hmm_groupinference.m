@@ -296,10 +296,10 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
                        
                         if envelope_do
                             dat = demean(dat,2)./std(dat(:));
-                            %cov_dat = demean(cov_dat,2)./std(cov_dat(:));
+                            cov_dat = demean(cov_dat,2)./std(cov_dat(:));
                             
                             %dat = normalise(dat,2);
-                            cov_dat = normalise(cov_dat,2);
+                            %cov_dat = normalise(cov_dat,2);
                         else
                             %dat = demean(dat,2)./std(dat(:));
                             %cov_dat = demean(cov_dat,2)./std(cov_dat(:));
@@ -378,7 +378,7 @@ if todo.infer
     
     %%%%%%%%%%%%%%%%
     % Sort this OUT!
-    if 0
+    if 1
         %tilde='/Users/woolrich';
         %addpath(genpath([tilde '/homedir/vols_data/ctf_selfpaced_fingertap']));
         global OSLDIR
@@ -406,7 +406,6 @@ if todo.infer
     hmm.MixingMatrix = MixingMatrix;
     hmm.fsample = fsample;
 
-    
     % Save results
     disp(['Saving inferred HMM to ' filenames.hmm])    
     save(filenames.hmm,'hmm');
