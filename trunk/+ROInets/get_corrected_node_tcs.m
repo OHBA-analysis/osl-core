@@ -152,8 +152,12 @@ switch lower(timeCourseGenMethod)
                 nodeTS          = TSsign .*                               ...
                                   (TSscale / max(std(PCAscores), eps)) .* ... 
                                   PCAscores;
-                              
-                voxelWeightings(thisMask, iParcel) = U ./ sum(abs(U));
+                      
+                % return the linear operator which is applied to the data
+                % to retrieve the nodeTS
+                voxelWeightings(thisMask, iParcel) = TSsign .* ...
+                                                     (TSscale / max(std(PCAscores), eps)) ...
+                                                     .* U';
                 
             else
                 warning([mfilename ':EmptySpatialComponentMask'],          ...
@@ -264,7 +268,7 @@ switch lower(timeCourseGenMethod)
             voxelWeightings = spatialBasis;
         end%if
         
-        clear voxelData parcelData
+        clear voxelData parcelData       
         
     case 'spatialbasis'
         % scale group maps so all have a positive peak of height 1
@@ -291,6 +295,7 @@ switch lower(timeCourseGenMethod)
             
             % extract the spatial map of interest
             thisMap     = scaledSpatialMaps(:, iParcel);
+            parcelMask  = logical(thisMap);
             
             % estimate temporal-STD for normalisation
             temporalSTD = max(std(voxelData, [], 2), eps);
@@ -306,12 +311,12 @@ switch lower(timeCourseGenMethod)
             % U is nVoxels by nComponents - the basis transformation
             % S*V holds nComponents by time sets of PCA scores - the 
             % timeseries data in the new basis
-            [U, S, V]   = ROInets.fast_svds(weightedTS, 1);
+            [U, S, V]   = ROInets.fast_svds(weightedTS(parcelMask,:), 1);
             clear weightedTS
             
             PCAscores   = S * V';
             maskThresh  = 0.5; % 0.5 is a decent arbitrary threshold chosen by Steve Smith and MJ after playing with various maps.
-            thisMask    = thisMap > maskThresh;   
+            thisMask    = thisMap(parcelMask) > maskThresh;   
             
             if any(thisMask), % the mask is non-zero
                 % U is the basis by which voxels in the mask are weighted
@@ -325,9 +330,11 @@ switch lower(timeCourseGenMethod)
                           (TSscale / max(std(PCAscores), eps)) .* ...      
                           PCAscores;
                       
-                voxelWeightings(:, iParcel)         = U ./ ...
-                                                      sum(abs(U(thisMask)));
-                voxelWeightings(~thisMask, iParcel) = 0;
+                % for Mark: this is the linear operator which is applied to
+                % the voxel data to get nodeTS.
+                voxelWeightings(parcelMask,iParcel) = TSsign .* ...
+                                             (TSscale / max(std(PCAscores), eps)) ...
+                                             .* (U' .* thisMap(parcelMask)');
                 
             else
                 warning([mfilename ':EmptySpatialComponentMask'],          ...
