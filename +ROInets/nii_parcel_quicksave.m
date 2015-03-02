@@ -1,12 +1,14 @@
-function fileNameOut = nii_parcel_quicksave(data, parcelFlag, filename, varargin)
+function fileNameOut = nii_parcel_quicksave(data, parcelFlag, parcelWeights, filename, varargin)
 %NII_PARCEL_QUICKSAVE	Saves data in parcels as nifti
-% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, SPATIALRES) saves
+% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, PARCELWEIGHTS, FILENAME, SPATIALRES) saves
 %   DATA in nifti file FILENAME using spatial resolution SPATIALRES. The
 %   DATA form an (nParcels) x (nVolumes) matrix and PARCELFLAG (nVoxels) x
 %   (nParcels) is a binary matrix identifying the membership of voxels in
-%   parcels. 
+%   parcels, and PARCELWEIGHTS (nVoxels) x (nParcels) is a matrix
+%   indicating the membership of each voxel in a parcel (set to an
+%   empty matrix, to indicate a binary parcellation).
 %
-% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, SPATIALRES, RESAMP, INTERP)
+% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, PARCELWEIGHTS, FILENAME, SPATIALRES, RESAMP, INTERP)
 %   uses resampling method RESAMP and interpolation method INTERP in the
 %   call to nii_quicksave. 
 %
@@ -69,11 +71,15 @@ assert(isequal(ROInets.rows(data), nParcels), ...
 rePackedData = zeros(nVoxels, ROInets.cols(data));
 
 % repack data into voxel form
-for iParcel = nParcels:-1:1,
-    insertInds                  = parcelFlag(:, iParcel);
-    rePackedData(insertInds, :) = repmat(data(iParcel, :), ...
-                                         sum(insertInds), 1);
-end%loop over parcels
+if isempty(parcelWeights)
+    for iParcel = nParcels:-1:1,
+        insertInds                  = parcelFlag(:, iParcel);
+        rePackedData(insertInds, :) = repmat(data(iParcel, :), ...
+                                             sum(insertInds), 1);
+    end;
+else
+    rePackedData=parcelWeights*data;
+end;
 
 if ROInets.cols(rePackedData) < NII_MAX_SIZE,
     % save using osl function
