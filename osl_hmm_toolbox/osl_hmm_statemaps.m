@@ -1,4 +1,4 @@
-function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode)
+function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,apply_mixing_matrix)
 % Computes spatial maps of state specific activity by reprojecting
 % observation model variance or by fitting the HMM statepath as a regressor
 % on the voxelwise data.
@@ -7,7 +7,8 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode)
 %
 % INPUT
 % hmm       - the inferred HMM model structure
-% voxeldata - the original full rank data or PCA components
+% voxeldata - the original full rank data or PCA components (in which case hmm
+% need to contain hmm.MixingMatrix, and set data_type to 'pca')
 % use_abs   - compute abs(voxeldata) before computing spatial maps
 % mode      - type of spatial map to compute from the following options:
 %             'var'   - outputs the variance in each state
@@ -16,6 +17,9 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode)
 %             'tstat' - t-statistic of within-state vs outside-of-state
 %             'corr'  - correlation of data with state time course
 %             'pcorr' - partial correlation of data with state time course
+% data_type - type of data in voxeldata
+%           - 'voxel'
+%           - 'pca'
 %
 % INPUT
 % statemaps - [Nvoxels x Nstates] spatial maps 
@@ -34,13 +38,25 @@ if ~exist('mode','var')
   mode = 'pcorr';
 end
 
+if ~exist('data_type')
+    data_type='voxel';
+end;
+
+if strcmp(data_type,'pca')
+    apply_mixing_matrix=1;
+elseif strcmp(data_type,'voxel')
+    apply_mixing_matrix=0;
+else
+    error('Illegal datatype');
+end;
+
 if exist('voxeldata','var') && ~any(strcmp(mode,{'var','cov'}))
     
     if size(voxeldata,2) ~= length(hmm.statepath)
         voxeldata = voxeldata';
     end
     
-    if size(voxeldata,1) == size(hmm.MixingMatrix,1)
+    if apply_mixing_matrix && size(voxeldata,1) == size(hmm.MixingMatrix,1)
         Nvoxels = size(hmm.MixingMatrix,2);
     else
         Nvoxels = size(voxeldata,1);
@@ -50,7 +66,7 @@ if exist('voxeldata','var') && ~any(strcmp(mode,{'var','cov'}))
     
 elseif strcmp(mode,'var')
     
-    if isfield(hmm,'MixingMatrix')
+    if apply_mixing_matrix && isfield(hmm,'MixingMatrix')
         statemaps = zeros(size(hmm.MixingMatrix,2),hmm.K);
         for k = 1:hmm.K
             statemaps(:,k) = diag(hmm.MixingMatrix'*hmm.state(k).Cov*hmm.MixingMatrix);
@@ -66,7 +82,7 @@ elseif strcmp(mode,'var')
     
 elseif strcmp(mode,'cov')
     
-    if isfield(hmm,'MixingMatrix')
+    if apply_mixing_matrix && isfield(hmm,'MixingMatrix')
         statemaps = zeros(size(hmm.MixingMatrix,2),size(hmm.MixingMatrix,2),hmm.K);
         for k = 1:hmm.K
             statemaps(:,:,k) = hmm.MixingMatrix'*hmm.state(k).Cov*hmm.MixingMatrix;
@@ -119,7 +135,7 @@ pinvx = pinv(x);
 
 for v = 1:Nvoxels
   
-    if size(voxeldata,1) == size(hmm.MixingMatrix,1)
+    if apply_mixing_matrix && size(voxeldata,1) == size(hmm.MixingMatrix,1)
         vdata = hmm.MixingMatrix(:,v)'*voxeldata;
     else
         vdata = voxeldata(v,:);
