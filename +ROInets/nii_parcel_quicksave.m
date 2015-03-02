@@ -1,14 +1,13 @@
-function fileNameOut = nii_parcel_quicksave(data, parcelFlag, parcelWeights, filename, varargin)
+function fileNameOut = nii_parcel_quicksave(data, parcelFlag, filename, varargin)
 %NII_PARCEL_QUICKSAVE	Saves data in parcels as nifti
-% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, PARCELWEIGHTS, FILENAME, SPATIALRES) saves
+% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, SPATIALRES) saves
 %   DATA in nifti file FILENAME using spatial resolution SPATIALRES. The
 %   DATA form an (nParcels) x (nVolumes) matrix and PARCELFLAG (nVoxels) x
 %   (nParcels) is a binary matrix identifying the membership of voxels in
-%   parcels, and PARCELWEIGHTS (nVoxels) x (nParcels) is a matrix
-%   indicating the membership of each voxel in a parcel (set to an
-%   empty matrix, to indicate a binary parcellation).
+%   parcels, or a matrix indicating the membership of each voxel in a
+%   parcel.
 %
-% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, PARCELWEIGHTS, FILENAME, SPATIALRES, RESAMP, INTERP)
+% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, SPATIALRES, RESAMP, INTERP)
 %   uses resampling method RESAMP and interpolation method INTERP in the
 %   call to nii_quicksave. 
 %
@@ -50,16 +49,6 @@ end%if
 % strip extension from filename - actually, don't. This takes apart names
 % with periods in the middle, but no explicit extension. 
 % filename = fullfile(saveDir, fileStem);
-
-% check parcelFlag is logical
-assert(islogical(parcelFlag), ...
-       [mfilename, ':nonLogicalInput'], ...
-       'parcelFlag must be a logical array. \n');
-
-% check that each voxel is only a member of one parcel
-assert(~any(ROInets.row_sum(parcelFlag) > 1), ...
-       [mfilename ':MultipleParcelOccupancy'], ...
-       'Each voxel can be a member of at most one parcel. \n');
    
 % check data sizes match
 [nVoxels, nParcels] = size(parcelFlag);
@@ -71,14 +60,22 @@ assert(isequal(ROInets.rows(data), nParcels), ...
 rePackedData = zeros(nVoxels, ROInets.cols(data));
 
 % repack data into voxel form
-if isempty(parcelWeights)
+if islogical(parcelFlag),
+    disp('Computing maps from binary parcellation');    
+    
+    % check that each voxel is only a member of one parcel
+    assert(~any(ROInets.row_sum(parcelFlag) > 1), ...
+       [mfilename ':MultipleParcelOccupancy'], ...
+       'Each voxel can be a member of at most one parcel. \n');
+
     for iParcel = nParcels:-1:1,
         insertInds                  = parcelFlag(:, iParcel);
         rePackedData(insertInds, :) = repmat(data(iParcel, :), ...
                                              sum(insertInds), 1);
     end;
 else
-    rePackedData=parcelWeights*data;
+    disp('Computing maps from spatial basis weights');
+    rePackedData=parcelFlag*data;
 end;
 
 if ROInets.cols(rePackedData) < NII_MAX_SIZE,
