@@ -3,6 +3,22 @@ function osl_hmm_plotstatepath(hmm)
 % osl_hmm_plotstatepath(hmm)
 % AB 2013
 
+if nargin < 2
+  options=[];
+end;
+
+try 
+    options = ft_checkopt(options,'mode','char',{'separate','overlay'});
+catch
+    options.mode='separate';
+    disp(['options.mode not set correctly. Defaulting to options.mode=''' options.mode '''']);
+end; % stack all states on separate lines on y-axis or overlay
+mode=options.mode; 
+try t0=options.t0; catch t0 = 0; end; % start time point in secs
+try bc=options.bc; catch bc = []; end; % baseline correct epoched states using this time range
+try win=options.win; catch win = []; end; % smoothing 
+try epoched_statepath_sub=hmm.epoched_statepath_sub; catch epoched_statepath_sub = []; end; 
+
 if ~isfield(hmm,'fsample') || isempty(hmm.fsample)
     fs = 1;
 else

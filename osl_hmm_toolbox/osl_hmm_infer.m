@@ -49,7 +49,11 @@ T = size(data,1);
 % Run HMM inference with multiple initialisations
 FrEn = Inf;
 for i = 1:Ninits
-    options.inittype='EM';
+    %options.inittype='EM';
+    options.inittype = 'GMM';
+    options.initcyc = 100;
+    %options.covtype='diag';
+    
     %options.initcyc = 10;
     [hmm_new, Gamma, Xi, vpath, GammaInit, residuals, fehist] = hmmmar(data,T,options);
     % keep inference if Free Energy is lower
