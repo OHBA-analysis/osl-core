@@ -173,7 +173,7 @@ try nreps   = options.hmm.nreps;   catch, nreps   = 5; end
     
 % Default output settings
 try output_method = options.output.method; catch, output_method = 'pcorr'; end
-try use_parcel_weights = options.output.use_parcel_weights; catch, use_parcel_weights = 1; end
+try use_parcel_weights = options.output.use_parcel_weights; catch, use_parcel_weights = 0; end
   
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
@@ -324,9 +324,9 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
     savefile_std_maps    = [pathstr '/' filestr '_hmmdata_std_maps'];
     
     if use_parcels
-        ROInets.nii_parcel_quicksave(MixingMatrix',parcelAssignments,savefile_pc_maps,masksize,masksize);
-        ROInets.nii_parcel_quicksave(mean(abs(MixingMatrix),1)',parcelAssignments,savefile_mean_pc_maps,masksize,2);
-        ROInets.nii_parcel_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),parcelAssignments,savefile_std_maps,masksize,2);
+        ROInets.nii_parcel_quicksave(MixingMatrix',parcelAssignments,savefile_pc_maps,masksize,masksize,'nearestneighbour');
+        ROInets.nii_parcel_quicksave(mean(abs(MixingMatrix),1)',parcelAssignments,savefile_mean_pc_maps,masksize,2,'nearestneighbour');
+        ROInets.nii_parcel_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),parcelAssignments,savefile_std_maps,masksize,2,'nearestneighbour');
     else
         nii_quicksave(MixingMatrix',savefile_pc_maps,masksize,2); 
         nii_quicksave(mean(abs(MixingMatrix),1)',savefile_mean_pc_maps,masksize,masksize);
@@ -454,8 +454,8 @@ if todo.output
                 masksize = getmasksize(size(parcelAssignments,1));
                 
                 if ~use_parcel_weights
-                    statemaps = ROInets.nii_parcel_quicksave(stat,parcelAssignments,statemaps,masksize,2);
-                else
+                    statemaps = ROInets.nii_parcel_quicksave(stat,parcelAssignments,statemaps,masksize,2,'nearestneighbour');
+                else % Question: Isn't it cheating to use the parcel weights to generate the maps?
                     weights = abs(parcelWeights);
                     weights = weights/mean(weights(logical(weights)));                    
 
