@@ -41,7 +41,7 @@ options.concat.log          = 0;
 options.concat.norm_subs    = 1;
 options.concat.pcadim       = 40;
 options.hmm.nstates         = 8;
-options.hmm.nreps           = 5;
+options.hmm.nreps           = 1;
 options.output.method       = 'pcorr';
 
 [HMMresults,statemaps] = osl_hmm_groupinference(BFfiles,hmmdir,todo,options);
@@ -64,7 +64,7 @@ osl_hmm_plotstatepath(hmm);
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %% example parcellation call
 
-todo.prepare  = 0;
+todo.prepare  = 1;
 todo.concat   = 1;
 todo.infer    = 1;
 todo.output   = 1;
@@ -76,7 +76,8 @@ options.prepare.log         = 0;
 
 use_parcels=1;
 if use_parcels
-    options.prepare.parcellation.file = fullfile([tilde '/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm_voted_2mm_alloc_8mm.nii.gz']);
+    %options.prepare.parcellation.file = fullfile([tilde '/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm_voted_2mm_alloc_8mm.nii.gz']);
+    options.prepare.parcellation.file = '/Users/abaker/Data/fMRI_parcellations/giles_parcellation/fmri_d100_parcellation_with_PCC_reduced_2mm_ds8mm_thresh.nii.gz';
     options.prepare.parcellation.method = 'PCA';       
     
     %options.prepare.parcellation.file = [tilde '/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm_ds8mm'];
@@ -95,13 +96,13 @@ options.concat.filename     = ['concat_pcdim' num2str(options.concat.pcadim)];
 
 options.hmm.nstates         = 8;
 options.hmm.nreps           = 1;
-options.hmm.use_old_hmm_tbx = 1;
+options.hmm.use_old_hmm_tbx = 0;
 options.hmm.filename        = [options.concat.filename '_hmm_NK' num2str(options.hmm.nstates)];
 
 options.output.method       = 'pcorr';
 options.output.filename     = options.hmm.filename;
 
-hmmdir  = '/Users/abaker/Scratch/oxford_resting2/HMMtest/results_parcel' num2str(use_parcels) '_env' num2str(options.prepare.envelope) '_' options.prepare.parcellation.method '_' options.prepare.parcellation.protocol '/'];
+hmmdir  = ['/Users/abaker/Scratch/oxford_resting2/HMMtest/results_parcel' num2str(use_parcels) '_env' num2str(options.prepare.envelope) '_' options.prepare.parcellation.method '_' options.prepare.parcellation.protocol '/'];
 
 % Run HMM with the default settings:
 [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_parcels(BFfiles,hmmdir,todo,options);

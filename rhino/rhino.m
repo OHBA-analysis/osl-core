@@ -479,7 +479,7 @@ qform_mni = reshape(qform_mni,4,4)';
 toMNI = load(trans_file);
 % trans seems to map from native (coords) to MNI (slices) so the correct
 % toMNI transformation is qform_mni*trans_file
-toMNI = qform_mni*toMNI*inv(qform_native);
+%toMNI = qform_mni*toMNI*inv(qform_native);
 
 
 % GET POLHEMUS FIDUCIALS
