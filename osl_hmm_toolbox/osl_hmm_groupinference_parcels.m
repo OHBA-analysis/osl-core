@@ -31,7 +31,7 @@ function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_p
 %                            only carried out if data is enveloped
 %                            (default 0.1)
 %                          .filenames  - filenames to save/load prepares from
-%                            (default <hmmdir>/prepares/<BFfiles{subnum}>.mat)
+%                            (default <hmmdir>/prepare/<BFfiles{subnum}>.mat)
 %                          .parcellation.file - 3D niftii file with same
 %                          gridstep as data_files containing parcellation
 %                          labels. If not provided then no parcellation is
@@ -162,7 +162,6 @@ try parcellation.protocol = options.prepare.parcellation.protocol; catch, parcel
 try parcellation.method   = options.prepare.parcellation.method;   catch, parcellation.method   = 'PCA';       end
 use_parcels               = ~isempty(parcellation.file);
 
-
 % Default concatenation settings
 try pcadim    = options.concat.pcadim;     catch, pcadim     = 40; end
 try whiten    = options.concat.whiten;     catch, whiten     = 1;  end
@@ -172,8 +171,8 @@ try nstates = options.hmm.nstates; catch, nstates = 8; end
 try nreps   = options.hmm.nreps;   catch, nreps   = 5; end
     
 % Default output settings
-try output_method = options.output.method; catch, output_method = 'pcorr'; end
-try use_parcel_weights = options.output.use_parcel_weights; catch, use_parcel_weights = 0; end
+try output_method       = options.output.method;                catch, output_method = 'pcorr'; end
+try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights = 0;  end
   
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
@@ -185,8 +184,25 @@ if todo.prepare
     
     for subnum = 1:length(data_files)
         
+        % Compute envelopes for all voxels
+        if envelope_do
+            S         = [];
+            S.D       = data_files{subnum};
+            S.winsize = windowsize;
+            D = osl_hilbenv(S);
+        else
+            D = spm_eeg_load(data_files{subnum});
+        end
+        
+        % Copy MEEG object to HMM directory
+        move(D,filenames.prepare{subnum}); 
+        disp(['Saving envelope data for ' filestr ' to ' filenames.prepare{subnum}])
+        clear D
+        
+        
         % Apply parcellation
         if use_parcels
+            
             S                   = [];
             S.D                 = data_files{subnum};
             S.parcellation      = parcellation.file;
@@ -200,29 +216,16 @@ if todo.prepare
             fname = fullfile(pathstr,'parcellation');
             save(fname,'parcelAssignments','parcelWeights');
             
-        else 
-            D = spm_eeg_load(data_files{subnum});
-        end
-        
-        % Compute envelopes
-        if envelope_do
-            S         = [];
-            S.D       = fullfile(D.path,D.fname);
-            S.winsize = windowsize;
-            D = osl_hilbenv(S);
-        end
-
-        % Copy new MEEG objects to HMM directory
-        move(D,filenames.prepare{subnum}); 
-        disp(['Saving envelope data for ' filestr ' to ' filenames.prepare{subnum}])
-        clear D
-        
-        % Delete intermediate MEEG objects
-        if use_parcels && envelope_do
-            fname = prefix(data_files{subnum},'p');
-            if exist(fname,'file')
-                runcmd(['rm ' fname]);
+            % Compute envelopes for all parcels
+            if envelope_do
+                S         = [];
+                S.D       = fullfile(D.path,D.fname);
+                S.winsize = windowsize;
+                D = osl_spmfun(@osl_hilbenv,S); % keep same filename
             end
+            
+            D = move(D,[fileparts(filenames.prepare{1}),filesep]);
+        
         end
 
     end
@@ -245,31 +248,13 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
     
     for subnum = 1:length(data_files)
 
-        D = spm_eeg_load(filenames.prepare{subnum});
-        
-        % reshape trialwise data
-        data = D(:,:,:);
-        data = reshape(data,[D.nchannels,D.nsamples*D.ntrials]);
-        
-        % select only good data
-        good_samples = ~all(badsamples(D,':',':',':'));
-        good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-        data = data(:,good_samples);
-
-        % log transform
-        if logtrans
-            data = log10(data);
-        end
-        
-        % normalisation
-        if envelope_do
-            data = demean(data,2)./std(data(:));
-            cov_data = data;
-            %cov_data = normalise(data,2);
+        if use_parcels
+            D = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
         else
-            data = normalise(data,2);
-            cov_data = data;
+            D = spm_eeg_load(filenames.prepare{subnum});
         end
+        
+        [data,cov_data] = prepare_data(D,logtrans,envelope_do);
       
         % compute covariance
         C = C + cov_data * permute(cov_data,[2,1]);
@@ -378,9 +363,7 @@ if todo.infer
     % Save results
     disp(['Saving inferred HMM to ' filenames.hmm])    
     save(filenames.hmm,'hmm');
-    
-    HMMresults = filenames.hmm;
-
+   
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -399,52 +382,52 @@ if todo.output
     switch output_method
         case {'pcorr'}
             
-            % Compute partial correlation/variance maps
-            stat = zeros(size(hmm.MixingMatrix,2),hmm.K);                
+            D  = spm_eeg_load(filenames.prepare{1}); % to get number of voxels
+            stat = zeros(D.nchannels,hmm.K);
 
-            epoched_statepath_sub=cell(length(data_files),1);
+            if use_parcels
+                Dp = spm_eeg_load(prefix(filenames.prepare{1},'p'));
+                statp = zeros(Dp.nchannels,hmm.K);
+
+            end
+                        
+            epoched_statepath_sub = cell(length(data_files),1);
                         
             for subnum = 1:length(data_files)
 
                 disp(['Computing ' output_method ' maps for ' data_files{1}]);
                 
-                D = spm_eeg_load(filenames.prepare{subnum});
-                
-                % reshape trialwise data
-                data = D(:,:,:);
-                data = reshape(data,[D.nchannels,D.nsamples*D.ntrials]);
-                
-                % select only good data
-                good_samples = ~all(badsamples(D,':',':',':'));
-                good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-                data = data(:,good_samples);
-                
-                % normalisation
-                if envelope_do
-                    if pcadim > 0,
-                        data = demean(data,2)./std(data(:));                        
-                    else
-                        data = demean(data,2)./std(data(:));
-                    end
-                else
-                    data = normalise(data,2);
-                end
-    
                 % compute subject's state maps
                 hmm_sub = hmm; 
                 hmm_sub.statepath = hmm.statepath(subj_inds==subnum);                            
                 hmm_sub = rmfield(hmm_sub,'MixingMatrix');
                 
-                stat = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method);
                 
+                D = spm_eeg_load(filenames.prepare{subnum});
+                data = prepare_data(D,logtrans,envelope_do);
+                stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method);
+                
+                if use_parcels
+                    Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
+                    datap = prepare_data(Dp,logtrans,envelope_do);
+                    statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method);
+                end
+                
+                good_samples = ~all(badsamples(D,':',':',':'));
+                good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+
                 sp_full = zeros(1,D.nsamples*D.ntrials);
                 sp_full(good_samples) = hmm_sub.statepath;
-                epoched_statepath_sub = reshape(sp_full,[1,D.nsamples,D.ntrials]);
+                epoched_statepath_sub{subnum} = reshape(sp_full,[1,D.nsamples,D.ntrials]);
  
             end                        
 
             stat = stat ./ length(data_files);
-            disp(['Saving state spatial maps to ' statemaps])    
+            disp(['Saving state spatial maps to ' statemaps]) 
+            
+            nii_quicksave(stat,statemaps,getmasksize(D.nchannels),2);
+
+                            
             if use_parcels
                 % convert parcel statemaps into voxel statemaps
                 pathstr = fileparts([filenames.prepare{1}]);
@@ -454,15 +437,13 @@ if todo.output
                 masksize = getmasksize(size(parcelAssignments,1));
                 
                 if ~use_parcel_weights
-                    statemaps = ROInets.nii_parcel_quicksave(stat,parcelAssignments,statemaps,masksize,2,'nearestneighbour');
+                    ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps,'_parcels'],masksize,2,'nearestneighbour');
                 else % Question: Isn't it cheating to use the parcel weights to generate the maps?
                     weights = abs(parcelWeights);
-                    weights = weights/mean(weights(logical(weights)));                    
-
-                    statemaps = ROInets.nii_parcel_quicksave(stat,weights,statemaps,masksize,2);
+                    weights = weights/mean(weights(logical(weights)));
+                    
+                    ROInets.nii_parcel_quicksave(statp,weights,[statemaps,'_parcels'],masksize,2);
                 end
-            else
-                statemaps = nii_quicksave(stat,statemaps,getmasksize(D.nchannels),2);
             end
                         
             % resave updated hmm
@@ -477,4 +458,36 @@ if todo.output
 
 end
 
+
+HMMresults = filenames.hmm;
+
+end
+
+
+function [data,cov_data] = prepare_data(D,logtrans,envelope_do)
+
+% reshape trialwise data
+data = D(:,:,:);
+data = reshape(data,[D.nchannels,D.nsamples*D.ntrials]);
+
+% select only good data
+good_samples = ~all(badsamples(D,':',':',':'));
+good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+data = data(:,good_samples);
+
+% log transform
+if logtrans
+    data = log10(data);
+end
+
+% normalisation
+if envelope_do
+    data = demean(data,2)./std(data(:));
+else
+    data = normalise(data,2);
+end
+
+cov_data = data;
+
+end
 
