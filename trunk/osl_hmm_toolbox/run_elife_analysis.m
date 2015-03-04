@@ -13,18 +13,22 @@ addpath(osldir);
 osl_startup(osldir);
 
 %%
-spmdir      = '/Users/abaker/Data/notts_3state/spm12/';
-spm_files = strcat([spmdir 'subj'],num2str(sort(repmat(1:10,1,3))','%0.2d'),'_',repmat({'ec','eo','mov'},1,10)');
+% spmdir      = '/Users/abaker/Data/notts_3state/spm12/';
+% spm_files = strcat([spmdir 'subj'],num2str(sort(repmat(1:10,1,3))','%0.2d'),'_',repmat({'ec','eo','mov'},1,10)');
+% 
+% %sessions2use = setdiff(1:3:30,[4:6,7:9,10:12]);
+% sessions2use = 1; %for test
+% 
+% spm_files = spm_files(sessions2use);
+% 
+% BFfiles = prefix(spm_files,'fA');
+%                   
+% hmmdir  = '/Users/abaker/Scratch/HMMtesting/HMMtest/';
 
-%sessions2use = setdiff(1:3:30,[4:6,7:9,10:12]);
-sessions2use = 1; %for test
+BFfiles = '/Users/abaker/Scratch/HMMtesting/epoched_testdata/concatfsession1_spm_meeg.mat';
+hmmdir  = '/Users/abaker/Scratch/HMMtesting/HMMtest_epoched/';
 
-spm_files = spm_files(sessions2use);
 
-BFfiles = prefix(spm_files,'fA');
-                  
-%hmmdir  = '/Users/abaker/Scratch/oxford_resting2/HMM/';
-hmmdir  = '/Users/abaker/Scratch/oxford_resting2/HMMtest/';
 
 mkdir(hmmdir);
 
@@ -64,7 +68,7 @@ osl_hmm_plotstatepath(hmm);
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %% example parcellation call
 
-todo.prepare  = 1;
+todo.prepare  = 0;
 todo.concat   = 1;
 todo.infer    = 1;
 todo.output   = 1;
@@ -95,14 +99,14 @@ options.concat.whiten       = 1;
 options.concat.filename     = ['concat_pcdim' num2str(options.concat.pcadim)];
 
 options.hmm.nstates         = 8;
-options.hmm.nreps           = 1;
+options.hmm.nreps           = 5;
 options.hmm.use_old_hmm_tbx = 0;
 options.hmm.filename        = [options.concat.filename '_hmm_NK' num2str(options.hmm.nstates)];
 
 options.output.method       = 'pcorr';
 options.output.filename     = options.hmm.filename;
 
-hmmdir  = ['/Users/abaker/Scratch/oxford_resting2/HMMtest/results_parcel' num2str(use_parcels) '_env' num2str(options.prepare.envelope) '_' options.prepare.parcellation.method '_' options.prepare.parcellation.protocol '/'];
+%hmmdir  = ['/Users/abaker/Scratch/oxford_resting2/HMMtest/results_parcel' num2str(use_parcels) '_env' num2str(options.prepare.envelope) '_' options.prepare.parcellation.method '_' options.prepare.parcellation.protocol '/'];
 
 % Run HMM with the default settings:
 [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_parcels(BFfiles,hmmdir,todo,options);
@@ -121,7 +125,13 @@ stats = osl_hmm_stats(hmm,'do_plots');
 figure
 osl_hmm_plotstatepath(hmm);
 
-
+%% Plot epoched statepath
+figure
+option=[];
+option.mode='overlay';
+option.epoched_statepath_sub=epoched_statepath_sub;
+option.win=0.5;
+osl_hmm_plotstatepath(hmm,option);
 
 
 
