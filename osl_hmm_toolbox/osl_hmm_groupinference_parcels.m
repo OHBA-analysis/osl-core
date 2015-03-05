@@ -294,13 +294,17 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
     disp(['Saving group concatenated data to ' filenames.concat])
     save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds');
 
-
-    % Load parcellation results:
-    pathstr = fileparts([filenames.prepare{1}]);
-    fname   = fullfile(pathstr,'parcellation');
-    load(fname); % Loads parcelAssignments and parcelWeights
+    if use_parcels
+        % Load parcellation results:
+        pathstr = fileparts([filenames.prepare{1}]);
+        fname   = fullfile(pathstr,'parcellation');
+        load(fname); % Loads parcelAssignments and parcelWeights
+        masksize = getmasksize(size(parcelAssignments,1));
+    else
+        masksize=getmasksize(size(dat_concat,1));
+    end
     
-    masksize = getmasksize(size(parcelAssignments,1));
+    
     
     % Save PCA maps
     [pathstr,filestr] = fileparts(filenames.concat);
