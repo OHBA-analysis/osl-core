@@ -399,7 +399,7 @@ if todo.output
                         
             for subnum = 1:length(data_files)
 
-                disp(['Computing ' output_method ' maps for ' data_files{1}]);
+                disp(['Computing ' output_method ' maps for ' data_files{subnum}]);
                 
                 % compute subject's state maps
                 hmm_sub = hmm; 

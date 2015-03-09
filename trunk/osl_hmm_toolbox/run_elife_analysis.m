@@ -13,20 +13,20 @@ addpath(osldir);
 osl_startup(osldir);
 
 %%
-% spmdir      = '/Users/abaker/Data/notts_3state/spm12/';
-% spm_files = strcat([spmdir 'subj'],num2str(sort(repmat(1:10,1,3))','%0.2d'),'_',repmat({'ec','eo','mov'},1,10)');
-% 
-% %sessions2use = setdiff(1:3:30,[4:6,7:9,10:12]);
-% sessions2use = 1; %for test
-% 
-% spm_files = spm_files(sessions2use);
-% 
-% BFfiles = prefix(spm_files,'fA');
-%                   
-% hmmdir  = '/Users/abaker/Scratch/HMMtesting/HMMtest/';
+spmdir      = '/Users/abaker/Data/notts_3state/spm12/';
+spm_files = strcat([spmdir 'subj'],num2str(sort(repmat(1:10,1,3))','%0.2d'),'_',repmat({'ec','eo','mov'},1,10)');
 
-BFfiles = '/Users/abaker/Scratch/HMMtesting/epoched_testdata/concatfsession1_spm_meeg.mat';
-hmmdir  = '/Users/abaker/Scratch/HMMtesting/HMMtest_epoched/';
+sessions2use = setdiff(1:3:30,[4:6,7:9,10:12]);
+%sessions2use = 1; %for test
+
+spm_files = spm_files(sessions2use);
+
+BFfiles = prefix(spm_files,'fA');
+                  
+hmmdir  = '/Users/abaker/Scratch/HMMtesting/HMMtest/';
+
+% BFfiles = '/Users/abaker/Scratch/HMMtesting/epoched_testdata/concatfsession1_spm_meeg.mat';
+% hmmdir  = '/Users/abaker/Scratch/HMMtesting/HMMtest_epoched/';
 
 
 
@@ -68,7 +68,7 @@ osl_hmm_plotstatepath(hmm);
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %% example parcellation call
 
-todo.prepare  = 0;
+todo.prepare  = 1;
 todo.concat   = 1;
 todo.infer    = 1;
 todo.output   = 1;
@@ -81,8 +81,8 @@ options.prepare.log         = 0;
 use_parcels=1;
 if use_parcels
     %options.prepare.parcellation.file = fullfile([tilde '/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm_voted_2mm_alloc_8mm.nii.gz']);
-    options.prepare.parcellation.file = '/Users/abaker/Data/fMRI_parcellations/giles_parcellation/fmri_d100_parcellation_with_PCC_reduced_2mm_ds8mm_thresh.nii.gz';
-    options.prepare.parcellation.method = 'PCA';       
+    options.prepare.parcellation.file = '/Users/abaker/Data/fMRI_parcellations/giles_parcellation/fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz';
+    options.prepare.parcellation.method = 'spatialBasis';       
     
     %options.prepare.parcellation.file = [tilde '/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm_ds8mm'];
     %options.prepare.parcellation.method = 'spatialBasis';
