@@ -431,7 +431,7 @@ if todo.output
                 
                 if use_parcels
                     Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
-                    datap = prepare_data(D,normalisation,logtrans);
+                    datap = prepare_data(Dp,normalisation,logtrans);
                     statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method);
                 end
                 
