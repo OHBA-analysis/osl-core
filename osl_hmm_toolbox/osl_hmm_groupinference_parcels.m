@@ -33,18 +33,22 @@ function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_p
 %                          .filenames  - filenames to save/load prepares from
 %                            (default <hmmdir>/prepare/<BFfiles{subnum}>.mat)
 %                          .parcellation.file - 3D niftii file with same
-%                          gridstep as data_files containing parcellation
-%                          labels. If not provided then no parcellation is
-%                          carried out (default)
+%                            gridstep as data_files containing parcellation
+%                            labels. If not provided then no parcellation is
+%                            carried out (default)
 %                          .parcellation.method - passed to ROInets.get_corrected_node_tcs
 %                          .parcellation.protocol - passed to ROInets.get_corrected_node_tcs
-%                          .log        - apply log transform to envelopes
-%              .concat   - settings for temporal concatenation with fields:%                          
-%                          .pcadim     - dimensionality to use 
-%                            (default 40)                       
-%                          .whiten     - apply whitening [0/1]                      
-%                            (default 1)
-%                          .filename   - filename to save/load concatenated data from
+%                          .log - apply log transform to envelopes
+%
+%              .concat   - settings for temporal concatenation with fields:                      
+%                          .pcadim        - dimensionality to use (default 40)             
+%                          .normalisation - variance normalisation method:
+%                            'none'     [data = demean(data,2)]
+%                            'global'   [data = demean(data,2)/std(data(:)]
+%                            'voxelwise'[data = normalise(data,2)]
+%                            (default 'global')
+%                          .whiten        - apply whitening [0/1] (default 1)
+%                          .filename      - filename to save/load concatenated data from
 %                            (default <hmmdir>/env_concat.mat)
 %
 %              .hmm      - settings for HMM inference with fields:                
@@ -163,8 +167,9 @@ try parcellation.method   = options.prepare.parcellation.method;   catch, parcel
 use_parcels               = ~isempty(parcellation.file);
 
 % Default concatenation settings
-try pcadim    = options.concat.pcadim;     catch, pcadim     = 40; end
-try whiten    = options.concat.whiten;     catch, whiten     = 1;  end
+try pcadim        = options.concat.pcadim;        catch, pcadim         = 40;       end
+try whiten        = options.concat.whiten;        catch, whiten         = 1;        end
+try normalisation = options.concat.normalisation; catch, normalisation  = 'global'; end
 
 % Default HMM settings
 try nstates = options.hmm.nstates; catch, nstates = 8; end
@@ -254,7 +259,7 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             D = spm_eeg_load(filenames.prepare{subnum});
         end
         
-        [data,cov_data] = prepare_data(D,logtrans,envelope_do);
+        [data,cov_data] = prepare_data(D,normalisation,logtrans);
       
         % compute covariance
         C = C + cov_data * permute(cov_data,[2,1]);
@@ -408,12 +413,12 @@ if todo.output
                 
                 
                 D = spm_eeg_load(filenames.prepare{subnum});
-                data = prepare_data(D,logtrans,envelope_do);
+                data = prepare_data(D,normalisation,logtrans);
                 stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method);
                 
                 if use_parcels
                     Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
-                    datap = prepare_data(Dp,logtrans,envelope_do);
+                    datap = prepare_data(D,normalisation,logtrans);
                     statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method);
                 end
                 
@@ -468,7 +473,7 @@ HMMresults = filenames.hmm;
 end
 
 
-function [data,cov_data] = prepare_data(D,logtrans,envelope_do)
+function [data,cov_data] = prepare_data(D,normalisation,logtrans)
 
 % reshape trialwise data
 data = D(:,:,:);
@@ -485,10 +490,13 @@ if logtrans
 end
 
 % normalisation
-if envelope_do
-    data = demean(data,2)./std(data(:));
-else
-    data = normalise(data,2);
+switch normalisation
+    case 'global'
+        data = demean(data,2)./std(data(:));
+    case 'voxelwise'
+        data = normalise(data,2);
+    case 'none'
+        data = demean(data,2);
 end
 
 cov_data = data;
