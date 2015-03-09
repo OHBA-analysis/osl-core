@@ -48,6 +48,11 @@ function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_p
 %                            'voxelwise'[data = normalise(data,2)]
 %                            (default 'global')
 %                          .whiten        - apply whitening [0/1] (default 1)
+%                          .embed.do      - do time embedding using call to
+%                                           embedx 
+%                          .embed.centre_freq - centre freq of interest (Hz), used to set the time span of the time embedding 
+%                           (default is 15Hz)
+%                           (default is 0)
 %                          .filename      - filename to save/load concatenated data from
 %                            (default <hmmdir>/env_concat.mat)
 %
@@ -172,7 +177,9 @@ use_parcels               = ~isempty(parcellation.file);
 try pcadim        = options.concat.pcadim;        catch, pcadim         = 40;       end
 try whiten        = options.concat.whiten;        catch, whiten         = 1;        end
 try normalisation = options.concat.normalisation; catch, normalisation  = 'global'; end
-try variance_normalise_envelopes    = options.concat.variance_normalise_envelopes;     catch, variance_normalise_envelopes  = 0;  end
+embed=[];
+try embed.do      = options.concat.embed.do; catch, embed.do  = 0; end
+try embed.centre_freq = options.concat.embed.centre_freq; catch, embed.centre_freq  = 15; end %Hz
 
 % Default HMM settings
 try nstates = options.hmm.nstates; catch, nstates = 8; end
@@ -271,11 +278,10 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
         else
             D = spm_eeg_load(filenames.prepare{subnum});
         end
-        
-        data = prepare_data(D,normalisation,logtrans);
+                
+        embed.tres=1/D.fsample;        
+        [data,cov_data] = prepare_data(D,normalisation,logtrans,embed);
       
-        cov_data = data;
-        
         % compute covariance
         C = C + cov_data * permute(cov_data,[2,1]);
         
@@ -323,29 +329,29 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
     else
         masksize=getmasksize(size(dat_concat,1));
     end
-    
-    
-    
-    % Save PCA maps
-    [pathstr,filestr] = fileparts(filenames.concat);
-    savefile_pc_maps        = [pathstr '/' filestr '_pc_maps'];
-    savefile_mean_pc_maps   = [pathstr '/' filestr '_mean_pc_maps'];
-    savefile_std_maps    = [pathstr '/' filestr '_hmmdata_std_maps'];
-    
-    if use_parcels
-        ROInets.nii_parcel_quicksave(MixingMatrix',parcelAssignments,savefile_pc_maps,masksize,masksize,'nearestneighbour');
-        ROInets.nii_parcel_quicksave(mean(abs(MixingMatrix),1)',parcelAssignments,savefile_mean_pc_maps,masksize,2,'nearestneighbour');
-        ROInets.nii_parcel_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),parcelAssignments,savefile_std_maps,masksize,2,'nearestneighbour');
-    else
-        nii_quicksave(MixingMatrix',savefile_pc_maps,masksize,2); 
-        nii_quicksave(mean(abs(MixingMatrix),1)',savefile_mean_pc_maps,masksize,masksize);
-        nii_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),savefile_std_maps,masksize,masksize);
-    end
+        
+    if ~embed.do
+        % Save PCA maps
+        [pathstr,filestr] = fileparts(filenames.concat);
 
-    disp(['PCA maps saved to ' savefile_pc_maps]);   
-    disp(['mean of PCA maps saved to ' savefile_mean_pc_maps]);  
-    disp(['HMM data sd maps saved to ' savefile_std_maps]);     
+        savefile_pc_maps        = [pathstr '/' filestr '_pc_maps'];
+        savefile_mean_pc_maps   = [pathstr '/' filestr '_mean_pc_maps'];
+        savefile_std_maps    = [pathstr '/' filestr '_hmmdata_std_maps'];
 
+        if use_parcels
+            ROInets.nii_parcel_quicksave(MixingMatrix',parcelAssignments,savefile_pc_maps,masksize,masksize,'nearestneighbour');
+            ROInets.nii_parcel_quicksave(mean(abs(MixingMatrix),1)',parcelAssignments,savefile_mean_pc_maps,masksize,2,'nearestneighbour');
+            ROInets.nii_parcel_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),parcelAssignments,savefile_std_maps,masksize,2,'nearestneighbour');
+        else
+            nii_quicksave(MixingMatrix',savefile_pc_maps,masksize,2); 
+            nii_quicksave(mean(abs(MixingMatrix),1)',savefile_mean_pc_maps,masksize,masksize);
+            nii_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),savefile_std_maps,masksize,masksize);
+        end
+        disp(['PCA maps saved to ' savefile_pc_maps]);   
+        disp(['mean of PCA maps saved to ' savefile_mean_pc_maps]);  
+        disp(['HMM data sd maps saved to ' savefile_std_maps]);     
+    end;
+    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -364,15 +370,43 @@ if todo.infer
         rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
         addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
 
-        if ~envelope_do
-            hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
+        if(1)
+            if ~envelope_do
+                hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
+            else
+                hmm = ABhmm_infer(hmmdata,nstates,nreps);
+            end;
+            hmm.statepath = ABhmm_statepath(hmm);
         else
-            hmm = ABhmm_infer(hmmdata,nstates,nreps);
-        end;
-        hmm.statepath = ABhmm_statepath(hmm);
-        addpath(genpath(OSLDIR));
+        
+            S=[];
+            S.num_hmm_starts=nreps;
+            S.do_plots=1;
+            S.tres=1/fsample;
+            S.data=hmmdata;
+            S.title='data1';
+            S.NK=nstates;
+            S.force_zero_means=1;
+            S.norm_vectors=0;
+            bandcentre=15;
+            span=1/bandcentre;
 
+            S.M=round(span/S.tres);
+
+            S.hmm_pca_dim=pcadim; % use this setting for synchro HMM
+
+
+            %S.M=1;S.hmm_pca_dim=-1; % use this setting for standard HMM
+
+            S.deltasecs=S.tres;
+
+            res_hmm  = synchro_hmm_multichan( S ); 
+
+            hmm.statepath = res_hmm.block(1).q_star;
+        end;
+        addpath(genpath(OSLDIR));
     else
+        
         rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
         addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
         
@@ -487,8 +521,7 @@ HMMresults = filenames.hmm;
 
 end
 
-
-function data = prepare_data(D,normalisation,logtrans)
+function [data,cov_data] = prepare_data(D,normalisation,logtrans,embed)
 
 % reshape trialwise data
 data = D(:,:,:);
@@ -504,6 +537,20 @@ if logtrans
     data = log10(data);
 end
 
+if exist('embed') && embed.do,    
+    
+    disp('Time embedding data');
+    span=1/embed.centre_freq; %secs
+    num_embeddings=round(span/embed.tres);        
+    lags=round(-num_embeddings/2:num_embeddings/2);
+
+    [dataout,valid]=embedx(data',lags);
+    dataout=dataout';
+    data=randn(size(dataout,1),size(data,2))*std(squash(data(:,1:500)));
+    data(:,valid)=dataout;          
+       
+end;
+
 % normalisation
 switch normalisation
     case 'global'
@@ -513,6 +560,8 @@ switch normalisation
     case 'none'
         data = demean(data,2);
 end
+
+cov_data = data;
 
 end
 
