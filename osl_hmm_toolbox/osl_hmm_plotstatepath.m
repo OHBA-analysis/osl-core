@@ -7,20 +7,20 @@ function osl_hmm_plotstatepath(hmm,options)
 
 if nargin < 2
   options=[];
-end;
+end
 
 try 
     options = ft_checkopt(options,'mode','char',{'separate','overlay'});
 catch
     options.mode='separate';
     disp(['options.mode not set correctly. Defaulting to options.mode=''' options.mode '''']);
-end; % stack all states on separate lines on y-axis or overlay
+end % stack all states on separate lines on y-axis or overlay
 mode=options.mode; 
 
-try t0=options.t0; catch t0 = 0; end; % start time point in secs
-try bc=options.bc; catch bc = []; end; % baseline correct epoched states using this time range
-try win=options.win; catch win = []; end; % smoothing 
-try epoched_statepath_sub=hmm.epoched_statepath_sub; catch epoched_statepath_sub = []; end; 
+try t0=options.t0;      catch,   t0 = 0;    end % start time point in secs
+try bc=options.bc;      catch,   bc = [];   end % baseline correct epoched states using this time range
+try win=options.win;    catch,  win = [];   end % smoothing 
+try epoched_statepath_sub=hmm.epoched_statepath_sub; catch epoched_statepath_sub = []; end 
 
 if ~isfield(hmm,'fsample') || isempty(hmm.fsample)
     fs = 1;
@@ -38,7 +38,7 @@ if isempty(epoched_statepath_sub)
     num_conds=1;
 else
     num_conds=size(epoched_statepath_sub,2);
-end;
+end
 
 for condnum = 1:num_conds,
     if 1,%num_conds>1, 
@@ -47,7 +47,7 @@ for condnum = 1:num_conds,
         cla(gca); hold(gca,'on')
 
         title(['Cond ' num2str(condnum)]);
-    end;
+    end
     
     leg=[];
     for s = 1:k
@@ -62,22 +62,22 @@ for condnum = 1:num_conds,
             stateinds=double(logical(epoched_statepath_sub{sub,condnum}==s));
             tmp=tmp+sum(stateinds,3);
             count=count+size(stateinds,3);
-        end;            
+        end            
 
         tmp=tmp/count;
-      end;
+      end
 
       if ~isempty(win)
         FO = conv(tmp,rectwin(fs*win),'same')./ (fs*win);
       else
         FO=tmp;
-      end;
+      end
 
       ts=linspace(t0,t0+length(FO)/fs,length(FO));
 
       if ~isempty(bc)
         FO=FO-mean(FO(intersect(ts>bc(1),ts < bc(2))))
-      end;
+      end
 
       if strcmp(mode,'separate'),      
         plot(ts,0.8*FO + s - 0.4,'color',col(s,:),'LineWidth',1);
@@ -87,11 +87,11 @@ for condnum = 1:num_conds,
         xlabel('Time (s)'); ylabel('FO')
         leg{s}=['s' num2str(s)];
 
-      end;  
+      end  
 
       %plot((1:length(hmm.statepath))/fs, 0.8*double(hmm.statepath==s)+ s - 0.4,'color',col(s,:));
     end
-end;
+end
 
 if strcmp(mode,'separate'),
     ylabel('State #')
@@ -101,7 +101,7 @@ else
     ylabel('FO')
     
     legend(leg);
-end;
+end
 
 if ~isfield(hmm,'fsample') || isempty(hmm.fsample)
   xlabel('Samples');    
@@ -117,19 +117,19 @@ end
 
 % if nargin < 2
 %   options=[];
-% end;
+% end
 % 
 % try 
 %     options = ft_checkopt(options,'mode','char',{'separate','overlay'});
 % catch
 %     options.mode='separate';
 %     disp(['options.mode not set correctly. Defaulting to options.mode=''' options.mode '''']);
-% end; % stack all states on separate lines on y-axis or overlay
+% end % stack all states on separate lines on y-axis or overlay
 % mode=options.mode; 
-% try t0=options.t0; catch t0 = 0; end; % start time point in secs
-% try bc=options.bc; catch bc = []; end; % baseline correct epoched states using this time range
-% try win=options.win; catch win = []; end; % smoothing 
-% try epoched_statepath_sub=hmm.epoched_statepath_sub; catch epoched_statepath_sub = []; end; 
+% try t0=options.t0; catch t0 = 0; end % start time point in secs
+% try bc=options.bc; catch bc = []; end % baseline correct epoched states using this time range
+% try win=options.win; catch win = []; end % smoothing 
+% try epoched_statepath_sub=hmm.epoched_statepath_sub; catch epoched_statepath_sub = []; end 
 % 
 % if ~isfield(hmm,'fsample') || isempty(hmm.fsample)
 %     fs = 1;
