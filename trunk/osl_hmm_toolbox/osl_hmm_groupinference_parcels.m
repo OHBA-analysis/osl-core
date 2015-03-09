@@ -78,7 +78,7 @@ function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_p
 % statemaps  - filename of the HMM state maps
 %
 %
-% AB & MWW 2014 
+% Mostly AB & a little bit from MWW (2014/15)
 
 global OSLDIR
 
@@ -164,12 +164,15 @@ parcellation = [];
 try parcellation.file     = options.prepare.parcellation.file;     catch, parcellation.file     = [];          end
 try parcellation.protocol = options.prepare.parcellation.protocol; catch, parcellation.protocol = 'symmetric'; end
 try parcellation.method   = options.prepare.parcellation.method;   catch, parcellation.method   = 'PCA';       end
+try parcellation.normalise_voxeldata   = options.prepare.parcellation.normalise_voxeldata;   catch, parcellation.normalise_voxeldata   = 0;       end
+
 use_parcels               = ~isempty(parcellation.file);
 
 % Default concatenation settings
 try pcadim        = options.concat.pcadim;        catch, pcadim         = 40;       end
 try whiten        = options.concat.whiten;        catch, whiten         = 1;        end
 try normalisation = options.concat.normalisation; catch, normalisation  = 'global'; end
+try variance_normalise_envelopes    = options.concat.variance_normalise_envelopes;     catch, variance_normalise_envelopes  = 0;  end
 
 % Default HMM settings
 try nstates = options.hmm.nstates; catch, nstates = 8; end
@@ -191,15 +194,22 @@ if todo.prepare
         
         % Compute envelopes for all voxels
         if envelope_do
+            disp(['Computing Hilbert Envelopes'])
+        
             S         = [];
             S.D       = data_files{subnum};
             S.winsize = windowsize;
             D = osl_hilbenv(S);
         else
-            D = spm_eeg_load(data_files{subnum});
+            % Need to copy D to preserve the original
+            S=[];
+            S.D=data_files{subnum};
+            [pathstr,filestr] = fileparts(filenames.concat);
+            S.outfile=[pathstr '/raw_' filestr];
+            D = spm_eeg_copy(S);
         end
         
-        % Copy MEEG object to HMM directory
+        % Move MEEG object to HMM directory
         move(D,filenames.prepare{subnum}); 
         disp(['Saving envelope data for ' filestr ' to ' filenames.prepare{subnum}])
         clear D
@@ -208,12 +218,15 @@ if todo.prepare
         % Apply parcellation
         if use_parcels
             
+            disp(['Applying parcellation'])
+    
             S                   = [];
             S.D                 = data_files{subnum};
             S.parcellation      = parcellation.file;
             S.orthogonalisation = parcellation.protocol;
             S.method            = parcellation.method;
             S.prefix            = 'p'; 
+            S.normalise_voxeldata = parcellation.normalise_voxeldata;
             [D,parcelWeights,parcelAssignments] = osl_apply_parcellation(S);
             
             % Save parcellation results:
@@ -497,9 +510,8 @@ switch normalisation
         data = normalise(data,2);
     case 'none'
         data = demean(data,2);
+    cov_data = data;
 end
-
-cov_data = data;
 
 end
 
