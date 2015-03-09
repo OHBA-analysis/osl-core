@@ -272,8 +272,10 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             D = spm_eeg_load(filenames.prepare{subnum});
         end
         
-        [data,cov_data] = prepare_data(D,normalisation,logtrans);
+        data = prepare_data(D,normalisation,logtrans);
       
+        cov_data = data;
+        
         % compute covariance
         C = C + cov_data * permute(cov_data,[2,1]);
         
@@ -486,7 +488,7 @@ HMMresults = filenames.hmm;
 end
 
 
-function [data,cov_data] = prepare_data(D,normalisation,logtrans)
+function data = prepare_data(D,normalisation,logtrans)
 
 % reshape trialwise data
 data = D(:,:,:);
@@ -510,7 +512,6 @@ switch normalisation
         data = normalise(data,2);
     case 'none'
         data = demean(data,2);
-    cov_data = data;
 end
 
 end
