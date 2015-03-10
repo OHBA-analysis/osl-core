@@ -68,7 +68,7 @@ osl_hmm_plotstatepath(hmm);
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %% example parcellation call
 
-todo.prepare  = 1;
+todo.prepare  = 0;
 todo.concat   = 1;
 todo.infer    = 1;
 todo.output   = 1;
@@ -97,6 +97,7 @@ else
 end;
 options.concat.whiten       = 1;
 options.concat.filename     = ['concat_pcdim' num2str(options.concat.pcadim)];
+options.concat.normalisation = 'global';
 
 options.hmm.nstates         = 8;
 options.hmm.nreps           = 5;
