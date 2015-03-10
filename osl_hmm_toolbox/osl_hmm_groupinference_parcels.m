@@ -480,7 +480,9 @@ if todo.output
  
             end                        
 
-            stat = stat ./ length(data_files);
+            stat  = stat  ./ length(data_files);
+            statp = statp ./ length(data_files);
+
             disp(['Saving state spatial maps to ' statemaps]) 
             
             nii_quicksave(stat,statemaps,getmasksize(D.nchannels),2);
