@@ -83,7 +83,7 @@ end
 try
     S.modalities = cellstr(S.modalities);
     S.modalities = S.modalities(:);
-    S = ft_checkopt(S,'modalities','cell',{{'MEG'},{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'}});
+    S = ft_checkopt(S,'modalities','cell',{{'MEG'},{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'},{'MEGPLANAR';'MEGMAG'}});
 catch
     if any(strcmp(unique(D.chantype),'MEGPLANAR'))
         default_modality = {'MEGPLANAR'};
