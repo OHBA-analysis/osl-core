@@ -5,11 +5,9 @@ currentMontage = montage(D,'getindex');
 
 if currentMontage == 0
     error('No virtual montage applied!')
-else
-    
+else  
     D = D.montage('switch');
-    tbad = all(badsamples(D,':',':',':'));
-    C = cov(D(:,find(~tbad))'); %#ok - logical indexing didn't work...
+    C = osl_cov(D);
     V = diag(D.montage('getmontage',currentMontage).tra * C * D.montage('getmontage',currentMontage).tra');
 end
 
