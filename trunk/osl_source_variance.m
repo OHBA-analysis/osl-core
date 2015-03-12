@@ -1,14 +1,18 @@
 function V = osl_source_variance(D)
-% Computes the variance of source reconstructed data
+% Computes the temporal variance of data in MEEG object
 % V = osl_source_variance(D)
 currentMontage = montage(D,'getindex');
 
-if currentMontage == 0
-    error('No virtual montage applied!')
-else  
-    D = D.montage('switch');
-    C = osl_cov(D);
-    V = diag(D.montage('getmontage',currentMontage).tra * C * D.montage('getmontage',currentMontage).tra');
+D = D.montage('switch');
+C = osl_cov(D);
+
+if currentMontage ~= 0
+    tra = D.montage('getmontage',currentMontage).tra;
+else
+    tra = eye(size(C));
 end
 
+V = diag(tra * C * tra');
+
 end
+
