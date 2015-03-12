@@ -1,4 +1,4 @@
-function osl_render4D(nii,savedir,workbenchdir,interptype,visualise)
+function osl_render4D(nii,savedir,workbenchdir,interptype,visualise,cleanEnvironmentFn)
 % Creates a surface rendering of a 4D nifti file and saves as dense time series
 % (.dtseries.nii) CIFTI file using HCP workbench
 %
@@ -9,6 +9,12 @@ function osl_render4D(nii,savedir,workbenchdir,interptype,visualise)
 % workbenchdir - directory containing HCP workbench (e.g. /.../workbench/bin_linux64/)
 % interptype   - (optional) interpolation method [{'trilinear'},'nearestneighbour']
 % visualise    - (optional) open workbench after rendering [{1},0]
+% cleanEnvironmentFn - (optional) dos calls will call this function prior to
+%                   calling command line workbench executables [default is 
+%                   to not call a function]. (Note that this is needed for certain
+%                   OS where the dynamics link library paths are not setup
+%                   properly in Matlab - see clearEnvironment.m for an
+%                   example).
 % -----------------------------------------------------------------
 % Adam Baker 2013
 
@@ -39,6 +45,15 @@ end
 if ~exist('visualise','var')
   visualise = 1;
 end
+if ~exist('cleanEnvironmentFn')
+    cleanEnvironmentFn=[];
+end;
+
+if ~isempty(cleanEnvironmentFn)
+    cleanEnvStr=feval(cleanEnvironmentFn);
+else
+    cleanEnvStr=[];
+end;
 
 switch lower(interptype)
     case {'trilinear'}
@@ -62,18 +77,25 @@ output_right    = [outfile '_right.nii'];
 output_left     = [outfile '_left.nii'];
 
 % Map volume to surface
-dos([workbenchdir '/wb_command -volume-to-surface-mapping ' nii ' ' surf_right       ' ' output_right    ' -' interptype_surf]);
-dos([workbenchdir '/wb_command -volume-to-surface-mapping ' nii ' ' surf_left        ' ' output_left     ' -' interptype_surf]);
+[st, res]=dos([cleanEnvStr workbenchdir '/wb_command -volume-to-surface-mapping ' nii ' ' surf_right       ' ' output_right    ' -' interptype_surf]);
+disp(res);
+[st, res]=dos([cleanEnvStr workbenchdir '/wb_command -volume-to-surface-mapping ' nii ' ' surf_left        ' ' output_left     ' -' interptype_surf]);
+disp(res);
 
 % Save as dtseries 
 cifti_right = strrep(output_right,'.nii','.dtseries.nii');
 cifti_left  = strrep(output_left, '.nii','.dtseries.nii');
 
-dos([workbenchdir '/wb_command -cifti-create-dense-timeseries ' cifti_right     ' -right-metric ' output_right]);
-dos([workbenchdir '/wb_command -cifti-create-dense-timeseries ' cifti_left      ' -left-metric '  output_left ]);
+[st, res]=dos([cleanEnvStr workbenchdir '/wb_command -cifti-create-dense-timeseries ' cifti_right     ' -right-metric ' output_right]);
+disp(res);
+[st, res]=dos([cleanEnvStr workbenchdir '/wb_command -cifti-create-dense-timeseries ' cifti_left      ' -left-metric '  output_left ]);
+disp(res);
 
 % View in workbench
 if visualise
-  runcmd([workbenchdir '/workbench ' surf_left ' ' surf_right ' ' cifti_left ' ' cifti_right ' &']);
+  cmd=[workbenchdir '/wb_view ' surf_left ' ' surf_right ' ' cifti_left ' ' cifti_right ' &'];
+  disp(cmd);
+  runcmd([cleanEnvStr cmd]);
 end
+
 end
