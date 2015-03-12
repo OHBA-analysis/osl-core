@@ -74,7 +74,7 @@ source_recon_report=osl_report_setup(report_dir,['Source recon (epoched)']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-disp(['Using ' source_recon.method ' for source recontruction']);  
+disp(['Using ' source_recon.method ' for source reconstruction']);  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Loop over sessions
@@ -143,7 +143,7 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
 
         S2 = [];
         S2.D            = [D.path '/' D.fname]; % requires .mat extension
-        S2.forward_meg  = source_recon.forward_meg;
+        S2.forward_meg  = source_recon_sess.forward_meg;
 
         D = osl_forward_model(S2);
 
@@ -161,14 +161,14 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     S2=[];
     S2.D=D;
     S2.mni_coords=mni_coords;
-    S2.timespan=source_recon.time_range;
-    S2.type=source_recon.type;
-    S2.pca_order=source_recon.pca_dim;
-    S2.modalities=source_recon.modalities;
+    S2.timespan=source_recon_sess.time_range;
+    S2.type=source_recon_sess.type;
+    S2.pca_order=source_recon_sess.pca_dim;
+    S2.modalities=source_recon_sess.modalities;
     S2.fuse='meg';
-    S2.conditions=source_recon.conditions;
-    S2.inverse_method=source_recon.method;
-    S2.dirname=source_recon.dirname;
+    S2.conditions=source_recon_sess.conditions;
+    S2.inverse_method=source_recon_sess.method;
+    S2.dirname=source_recon_sess.dirname;
     S2.use_class_channel=true;
     
     D = osl_inverse_model(S2);
