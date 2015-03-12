@@ -37,7 +37,7 @@ outfile = strrep(outfile,'.nii','');
 
 if ~exist('workbenchdir','var') || isempty(workbenchdir)
  % workbenchdir = '/home/abaker/Code/HCPworkbench/bin_linux64';
-  workbenchdir = '/home/abaker/Desktop/workbench/bin_linux64';
+  workbenchdir = '/Applications/workbench/bin_macosx64/';
 end
 if ~exist('interptype','var')
   interptype = 'trilinear';
