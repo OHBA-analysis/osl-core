@@ -15,9 +15,10 @@ fid = D.fiducials;
 hf = figure('NumberTitle',                'off'     ,...
     'Menubar',               'none'    ,...
     'DockControls',          'off'     ,...
-    'Color',                 'w'       ,...
+    'Color',                 'k'       ,...
     'CloseRequestFcn',       @closefig ,...
-    'KeyPressFcn',           @key_press);
+    'KeyPressFcn',           @key_press,...
+    'Name',                  fullfile(D.path,D.fname));
 
 uitools.toolbar = uitoolbar;
 
@@ -45,7 +46,7 @@ set(h,'Color',[1 0 0],'Enable','on');
 
     function save_meeg(~,~)
         if any(get(findall(gca,'tag','Brushing'),'Xdata'))
-            selection = questdlg('Remove selected points?','Yes','No');
+            selection = questdlg('Remove selected points?');
             switch selection,
                 case 'Yes'
                     brushedData = get(findall(gca,'tag','Brushing'),'Xdata');
@@ -79,7 +80,7 @@ set(h,'Color',[1 0 0],'Enable','on');
     end
 
     function plotfid
-        plot3(fid.pnt(:,1),fid.pnt(:,2),fid.pnt(:,3),'color',[0.2 0.8 0.2],'marker','.','LineStyle','none','parent',ha)
+        plot3(fid.pnt(:,1),fid.pnt(:,2),fid.pnt(:,3),'color','g','marker','.','LineStyle','none','parent',ha)
         axis(ha,'image');
         axis(ha,'off');
     end
