@@ -490,10 +490,11 @@ if todo.output
             end                        
 
             stat  = stat  ./ length(data_files);
-            statp = statp ./ length(data_files);
-
-            statp = statp ./ length(data_files);
-            
+          
+            if use_parcels
+                statp = statp ./ length(data_files);
+            end;
+          
             disp(['Saving state spatial maps to ' statemaps]) 
             
             S2=[];
