@@ -574,12 +574,13 @@ for subi_todo=1:length(first_level.sessions_to_do),
         Sc.newdata = sensor_data_tf;
         Sc.time = tf_out_times;
         Sc.frequencies = first_level_results.frequencies(f);
+        Sc.remove_montages=0;
         D_tf = osl_change_spm_eeg_data( Sc );   
         
         % add back in Class channel:        
         classchanind=find(strcmp(D.chanlabels,'Class'));
         classchanind_tf=find(strcmp(D_tf.chanlabels,'Class'));
-        D_tf(classchanind_tf,:,1)=D(classchanind,D_time_indices(tf_time_indices_into_D_times),1);
+        D_tf(classchanind_tf,:,:)=D(classchanind,D_time_indices(tf_time_indices_into_D_times),triallist);
                 
         clear sensor_data_tf;
         
