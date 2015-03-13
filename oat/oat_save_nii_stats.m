@@ -29,6 +29,9 @@ function [statsdir,times,cluster_times]=oat_save_nii_stats( Sin )
 %                               to indicate which group level contrasts to output
 %                               should have nii files output for them
 % Sin.resamp_gridstep: resolution to resample niis to [default is 2mm]
+% Sin.time_range: time range to use, i.e. [from to]. Default is to use full
+%                   time range.
+% Sin.freq_bin: index of freq bin to us [default is 1]
 %
 % Example first level stats call:
 %
@@ -134,7 +137,7 @@ else
     time_indices=1:length(tim);   
 end;
 
-tim=tim(time_indices);
+clear tim;
 
 if(size(Sin.stats.cope,4)>1 && ~isfield(Sin,'freq_bin'))
     error('Not implemented for multiple freq bins');
@@ -188,7 +191,7 @@ else
     
 end
 
-times=tim;
+times=Sin.stats.times(time_indices);
 save([Sin.stats_dir '/times'],'times','-ascii');
 statsdir=Sin.stats_dir;
 
@@ -225,7 +228,8 @@ for coni=1:length(Sin.first_level_contrasts),
         if size(ts,2)>1,
 
             fname=[statsdir '/tstat' num2str(con) '_mip' fname_postfix];
-            time_indices_sum=find(tim>=0);
+            times=Sin.stats.times(time_indices);
+            time_indices_sum=find(times>=0);
             time_indices_sum=intersect(time_indices_sum,time_indices);
             ts=abs(Sin.stats.cope(:,time_indices_sum,con,:,gcon)./Sin.stats.stdcope(:,time_indices_sum,con,:,gcon));
 
@@ -273,7 +277,8 @@ for coni=1:length(Sin.first_level_contrasts),
         runcmd(['fslmaths ' clustimg_fname '_' num2str(resamp_gridstep) 'mm -thr ' num2str(1-corrp_thresh) ' ' clustimg_fname '_thresh_' num2str(resamp_gridstep) 'mm']);
         % runcmd(['fslmaths ' fnamet '_' num2str(resamp_gridstep) 'mm -mas ' clustimg_fname '_thresh_' num2str(resamp_gridstep) 'mm -thr ' num2str(Sin.stats.S.cluster_stats_thresh) ' ' tstat_thresh_img_fname '_' num2str(resamp_gridstep) 'mm ']);
     end;
+    
 end;
 
 disp(['E.g. to view t-statistics: ']);
-disp(['fslview(' fnamet ')']);
+disp(['fslview(''' fnamet ''')']);
