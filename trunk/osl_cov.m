@@ -19,7 +19,8 @@ if isa(X,'meeg')
     nch  = X.nchannels;
     %samples2use = reshape(squeeze(~all(badsamples(X,':',':',':'))),X.nsamples*X.ntrials,1); 
     samples2use = squeeze(~all(badsamples(X,':',':',':')));
-    nsmp = sum(samples2use(:));
+    samples2use = samples2use(:);
+    nsmp = sum(samples2use);
 else
     [nch,nsmp] = size(X);
     if nch > nsmp
