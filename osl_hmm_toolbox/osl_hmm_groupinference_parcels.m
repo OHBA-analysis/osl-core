@@ -39,7 +39,8 @@ function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_p
 %                          .parcellation.method - passed to ROInets.get_corrected_node_tcs
 %                          .parcellation.protocol - passed to ROInets.get_corrected_node_tcs
 %                          .log - apply log transform to envelopes
-%
+%                          .mask_fname - mask used to get data from vols2matrix
+%                           [default is to assume a whole brain std space MNI mask]
 %              .concat   - settings for temporal concatenation with fields:                      
 %                          .pcadim        - dimensionality to use (default 40)             
 %                          .normalisation - variance normalisation method:
@@ -164,6 +165,12 @@ try todo.hmm     = todo.hmm;     catch, todo.hmm     = 1; end
 try envelope_do = options.prepare.envelope;   catch, envelope_do = 1;   end
 try logtrans    = options.prepare.log;        catch, logtrans    = 0;   end
 try windowsize  = options.prepare.windowsize; catch, windowsize  = 0.1; end
+try 
+    options.prepare = ft_checkopt(options.prepare,'mask_fname','char');
+catch
+    options.prepare.mask_fname=[];
+end;
+mask_fname=options.prepare.mask_fname;
 
 parcellation = [];
 try parcellation.file     = options.prepare.parcellation.file;     catch, parcellation.file     = [];          end
@@ -320,16 +327,16 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
     disp(['Saving group concatenated data to ' filenames.concat])
     save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds');
 
-    if use_parcels
-        % Load parcellation results:
-        pathstr = fileparts([filenames.prepare{1}]);
-        fname   = fullfile(pathstr,'parcellation');
-        load(fname); % Loads parcelAssignments and parcelWeights
-        masksize = getmasksize(size(parcelAssignments,1));
-    else
-        masksize=getmasksize(size(dat_concat,1));
-    end
-        
+%     if use_parcels
+%         % Load parcellation results:
+%         pathstr = fileparts([filenames.prepare{1}]);
+%         fname   = fullfile(pathstr,'parcellation');
+%         load(fname); % Loads parcelAssignments and parcelWeights
+%         masksize = getmasksize(size(parcelAssignments,1));
+%     else
+%         masksize=getmasksize(size(dat_concat,1));
+%     end
+         
     if ~embed.do
         % Save PCA maps
         [pathstr,filestr] = fileparts(filenames.concat);
@@ -338,14 +345,16 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
         savefile_mean_pc_maps   = [pathstr '/' filestr '_mean_pc_maps'];
         savefile_std_maps    = [pathstr '/' filestr '_hmmdata_std_maps'];
 
+        S2=[];
+        S2.mask_fname=mask_fname;
         if use_parcels
             ROInets.nii_parcel_quicksave(MixingMatrix',parcelAssignments,savefile_pc_maps,masksize,masksize,'nearestneighbour');
             ROInets.nii_parcel_quicksave(mean(abs(MixingMatrix),1)',parcelAssignments,savefile_mean_pc_maps,masksize,2,'nearestneighbour');
             ROInets.nii_parcel_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),parcelAssignments,savefile_std_maps,masksize,2,'nearestneighbour');
-        else
-            nii_quicksave(MixingMatrix',savefile_pc_maps,masksize,2); 
-            nii_quicksave(mean(abs(MixingMatrix),1)',savefile_mean_pc_maps,masksize,masksize);
-            nii_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),savefile_std_maps,masksize,masksize);
+        else            
+            nii_quicksave(MixingMatrix',savefile_pc_maps,S2); 
+            nii_quicksave(mean(abs(MixingMatrix),1)',savefile_mean_pc_maps,S2);
+            nii_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),savefile_std_maps,S2);
         end
         disp(['PCA maps saved to ' savefile_pc_maps]);   
         disp(['mean of PCA maps saved to ' savefile_mean_pc_maps]);  
@@ -483,10 +492,13 @@ if todo.output
             stat  = stat  ./ length(data_files);
             statp = statp ./ length(data_files);
 
+            statp = statp ./ length(data_files);
+            
             disp(['Saving state spatial maps to ' statemaps]) 
             
-            nii_quicksave(stat,statemaps,getmasksize(D.nchannels),2);
-
+            S2=[];
+            S2.mask_fname=mask_fname;        
+            nii_quicksave(stat,statemaps,S2);
                             
             if use_parcels
                 % convert parcel statemaps into voxel statemaps
