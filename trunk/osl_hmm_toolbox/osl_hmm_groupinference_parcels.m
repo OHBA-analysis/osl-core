@@ -347,10 +347,12 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
 
         S2=[];
         S2.mask_fname=mask_fname;
+        
         if use_parcels
-            ROInets.nii_parcel_quicksave(MixingMatrix',parcelAssignments,savefile_pc_maps,masksize,masksize,'nearestneighbour');
-            ROInets.nii_parcel_quicksave(mean(abs(MixingMatrix),1)',parcelAssignments,savefile_mean_pc_maps,masksize,2,'nearestneighbour');
-            ROInets.nii_parcel_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),parcelAssignments,savefile_std_maps,masksize,2,'nearestneighbour');
+            S2.interp='nearestneighbour';
+            ROInets.nii_parcel_quicksave(MixingMatrix',parcelAssignments,savefile_pc_maps,S2);
+            ROInets.nii_parcel_quicksave(mean(abs(MixingMatrix),1)',parcelAssignments,savefile_mean_pc_maps,S2);
+            ROInets.nii_parcel_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),parcelAssignments,savefile_std_maps,S2);
         else            
             nii_quicksave(MixingMatrix',savefile_pc_maps,S2); 
             nii_quicksave(mean(abs(MixingMatrix),1)',savefile_mean_pc_maps,S2);
@@ -498,7 +500,8 @@ if todo.output
             disp(['Saving state spatial maps to ' statemaps]) 
             
             S2=[];
-            S2.mask_fname=mask_fname;        
+            S2.mask_fname=mask_fname;  
+            S2.output_spat_res=2; %mm
             nii_quicksave(stat,statemaps,S2);
                             
             if use_parcels
@@ -510,12 +513,13 @@ if todo.output
                 masksize = getmasksize(size(parcelAssignments,1));
                 
                 if ~use_parcel_weights
-                    ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps,'_parcels'],masksize,2,'nearestneighbour');
+                    S2.interp='nearestneighbour';
+                    ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps,'_parcels'],S2);
                 else % Question: Isn't it cheating to use the parcel weights to generate the maps?
                     weights = abs(parcelWeights);
                     weights = weights/mean(weights(logical(weights)));
                     
-                    ROInets.nii_parcel_quicksave(statp,weights,[statemaps,'_parcels'],masksize,2);
+                    ROInets.nii_parcel_quicksave(statp,weights,[statemaps,'_parcels'],S2);
                 end
             end
                         

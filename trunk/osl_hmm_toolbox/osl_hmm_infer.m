@@ -52,9 +52,20 @@ for i = 1:Ninits
     %options.inittype='EM';
     options.inittype = 'GMM';
     options.initcyc = 100;
+    options.initrep = 5;
     %options.covtype='diag';
     
-    %options.initcyc = 10;
+    if 0 
+        % to run HMM MAR
+        minfreq=4;
+        options.orderoffset=1;
+        [order,exptimelag] = higherorder(minfreq,options.Hz,12,options.orderoffset);
+        options.order=order;
+        options.exptimelag=exptimelag;
+        options.S=-1*ones(size(data,2))+2*eye(size(data,2));
+        options.covtype='diag';
+    end;
+    
     [hmm_new, Gamma, Xi, vpath, GammaInit, residuals, fehist] = hmmmar(data,T,options);
     % keep inference if Free Energy is lower
     if fehist(end) < FrEn
