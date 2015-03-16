@@ -1,15 +1,16 @@
 function fileNameOut = nii_parcel_quicksave(data, parcelFlag, filename, varargin)
 %NII_PARCEL_QUICKSAVE	Saves data in parcels as nifti
-% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, SPATIALRES) saves
-%   DATA in nifti file FILENAME using spatial resolution SPATIALRES. The
+% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, OPTIONS) or
+%   saves DATA in nifti file FILENAME using the spatial resolution specified in
+%   OPTIONS.INPUT_SPAT_RES (in mm). See nii_quicksave for other OPTIONS. The
 %   DATA form an (nParcels) x (nVolumes) matrix and PARCELFLAG (nVoxels) x
 %   (nParcels) is a binary matrix identifying the membership of voxels in
 %   parcels, or a matrix indicating the membership of each voxel in a
 %   parcel.
-%
-% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, SPATIALRES, RESAMP, INTERP)
-%   uses resampling method RESAMP and interpolation method INTERP in the
-%   call to nii_quicksave. 
+% OR:
+% NII_PARCEL_QUICKSAVE(DATA, PARCELFLAG, FILENAME, SPATIALRES, RESAMP, INTERP) 
+%   Is the old interface. Where is the output spatial resolution specified
+%   (in mm). See nii_quicksave for other settings
 %
 % See also: NII_QUICKSAVE. 
 
