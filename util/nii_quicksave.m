@@ -1,7 +1,8 @@
-function fname_out = nii_quicksave(mat,fname,options,output_spat_res)
+function fname_out = nii_quicksave(mat,fname,options_or_input_spat_res,output_spat_res,interp)
 
 % fname_out = nii_quicksave(mat,fname,options)
-% fname_out = nii_quicksave(mat,fname,input_spat_res,output_spat_res) - interface provided for some
+% OR
+% fname_out = nii_quicksave(mat,fname,input_spat_res,output_spat_res,interp) - interface provided for some
 % backwards compatibility
 % 
 % Saves a niftii file for passed in data
@@ -25,15 +26,23 @@ end;
 
 %%%%%%%%%%%%%%%
 % backwards compatibility
-if ~isstruct(options)
-    % old input format where third argument is input_spat_res
-    input_spat_res=options;
+if ~isstruct(options_or_input_spat_res)
+    % old interface was:
+    % nii_quicksave(mat,fname,input_spat_res,output_spat_res,interp)
+    input_spat_res=options_or_input_spat_res;
     
     options=struct();
     if nargin>3
         options.output_spat_res=output_spat_res;
     end;
+    if nargin>4
+        options.interp=interp;
+    end;
+else
+    options=options_or_input_spat_res;
 end;
+
+clear options_or_input_spat_res;
 
 %%%%%%%%%%%%%%%
 % parse options
@@ -74,8 +83,10 @@ if isempty(mask_fname)
     
     % load in std brain mask
     mask_fname=[OSLDIR '/std_masks/MNI152_T1_' num2str(input_spat_res) 'mm_brain.nii.gz'];
+    
+    % for a sanity check:
     mask_spat_res = get_nii_spatial_res( mask_fname );
-    mask_spat_res = input_spat_res(1);
+    mask_spat_res = mask_spat_res(1);
         
 else
     % establish input_spat_res from mask hdr

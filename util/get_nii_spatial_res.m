@@ -1,5 +1,9 @@
 function [ mni_res ] = get_nii_spatial_res( mask_fname )
 
+% [ mni_res ] = get_nii_spatial_res( mask_fname )
+%
+% MWW 
+
 res=[];
 
 [status,res]=dos(['fslval ' mask_fname ' pixdim1']);
