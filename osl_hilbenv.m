@@ -2,10 +2,11 @@ function Denv = osl_hilbenv(S)
 % Computes the Hilbert envelope of MEEG data
 % Dnew = osl_hilbenv(S)
 %
-% S.D       - MEEG object
-% S.winsize - window size (seconds)
-% S.prefix  - filename prefix for new MEEG object
-%
+% S.D         - MEEG object
+% S.winsize   - window size (seconds)
+% S.prefix    - filename prefix for new MEEG object
+% S.freqbands - cell array of frequency bands to use [Hz]
+%                 i.e. {[f1_low f1_high],[f2_low f2_high]}
 % Adam Baker 2014
 
 % Check SPM File Specification:
@@ -29,13 +30,25 @@ S.winsize = ft_getopt(S,'winsize');
 if isempty(S.winsize)
     S.winsize = 0; % No smoothing
 end
+
+
+S.freqbands = ft_getopt(S,'freqbands',{});
+if ~iscell(S.freqbands)
+    error('S.freqbands must be a cell array');
+end
   
 % Set up new MEEG object to hold downsampled envelope
 [~,t_env] = hilbenv(D.time,D.time,round(S.winsize*D.fsample));
 
-
-Denv = clone(montage(D,'switch',0),prefix(D.fnamedat,S.prefix),[D.nchannels,length(t_env),D.ntrials]);
-Denv = timeonset(Denv,t_env(1));
+if numel(S.freqbands) > 2
+    % Create Nchannels x Nsamples x Ntrials object
+    Denv = clone(montage(D,'switch',0),prefix(D.fnamedat,S.prefix),[D.nchannels,length(t_env),D.ntrials]);
+    Denv = timeonset(Denv,t_env(1));
+else
+    % Create Nchannels x Nfrequencies x Nsamples x Ntrials TF object
+    Denv = clone(montage(D,'switch',0),prefix(D.fnamedat,S.prefix),[D.nchannels,numel(S.freqbands),length(t_env),D.ntrials]);
+    Denv = timeonset(Denv,t_env(1));
+end
 
 fsampleNew = 1./(diff(t_env([1,end]))/length(t_env));
 Denv = fsample(Denv,fsampleNew);
@@ -48,9 +61,17 @@ for iblk = 1:size(blks,1)
     ft_progress(iblk/size(blks,1));
 
     for trl = 1:D.ntrials
+        
         dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl);
+
+        if ~isempty(S.freqbands) 
+            %dat_blk = bandpass(dat_blk,[],2)
+        end
+        
+        
         env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample));   
         Denv(blks(iblk,1):blks(iblk,2),:,trl) = env;
+        
     end
 end
 
