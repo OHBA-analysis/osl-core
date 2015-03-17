@@ -120,7 +120,7 @@ end
 filenames.concat = [filenames.concat '.mat'];
 
 if isfield(options.hmm,'filename') && ~isempty(options.hmm.filename)
-    [pathstr,filestr] = fileparts(options.hmm.filenam);
+    [pathstr,filestr] = fileparts(options.hmm.filename);
         if strcmp(pathstr,'')
             pathstr = hmmdir;
         end
@@ -131,7 +131,7 @@ end
 filenames.hmm = [filenames.hmm '.mat'];
 
 if isfield(options.output,'filename') && ~isempty(options.output.filename)
-    [pathstr,filestr] = fileparts(options.output.filenam);
+    [pathstr,filestr] = fileparts(options.output.filename);
         if strcmp(pathstr,'')
             pathstr = hmmdir;
         end
