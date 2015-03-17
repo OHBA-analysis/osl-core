@@ -24,7 +24,7 @@ if isa(X,'meeg')
 else
     [nch,nsmp] = size(X);
     if nch > nsmp
-        error(['Input has ' num2str(nsmp) ' rows and ' num2str(ncol) ' columns. Consider transposing']);
+        error(['Input has ' num2str(nsmp) ' rows and ' num2str(nch) ' columns. Consider transposing']);
     end
     samples2use = true(nsmp,1);
 end
