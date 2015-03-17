@@ -27,6 +27,10 @@ function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_p
 %              .prepare - settings for prepare computation with fields:
 %                          .envelope   - compute Hilbert envelope for data
 %                            (default 1)
+%                          .freqbands  - frequencies within which to compute 
+%                            envelope {[Hz Hz],[Hz Hz]} only used if data
+%                            is enveloped 
+%                            (default {} - wideband)
 %                          .windowsize - window size for moving average filter [s]
 %                            only carried out if data is enveloped
 %                            (default 0.1)
@@ -163,6 +167,7 @@ try todo.hmm     = todo.hmm;     catch, todo.hmm     = 1; end
 
 % Default prepare settings
 try envelope_do = options.prepare.envelope;   catch, envelope_do = 1;   end
+try freqbands   = options.prepare.freqbands;  catch, freqbands   = {};  end
 try logtrans    = options.prepare.log;        catch, logtrans    = 0;   end
 try windowsize  = options.prepare.windowsize; catch, windowsize  = 0.1; end
 try 
@@ -250,9 +255,10 @@ if todo.prepare
             
             % Compute envelopes for all parcels
             if envelope_do
-                S         = [];
-                S.D       = fullfile(D.path,D.fname);
-                S.winsize = windowsize;
+                S           = [];
+                S.D         = fullfile(D.path,D.fname);
+                S.winsize   = windowsize;
+                S.freqbands = freqbands;
                 D = osl_spmfun(@osl_hilbenv,S); % keep same filename
             end
             

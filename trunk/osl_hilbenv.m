@@ -40,7 +40,7 @@ end
 % Set up new MEEG object to hold downsampled envelope
 [~,t_env] = hilbenv(D.time,D.time,round(S.winsize*D.fsample));
 
-if numel(S.freqbands) > 2
+if numel(S.freqbands) < 2
     % Create Nchannels x Nsamples x Ntrials object
     Denv = clone(montage(D,'switch',0),prefix(D.fnamedat,S.prefix),[D.nchannels,length(t_env),D.ntrials]);
     Denv = timeonset(Denv,t_env(1));
