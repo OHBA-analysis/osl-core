@@ -118,6 +118,9 @@ end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 OSLDIR=osldir;
 
+% Ensure osl2 dir gets priority in path
+addpath(genpath([osldir '/osl2/']))
+
 spm_get_defaults('cmdline',true);
 spm eeg;
 close all;
