@@ -55,7 +55,8 @@ for i = 1:Ninits
     options.initrep = 5;
     %options.covtype='diag';
     
-    if 0 
+    if 0
+        options.inittype='EM';
         % to run HMM MAR
         minfreq=4;
         options.orderoffset=1;
