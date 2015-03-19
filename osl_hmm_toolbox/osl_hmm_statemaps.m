@@ -1,4 +1,4 @@
-function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,apply_mixing_matrix)
+function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,use_viterbi_path)
 % Computes spatial maps of state specific activity by reprojecting
 % observation model variance or by fitting the HMM statepath as a regressor
 % on the voxelwise data.
@@ -20,7 +20,9 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,apply_mixing_m
 % data_type - type of data in voxeldata
 %           - 'voxel'
 %           - 'pca'
-%
+% use_viterbi_path - boolean: true - uses viterbi path for states [dafault]
+%                             false - uses hmm.train.Gamma soft
+%                             probabilites
 % INPUT
 % statemaps - [Nvoxels x Nstates] spatial maps 
 %                or 
@@ -28,7 +30,9 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,apply_mixing_m
 %
 % AB 2013
 
-
+if ~exist('use_viterbi_path','var')
+    use_viterbi_path=true; 
+end;
 
 if ~exist('use_abs','var') || isempty(use_abs)
   use_abs = 0;
@@ -117,9 +121,13 @@ c       = zeros(Nvoxels,hmm.K);
 
 x = zeros(length(hmm.statepath),hmm.K);
 
-for k = 1:hmm.K
-  x(:,k) = double(hmm.statepath == k);
-end
+if use_viterbi_path
+    for k = 1:hmm.K
+      x(:,k) = double(hmm.statepath == k);
+    end
+else
+    x=hmm.train.Gamma;
+end;
 
 if strcmp(mode,'pcorr')
   x = devar(x,1);
