@@ -91,6 +91,9 @@ Pi=hmm.Pi;
 
 B = obslike(X,hmm,residuals);
 
+% Adam's hack to ensure no NaNs
+B(B<realmin) = realmin;
+
 scale=zeros(T,1);
 alpha=zeros(T,K);
 beta=zeros(T,K);

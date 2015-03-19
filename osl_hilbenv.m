@@ -61,19 +61,18 @@ for iblk = 1:size(blks,1)
     ft_progress(iblk/size(blks,1));
 
     for trl = 1:D.ntrials
-        
-        dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl);
-
+       
         if ~isempty(S.freqbands)
             % Filter and compute envelope for each band
             for f = 1:numel(S.freqbands)
-                dat_blk = bandpass(dat_blk,S.freqbands{f},D.fsample);
+                dat_blk = bandpass(D(blks(iblk,1):blks(iblk,2),:,trl),S.freqbands{f},D.fsample);
                 env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample));
                 env = permute(env,[1 3 2]);
                 Denv(blks(iblk,1):blks(iblk,2),f,:,trl) = env;
-            end  
+            end
         else
             % Compute wideband envelope
+            dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl); 
             env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample));
             Denv(blks(iblk,1):blks(iblk,2),:,trl) = env;
         end
