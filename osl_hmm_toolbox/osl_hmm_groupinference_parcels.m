@@ -1,4 +1,4 @@
-function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_parcels(data_files,hmmdir,todo,options)
+function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmdir,todo,options)
 % Runs a group HMM analysis on amplitude envelopes of source reconstructed
 % MEG data using the SPM12 beamformer OR any arbitrary data saved in .mat
 % data files.
@@ -401,48 +401,23 @@ if todo.infer
         rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
         addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
 
-        if(1)
-            if ~envelope_do
-                hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
-            else
-                hmm = ABhmm_infer(hmmdata,nstates,nreps);
-            end;
-            hmm.statepath = ABhmm_statepath(hmm);
+        if ~envelope_do
+            hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
         else
-        
-            S = [];
-            S.num_hmm_starts=nreps;
-            S.do_plots=1;
-            S.tres=1/fsample;
-            S.data=hmmdata;
-            S.title='data1';
-            S.NK=nstates;
-            S.force_zero_means=1;
-            S.norm_vectors=0;
-            bandcentre=15;
-            span=1/bandcentre;
-
-            S.M=round(span/S.tres);
-
-            S.hmm_pca_dim=pcadim; % use this setting for synchro HMM
-
-
-            %S.M=1;S.hmm_pca_dim=-1; % use this setting for standard HMM
-
-            S.deltasecs=S.tres;
-
-            res_hmm  = synchro_hmm_multichan( S ); 
-
-            hmm.statepath = res_hmm.block(1).q_star;
+            hmm = ABhmm_infer(hmmdata,nstates,nreps);
         end;
-        addpath(genpath(OSLDIR));
+        addpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
+        rmpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
+
     else
         
         rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
         addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
         
         hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',~envelope_do));
-        addpath(genpath(OSLDIR));
+        addpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
+        rmpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
+        
     end
     
     hmm.MixingMatrix = MixingMatrix;
@@ -500,12 +475,12 @@ if todo.output
                     
                     D = spm_eeg_load(filenames.prepare{subnum});
                     data = prepare_data(D,normalisation,logtrans,f,embed);
-                    stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method);
+                    stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,false);
                     
                     if use_parcels
                         Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
                         datap = prepare_data(Dp,normalisation,logtrans,f,embed);
-                        statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method);
+                        statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,false);
                     end
                     
                     good_samples = ~all(badsamples(D,':',':',':'));
@@ -550,6 +525,8 @@ if todo.output
             % resave updated hmm
             hmm.statemaps = statemaps;
             hmm.epoched_statepath_sub = epoched_statepath_sub;
+            hmm.filenames=filenames;
+            
             disp(['Saving updated hmm to ' filenames.hmm]);
             save(filenames.hmm,'hmm');
             
