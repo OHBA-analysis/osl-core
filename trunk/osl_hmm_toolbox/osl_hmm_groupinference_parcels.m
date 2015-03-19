@@ -92,9 +92,6 @@ function [HMMresults,statemaps,epoched_statepath_sub] = osl_hmm_groupinference_p
 
 global OSLDIR
 
-HMMresults = [];
-statemaps  = [];
-
 data_files = cellstr(data_files);
 
 data_fnames = cell(size(data_files));
@@ -194,9 +191,11 @@ try embed.do      = options.concat.embed.do; catch, embed.do  = 0; end
 try embed.centre_freq = options.concat.embed.centre_freq; catch, embed.centre_freq  = 15; end %Hz
 
 % Default HMM settings
-try nstates = options.hmm.nstates; catch, nstates = 8; end
-try nreps   = options.hmm.nreps;   catch, nreps   = 5; end
-    
+try nstates     = options.hmm.nstates;      catch, nstates     = 8; end
+try nreps       = options.hmm.nreps;        catch, nreps       = 5; end
+try use_old_tbx = options.use_old_hmm_tbx;  catch, use_old_tbx = 0; end
+
+
 % Default output settings
 try output_method       = options.output.method;                catch, output_method = 'pcorr'; end
 try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights = 0;  end
@@ -213,11 +212,12 @@ if todo.prepare
         
         % Compute envelopes for all voxels
         if envelope_do
-            disp(['Computing Hilbert Envelopes'])
+            disp('Computing Hilbert Envelopes')
         
             S         = [];
             S.D       = data_files{subnum};
             S.winsize = windowsize;
+            S.freqbands = freqbands;
             D = osl_hilbenv(S);
         else
             % Need to copy D to preserve the original
@@ -237,7 +237,7 @@ if todo.prepare
         % Apply parcellation
         if use_parcels
             
-            disp(['Applying parcellation'])
+            disp('Applying parcellation')
     
             S                   = [];
             S.D                 = data_files{subnum};
@@ -278,96 +278,111 @@ end
 
 if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             
-    % Load subjects and concatenate:
-    dat_concat  = [];
-    subj_inds   = [];
-    C           = 0;
-    Csamples    = 0;
+    MixingMatrix = [];
+    hmmdata      = [];
     
-    for subnum = 1:length(data_files)
-
-        if use_parcels
-            D = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
-        else
-            D = spm_eeg_load(filenames.prepare{subnum});
+    for f = 1:max([numel(freqbands),1])
+        % Load subjects and concatenate:
+        dat_concat  = [];
+        subj_inds   = [];
+        C           = 0;
+        Csamples    = 0;
+        
+        for subnum = 1:length(data_files)
+            
+            if use_parcels
+                D = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
+            else
+                D = spm_eeg_load(filenames.prepare{subnum});
+            end
+            
+            embed.tres=1/D.fsample;
+                            
+            data = prepare_data(D,normalisation,logtrans,f,embed);
+            
+            % compute covariance (assuming zero mean data then global (over
+            % all sessions) covariance matrix is:
+            % (N1*C1 + N2*C2 + ... + Nk*Ck) / (N1 + N2 + ... + Nk)
+            C = C + ((size(data,2)-1) * osl_cov(data));
+            
+            % keep track of number of samples
+            Csamples = Csamples + size(data,2);
+            
+            dat_concat = [dat_concat, data];
+            subj_inds  = [subj_inds, subnum*ones(1,size(data,2))];
+            
         end
-                
-        embed.tres=1/D.fsample;        
-        [data,cov_data] = prepare_data(D,normalisation,logtrans,embed);
-      
-        % compute covariance
-        C = C + cov_data * permute(cov_data,[2,1]);
         
-        % keep track of number of samples
-        Csamples = Csamples + size(cov_data,2);
+        C = C / (Csamples-1);
         
-        dat_concat = [dat_concat, data];
-        subj_inds  = [subj_inds, subnum*ones(1,size(data,2))];
-
-    end
+        clear data;
+        
+        % Apply PCA dimensionality reduction
+        if pcadim > 0
+            disp(['Keeping top ' num2str(pcadim) ' PCs']);
+            pcadim = min(pcadim,size(dat_concat,1));
+            [allsvd,M] = eigdec(C,pcadim);
+        else
+            M = eye(size(dat_concat,1));
+            allsvd = diag(C);
+        end
+        
+        if whiten
+            M = diag(1./sqrt(allsvd)) * M';
+        else
+            M = M';
+        end
+        
+        % Concatenate multiple frequency bands and mixing matrices
+        hmmdata = [hmmdata (M * dat_concat)'];
+        MixingMatrix = blkdiag(MixingMatrix,M);
+        
+        
+        
+        % Save PCA maps
+        if ~embed.do
+            [pathstr,filestr] = fileparts(filenames.concat);
+            if ~isempty(freqbands)
+                bandstr = ['_fband' num2str(f)];
+            else
+                bandstr = '';
+            end
+            
+            savefile_pc_maps        = [pathstr '/' filestr '_pc_maps'          bandstr];
+            savefile_mean_pc_maps   = [pathstr '/' filestr '_mean_pc_maps'     bandstr];
+            savefile_std_maps       = [pathstr '/' filestr '_hmmdata_std_maps' bandstr];
+                        
+            if use_parcels
+                % Load parcellation results:
+                pathstr = fileparts([filenames.prepare{1}]);
+                fname   = fullfile(pathstr,'parcellation');
+                load(fname); % Loads parcelAssignments and parcelWeights
+                nii_settings            = [];
+                nii_settings.interp     = 'nearestneighbour';
+                nii_settings.mask_fname = mask_fname;
+                ROInets.nii_parcel_quicksave(M', parcelAssignments, savefile_pc_maps,      nii_settings);
+                ROInets.nii_parcel_quicksave(mean(abs(M),1)', parcelAssignments, savefile_mean_pc_maps, nii_settings);
+                ROInets.nii_parcel_quicksave(std(pinv(M)*M*dat_concat,[],2), parcelAssignments, savefile_std_maps,     nii_settings);
+            else      
+                nii_settings            = [];
+                nii_settings.mask_fname = mask_fname;
+                nii_quicksave(M', savefile_pc_maps, nii_settings);
+                nii_quicksave(mean(abs(M),1)', savefile_mean_pc_maps, nii_settings);
+                nii_quicksave(std(pinv(M)*M*dat_concat,[],2), savefile_std_maps, nii_settings);
+            end
+            
+            disp(['PCA maps saved to '          savefile_pc_maps]);
+            disp(['mean of PCA maps saved to '  savefile_mean_pc_maps]);
+            disp(['HMM data sd maps saved to '  savefile_std_maps]);
+        end
+          
+        
+    end %f
     
-    C = C / (Csamples-1);
-    
-    clear data cov_data;
-
-    % Apply PCA dimensionality reduction
-    if pcadim > 0
-        disp(['Keeping top ' num2str(pcadim) ' PCs']);
-        pcadim = min(pcadim,size(dat_concat,1));   
-        [allsvd,MixingMatrix] = eigdec(C,pcadim);
-    else
-        MixingMatrix = eye(size(dat_concat,1));   
-        allsvd = diag(C);
-    end
-    
-    if whiten
-        MixingMatrix = diag(1./sqrt(allsvd)) * MixingMatrix';
-    else
-        MixingMatrix = MixingMatrix';
-    end
-    
-    hmmdata = (MixingMatrix * dat_concat)';
-                 
     fsample = D.fsample;
    
     disp(['Saving group concatenated data to ' filenames.concat])
-    save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds');
-
-%     if use_parcels
-%         % Load parcellation results:
-%         pathstr = fileparts([filenames.prepare{1}]);
-%         fname   = fullfile(pathstr,'parcellation');
-%         load(fname); % Loads parcelAssignments and parcelWeights
-%         masksize = getmasksize(size(parcelAssignments,1));
-%     else
-%         masksize=getmasksize(size(dat_concat,1));
-%     end
-         
-    if ~embed.do
-        % Save PCA maps
-        [pathstr,filestr] = fileparts(filenames.concat);
-
-        savefile_pc_maps        = [pathstr '/' filestr '_pc_maps'];
-        savefile_mean_pc_maps   = [pathstr '/' filestr '_mean_pc_maps'];
-        savefile_std_maps    = [pathstr '/' filestr '_hmmdata_std_maps'];
-
-        S2=[];
-        S2.mask_fname=mask_fname;
-        
-        if use_parcels
-            S2.interp='nearestneighbour';
-            ROInets.nii_parcel_quicksave(MixingMatrix',parcelAssignments,savefile_pc_maps,S2);
-            ROInets.nii_parcel_quicksave(mean(abs(MixingMatrix),1)',parcelAssignments,savefile_mean_pc_maps,S2);
-            ROInets.nii_parcel_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),parcelAssignments,savefile_std_maps,S2);
-        else            
-            nii_quicksave(MixingMatrix',savefile_pc_maps,S2); 
-            nii_quicksave(mean(abs(MixingMatrix),1)',savefile_mean_pc_maps,S2);
-            nii_quicksave(std(pinv(MixingMatrix)*hmmdata',[],2),savefile_std_maps,S2);
-        end
-        disp(['PCA maps saved to ' savefile_pc_maps]);   
-        disp(['mean of PCA maps saved to ' savefile_mean_pc_maps]);  
-        disp(['HMM data sd maps saved to ' savefile_std_maps]);     
-    end;
+    save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds');   
     
 end
 
@@ -380,10 +395,9 @@ end
 if todo.infer
     
     load(filenames.concat);
-    D = spm_eeg_load(data_files{1}); 
 
     % Switch between Iead's & Diego's HMM toolboxes
-    if options.hmm.use_old_hmm_tbx
+    if use_old_tbx
         rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
         addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
 
@@ -396,7 +410,7 @@ if todo.infer
             hmm.statepath = ABhmm_statepath(hmm);
         else
         
-            S=[];
+            S = [];
             S.num_hmm_starts=nreps;
             S.do_plots=1;
             S.tres=1/fsample;
@@ -448,97 +462,102 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if todo.output
-            
-    statemaps = [filenames.output,'_',output_method];
- 
+        
     load(filenames.hmm);
     load(filenames.concat)
-
+    
     switch output_method
         case {'pcorr'}
             
-            D  = spm_eeg_load(filenames.prepare{1}); % to get number of voxels
-            stat = zeros(D.nchannels,hmm.K);
-
-            if use_parcels
-                Dp = spm_eeg_load(prefix(filenames.prepare{1},'p'));
-                statp = zeros(Dp.nchannels,hmm.K);
-
-            end
-                        
-            epoched_statepath_sub = cell(length(data_files),1);
-                        
-            for subnum = 1:length(data_files)
-
-                disp(['Computing ' output_method ' maps for ' data_files{subnum}]);
+            for f = 1:max([numel(freqbands),1])
                 
-                % compute subject's state maps
-                hmm_sub = hmm; 
-                hmm_sub.statepath = hmm.statepath(subj_inds==subnum);                            
-                hmm_sub = rmfield(hmm_sub,'MixingMatrix');
+                D  = spm_eeg_load(filenames.prepare{1}); % to get number of voxels
+                stat = zeros(D.nchannels,hmm.K); 
+
+                if ~isempty(freqbands)
+                    bandstr = ['_fband' num2str(f)];
+                else
+                    bandstr = '';
+                end
                 
-                
-                D = spm_eeg_load(filenames.prepare{subnum});
-                data = prepare_data(D,normalisation,logtrans);
-                stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method);
+                statemaps{f} = [filenames.output,'_',output_method,bandstr];
                 
                 if use_parcels
-                    Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
-                    datap = prepare_data(Dp,normalisation,logtrans);
-                    statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method);
+                    Dp = spm_eeg_load(prefix(filenames.prepare{1},'p'));
+                    statp = zeros(Dp.nchannels,hmm.K);
                 end
                 
-                good_samples = ~all(badsamples(D,':',':',':'));
-                good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-
-                sp_full = zeros(1,D.nsamples*D.ntrials);
-                sp_full(good_samples) = hmm_sub.statepath;
-                epoched_statepath_sub{subnum} = reshape(sp_full,[1,D.nsamples,D.ntrials]);
- 
-            end                        
-
-            stat  = stat  ./ length(data_files);
-          
-            if use_parcels
-                statp = statp ./ length(data_files);
-            end;
-          
-            disp(['Saving state spatial maps to ' statemaps]) 
-            
-            S2=[];
-            S2.mask_fname=mask_fname;  
-            S2.output_spat_res=2; %mm
-            nii_quicksave(stat,statemaps,S2);
-                            
-            if use_parcels
-                % convert parcel statemaps into voxel statemaps
-                pathstr = fileparts([filenames.prepare{1}]);
-                fname   = fullfile(pathstr,'parcellation');
-                load(fname); % Loads parcelAssignments and parcelWeights
+                epoched_statepath_sub = cell(length(data_files),1);
                 
-                masksize = getmasksize(size(parcelAssignments,1));
-                
-                if ~use_parcel_weights
-                    S2.interp='nearestneighbour';
-                    ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps,'_parcels'],S2);
-                else % Question: Isn't it cheating to use the parcel weights to generate the maps?
-                    weights = abs(parcelWeights);
-                    weights = weights/mean(weights(logical(weights)));
+                for subnum = 1:length(data_files)
                     
-                    ROInets.nii_parcel_quicksave(statp,weights,[statemaps,'_parcels'],S2);
+                    disp(['Computing ' output_method ' maps for ' data_files{subnum}]);
+                    
+                    % compute subject's state maps
+                    hmm_sub = hmm;
+                    hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
+                    hmm_sub = rmfield(hmm_sub,'MixingMatrix');
+                    
+                    D = spm_eeg_load(filenames.prepare{subnum});
+                    data = prepare_data(D,normalisation,logtrans,f,embed);
+                    stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method);
+                    
+                    if use_parcels
+                        Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
+                        datap = prepare_data(Dp,normalisation,logtrans,f,embed);
+                        statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method);
+                    end
+                    
+                    good_samples = ~all(badsamples(D,':',':',':'));
+                    good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+                    
                 end
-            end
+                
+                stat  = stat  ./ length(data_files);
+                
+                if use_parcels
+                    statp = statp ./ length(data_files);
+                end
+                                
+                S2=[];
+                S2.mask_fname=mask_fname;
+                S2.output_spat_res=2; %mm
+                nii_quicksave(stat,[statemaps{f},'_wholebrain'],S2);
+                
+                if use_parcels
+                    % convert parcel statemaps into voxel statemaps
+                    pathstr = fileparts([filenames.prepare{1}]);
+                    fname   = fullfile(pathstr,'parcellation');
+                    load(fname); % Loads parcelAssignments and parcelWeights
+                    
+                    if ~use_parcel_weights
+                        S2.interp='nearestneighbour';
+                        ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps{f},'_parcels'],S2);
+                    else % Question: Isn't it cheating to use the parcel weights to generate the maps?
+                        weights = abs(parcelWeights);
+                        weights = weights/mean(weights(logical(weights)));
                         
+                        ROInets.nii_parcel_quicksave(statp,weights,[statemaps{f},'_parcels'],S2);
+                    end
+                end
+                
+            end
+            
+            sp_full = zeros(1,D.nsamples*D.ntrials);
+            sp_full(good_samples) = hmm_sub.statepath;
+            epoched_statepath_sub{subnum} = reshape(sp_full,[1,D.nsamples,D.ntrials]);
+            
             % resave updated hmm
             hmm.statemaps = statemaps;
             hmm.epoched_statepath_sub = epoched_statepath_sub;
             disp(['Saving updated hmm to ' filenames.hmm]);
-            save(filenames.hmm,'hmm');        
-
+            save(filenames.hmm,'hmm');
+            
         otherwise
+            
             warning([output_method ' is not a supported output method']);
     end
-
+    
 end
 
 
@@ -546,10 +565,14 @@ HMMresults = filenames.hmm;
 
 end
 
-function [data,cov_data] = prepare_data(D,normalisation,logtrans,embed)
+function data = prepare_data(D,normalisation,logtrans,freq_ind,embed)
 
 % reshape trialwise data
-data = D(:,:,:);
+if strcmp(D.transformtype,'TF')
+    data = D(:,freq_ind,:,:);
+else
+    data = D(:,:,:);
+end
 data = reshape(data,[D.nchannels,D.nsamples*D.ntrials]);
 
 % select only good data
@@ -562,7 +585,7 @@ if logtrans
     data = log10(data);
 end
 
-if exist('embed') && embed.do,    
+if exist('embed','var') && embed.do,    
     
     disp('Time embedding data');
     span=1/embed.centre_freq; %secs
@@ -585,8 +608,6 @@ switch normalisation
     case 'none'
         data = demean(data,2);
 end
-
-cov_data = data;
 
 end
 
