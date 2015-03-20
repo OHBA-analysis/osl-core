@@ -253,6 +253,9 @@ switch lower(timeCourseGenMethod)
                                    mapSign ./                ...
                                    max(max(abs(spatialBasis), [], 1), eps));
         
+        % estimate temporal-STD for normalisation
+        temporalSTD = max(std(voxelData, [], 2), eps);
+                               
         % find time-course for each spatial basis map
         for iParcel = nParcels:-1:1, % allocate memory on the fly
             progress = nParcels - iParcel + 1;
@@ -264,10 +267,7 @@ switch lower(timeCourseGenMethod)
             % extract the spatial map of interest
             thisMap     = scaledSpatialMaps(:, iParcel);
             parcelMask  = logical(thisMap);
-            
-            % estimate temporal-STD for normalisation
-            temporalSTD = max(std(voxelData, [], 2), eps);
-            
+                        
             % variance-normalise all voxels to remove influence of
             % outliers. - remove this step 20 May 2014 for MEG as data are
             % smooth and little risk of high-power outliers. Also, power is
