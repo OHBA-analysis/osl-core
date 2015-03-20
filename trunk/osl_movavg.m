@@ -10,8 +10,6 @@ function [data_avg,t_avg] = osl_movavg(data,t,winsize,overlap,resamp,robust)
 % robust  - use robust averaging (% of data to exlude)
 % -----------------------------------------------------------------
 % AB 2011
-
-use_hanning = 0;
     
 if nargin < 4
   overlap = 0.75;
@@ -21,16 +19,10 @@ if nargin < 5
 end
 if nargin < 6
   robust = 0;
-else
-  use_hanning = 0;
 end
 
 if isempty(t) 
   t = 1:length(data);
-end
-
-if use_hanning
-  winsize = winsize *2;
 end
 
 data = data(:)'; t = t(:)';
@@ -42,22 +34,20 @@ bf       = buffer(data_pad,winsize,round(winsize*overlap),'nodelay');
 tbf      = buffer(t_pad,winsize,round(winsize*overlap),'nodelay');
 
 % reject data sections where more than 25% of data is NaN
-nans = sum(isnan(bf)) > 0.25*winsize;
-bf( :,nans) = nan; % - do this by replacing all with nans
-tbf(:,nans) = nan; % - do this by replacing all with nans
-
-if(use_hanning)
-hanning_window = repmat(hanning(winsize),1,size(bf,2));
-bf = bf.*hanning_window;
-end
+nans = isnan(bf);
+bf(nans)  = 0;
+tbf(nans) = 0;
+sum_nans = sum(nans);
+bf( :,sum_nans > 0.25*winsize) = nan; % - do this by replacing all with nans
+tbf(:,sum_nans > 0.25*winsize) = nan; % - do this by replacing all with nans
 
 if robust ~= 0
   data_avg = trimmean(bf,robust);
 else
-  data_avg = nanmean(bf);
+  data_avg = sum(bf)./(size(bf,2) - sum_nans);
 end
 
-t_avg    = nanmean(tbf);
+t_avg    = sum(tbf)./(size(tbf,2) - sum_nans);
 
 if resamp
   t_start = t_avg(find(~isnan(t_avg),1,'first'));
