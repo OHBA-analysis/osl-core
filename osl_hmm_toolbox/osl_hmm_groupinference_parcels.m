@@ -230,7 +230,7 @@ if todo.prepare
         
         % Move MEEG object to HMM directory
         move(D,filenames.prepare{subnum}); 
-        disp(['Saving envelope data for ' filestr ' to ' filenames.prepare{subnum}])
+        disp(['Saving envelope data for ' D.fname ' to ' filenames.prepare{subnum}])
         clear D
         
         
