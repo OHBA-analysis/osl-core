@@ -76,7 +76,6 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 %                            (default 'pcorr')
 %                          .use_parcel_weights - uses parcel weights rather
 %                          than binary parcels [0/1] (default 1)
-%                          
 %                          .filename   - filename to save/load HMM results from
 %                            (default <hmmdir>/HMM<_method.*>)
 %                       
@@ -475,12 +474,12 @@ if todo.output
                     
                     D = spm_eeg_load(filenames.prepare{subnum});
                     data = prepare_data(D,normalisation,logtrans,f,embed);
-                    stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,false);
+                    stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,true);
                     
                     if use_parcels
                         Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
                         datap = prepare_data(Dp,normalisation,logtrans,f,embed);
-                        statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,false);
+                        statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,true);
                     end
                     
                     good_samples = ~all(badsamples(D,':',':',':'));
