@@ -1,4 +1,4 @@
-function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,use_viterbi_path)
+function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,assignment)
 % Computes spatial maps of state specific activity by reprojecting
 % observation model variance or by fitting the HMM statepath as a regressor
 % on the voxelwise data.
@@ -6,23 +6,23 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,use_viterbi_pa
 % statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode)
 %
 % INPUT
-% hmm       - the inferred HMM model structure
-% voxeldata - the original full rank data or PCA components (in which case hmm
+% hmm        - the inferred HMM model structure
+% voxeldata  - the original full rank data or PCA components (in which case hmm
 % need to contain hmm.MixingMatrix, and set data_type to 'pca')
-% use_abs   - compute abs(voxeldata) before computing spatial maps
-% mode      - type of spatial map to compute from the following options:
+% use_abs    - compute abs(voxeldata) before computing spatial maps
+% mode       - type of spatial map to compute from the following options:
 %             'var'   - outputs the variance in each state
 %             'cov'   - outputs the full covariance in each state
 %             'cope'  - contrast of within-state vs outside-of-state
 %             'tstat' - t-statistic of within-state vs outside-of-state
 %             'corr'  - correlation of data with state time course
 %             'pcorr' - partial correlation of data with state time course
-% data_type - type of data in voxeldata
-%           - 'voxel'
-%           - 'pca'
-% use_viterbi_path - boolean: true - uses viterbi path for states [dafault]
-%                             false - uses hmm.train.Gamma soft
-%                             probabilites
+% data_type  - type of data in voxeldata
+%            - 'voxel'
+%            - 'pca'
+%
+% assignment - 'hard' - use hard state assignment (Viterbi path, default)
+%              'soft' - use probabilistic state assignment
 % INPUT
 % statemaps - [Nvoxels x Nstates] spatial maps 
 %                or 
@@ -30,8 +30,8 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,use_viterbi_pa
 %
 % AB 2013
 
-if ~exist('use_viterbi_path','var')
-    use_viterbi_path=true; 
+if ~exist('assignment','var')
+    assignment = 'hard'; 
 end;
 
 if ~exist('use_abs','var') || isempty(use_abs)
@@ -107,7 +107,6 @@ else
     
 end
 
-    
 
 % Regress Viterbi path onto wholebrain results
 con = cell(1,hmm.K);
@@ -121,13 +120,14 @@ c       = zeros(Nvoxels,hmm.K);
 
 x = zeros(length(hmm.statepath),hmm.K);
 
-if use_viterbi_path
-    for k = 1:hmm.K
-      x(:,k) = double(hmm.statepath == k);
-    end
-else
-    x=hmm.train.Gamma;
-end;
+switch assignment
+    case 'hard'
+        for k = 1:hmm.K
+            x(:,k) = double(hmm.statepath == k);
+        end
+    case 'soft'
+        x = hmm.train.Gamma;
+end
 
 if strcmp(mode,'pcorr')
   x = devar(x,1);
