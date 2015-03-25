@@ -498,8 +498,8 @@ if ~isempty(fid_MNI)
 end
 
 % MATCH FIDUCIALS
-[~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x}(1:end))}, 1:length(fid_labels)),...
-                         arrayfun(@(x) {lower(     fid_labels{x}(1:end))}, 1:length(fid_labels)));                     
+[~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x}(1:3))}, 1:length(fid_labels)),...
+                         arrayfun(@(x) {lower(     fid_labels{x}(1:3))}, 1:length(fid_labels)));                     
                      
 fid_labels = fid_labels(fid_order);
 fid_native = fid_native(fid_order, :);
