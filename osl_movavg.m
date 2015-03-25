@@ -44,10 +44,10 @@ tbf(:,sum_nans > 0.25*winsize) = nan; % - do this by replacing all with nans
 if robust ~= 0
   data_avg = trimmean(bf,robust);
 else
-  data_avg = sum(bf)./(size(bf,2) - sum_nans);
+  data_avg = sum(bf)./(size(bf,1) - sum_nans);
 end
 
-t_avg    = sum(tbf)./(size(tbf,2) - sum_nans);
+t_avg    = sum(tbf)./(size(tbf,1) - sum_nans);
 
 if resamp
   t_start = t_avg(find(~isnan(t_avg),1,'first'));
