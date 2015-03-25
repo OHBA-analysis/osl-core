@@ -14,10 +14,10 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 % hmmdir     - directory within which to save HMM results
 %
 % todo       - binary flags for each stage of the analysis [0/1]:
-%              .prepare - preps data, including computes amplitude prepares from source
-%                        reconstructed data
+%              .prepare  - preps data, including computes amplitude prepares from source
+%                          reconstructed data
 %              .concat   - concatenates data and performs PCA dimensionality
-%                        reduction
+%                          reduction
 %              .hmm      - infers the HMM
 %              .output   - output the state maps
 %
@@ -26,25 +26,25 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 %              with the following fields:
 %              .prepare - settings for prepare computation with fields:
 %                          .envelope   - compute Hilbert envelope for data
-%                            (default 1)
+%                                        (default 1)
 %                          .freqbands  - frequencies within which to compute 
-%                            envelope {[Hz Hz],[Hz Hz]} only used if data
-%                            is enveloped 
-%                            (default {} - wideband)
+%                                        envelope {[Hz Hz],[Hz Hz]} only 
+%                                        used if data is enveloped 
+%                                        (default {} - wideband)
 %                          .windowsize - window size for moving average filter [s]
-%                            only carried out if data is enveloped
-%                            (default 0.1)
+%                                        only carried out if data is enveloped
+%                                        (default 0.1)
 %                          .filenames  - filenames to save/load prepares from
-%                            (default <hmmdir>/prepare/<BFfiles{subnum}>.mat)
+%                                        (default <hmmdir>/prepare/<BFfiles{subnum}>.mat)
 %                          .parcellation.file - 3D niftii file with same
-%                            gridstep as data_files containing parcellation
-%                            labels. If not provided then no parcellation is
-%                            carried out (default)
+%                                               gridstep as data_files containing parcellation
+%                                               labels. If not provided then no parcellation is
+%                                               carried out (default)
 %                          .parcellation.method - passed to ROInets.get_corrected_node_tcs
 %                          .parcellation.protocol - passed to ROInets.get_corrected_node_tcs
 %                          .log - apply log transform to envelopes
 %                          .mask_fname - mask used to get data from vols2matrix
-%                           [default is to assume a whole brain std space MNI mask]
+%                                        [default is to assume a whole brain std space MNI mask]
 %              .concat   - settings for temporal concatenation with fields:                      
 %                          .pcadim        - dimensionality to use (default 40)             
 %                          .normalisation - variance normalisation method:
@@ -56,24 +56,26 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 %                          .embed.do      - do time embedding using call to
 %                                           embedx 
 %                          .embed.centre_freq - centre freq of interest (Hz), used to set the time span of the time embedding 
-%                           (default is 15Hz)
-%                           (default is 0)
+%                                               (default is 15Hz)
+%                                               (default is 0)
 %                          .filename      - filename to save/load concatenated data from
-%                            (default <hmmdir>/env_concat.mat)
+%                                           (default <hmmdir>/env_concat.mat)
 %
 %              .hmm      - settings for HMM inference with fields:                
 %                          .nstates    - number of states to infer 
-%                            (default 8)
+%                                        (default 8)
 %                          .nreps      - number of repeat inferences to run 
-%                            (default 5)
+%                                        (default 5)
 %                          .filename   - filename to save/load HMM results from
-%                            (default <hmmdir>/HMM.mat)
+%                                        (default <hmmdir>/HMM.mat)
 %      
 %              .output   - settings for the HMM output with fields
 %                          .method     - maps/matrix to output:
-%                                        'pcorr' - partial correlation maps
-%                                        
-%                            (default 'pcorr')
+%                                        'pcorr' - partial correlation maps           
+%                                        (default 'pcorr')
+%                          .assignment - Use hard or soft (probabilistic)
+%                                        state assignment ['soft','hard']
+%                                        (default 'hard')
 %                          .use_parcel_weights - uses parcel weights rather
 %                          than binary parcels [0/1] (default 1)
 %                          .filename   - filename to save/load HMM results from
@@ -194,11 +196,12 @@ try nstates     = options.hmm.nstates;      catch, nstates     = 8; end
 try nreps       = options.hmm.nreps;        catch, nreps       = 5; end
 try use_old_tbx = options.use_old_hmm_tbx;  catch, use_old_tbx = 0; end
 
-
 % Default output settings
-try output_method       = options.output.method;                catch, output_method = 'pcorr'; end
-try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights = 0;  end
-  
+try output_method       = options.output.method;                catch, output_method        = 'pcorr'; end
+try state_assignment    = options.output.assignment;            catch, state_assignment     = 'hard';  end  
+try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights   = 0;       end
+
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %                    P R E P   D A T A
@@ -474,12 +477,12 @@ if todo.output
                     
                     D = spm_eeg_load(filenames.prepare{subnum});
                     data = prepare_data(D,normalisation,logtrans,f,embed);
-                    stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,true);
+                    stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,state_assignment);
                     
                     if use_parcels
                         Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
                         datap = prepare_data(Dp,normalisation,logtrans,f,embed);
-                        statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,true);
+                        statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,state_assignment);
                     end
                     
                     good_samples = ~all(badsamples(D,':',':',':'));
