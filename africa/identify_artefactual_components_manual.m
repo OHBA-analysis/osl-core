@@ -277,7 +277,9 @@ elseif strcmp(modality, 'MEG')
     cfg.channel = {'MEG'};
     cfg.layout  = fullfile(OSLDIR, 'layouts', '4D248.mat');
 elseif (strcmp(modality,'EEG')),
-    error('EEG not currently supported');
+    warning('EEG not currently supported, using development EEG layout');
+    cfg.channel = {'EEG'};
+    cfg.layout  = [OSLDIR '/layouts/EEG60.lay'];
 else   
     error('Unsupported modality');
 end
@@ -287,12 +289,13 @@ data.topo      = comp2view;
 data.topolabel = D.chanlabels(indchantype(D,cfg.channel));
 data.time      = {1};
 
+cfg = rmfield(cfg,'channel');
 cfg.component   = 1:size(comp,2);
 cfg.interactive = 'no';
 cfg.comment     = 'no';
 cfg.title       = modality{:};
 
-cfg.layout = ft_prepare_layout(cfg);
+%cfg.layout = ft_prepare_layout(cfg);
 
 [~] = evalc('ft_topoplotIC(cfg,data);');
 topos = get(gcf,'children');
