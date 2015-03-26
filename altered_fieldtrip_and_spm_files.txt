@@ -51,3 +51,12 @@ osl2.0/spm12/external/fieldtrip/private/undobalancing.m
 % Solution: copy local correct copy to the SPM12 directory via spm-changes
 
 osl2.0/spm12/@meeg/path.m
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Problem: spm_eeg_montage has a bug that occurs when the case of strings in D.chantype and D.sensors are inconsistent.
+
+% Solution: copy patched spm_eeg_montage (provided by Vlad) to the SPM12 directory via spm-changes
+
+osl2.0/spm12/spm_eeg_montage.m
