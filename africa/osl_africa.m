@@ -385,17 +385,7 @@ if use_montage
     montage.chanunitorg =  D.sensors(modality).chanunit(indx);
     montage.chantypenew =  lower(D.sensors(modality).chantype(indx));
     montage.chantypeorg =  lower(D.sensors(modality).chantype(indx));
-    
-    
-    if ~isempty(badchannels)
-        [~,indx] = ismember(D.sensors(modality).label,montage.labelnew);
-        indx(0 == indx) = [];
-        montage.tra(indx,:) = 0;
-        for bi = indx'
-            montage.tra(bi,bi) = 1;
-        end
-    end
-    
+        
     S_montage                =  [];
     S_montage.D              =  fullfile(D.path,D.fname);
     S_montage.montage        =  montage;
