@@ -71,11 +71,11 @@ if isfield(S,'logfile') && S.logfile == 1
   	diary(logfile);
 end
 
-if not(isfield(S,'modality'))   % added by DM
+if not(isfield(S,'modality'))
     S.modality = 'MEG';
 end
 
-if not(isfield(S,'do_plots'))   % added by DM
+if not(isfield(S,'do_plots'))
     S.do_plots = 0;
 end
 
@@ -348,9 +348,11 @@ D = spm_eeg_load(S.D);
 
 if strcmp(S.modality,'EEG')
     chantype = 'EEG';
-    use_montage = 0;
+    modality = 'EEG';
+    use_montage = 1;
 else
     chantype = 'MEGANY';
+    modality = 'MEG';
     use_montage = 1;
 end
 
@@ -376,17 +378,17 @@ if use_montage
     montage.labelnew    =  D.chanlabels(chan_inds);
     montage.labelorg    =  D.chanlabels(chan_inds);
     
-    [~,indx] = ismember(montage.labelnew,D.sensors('MEG').label);
+    [~,indx] = ismember(montage.labelnew,D.sensors(modality).label);
     
     
-    montage.chanunitnew =  D.sensors('MEG').chanunit(indx);
-    montage.chanunitorg =  D.sensors('MEG').chanunit(indx);
-    montage.chantypenew =  lower(D.sensors('MEG').chantype(indx));
-    montage.chantypeorg =  lower(D.sensors('MEG').chantype(indx));
+    montage.chanunitnew =  D.sensors(modality).chanunit(indx);
+    montage.chanunitorg =  D.sensors(modality).chanunit(indx);
+    montage.chantypenew =  lower(D.sensors(modality).chantype(indx));
+    montage.chantypeorg =  lower(D.sensors(modality).chantype(indx));
     
     
     if ~isempty(badchannels)
-        [~,indx] = ismember(D.sensors('MEG').label,montage.labelnew);
+        [~,indx] = ismember(D.sensors(modality).label,montage.labelnew);
         indx(0 == indx) = [];
         montage.tra(indx,:) = 0;
         for bi = indx'

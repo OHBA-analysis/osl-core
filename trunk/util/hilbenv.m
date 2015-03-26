@@ -77,7 +77,7 @@ if winsize > 1
         else
             t_env = t;
         end
-    end;
+    end
     
 end
 
