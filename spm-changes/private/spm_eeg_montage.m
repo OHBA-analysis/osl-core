@@ -131,7 +131,7 @@ if ~isnumeric(montage)
         montage.labelnew = cat(1, montage.labelnew(:), add(:));
         
         if isfield(montage, 'chantypenew')
-            montage.chantypenew = cat(1, montage.chantypenew(:), lower(D.chantype(ind)'));
+            montage.chantypenew = cat(1, lower(montage.chantypenew(:)), lower(D.chantype(ind)')); % AB
         end
         if isfield(montage, 'chanunitnew')
             montage.chanunitnew = cat(1, montage.chanunitnew(:), D.units(ind)');
@@ -142,7 +142,7 @@ if ~isnumeric(montage)
     montage.labelorg = cat(1, montage.labelorg(:), add(:));
     
     if isfield(montage, 'chantypeorg')
-        montage.chantypeorg = cat(1, montage.chantypeorg(:), lower(D.chantype(ind))');
+        montage.chantypeorg = cat(1, lower(montage.chantypeorg(:)), lower(D.chantype(ind))'); % AB
     end
     if isfield(montage, 'chanunitorg')
         montage.chanunitorg = cat(1, montage.chanunitorg(:), D.units(ind)');
