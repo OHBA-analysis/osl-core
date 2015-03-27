@@ -383,8 +383,8 @@ if use_montage
     
     montage.chanunitnew =  D.sensors(modality).chanunit(indx);
     montage.chanunitorg =  D.sensors(modality).chanunit(indx);
-    montage.chantypenew =  lower(D.sensors(modality).chantype(indx));
-    montage.chantypeorg =  lower(D.sensors(modality).chantype(indx));
+    montage.chantypenew =  D.sensors(modality).chantype(indx);
+    montage.chantypeorg =  D.sensors(modality).chantype(indx);
         
     S_montage                =  [];
     S_montage.D              =  fullfile(D.path,D.fname);
