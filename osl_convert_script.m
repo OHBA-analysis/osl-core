@@ -102,6 +102,7 @@ if 1,
             warning('Some events detected with no value available in D.events, so setting them to 1');
         end;
     end;
+end;
 
 %%%%%%%%%%%%%%%%%%%%%%
 
