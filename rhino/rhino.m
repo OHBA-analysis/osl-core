@@ -166,16 +166,19 @@ else
     end
 end
 
-try
-    S.fid = ft_checkopt(S.fid,'label','struct');
-    assert(isfield(S.fid.label, 'nasion') &&        ...
-           isfield(S.fid.label, 'lpa')    &&        ...
-           isfield(S.fid.label, 'rpa'),             ...
-           [mfilename ':fid.labelIncorrectFields'], ...
-        'Incorrect fields in S.fid.label\n');
-catch
-    warning('Fiducial label specification not recognised or incorrect, assigning Elekta defaults\n')
-    S.fid = ft_setopt(S.fid,'label',struct('nasion','Nasion','lpa','LPA','rpa','RPA'));
+if ~strcmpi(S.fid.coordsys,'headcast')
+    try
+        S.fid = ft_checkopt(S.fid,'label','struct');
+        assert(isfield(S.fid.label, 'nasion') &&        ...
+            isfield(S.fid.label, 'lpa')    &&        ...
+            isfield(S.fid.label, 'rpa'),             ...
+            [mfilename ':fid.labelIncorrectFields'], ...
+            'Incorrect fields in S.fid.label\n');
+    catch
+        warning('Fiducial label specification not recognised or incorrect, assigning Elekta defaults\n')
+        S.fid = ft_setopt(S.fid,'label',struct('nasion','Nasion','lpa','LPA','rpa','RPA'));
+    end
+    
 end
 
 if numel(fieldnames(S.fid.label)) == 3
@@ -491,16 +494,23 @@ assert(~isempty(fid_polhemus)       &&  ...
        'Polhemus points not found in D.fiducials. \n');
 
 % TRANSFORM MNI FIDUCIALS TO NATIVE SPACE IF DEFINED
-if ~isempty(fid_MNI)
-    %fid_native = [fid_MNI, ones(3,1)] * inv(toMNI)';
-    fid_native = [fid_MNI, ones(3,1)] * inv(D.inv{1}.mesh.Affine)';
-    fid_native = fid_native(:,1:3);
+if exist('fid_MNI','var')
+    if ~isempty(fid_MNI)
+        %fid_native = [fid_MNI, ones(3,1)] * inv(toMNI)';
+        fid_native = [fid_MNI, ones(3,1)] * inv(D.inv{1}.mesh.Affine)';
+        fid_native = fid_native(:,1:3);
+    end
 end
 
 % MATCH FIDUCIALS
-[~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x}(1:3))}, 1:length(fid_labels)),...
-                         arrayfun(@(x) {lower(     fid_labels{x}(1:3))}, 1:length(fid_labels)));                     
-                     
+if strcmpi(S.fid.coordsys,'headcast')
+        [~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x})}, 1:length(fid_labels)),...
+        arrayfun(@(x) {lower(     fid_labels{x})}, 1:length(fid_labels)));
+else  
+    [~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x}(1:3))}, 1:length(fid_labels)),...
+        arrayfun(@(x) {lower(     fid_labels{x}(1:3))}, 1:length(fid_labels)));
+end
+
 fid_labels = fid_labels(fid_order);
 fid_native = fid_native(fid_order, :);
 
