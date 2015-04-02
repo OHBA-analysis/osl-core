@@ -13,8 +13,8 @@ function osl_render4D(nii,savedir,workbenchdir,interptype,visualise,cleanEnviron
 %                   calling command line workbench executables [default is 
 %                   to not call a function]. (Note that this is needed for certain
 %                   OS where the dynamics link library paths are not setup
-%                   properly in Matlab - see clearEnvironment.m for an
-%                   example).
+%                   properly in Matlab - see cleanEnvironment.m for an
+%                   example (e.g. pass in @cleanEnvironment).
 % -----------------------------------------------------------------
 % Adam Baker 2013
 
