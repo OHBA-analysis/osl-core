@@ -1,5 +1,13 @@
-
 function rhino_display(D,hf)
+
+try 
+    D.inv{1}.mesh.tess_rhino;
+catch
+    error('RHINO has not been run!')
+end
+
+
+
 
 if nargin < 2
     hf = figure;
