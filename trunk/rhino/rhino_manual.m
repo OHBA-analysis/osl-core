@@ -1,5 +1,12 @@
 function rhino_manual(D)
 
+try 
+    D.inv{1}.mesh.tess_rhino;
+catch
+    error('RHINO has not been run!')
+end
+
+
 MainFig = figure('NumberTitle',           'off'     ,...
                  'Menubar',               'none'    ,...
                  'DockControls',          'off'     ,...
