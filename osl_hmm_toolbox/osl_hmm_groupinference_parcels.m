@@ -466,42 +466,46 @@ if todo.output
                 
                 epoched_statepath_sub = cell(length(data_files),1);
                 
+                % definitely do not want to do any embedding when computing pcorr
+                % maps:
+                embed.do=0;
+                
                 for subnum = 1:length(data_files)
-                    
+
                     disp(['Computing ' output_method ' maps for ' data_files{subnum}]);
-                    
+
                     % compute subject's state maps
                     hmm_sub = hmm;
                     hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
+
                     hmm_sub = rmfield(hmm_sub,'MixingMatrix');
-                    
+
                     D = spm_eeg_load(filenames.prepare{subnum});
+                                        
                     data = prepare_data(D,normalisation,logtrans,f,embed);
-                    stat  = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,state_assignment);
+                    stat   = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,state_assignment);
                     
                     if use_parcels
                         Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
                         datap = prepare_data(Dp,normalisation,logtrans,f,embed);
                         statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,state_assignment);
                     end
-                    
+
                     good_samples = ~all(badsamples(D,':',':',':'));
-                    good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-                    
+%                     good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+
                 end
-                
+
                 stat  = stat  ./ length(data_files);
-                
-                if use_parcels
-                    statp = statp ./ length(data_files);
-                end
-                                
+
                 S2=[];
                 S2.mask_fname=mask_fname;
                 S2.output_spat_res=2; %mm
                 nii_quicksave(stat,[statemaps{f},'_wholebrain'],S2);
-                
+               
                 if use_parcels
+                    statp = statp ./ length(data_files);
+               
                     % convert parcel statemaps into voxel statemaps
                     pathstr = fileparts([filenames.prepare{1}]);
                     fname   = fullfile(pathstr,'parcellation');
