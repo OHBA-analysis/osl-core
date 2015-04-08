@@ -11,15 +11,21 @@ function [D, montage] = osl_montage(S)
 
 D = spm_eeg_load(S.D);
 
-D_inv = D.inv;
+if isfield(D,'inv')
+    D_inv = D.inv;
+else
+    D_inv=[];
+end;
 
 [D,montage] = spm_eeg_montage(S);
 
-D.inv = D_inv;
+if ~isempty(D_inv)
+    D.inv = D_inv;
 
-for ii=1:length(D.inv)
-    D.inv{ii}=rmfield(D.inv{ii},'forward');
-    D.inv{ii}.datareg.sensors=D.sensors(D.inv{ii}.datareg.modality);
+    for ii=1:length(D.inv)
+        D.inv{ii}=rmfield(D.inv{ii},'forward');
+        D.inv{ii}.datareg.sensors=D.sensors(D.inv{ii}.datareg.modality);
+    end;
 end;
 
 D.save;
