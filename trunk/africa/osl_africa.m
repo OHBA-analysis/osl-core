@@ -351,7 +351,7 @@ if strcmp(S.modality,'EEG')
     modality = 'EEG';
     use_montage = 1;
 else
-    chantype = 'MEGANY';
+    chantype = {'MEG','MEGANY'};
     modality = 'MEG';
     use_montage = 1;
 end
