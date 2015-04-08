@@ -51,7 +51,7 @@ for sessi_todo=1:length(oat.source_recon.sessions_to_do),
         source_recon_sess.D_epoched=[];
     end;    
     
-    source_recon_sess.mri=source_recon.mri{sessi};
+%    source_recon_sess.mri=source_recon.mri{sessi};
     
     if length(source_recon.pca_dim)>1,
         source_recon_sess.pca_dim=source_recon.pca_dim(sessi);
