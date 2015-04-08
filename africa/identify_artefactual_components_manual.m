@@ -275,7 +275,7 @@ elseif (strcmp(modality,'MEGGRAD'))
     cfg.layout      = [OSLDIR '/layouts/CTF275.lay'];
 elseif strcmp(modality, 'MEG')
     cfg.channel = {'MEG'};
-    cfg.layout  = fullfile(OSLDIR, 'layouts', '4D248.mat');
+    cfg.layout  = fullfile(OSLDIR, 'layouts', '4D248.lay');
 elseif (strcmp(modality,'EEG')),
     warning('EEG not currently supported, using development EEG layout');
     cfg.channel = {'EEG'};

@@ -76,8 +76,7 @@ set(h_fidmr,'MarkerFaceColor','m','MarkerSize',12,'MarkerEdgeColor','k');
 
 
     function movelight(varargin)
-        delete(hl)
-        hl = camlight('headlight');
+        hl = camlight(hl,'headlight');
     end
 
 end
