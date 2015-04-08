@@ -28,6 +28,14 @@ S = [];
 S.dataset = Sin.fif_file;
 S.outfile = Sin.spm_file;
 
+
+% Create directory if it doesn't exist
+pathstr = fileparts(Sin.spm_file);
+if ~isdir(pathstr)
+    mkdir(pathstr);
+end
+
+
 [dir nam ext]=fileparts(Sin.fif_file);
 
 if strcmp(ext,'.ds')

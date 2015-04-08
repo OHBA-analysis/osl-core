@@ -503,22 +503,18 @@ if exist('fid_MNI','var')
 end
 
 % MATCH FIDUCIALS
-if strcmpi(S.fid.coordsys,'headcast')
-        [~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x})}, 1:length(fid_labels)),...
-        arrayfun(@(x) {lower(     fid_labels{x})}, 1:length(fid_labels)));
-else  
-    [~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x}(1:3))}, 1:length(fid_labels)),...
-        arrayfun(@(x) {lower(     fid_labels{x}(1:3))}, 1:length(fid_labels)));
-end
+[~,fid_order] = ismember(arrayfun(@(x) {lower(polhemus_labels{x}(1:min(3,length(polhemus_labels{x}))))}, 1:length(fid_labels)),...
+                         arrayfun(@(x) {lower(fid_labels{x}(1:min(3,length(fid_labels{x}))))}, 1:length(fid_labels)));
 
 fid_labels = fid_labels(fid_order);
 fid_native = fid_native(fid_order, :);
+
+fid_polhemus = fid_polhemus(1:length(fid_order),:);
 
 % REFINE FIDUCIALS MANUALLY
 if manual_fid_selection
     fid_native = rhino_select(mesh_rhino,fid_native,fid_labels);
 end
-
 
 
 % RIGID BODY TRANSFORMATION USING FIDUCIALS
