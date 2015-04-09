@@ -369,22 +369,32 @@ megdata        = reshape(megdata,size(megdata,1),[]);
 sm = S.ica_res.sm;
 tc = S.ica_res.tc;
 
+tra = eye(D.nchannels);
+
 if use_montage
     dat_inv = pinv_plus(megdata', S.ica_res.ica_params.num_ics);
-    tra = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(chan_inds,bad_components)'))';
+    tra(chan_inds,chan_inds) = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(chan_inds,bad_components)'))';
     
+    % Set up montage with full channel list:
     montage             =  [];
     montage.tra         =  tra;
-    montage.labelnew    =  D.chanlabels(chan_inds);
-    montage.labelorg    =  D.chanlabels(chan_inds);
+    montage.labelnew    =  D.chanlabels;
+    montage.labelorg    =  D.chanlabels;
+    
+    % Exclude channels that are not MEEG:
+    xchans = setdiff(1:D.nchannels,indchantype(D,chantype));
+    montage.tra(xchans,:)    = [];
+    montage.tra(:,xchans)    = [];
+    montage.labelorg(xchans) = [];
+    montage.labelnew(xchans) = [];
     
     [~,indx] = ismember(montage.labelnew,D.sensors(modality).label);
-    
-    
+            
     montage.chanunitnew =  D.sensors(modality).chanunit(indx);
     montage.chanunitorg =  D.sensors(modality).chanunit(indx);
     montage.chantypenew =  D.sensors(modality).chantype(indx);
     montage.chantypeorg =  D.sensors(modality).chantype(indx);
+
         
     S_montage                =  [];
     S_montage.D              =  fullfile(D.path,D.fname);
