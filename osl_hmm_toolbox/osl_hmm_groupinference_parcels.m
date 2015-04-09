@@ -93,6 +93,8 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 
 global OSLDIR
 
+statemaps=[];
+
 data_files = cellstr(data_files);
 
 data_fnames = cell(size(data_files));
@@ -446,6 +448,8 @@ if todo.output
     switch output_method
         case {'pcorr'}
             
+            epoched_statepath_sub = cell(length(data_files),1);
+                
             for f = 1:max([numel(freqbands),1])
                 
                 D  = spm_eeg_load(filenames.prepare{1}); % to get number of voxels
@@ -463,9 +467,7 @@ if todo.output
                     Dp = spm_eeg_load(prefix(filenames.prepare{1},'p'));
                     statp = zeros(Dp.nchannels,hmm.K);
                 end
-                
-                epoched_statepath_sub = cell(length(data_files),1);
-                
+                               
                 % definitely do not want to do any embedding when computing pcorr
                 % maps:
                 embed.do=0;
@@ -494,6 +496,11 @@ if todo.output
                     good_samples = ~all(badsamples(D,':',':',':'));
 %                     good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
 
+                    if f==1
+                        sp_full = zeros(1,D.nsamples*D.ntrials);
+                        sp_full(good_samples) = hmm_sub.statepath;
+                        epoched_statepath_sub{subnum} = reshape(sp_full,[1,D.nsamples,D.ntrials]);
+                    end;
                 end
 
                 stat  = stat  ./ length(data_files);
@@ -524,13 +531,9 @@ if todo.output
                 
             end
             
-            sp_full = zeros(1,D.nsamples*D.ntrials);
-            sp_full(good_samples) = hmm_sub.statepath;
-            epoched_statepath_sub{subnum} = reshape(sp_full,[1,D.nsamples,D.ntrials]);
-            
             % resave updated hmm
-            hmm.statemaps = statemaps;
             hmm.epoched_statepath_sub = epoched_statepath_sub;
+            hmm.statemaps = statemaps;
             hmm.filenames=filenames;
             
             disp(['Saving updated hmm to ' filenames.hmm]);
