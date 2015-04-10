@@ -402,7 +402,7 @@ if use_montage
     S_montage.keepothers     =  true;
     S_montage.updatehistory  =  1;
     
-    Dmontaged = spm_eeg_montage(S_montage);
+    Dmontaged = osl_montage(S_montage);
     
     % rename montaged file
     S_copy         = [];
