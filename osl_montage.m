@@ -21,12 +21,13 @@ end;
 
 if ~isempty(D_inv)
     D.inv = D_inv;
-
     for ii=1:length(D.inv)
-        D.inv{ii}=rmfield(D.inv{ii},'forward');
-        D.inv{ii}.datareg.sensors=D.sensors(D.inv{ii}.datareg.modality);
-    end;
-end;
+        if isfield(D.inv,'forward')
+            D.inv{ii}=rmfield(D.inv{ii},'forward');
+        end
+        D.inv{ii}.datareg.sensors = D.sensors(D.inv{ii}.datareg.modality);
+    end
+end
 
-D.save;
+D.save
 

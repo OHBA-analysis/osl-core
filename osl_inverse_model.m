@@ -187,6 +187,15 @@ matlabbatch{2}.spm.tools.beamforming.sources.keep3d                             
 matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 0;
 matlabbatch{2}.spm.tools.beamforming.sources.plugin.mni_coords.pos              = S.mni_coords;
 
+
+% MESH STUFF!
+%matlabbatch{2}.spm.tools.beamforming.sources.BF(1)                              = cfg_dep('Prepare data: BF.mat file', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+%matlabbatch{2}.spm.tools.beamforming.sources.reduce_rank                        = [2 3];
+%matlabbatch{2}.spm.tools.beamforming.sources.keep3d                             = 1;
+%matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 0;
+%matlabbatch{2}.spm.tools.beamforming.sources.plugin.mesh.orient                 = 'Original';
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matlabbatch{3}.spm.tools.beamforming.features.BF(1)                             = cfg_dep('Define sources: BF.mat file', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
 
@@ -254,6 +263,7 @@ matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise        
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matlabbatch{6}.spm.tools.beamforming.write.BF(1)                                = cfg_dep('Output: BF.mat file', substruct('.','val', '{}',{5}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
 matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             = S.prefix;
+
 
 spm_jobman('run',matlabbatch)
 
