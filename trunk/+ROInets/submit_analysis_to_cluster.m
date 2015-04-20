@@ -1,4 +1,4 @@
-function [] = submit_analysis_to_cluster(oil, logfileDir)
+function [] = submit_analysis_to_cluster(Settings, DobjNames, logfileDir)
 %SUBMIT_ANALYSIS_TO_CLUSTER  submit a set of sessions for network analysis
 %
 % SUBMIT_ANALYSIS_TO_CLUSTER(OIL) runs individual network analyses on
@@ -34,18 +34,18 @@ fprintf('%s: submitting analysis to cluster. \n', mfilename);
 %% Parse input settings
 fprintf('%s: checking inputs. \n', mfilename);
 
-oil = ROInets.check_inputs_osl(oil);
+Settings  = ROInets.check_inputs(Settings);
+nSessions = length(DobjNames);
 
 % make results directory
-ROInets.make_directory(oil.ROInetworks.outputDirectory);
+ROInets.make_directory(Settings.outputDirectory);
 
 % save settings
-Settings = oil.ROInetworks;
 settingsFileName = fullfile(Settings.outputDirectory, 'ROInetworks_settings.mat');
 save(settingsFileName, 'Settings');
 
 % load parcellation
-parcelFile = oil.ROInetworks.spatialBasisSet;
+parcelFile = Settings.spatialBasisSet;
 if ~isempty(parcelFile) && ischar(parcelFile), 
     nii_quickread(parcelFile, Settings.gridStep);
 else
@@ -56,7 +56,7 @@ end%if
 
 %% Generate matlab script for each session
 fprintf('Generating matlab scripts. \n');
-for iSession = Settings.nSessions:-1:1,
+for iSession = nSessions:-1:1,
     m_scriptName{iSession} = fullfile(Settings.outputDirectory,                                ...
                                     sprintf('matlab_submit_individual_network_session_%d.m', ...
                                             iSession));
@@ -71,6 +71,15 @@ for iSession = Settings.nSessions:-1:1,
         C = onCleanup(@() fclose(fid));
     end%if
     
+    % load D object to be analysed
+    D = spm_eeg_load(DobjNames{iSession});
+    Dfilt = Dfilt.montage('switch', 1);
+    Dfilt.save;
+    
+    % set a save file name
+    sessionName = strrep(Dfilt.fname, '.mat', '_ROInets');
+    resultsName = fullfile(outDir, sessionName);
+    
     % make file header
     fprintf(fid, '%% matlab_submit_individual_network_session_%d.m\n', iSession);
     fprintf(fid, '%% Submits network analysis for session %d\n', iSession);
@@ -80,35 +89,25 @@ for iSession = Settings.nSessions:-1:1,
     % set up paths and osl
     fprintf(fid, '%% Open OSL\n');
     fprintf(fid, 'set(0, ''DefaultFigureVisible'', ''off'');\n');
-    fprintf(fid, 'OSLDIR = ''/home/fs0/gilesc/OSL-Repo/osl1.5.0_beta/'';\n');
+    fprintf(fid, 'OSLDIR = ''/home/fs0/gilesc/OSL-Repo/osl2-outer/'';\n');
     fprintf(fid, 'addpath(OSLDIR);\n');
     fprintf(fid, 'osl_startup(OSLDIR);\n\n');
     
     % Giles' paths
     fprintf(fid, '%% Set up paths\n');
-    fprintf(fid, 'addpath(genpath(''/home/fs0/gilesc/IBME-SVN-Repo/src/oil_pipeline''));\n');
-    fprintf(fid, 'addpath(''/home/fs0/gilesc/IBME-SVN-Repo/src/utils'');\n');
-    fprintf(fid, 'addpath(genpath(''/home/fs0/gilesc/IBME-SVN-Repo/src/speedUpMatlab/''));\n\n');
+    fprintf(fid, 'addpath(genpath(''/home/fs0/gilesc/IBME-SVN-Repo/src/''));\n');
     
     % Load information
     fprintf(fid, '%% Load data for analysis\n');
     fprintf(fid, 'fprintf(''Loading data for analysis \\n'');\n');
-    fprintf(fid, 'tmp      = load(''%s'');\noil      = tmp.oil;\n', oil.fname);
     fprintf(fid, 'tmp      = load(''%s'');\nSettings = tmp.Settings;\n', settingsFileName);
     fprintf(fid, 'clear tmp\n');
-    fprintf(fid, 'reconFileName = ''%s'';\n', Settings.reconResultsFiles{iSession});
-    fprintf(fid, 'iSession     = %d;\n',      iSession);
-    fprintf(fid, 'spatialBasis = nii_quickread(''%s'', %d);\n', parcelFile, Settings.gridStep);
-    
-    saveFileName{iSession} = fullfile(Settings.outputDirectory,                             ...
-                                      sprintf('corr_mat_individual_network_session_%d_tmp.mat', ...
-                                              Settings.subjectsToDo(iSession)));
-    fprintf(fid, 'saveFileName = ''%s'';\n', saveFileName{iSession});
+    fprintf(fid, 'Settings.sessionName = ''%s'';\n', sessionName);
     
     % Run analysis
     fprintf(fid, '\n%% Run the analysis\n');
     fprintf(fid, 'fprintf(''Running run_individual_correlation_analysis \\n'');\n');
-    fprintf(fid, 'mats = ROInets.run_individual_network_analysis_osl(oil, reconFileName, spatialBasis, Settings, iSession, saveFileName);\n');
+    fprintf(fid, 'mats = ROInets.run_individual_network_analysis_osl(Dfilt, Settings, ''%s'');\n', resultsName);
     fprintf(fid, 'fprintf(''All done. \\n'');\n');
     % close matlab session
     fprintf(fid, '\nexit\n\n');
