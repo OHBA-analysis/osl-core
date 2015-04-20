@@ -1,7 +1,12 @@
 function s = getmasksize(n)
 % Really dumb way of determining size of standard space mask knowing only
 % the number of voxels in the grid (& vice versa)
-if n == 1821;
+
+if n == 1065;
+  s = 12;
+elseif n == 12
+  s = 1065;
+elseif n == 1821;
   s = 10;
 elseif n == 10
   s = 1821;
