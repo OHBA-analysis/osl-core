@@ -97,6 +97,7 @@ nSamples = ROInets.cols(envData);
 mats.nSamples              = nSamples;
 mats.correlation           = rawCorr;
 mats.envCorrelation        = nodeCorr;
+mats.envPrecision          = nodePrecision;
 mats.envPartialCorrelation = nodePCorr;
 
 if Regularize.do,
@@ -123,11 +124,13 @@ if Regularize.do,
                                                       burnIn,              ...
                                                       nMC);
         
-        regPCorr = ROInets.convert_precision_to_pcorr(mean(postPrecision, 3));
+        regPrec  = mean(postPrecision, 3);
+        regPCorr = ROInets.convert_precision_to_pcorr(regPrec);
         meanRho  = mean(postLambda) ./ nSamples; % lambda = N * rho
         fprintf('   Mean regularization rho: %g. \n', meanRho);
         
         mats.envPartialCorrelationRegularized = regPCorr;
+        mats.envPrecisionRegularized          = regPrec;
         mats.Regularization.mean              = meanRho;
         mats.Regularization.posteriorRho      = postLambda ./nSamples;
         
@@ -143,6 +146,7 @@ if Regularize.do,
                                                    Regularize.adaptivePath);
         
         regPCorr = ROInets.convert_precision_to_pcorr(regPrecision);
+        mats.envPrecisionRegularized          = regPrecision;
         mats.envPartialCorrelationRegularized = regPCorr;
         mats.Regularization.mean              = rhoOpt;
         
