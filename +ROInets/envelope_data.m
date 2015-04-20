@@ -1,4 +1,4 @@
-function [envelopedData, t_ds] = envelope_data(dipoleMag, t, varargin)
+function [envelopedData, t_ds, newFs] = envelope_data(dipoleMag, t, varargin)
 %ENVELOPE_DATA applies Hilbert envelope to data, without normalisation
 %
 % ENV = ENVELOPE_DATA(DIPOLEMAG, TIME) takes dipoles magnitudes in a set
@@ -72,7 +72,7 @@ end%if
 % downsample and low-pass filter
 if ~useFilter,
     % do osl-style averaging
-    [envelopedData, t_ds] = moving_average_downsample(t,            ...
+    [envelopedData, t_ds, newFs] = moving_average_downsample(t,            ...
                                                       overlap,      ...
                                                       windowLength, ...
                                                       useHanningWindow);
@@ -82,7 +82,7 @@ else
     % is different to published approaches for finding band-limited power.
     newMaxFreq            = 1.0 / windowLength;
     % use nested function to minimize memory movement
-    [envelopedData, t_ds] = filter_and_downsample(t, newMaxFreq);
+    [envelopedData, t_ds, newFs] = filter_and_downsample(t, newMaxFreq);
     
 end%if useFilter
 
@@ -128,7 +128,7 @@ HE       = HE(:, 1:nSamples);
 end%hilbert_envelope
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [envelopedDataDS, t_ds] = filter_and_downsample(t, newMaxFreq)
+function [envelopedDataDS, t_ds, newFs] = filter_and_downsample(t, newMaxFreq)
 %FILTER_AND_DOWNSAMPLE downsamples signal Matlab's decimate function
 %
 % [SIGDS, TDS] = FILTER_AND_DOWNSAMPLE(SIG, T, NEWFS)
@@ -152,6 +152,7 @@ nVoxels       = ROInets.rows(HE);
 nyquistFactor = 2.0 / 0.8;
 newFs         = nyquistFactor * newMaxFreq;
 DsFactor      = floor(Fs / newFs);
+newFs         = Fs / DsFactor;
 factorList    = get_factors(DsFactor);
 filterType    = 'iir';%'fir'; % use fir filter for long time-series, and for higher downsample factors. Be aware that no phase shift correction is applied
 
@@ -175,7 +176,7 @@ end%filter_and_downsample
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [envelopedData, t_ds] = moving_average_downsample(t, overlap,   ...
+function [envelopedData, t_ds, newFs] = moving_average_downsample(t, overlap,   ...
                                                            windowLength, ...
                                                            useHanningWindow)
 %MOVING_AVERAGE_DOWNSAMPLE downsamples signal using a moving average filter
