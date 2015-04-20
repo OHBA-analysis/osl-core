@@ -13,8 +13,8 @@ function D = osl_spmfun(fun,S)
 
 try 
     D = spm_eeg_load(S.D);
-catch
-    error('S must contain S.D')
+catch 
+    error('S must contain valid S.D')
 end
    
 Dnew = feval(fun,S);
