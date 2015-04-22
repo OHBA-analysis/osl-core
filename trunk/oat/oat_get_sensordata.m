@@ -16,19 +16,29 @@ if isstr(oat_results)
 end;
 
 if(isfield(oat_results,'BF'))
-    D=oat_results.BF.data.D;
-    oatdirname=oat_results.source_recon.dirname;
+    %D=oat_results.BF.data.D; % MWW commented
+    D=oat_results.BF.write.spmeeg.files{1}; % MWW added 
 else,
-    D=oat_results.D_sensor_data;
-    oatdirname=oat_results.source_recon.dirname;
+    D=fullfile(oat_results.D_sensor_data);
 end;
 
-if(~strcmp([oatdirname],D.path)),        
-    D=path(D,[oatdirname]);
+[D_path, D_nme, D_ext]=fileparts(D);
+
+oatdirname=oat_results.source_recon.dirname;
+
+% if needs be adjust path to the oatdir name (e.g. will be
+% necessary if the oatdir has been moved or renamed)
+if(~strcmp([oatdirname],D_path)),  
+    D=[oatdirname,'/',D_nme,D_ext];
+
+    D=spm_eeg_load(D);
+    
+    D=path(D,oatdirname);
+    
     D.save;
 end;
 
-D=spm_eeg_load([D.path '/' D.fname]);
+
 
 % make sure we are using sensor space montage:
 D=montage(D,'switch',0);
