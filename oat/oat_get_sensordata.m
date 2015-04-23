@@ -36,9 +36,9 @@ if(~strcmp([oatdirname],D_path)),
     D=path(D,oatdirname);
     
     D.save;
+else
+    D=spm_eeg_load(D);    
 end;
-
-
 
 % make sure we are using sensor space montage:
 D=montage(D,'switch',0);

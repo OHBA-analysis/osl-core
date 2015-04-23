@@ -55,6 +55,7 @@ oat.source_recon.D_epoched=spm_files_epoched; % this is passed in so that the ba
 oat.source_recon.freq_range=[4 100]; % frequency range in Hz
 oat.source_recon.time_range=[-0.2 0.4];
 oat.source_recon.method='none';
+oat.source_recon.normalise_method='none';
 
 % Xsummary is a parsimonious description of the design matrix.
 % It contains values Xsummary{reg,cond}, where reg is a regressor no. and cond
@@ -91,7 +92,10 @@ oat.first_level
 oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 
-% report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});
+%%
+
+oat.first_level.report.modality_to_do='MEGPLANAR';
+report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %% RESULTS
@@ -120,8 +124,9 @@ figure;imagesc(stats1.x);title('GLM design matrix');xlabel('regressor no.');ylab
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
-S2.modality='MEGPLANAR'; % can also set this to 'MEGPLANAR'
-S2.first_level_contrast=[3];
+S2.modality='MEGMAG'; % can also set this to 'MEGPLANAR'
+S2.first_level_contrast=[2];
+S2.view_cope=1;
 
 % calculate t-stat using contrast of absolute value of parameter estimates
 [cfg, dats, fig_handle]=oat_stats_multiplotER(S2);
