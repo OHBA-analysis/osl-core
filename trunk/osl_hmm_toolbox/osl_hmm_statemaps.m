@@ -17,6 +17,7 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,assignment)
 %             'tstat' - t-statistic of within-state vs outside-of-state
 %             'corr'  - correlation of data with state time course
 %             'pcorr' - partial correlation of data with state time course
+%             'conn'  - compute the connectivity profile of each state
 % data_type  - type of data in voxeldata
 %            - 'voxel'
 %            - 'pca'
@@ -44,7 +45,7 @@ end
 
 if ~exist('data_type')
     data_type='voxel';
-end;
+end
 
 if strcmp(data_type,'pca')
     apply_mixing_matrix=1;
@@ -52,9 +53,9 @@ elseif strcmp(data_type,'voxel')
     apply_mixing_matrix=0;
 else
     error('Illegal datatype');
-end;
+end
 
-if exist('voxeldata','var') && ~any(strcmp(mode,{'var','cov'}))
+if exist('voxeldata','var') && ~any(strcmp(mode,{'var','cov','conn'}))
     
     if size(voxeldata,2) ~= length(hmm.statepath)
         voxeldata = voxeldata';
@@ -84,22 +85,53 @@ elseif strcmp(mode,'var')
     
     return
     
-elseif strcmp(mode,'cov')
+elseif any(strcmp(mode,{'cov','conn'}))
     
-    if apply_mixing_matrix && isfield(hmm,'MixingMatrix')
-        statemaps = zeros(size(hmm.MixingMatrix,2),size(hmm.MixingMatrix,2),hmm.K);
+    if exist('voxeldata','var') && ~isempty(voxeldata)
+        statemaps = zeros(size(voxeldata,1),size(voxeldata,1),hmm.K);
         for k = 1:hmm.K
-            statemaps(:,:,k) = hmm.MixingMatrix'*hmm.state(k).Cov*hmm.MixingMatrix;
+            statemaps(:,:,k) = cov(voxeldata(:,hmm.statepath==k)');
         end
     else
-        statemaps = zeros(size(hmm.state(1).Cov,1),size(hmm.state(1).Cov,1),hmm.K);
-        for k = 1:hmm.K
-            statemaps(:,:,k) = hmm.state(k).Cov;
+        if apply_mixing_matrix && isfield(hmm,'MixingMatrix')
+            statemaps = zeros(size(hmm.MixingMatrix,2),size(hmm.MixingMatrix,2),hmm.K);
+            for k = 1:hmm.K
+                statemaps(:,:,k) = hmm.MixingMatrix'*hmm.state(k).Cov*hmm.MixingMatrix;
+            end
+        else
+            statemaps = zeros(size(hmm.state(1).Cov,1),size(hmm.state(1).Cov,1),hmm.K);
+            for k = 1:hmm.K
+                statemaps(:,:,k) = hmm.state(k).Cov;
+            end
         end
+        
     end
     
-    return
+    if strcmp(mode,'conn')
+        
+        Nvoxels = size(statemaps,1);
+        Conn = zeros(Nvoxels,hmm.K);
+        
+        for k = 1:hmm.K
+            statemaps(:,:,k) = corrcov(statemaps(:,:,k));
+        end
     
+        statemaps(repmat(logical(eye(Nvoxels)),[1,1,hmm.K])) = nan;
+        
+        for vox = 1:size(statemaps,1)
+            for k = 1:hmm.K
+                centroid = mean(statemaps(vox,1:Nvoxels~=vox,1:hmm.K~=k),3);
+                cp = statemaps(vox,1:Nvoxels~=vox,k);
+                Conn(vox,k) = norm((centroid - cp),2); 
+            end
+        end
+        
+        statemaps = Conn;
+
+    end
+    
+
+    return
     
 else
     
