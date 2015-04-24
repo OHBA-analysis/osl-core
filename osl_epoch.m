@@ -20,6 +20,9 @@ end
 
 D_epoched = spm_eeg_epochs(S);
 
+D_epoched.epochinfo=S.epochinfo; % store epoch info inside D object
+D_epoched.epochinfo.time_continuous=S.D.time;
+
 if ~isempty(S.bad_event_type)
     
     Badtrials = false(1,D_epoched.ntrials);
@@ -36,4 +39,3 @@ end
 D_epoched.save;
 
 end
-
