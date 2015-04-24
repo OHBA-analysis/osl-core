@@ -16,8 +16,7 @@ if isstr(oat_results)
 end;
 
 if(isfield(oat_results,'BF'))
-    %D=oat_results.BF.data.D; % MWW commented
-    D=oat_results.BF.write.spmeeg.files{1}; % MWW added 
+    D=fullfile(oat_results.BF.data.D);
 else,
     D=fullfile(oat_results.D_sensor_data);
 end;
