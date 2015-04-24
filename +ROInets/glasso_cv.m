@@ -228,7 +228,7 @@ while rhoBest == rhoPath(end),
     % move path and re-run
     nAdaption    = nAdaption + 1;
     rhoEnd       = max(nRho * dRho + rhoPath(end), 10 * rhoPath(end));
-    rhoPath      = logspace(log10(rhoPath(end)), log10(rhoEnd), nRho);
+    rhoPath      = logspace(log10(rhoPath(end-1)), log10(rhoEnd), nRho);
 
     [P, rhoBest, W] = main_glasso_cv(Y, rhoPath, K, scoreFun);
 end%while
@@ -273,7 +273,7 @@ while rhoBest == rhoPath(1),
         rhoStart = 0; 
     end%if
     rhoPath      = logspace(log10(rhoStart   + eps), ...
-                            log10(rhoPath(1) + eps), nRho);
+                            log10(rhoPath(2)), nRho);
 
     [P, rhoBest, W] = main_glasso_cv(Y, rhoPath, K, scoreFun);
 end%while
@@ -300,15 +300,25 @@ while nFinesse < maxFinesses,
                 ['Regularization parameter mismatch. \n',    ...
                  'Stopping finessing process. \n', ...
                  'Come check me out? \n']);
+             
+        if 1 == nFinesse, 
+            % no results allocated yet
+            [P, rhoBest, W] = main_glasso_cv(Y, rhoPath, K, scoreFun);
+        end%if
         break
     end%if
     if (1 == rhoBestInd) || (length(rhoPath) == rhoBestInd),
         % we should not be here either, as we had not hit the
         % bounds above. Keep to existing value, again. 
+        % unless we've changed which boundary we've hit.
         warning([mfilename ':UnexpectedBoundary'], ...
                 ['Regularization parameter unexpectedly hit a ',    ...
                  'path boundary. \nStopping finessing process. \n', ...
                  'Come check me out? \n']);
+        if 1 == nFinesse,
+            % no results allocated yet
+            [P, rhoBest, W] = main_glasso_cv(Y, rhoPath, K, scoreFun);
+        end%if
         break
     end%if
 
