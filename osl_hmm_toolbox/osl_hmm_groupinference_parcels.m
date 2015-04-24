@@ -446,7 +446,7 @@ if todo.output
     load(filenames.concat)
     
     switch output_method
-        case {'pcorr'}
+        case {'pcorr','conn'}
             
             epoched_statepath_sub = cell(length(data_files),1);
                 

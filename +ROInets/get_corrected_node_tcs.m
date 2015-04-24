@@ -107,6 +107,13 @@ else
     % carry on
 end%if
 
+
+if isa(voxelData,'meeg')
+    goodSamples = find(~all(badsamples(voxelData,':',':',':')));
+else
+    goodSamples = find(true(1,ROInets.cols(voxelData)));
+end
+
 nParcels = ROInets.cols(spatialBasis);
 
 ft_progress('init', 'text', '');
@@ -127,9 +134,11 @@ switch lower(timeCourseGenMethod)
         % demean and variance normalise each voxel - 20 May 2014 Don't
         % variance normalise as MEG data are very smooth, and power is a
         % good indication of true sources
-        temporalSTD     = max(std(voxelData, [], 2), eps);
-        voxelDataScaled = ROInets.demean(voxelData, 2);
-        clear voxelData
+        if isa(voxelData,'meeg')
+            temporalSTD = max(sqrt(osl_source_variance(voxelData)), eps);
+        else
+            temporalSTD = max(std(voxelData, [], 2), eps);
+        end
         
         % pre-allocate PCA weightings for each parcel
         voxelWeightings = zeros(size(spatialBasis));
@@ -145,7 +154,8 @@ switch lower(timeCourseGenMethod)
                 
             thisMask = spatialBasis(:, iParcel);
             if any(thisMask), % non-zero
-                parcelData = voxelDataScaled(thisMask, :);
+                parcelData = voxelData(find(thisMask),goodSamples); %#ok Can't use logical indexing
+                parcelData = ROInets.demean(parcelData, 2);
                 
                 [U, S, V]  = ROInets.fast_svds(parcelData, 1);
                 PCAscores  = S * V';
@@ -194,9 +204,13 @@ switch lower(timeCourseGenMethod)
         spatialBasis = logical(spatialBasis);
         
         % find rms power in each voxel
-        voxelPower = sqrt(ROInets.row_sum(voxelData.^2) ./ ...
-                          ROInets.cols(voxelData));
-                      
+        if isa(D,'meeg')
+            voxelPower = osl_source_variance(D); % I'm going to use variance instead, because it's fast to compute
+        else
+            voxelPower = sqrt(ROInets.row_sum(voxelData.^2) ./ ...
+                              ROInets.cols(voxelData));
+        end
+        
         % pre-allocate weightings for each parcel
         voxelWeightings = zeros(size(spatialBasis));
                       
@@ -254,8 +268,12 @@ switch lower(timeCourseGenMethod)
                                    max(max(abs(spatialBasis), [], 1), eps));
         
         % estimate temporal-STD for normalisation
-        temporalSTD = max(std(voxelData, [], 2), eps);
-                               
+        if isa(voxelData,'meeg')
+            temporalSTD = max(sqrt(osl_source_variance(voxelData)), eps);
+        else
+            temporalSTD = max(std(voxelData, [], 2), eps);
+        end      
+        
         % find time-course for each spatial basis map
         for iParcel = nParcels:-1:1, % allocate memory on the fly
             progress = nParcels - iParcel + 1;
@@ -273,13 +291,15 @@ switch lower(timeCourseGenMethod)
             % smooth and little risk of high-power outliers. Also, power is
             % a good indicator of sensible signal. 
             % Weight all voxels by the spatial map in question
-            weightedTS  = ROInets.scale_rows(voxelData, thisMap);
-            
+            % AB - apply the mask first then weight, to reduce memory use
+            weightedTS  = voxelData(find(parcelMask),goodSamples); %#ok Can't use logical indexing
+            weightedTS  = ROInets.scale_rows(weightedTS, thisMap(parcelMask));
+
             % perform svd and take scores of 1st PC as the node time-series
             % U is nVoxels by nComponents - the basis transformation
             % S*V holds nComponents by time sets of PCA scores - the 
             % timeseries data in the new basis
-            [U, S, V]   = ROInets.fast_svds(weightedTS(parcelMask,:), 1);
+            [U, S, V]   = ROInets.fast_svds(weightedTS, 1);
             clear weightedTS
             
             PCAscores   = S * V';
@@ -338,3 +358,7 @@ nodeData = ROInets.remove_source_leakage(nodeDataOrig, protocol);
 
 end%get_orthogonalised_node_tcs
 % [EOF]
+
+
+
+

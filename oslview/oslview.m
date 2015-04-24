@@ -247,9 +247,9 @@ pointer_wait;
     % Add the movable pan box
     box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
     box_y = [ylim(1) ylim(1) ylim(2) ylim(2)];
-    try
+    if ~ismac
         PanBox = patch(box_x,box_y,'r','parent',PanWindow,'facealpha',0.5);
-    catch
+    else
         PanBox = patch(box_x,box_y,'r','parent',PanWindow);
     end
     

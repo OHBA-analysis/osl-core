@@ -8,6 +8,8 @@ function [D,parcellation,assignments] = osl_apply_parcellation(S)
 %
 % S.D                   - source space MEEG object
 % S.parcellation        - .nii or .nii.gz file at the same gridstep as S.D
+%                         OR a matrix of dimensions voxels x parcels
+%                         with the same number of voxels as S.D
 % S.orthogonalisation   - Orthogonalisation protocol to apply:
 %                           ['none','symmetric','closest','householder']
 % S.method              - method for reconstructing parcel time course:
@@ -44,12 +46,20 @@ S.prefix            = ft_getopt(S,'prefix','p');
 S.orthogonalisation = ft_getopt(S,'orthogonalisation','none');
 S.method            = ft_getopt(S,'method','PCA');
 
-stdbrain = read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz']);
-try
-    parcellation = vols2matrix(read_avw(S.parcellation),stdbrain); %nVoxels x nSamples
-catch
-    error('Make sure the parcellation file and the data are compatible, including having the same spatial resolution.');
+switch class(S.parcellation)
+    case {'char','cell'}
+        try
+            stdbrain = read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz']);
+            parcellation = vols2matrix(read_avw(S.parcellation),stdbrain); %nVoxels x nSamples
+        catch
+            error('Make sure the parcellation file and the data are compatible, including having the same spatial resolution.');
+        end
+    case {'single','double','logical'}
+        parcellation = S.parcellation;
+    otherwise
+        error('Unrecognized parcellation');
 end
+
 
 if size(parcellation,2) == 1
     % Currently nvoxels x 1 with a index at each voxel indicating
@@ -76,15 +86,17 @@ for voxel = 1:size(parcellation,1)
 end
 
 
-% get voxel data
-data = D(:,:,:);
+if D.ntrials == 1 % can just pass in the MEEG object
+    voxeldata = D;
+    good_samples = ~all(badsamples(D,':',':',':'));
+else % reshape the data first (or fix get_corrected_node_tcs to work with trialwise MEEG data)
+    voxeldata = reshape(D(:,:,:),[D.nchannels,D.nsamples*D.ntrials]);
+    good_samples = ~all(badsamples(D,':',':',':'));
+    good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+    voxeldata = voxeldata(:,good_samples);
+end
 
-voxeldata_concat = reshape(data,[D.nchannels,D.nsamples*D.ntrials]);
-good_samples = ~all(badsamples(D,':',':',':'));
-good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-voxeldata_concat = voxeldata_concat(:,good_samples);
-
-nodedata = ROInets.get_corrected_node_tcs(voxeldata_concat, parcellation, S.orthogonalisation, S.method);
+nodedata = ROInets.get_corrected_node_tcs(voxeldata, parcellation, S.orthogonalisation, S.method);
 
 data = zeros(size(nodedata,1),length(good_samples));
 data(:,good_samples) = nodedata;
