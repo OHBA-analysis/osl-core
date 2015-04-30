@@ -319,11 +319,12 @@ end%switch
 %% Extracting timecourses
 fprintf('%s: loading data from file %s. \n', mfilename, D.fname);
 allTime            = D.time;
-Fs                 = D.fsample; 
-voxelDataBroadBand = D(:,find(~any(D.badsamples(:,:,:))),:);               %#ok<FNDSB>
+Fs                 = D.fsample;
+badSamples         = any(D.badsamples(:,:,:));
+voxelDataBroadBand = D(:,find(~badSamples),:);                                 %#ok<FNDSB>
 
 % select time range from user-defined input
-[time, timeInd, timeRange] = time_range(allTime, Settings.timeRange, iSession);
+[time, timeInd, timeRange] = time_range(allTime(~badSamples), Settings.timeRange, iSession);
 % apply to source data, too.
 voxelDataBroadBand(:,~timeInd) = [];
 nTimeSamples                   = ROInets.cols(voxelDataBroadBand);
