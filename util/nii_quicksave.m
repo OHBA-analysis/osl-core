@@ -21,7 +21,7 @@ function fname_out = nii_quicksave(mat,fname,options_or_input_spat_res,output_sp
 global OSLDIR;
 
 if nargin<3
-    options=struct();
+    options_or_input_spat_res=struct();
 end;
 
 %%%%%%%%%%%%%%%

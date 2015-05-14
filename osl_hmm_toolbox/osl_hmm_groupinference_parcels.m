@@ -60,6 +60,7 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 %                                               (default is 0)
 %                          .filename      - filename to save/load concatenated data from
 %                                           (default <hmmdir>/env_concat.mat)
+%                          .savePCmaps    - save PCA maps [0/1] (default 0)
 %
 %              .hmm      - settings for HMM inference with fields:                
 %                          .nstates    - number of states to infer 
@@ -189,6 +190,8 @@ use_parcels               = ~isempty(parcellation.file);
 try pcadim        = options.concat.pcadim;        catch, pcadim         = 40;       end
 try whiten        = options.concat.whiten;        catch, whiten         = 1;        end
 try normalisation = options.concat.normalisation; catch, normalisation  = 'global'; end
+try savePCmaps    = options.concat.savePCmaps;    catch, savePCmaps     = 0;        end
+
 embed=[];
 try embed.do      = options.concat.embed.do; catch, embed.do  = 0; end
 try embed.centre_freq = options.concat.embed.centre_freq; catch, embed.centre_freq  = 15; end %Hz
@@ -344,7 +347,7 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
         
         
         % Save PCA maps
-        if ~embed.do
+        if ~embed.do && savePCmaps
             [pathstr,filestr] = fileparts(filenames.concat);
             if ~isempty(freqbands)
                 bandstr = ['_fband' num2str(f)];
