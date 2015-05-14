@@ -7,6 +7,9 @@ function Denv = osl_hilbenv(S)
 % S.prefix    - filename prefix for new MEEG object
 % S.freqbands - cell array of frequency bands to use [Hz]
 %                 i.e. {[f1_low f1_high],[f2_low f2_high]}
+% S.logtrans  - apply log transform [0/1] (default 0)
+% S.demean    - remove mean from envelope (default 0)
+%
 % Adam Baker 2014
 
 % Check SPM File Specification:
@@ -25,6 +28,10 @@ catch
 end
 
 S.prefix = ft_getopt(S,'prefix','h');
+
+S.logtrans = ft_getopt(S,'logtrans',0);
+S.demean   = ft_getopt(S,'demean',0);
+
 
 S.winsize = ft_getopt(S,'winsize');
 if isempty(S.winsize)
@@ -68,12 +75,24 @@ for iblk = 1:size(blks,1)
                 dat_blk = bandpass(D(blks(iblk,1):blks(iblk,2),:,trl),S.freqbands{f},D.fsample);
                 env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample));
                 env = permute(env,[1 3 2]);
+                if S.logtrans
+                    env = log10(env);
+                end
+                if S.demean
+                    env = bsxfun(@minus,env,mean(env,2));
+                end
                 Denv(blks(iblk,1):blks(iblk,2),f,:,trl) = env;
             end
         else
             % Compute wideband envelope
             dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl); 
             env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample));
+            if S.logtrans
+                env = log10(env);
+            end
+            if S.demean
+                env = bsxfun(@minus,env,mean(env,2));
+            end
             Denv(blks(iblk,1):blks(iblk,2),:,trl) = env;
         end
         
