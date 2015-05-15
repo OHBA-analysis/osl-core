@@ -27,6 +27,7 @@ function oil = osl_run_oil(oil)
 % Version 1.1
 % 010213
 
+%% Initial admin
 oil = osl_check_oil(oil);
 
 oil.results = struct();
@@ -35,9 +36,7 @@ oil.results.date = date;
 % set logfile up
 oil.results.plotsdir = fullfile(oil.source_recon.dirname, 'plots');
 logFileName = ['log-' datestr(now, 29) '.txt'];
-if ~isdir(oil.source_recon.dirname), 
-    mkdir(oil.source_recon.dirname); 
-end%if
+ROInets.make_directory(oil.source_recon.dirname);
 oil.results.logfile = fullfile(oil.results.plotsdir, logFileName);
 
 % set first level diagnostic report up    
@@ -62,9 +61,8 @@ if oil.to_do(1),
     end%if
        
     for iSubject = oil.source_recon.sessions_to_do
-        [~, reconResultFname] = fileparts(oil.source_recon.results_fnames{iSubject});
         
-        Sout = oil_ica_preproc(oil, reconResultFname);
+        Sout = oil_ica_preproc(oil, oil.source_recon.results_fnames{iSubject});
         
         oil.enveloping.results.source_space_envelopes_results_fnames{iSubject}               = ...
             Sout.fils_nifti;
