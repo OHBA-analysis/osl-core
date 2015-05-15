@@ -69,14 +69,18 @@ function oil = osl_check_oil(oilin)
 try oil.to_do    = oilin.to_do;    oilin = rmfield(oilin,'to_do');     catch, oil.to_do=[1 1 1 1 0 0];                                                                            end;
 try oil.do_plots = oilin.do_plots; oilin = rmfield(oilin,'do_plots');  catch, oil.do_plots=0;                                                                                     end;
 try oil.paradigm = oilin.paradigm; oilin = rmfield(oilin,'paradigm');  catch, error('User must specify the paradigm type: oil.paradigm, It can be either ''rest'' or ''task''.'); end;
+% allow for a name
+if isfield(oilin, 'fname'), oil.fname = oilin.fname; oilin = rmfield(oilin, 'fname'); end
+
+%% Source recon from oat
+oil.source_recon = oilin.source_recon;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  Enveloping Settings 
 
 oil.enveloping=[]; if ~isfield(oilin,'enveloping'); oilin.enveloping = struct; end
 try oil.enveloping.window_length            = oilin.enveloping.window_length;            oilin.enveloping = rmfield(oilin.enveloping,'window_length');            catch, oil.enveloping.window_length             = 1;                                                                                           end;    
-try oil.enveloping.overlap                  = oilin.enveloping.overlap;                  oilin.enveloping = rmfield(oilin.enveloping,'overlap');                  catch, oil.enveloping.overlap                   = 0;                                                                                           end;
-try oil.enveloping.spatial_smoothing        = oilin.enveloping.spatial_smoothing;        oilin.enveloping = rmfield(oilin.enveloping,'spatial_smoothing');        catch, oil.enveloping.spatial_smoothing         = 4;                                                                                           end;
+try oil.enveloping.ss                       = oilin.enveloping.ss;                       oilin.enveloping = rmfield(oilin.enveloping,'ss');        catch, oil.enveloping.ss         = 4;                                                                                           end;
 try oil.enveloping.gridstep                 = oilin.enveloping.gridstep;                 oilin.enveloping = rmfield(oilin.enveloping,'gridstep');                 catch, oil.enveloping.gridstep                  = 8;                                                                                           end;
 try oil.enveloping.timewindow               = oilin.enveloping.timewindow;               oilin.enveloping = rmfield(oilin.enveloping,'timewindow');               catch, oil.enveloping.timewindow                = 'all';                                                                                       end;
 try oil.enveloping.name                     = oilin.enveloping.name;                     oilin.enveloping = rmfield(oilin.enveloping,'name');                     catch, oil.enveloping.name                      = [num2str(oil.enveloping.window_length) 's_win_' num2str(oil.enveloping.gridstep) 'mm_grid']; end;
@@ -84,7 +88,7 @@ try oil.enveloping.name                     = oilin.enveloping.name;            
 %%  Concatenation Settings 
 
 oil.concat_subs=[]; if ~isfield(oilin,'concat_subs'); oilin.concat_subs = struct; end
-try oil.concat_subs.sessions_to_do     = oilin.concat_subs.sessions_to_do;      oilin.concat_subs = rmfield(oilin.concat_subs,'sessions_to_do');      catch, oil.concat_subs.sessions_to_do = oil.source_recon.sessions_to_do;  end;
+try oil.concat_subs.sessions_to_do     = oilin.concat_subs.sessions_to_do;      oilin.concat_subs = rmfield(oilin.concat_subs,'sessions_to_do');      catch, oil.concat_subs.sessions_to_do = oilin.source_recon.sessions_to_do;  end;
 try oil.concat_subs.normalise_subjects = oilin.concat_subs.normalise_subjects;  oilin.concat_subs = rmfield(oilin.concat_subs,'normalise_subjects');  catch, oil.concat_subs.normalise_subjects  = 0;                           end;
 try oil.concat_subs.demean_vox         = oilin.concat_subs.demean_vox;          oilin.concat_subs = rmfield(oilin.concat_subs,'demean_vox');          catch, oil.concat_subs.demean_vox          = 1;                           end;
 try oil.concat_subs.name               = oilin.concat_subs.name;                oilin.concat_subs = rmfield(oilin.concat_subs,'name');                catch, oil.concat_subs.name                = 'all_subs';                  end;
@@ -157,17 +161,6 @@ try oil.ica_first_level.results     = oilin.ica_first_level.results;     oilin.i
 try oil.ica_group_level.results     = oilin.ica_group_level.results;     oilin.ica_group_level = rmfield(oilin.ica_group_level,'results');                          catch, end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% check people haven't set any weird fields
-
-weirdfields = fieldnames(oilin.source_recon);
-if ~isempty(weirdfields)
-    displayedWeirdFields = [];
-    for iprint = 1:numel(weirdfields)
-        displayedWeirdFields = [displayedWeirdFields weirdfields{iprint} ' '];
-    end
-    error([mfilename ':UnrecognisedFields'], ...
-          ['The following oil.source_recon settings were not recognized ', ...
-           'by osl_check_oil: \n ' displayedWeirdFields '\n']);
-end % if ~isempty(weirdfields)
 
 weirdfields = fieldnames(oilin.enveloping);
 if ~isempty(weirdfields)
