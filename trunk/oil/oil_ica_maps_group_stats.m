@@ -51,16 +51,20 @@ copes = copes./repmat(wwt_mean,[1 size(copes,2),size(copes,3)]);
 
 %% Perform GLM
 if demean_designmatrix
-design_matrix=demean(design_matrix,1);
-end
-pinvxtx=pinv(design_matrix'*design_matrix);
-pinvx=pinv(design_matrix);
+    design_matrix=demean(design_matrix,1);
+end%if
+R       = chol(design_matrix' * design_matrix);
+Rinv    = inv(R);
+pinvxtx = Rinv * Rinv';
+pinvx   = pinvxtx * design_matrix';
+
 for i = 1:Nics
     for v = 1:Nvoxels
         y=permute(copes(v,i,:),[3 1 2]);
 
-        [copeout, varcopeout]=glm_fast_for_meg(y,design_matrix,pinvxtx,pinvx,contrast,0);
-        group_copes(v,i,:) = copeout;
+        [copeout, varcopeout] = glm_fast_for_meg(y, design_matrix, pinvxtx, ...
+                                                 pinvx, contrast,0);
+        group_copes(v,i,:)    = copeout;
         group_stdcopes(v,i,:) = sqrt(varcopeout);
     end
 end

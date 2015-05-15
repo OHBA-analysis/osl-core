@@ -16,4 +16,4 @@ end%if
 
 % save
 ROInets.make_directory(fileparts(oil.fname));
-save(oil.fname, 'oil');
+save(oil.fname, 'oil', '-v7.3');

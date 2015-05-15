@@ -16,7 +16,6 @@ function oil = osl_setup_oil(S)
 %
 % Enveloping Parameters - stored in oil.enveloping
 % S.hilbert_downsampling - the downsampling window length is seconds (default 1s).
-% S.overlap              - overlap between down-sampling windows as fraction (default 0).
 % S.spatial_downsampling - the spatial resampling after enveloping (default 8mm).
 % S.spatial_smoothing    - FWHM of Gaussian Kernal for spatial smoothing (default 4mm).
 % S.timewindow           - the subset time window for the enveloping (to minimise edge effects).
@@ -31,7 +30,8 @@ function oil = osl_setup_oil(S)
 % S.temp_or_spat - select either 'temporal' or 'spatial' ICA. (default is temporal).
 % S.icasso_its - number of ICASSO iterations (default is 0).
 %
-% First Level ICA Statistics - stored in oil.ica_first_level
+% First Level ICA Statistics - stored in oil.ica_first_level. The design
+% matrix and contrasts are only relevant here for task data.
 % S.design_matrix_summary - this is a parsimonious description of the design matrix.
 % S.contrast - E.g. Two different contrasts, for a design matrix with 3 regressors: S.contrast{1}=[1 0 0]'; S.contrast{2}=[0 1 -1]'; 
 %
@@ -43,7 +43,7 @@ function oil = osl_setup_oil(S)
 
 %%%%%%%%%%%%%%%%%%%
 % General Settings
-try oil.name=[S.oil_name '.oil']; catch, oil.name=[S.spm_files{1} '.oil']; end
+try oil.fname=S.oil_name; catch, oil.fname=[S.spm_files{1} '.oil']; end
 try oil.to_do=S.to_do; catch, oil.to_do=[1 1 1 1 0 0]; end
 try oil.paradigm=S.paradigm; catch, error('User must specify the paradigm type: S.paradigm, It can be either rest or task.'); end
 
@@ -57,13 +57,12 @@ oil.enveloping=[];
 try oil.enveloping.window_length=S.hilbert_downsampling; catch, oil.enveloping.window_length=1;end;    
 try oil.enveloping.gridstep=S.spatial_downsampling; catch, oil.enveloping.gridstep=8;end;
 try oil.enveloping.ss=S.spatial_smoothing; catch, oil.enveloping.ss=4;end;
-try oil.enveloping.overlap=S.window_overlap; catch, oil.enveloping.overlap=0;end;
 try oil.enveloping.timewindow=S.envelope_timewindow; catch, oil.enveloping.timewindow='all';end;
 
 %%%%%%%%%%%%%%%%%%%
 % Concatenation Settings
 oil.concat_subs=[];
-try oil.concat_subs.subs2use=S.ica_subs2use; catch,oil.concat_subs.subs2use = 1:length(oil.source_recon.D);end;
+try oil.concat_subs.sessions_to_do=S.ica_subs2use; catch,oil.concat_subs.sessions_to_do = 1:length(oil.source_recon.D_continuous);end;
 try oil.concat_subs.normalise_subjects=S.normalise_subjects; catch,oil.concat_subs.normalise_subjects=0;end;
 
 %%%%%%%%%%%%%%%%%%%
@@ -82,8 +81,10 @@ try oil.ica.normalise_vox=S.normalise_vox; catch, oil.ica.normalise_vox=0; end;
 % First Level Stats Settings
 oil.ica_first_level=[];
 % required settings:
-try oil.ica_first_level.design_matrix_summary=S.design_matrix_summary; catch, error('S.design_matrix_summary not specified'); end;
-try oil.ica_first_level.contrast=S.contrast; catch, error('S.contrast not specified'); end;
+if strcmp(oil.paradigm,'task')
+    try oil.ica_first_level.design_matrix_summary=S.design_matrix_summary; catch, error('S.design_matrix_summary not specified'); end;
+    try oil.ica_first_level.contrast=S.contrast; catch, error('S.contrast not specified'); end;
+end
 oil.ica_first_level.name='ica_first_level';
 try, oil.ica_first_level.time_range=S.ica_first_level_time_range; catch, oil.ica_first_level.time_range=oil.source_recon.time_range; end;
 try, oil.ica_first_level.use_robust_glm=S.use_robust_glm; catch, oil.ica_first_level.use_robust_glm=0; end; % do robust GLM (uses bisquare via Matlab robustfit fn)
@@ -95,4 +96,5 @@ try, oil.ica_first_level.cope_type=S.cope_type; catch, oil.ica_first_level.cope_
 oil.ica_group_level=[];
 try, oil.ica_group_level.group_design_matrix=S.group_design_matrix; catch, oil.ica_group_level.group_design_matrix=ones(1,length(oil.source_recon.D)); end;
 try, oil.ica_group_level.group_contrast=S.group_contrast; catch, oil.ica_group_level.group_contrast{1}=[1]; end;
+try, oil.ica_group_level.comps2use=S.group_comps2use; catch, oil.ica_group_level.comps2use = 1:oil.ica.num_ics; end;
 

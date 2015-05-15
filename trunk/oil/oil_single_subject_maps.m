@@ -64,18 +64,11 @@ if isSpatialBasisSet || isSpatialICA, % need to calculate pseudo tcs
     % load concatenated data (nonorm option appears to be removed)
     % Henry's dual-reg approach suggests using weights-normalised data here
 
-%     if oil.ica_first_level.use_nonorm_data
-%         ica_concat_fname = fullfile(oil.source_recon.dirname, ...
-%                                     oil.enveloping.name, ...
-%                                     oil.concat_subs.name, ...
-%                                     oil.concat_subs.results.concat_file_nonorm);
-%     else
         ica_concat_fname = fullfile(oil.source_recon.dirname, ...
                                     oil.enveloping.name, ...
                                     oil.concat_subs.name, ...
                                     oil.concat_subs.results.concat_file);
-%     end%if
-    
+
     try % assume nifti
         concat_data = nii_quickread(ica_concat_fname, ...
                                     oil.enveloping.gridstep);
@@ -96,8 +89,10 @@ if isSpatialBasisSet || isSpatialICA, % need to calculate pseudo tcs
     oil.ica.num_ics = Nics;
     
     x       = demean(spat_bas,1);
-    pinvxtx = pinv(x' * x);
-    pinvx   = pinv(x);
+    R       = chol(x' * x);
+    Rinv    = inv(R);
+    pinvxtx = Rinv * Rinv';
+    pinvx   = pinvxtx * x';
     
     tc_est  = zeros(Nics,Nsamples); % declare memory
     

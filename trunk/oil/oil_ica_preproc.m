@@ -1,17 +1,22 @@
-%% osl_ica_preproc.m
+function S_out = oil_ica_preproc(oil, reconResultsFname)
+%osl_ica_preproc prepares data for ICA by enveloping and downsampling
 %
-%  S_out=osl_ica_preproc(OIL,RECON_RESULTS_FNAME)
+%  S_out = osl_ica_preproc(OIL,RECON_RESULTS_FNAME)
+%
+%  S_out = osl_ica_preproc(OIL, D)
 %  
 %  Input contains:
-%     REQUIRED: OIL.SOURCE_RECON, containing beamforming results
-%               OIL.ENVELOPING,   containing parameters for this function
-%               RECON_RESULTS_FNAME source recon results file name for this session
+%     REQUIRED: OIL.SOURCE_RECON,   containing beamforming results
+%               OIL.ENVELOPING,     containing parameters for this function
+%               RECON_RESULTS_FNAME source recon results file name for this
+%                                   session, from a successful oat.
+%          or,  D                   a source-reconstructed SPM MEEG object       
 %     
 %     OIL.ENVELOPING contains:
 %               window_length            : the window over which the envelope is downsampled (default 1s).   
 %               timewindow               : subset of trial window to remove edge effects (default is 'all').
 %               ss                       : spatial smoothing of down-sampled envelopes by gaussian kernel (FWHM) (default is 4mm).               
-%               ds                       : spatial down-sampling of data (default 8mm).
+%               gridstep                 : spatial down-sampling of data (default 8mm).
 %
 %  Output structure S_out contains:      
 %               fils_nifti           : name of the nifti file output 
@@ -20,30 +25,46 @@
 
 %
 %  HL 060213
-%  Version 1.2
-
-function S_out = oil_ica_preproc(oil, reconResultsFname)
+%  GC 15-05-2015
 
 %% Initialise Variables
 
-if isfield(oil.enveloping,'window_length'), window_length =  S_in.window_length; else warning('window_length not specified, Set to 1s by default');   window_length = 1;     end;
-if isfield(oil.enveloping,'ss'),            ss            =  S_in.ss;            else warning('ss not specified, Set to 4mm by default');             ss            = 4;     end;
-if isfield(oil.enveloping,'ds'),            ds            =  S_in.ds;            else warning('ds not specified, Set to 8mm by default');             ds            = 8;     end;
-if isfield(oil.enveloping,'timewindow'),    timewindow    =  S_in.timewindow;    else warning('timewindow not specified, Using whole trial window,'); timewindow    = 'all'; end;
+if isfield(oil.enveloping,'window_length'), window_length =  oil.enveloping.window_length; else warning('window_length not specified, Set to 1s by default');   window_length = 1;     end;
+if isfield(oil.enveloping,'ss'),            ss            =  oil.enveloping.ss;            else warning('ss not specified, Set to 4mm by default');             ss            = 4;     end;
+if isfield(oil.enveloping,'gridstep'),      ds            =  oil.enveloping.gridstep;      else warning('ds not specified, Set to 8mm by default');             ds            = 8;     end;
+if isfield(oil.enveloping,'timewindow'),    timewindow    =  oil.enveloping.timewindow;    else warning('timewindow not specified, Using whole trial window,'); timewindow    = 'all'; end;
 
 saveDir = fullfile(oil.source_recon.dirname, oil.enveloping.name);
 ROInets.make_directory(saveDir);
 
 %% Load Beamformed Data
-sourceReconResults = oat_load_results(oil,reconResultsFname);
-D = sourceReconResults.BF.data.D;
+try % passed in as meeg
+    D = spm_eeg_load(reconResultsFname);
+    [~, saveNameStem] = fileparts(D.fname);
+catch ME 
+    if strfind(ME.message, 'doesn''t contain SPM M/EEG data'),
+        % passed in as results structure from an oat
+        [~, saveNameStem]  = fileparts(reconResultsFname);
+        sourceReconResults = oat_load_results(oil, saveNameStem);
+        D                  = sourceReconResults.BF.data.D;
+    else
+        % another error
+        rethrow(ME);
+    end%if
+end%if
+
+montageCheck = D.montage('getmontage', 2);
+assert(any(strfind(montageCheck.name, 'with weights normalisation')),        ...
+       [mfilename ':UnexpectedMontage'],                                     ...
+       ['%s: Expected source-space data to have two montages, one without ', ...
+        'and one with weights normalisation. \n'], mfilename);
 
 %% Spit out variance maps as a sanity check
 varianceDir  = fullfile(saveDir, 'variance-maps', filesep);
-varianceFile = fullfile(varianceDir, [reconResultsFname '_noise_corrected_variance_map']);
+varianceFile = fullfile(varianceDir, [saveNameStem '_noise_corrected_variance_map']);
 ROInets.make_directory(varianceDir);
 nii_quicksave(osl_source_variance(D.montage('switch',2)), ... % second montage is weights-normalised
-              varianceFile, sourceReconResults.gridstep, 2);
+              varianceFile, oil.source_recon.gridstep, 2);
 
 %% Enveloping 
 % select time points to use
@@ -64,18 +85,24 @@ tSamples = ROInets.setdiff_pos_int(                                       ...
     all(badsamples(D,':',':',':')));
 
 % create a cleaned temporary object
-Dtmp = copy(D, tempname);
-Dtmp(:,:,:) = D(:,tSamples,:);
+Dsensor     = D.montage('switch');
+Dtmp        = clone(Dsensor, tempname,  ...
+                    [nchannels(Dsensor), length(tSamples), D.ntrials], 0);
+cleanDtmp   = onCleanup(@() delete(Dtmp));
+Dtmp(:,:,:) = Dsensor(:,tSamples,:);
 
 % do the enveloping
 fprintf('Converting to time domain, enveloping and down-sampling\n')
-Dtmp = Dtmp.montage('switch', 2);
+Dtmp      = Dtmp.montage('switch', 2);
 Dh_norm   = osl_hilbenv(struct('D', Dtmp, 'winsize', window_length, ...
                                'prefix', 'h'));
 Dh_nonorm = osl_hilbenv(struct('D', Dtmp.montage('switch', 1), ...
                                'winsize', window_length,    ...
                                'prefix', 'hnn'));
-Dtmp.delete;
+
+cleanDh_norm   = onCleanup(@() delete(Dh_norm));
+cleanDh_nonorm = onCleanup(@() delete(Dh_nonorm));
+delete(cleanDtmp);
 
 %% Convert to MNI nii space and save nii
 try    
@@ -83,26 +110,28 @@ try
             'Saving Downsampled Envelopes as .nii files and applying ', ...
             ss, 'mm spatial smoothing and ', ds, 'mm spatial resampling.');
         
-    fnamec   = fullfile(saveDir, [reconResultsFname '_winavHE_delta_' ...
+    fnamec   = fullfile(saveDir, [saveNameStem '_winavHE_delta_' ...
                                   num2str(window_length) 's']);
-    fnamecnn = fullfile(saveDir, [reconResultsFname '_NoWeightsNorm_winavHE_delta_' ...
+    fnamecnn = fullfile(saveDir, [saveNameStem '_NoWeightsNorm_winavHE_delta_' ...
                                   num2str(window_length) 's']);
                               
-    nii_quicksave(unwrap_trials(Dh_norm),   fnamec,   sourceReconResults.gridstep);
-    nii_quicksave(unwrap_trials(Dh_nonorm), fnamecnn, sourceReconResults.gridstep);
+    nii_quicksave(unwrap_trials(Dh_norm),   fnamec,   oil.source_recon.gridstep);
+    nii_quicksave(unwrap_trials(Dh_nonorm), fnamecnn, oil.source_recon.gridstep);
 
-catch
+catch ME
     % there's a limit on the amount of data that a nifti will take
+    fprintf('Error: %s\n Message: %s\n\nProgram flow maintained. \n', ...
+            ME.identifier, ME.message);
     fprintf('\n%s\n', ...
             ['Unable to save as .nii. ', ...
              'Saving as .mat instead. ', ...
              'No spatial smoothing or spatial resampling will be applied.']);
     fnamec = fullfile(saveDir, ...
-                      [reconResultsFname '_winavHE_delta_' ...
+                      [saveNameStem '_winavHE_delta_' ...
                        num2str(window_length) 's' '_ss' num2str(ss) ...
                        'mm' '_ds' num2str(ds) 'mm']);
     fnamec = fullfile(saveDir, ...
-                      [reconResultsFname '_NoWeightsNorm_winavHE_delta_' ...
+                      [saveNameStem '_NoWeightsNorm_winavHE_delta_' ...
                        num2str(window_length) 's' '_ss' num2str(ss) ...
                        'mm' '_ds' num2str(ds) 'mm']);
     
@@ -115,11 +144,11 @@ catch
     save(fnamecnn,'ica_course_nonorm');
     S_out.fils_nifti_nonorm = fnamec;
     return
-end
+end%try
 
 %% spatial smoothing and downsample
-Sout.fils.nifti        = smooth_and_downsample(fnamec,   sourceReconResults.gridstep, ss, ds);
-Sout.fils.nifti_nonorm = smooth_and_downsample(fnamecnn, sourceReconResults.gridstep, ss, ds);
+Sout.fils.nifti        = smooth_and_downsample(fnamec,   oil.source_recon.gridstep, ss, ds);
+Sout.fils.nifti_nonorm = smooth_and_downsample(fnamecnn, oil.source_recon.gridstep, ss, ds);
     
 end%oil_ica_preproc
 
@@ -176,7 +205,7 @@ call_fsl_wrapper(['flirt -in ' fname2 ' -applyxfm -init ' ...
                   getenv('FSLDIR') '/etc/flirtsch/ident.mat -out ' fname3 ...
                   ' -paddingsize 0.0 -interp trilinear -ref ' dsBrain]);      
 % mask to reduce edge blurring
-call_fsl_wrapper(['fslmaths ' fname3 ' -mas ' dsBrainMask fname3]);             
+call_fsl_wrapper(['fslmaths ' fname3 ' -mas ' dsBrainMask ' ' fname3]);             
 
 [~, nam, ext] = fileparts(fname3);
 newName       = [nam ext];
