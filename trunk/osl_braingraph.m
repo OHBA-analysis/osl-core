@@ -25,7 +25,7 @@ prettiness = 0.5; % quite pretty
 
 brain_shading = repmat(0.5,1,3); brain_alpha = 0.1;
 
-mesh = export(gifti([OSLDIR '/spm8/canonical/cortex_5124.surf.gii']), 'spm');
+mesh = export(gifti([OSLDIR '/spm12/canonical/cortex_5124.surf.gii']), 'spm');
 mesh = struct('faces',mesh.face,'vertices',mesh.vert);
 mesh = reducepatch(mesh,prettiness);
 
