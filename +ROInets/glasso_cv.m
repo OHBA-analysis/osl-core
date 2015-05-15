@@ -185,7 +185,7 @@ function nEdges = num_edges(P, edgeThresh)
 
 if nargin < 2 || isempty(edgeThresh),
     % threshold defining a zero in precision matrix
-    edgeThresh = eps;
+    edgeThresh = 1e-3; % if tolerance of GLASSO algorithm is 1e-4, this seems like a sensible threshold. See Fan et al., 2009
 end
 uniqueInd = triu(true(size(P)), 1);
 nEdges    = sum(abs(P(uniqueInd)) > edgeThresh);
@@ -358,7 +358,7 @@ for iFold = 1:K
     Y_train = Y;
     Y_train(:, ((iFold-1) * k + 1) : (iFold * k)) = [];
     
-    S_train = cov(Y_train', 1); % noralise by N not N-1.
+    S_train = cov(Y_train', 1); % normalise by N not N-1.
     S_test  = cov(Y_test',  1);
     
     P = ROInets.dp_glasso(S_train, [], rhoPath, [], [], verbose);
