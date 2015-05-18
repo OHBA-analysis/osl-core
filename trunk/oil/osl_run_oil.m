@@ -61,13 +61,9 @@ if oil.to_do(1),
     end%if
        
     for iSubject = oil.source_recon.sessions_to_do
-        
-        Sout = oil_ica_preproc(oil, oil.source_recon.results_fnames{iSubject});
-        
-        oil.enveloping.results.source_space_envelopes_results_fnames{iSubject}               = ...
-            Sout.fils_nifti;
-        oil.enveloping.results.source_space_envelopes_NoWeightsNorm_results_fnames{iSubject} = ...
-            Sout.fils_nifti_nonorm;
+        [oil.enveloping.results.source_space_envelopes_results_fnames{iSubject},               ...
+         oil.enveloping.results.source_space_envelopes_NoWeightsNorm_results_fnames{iSubject}] ...
+             = oil_ica_preproc(oil, oil.source_recon.results_fnames{iSubject});
     end%for
     
     % save OIL to disk
