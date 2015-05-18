@@ -1,9 +1,9 @@
-function S_out = oil_ica_preproc(oil, reconResultsFname)
+function [niftiNorm, niftiNoNorm] = oil_ica_preproc(oil, reconResultsFname)
 %osl_ica_preproc prepares data for ICA by enveloping and downsampling
 %
-%  S_out = osl_ica_preproc(OIL,RECON_RESULTS_FNAME)
+%  [normResult, noNormResult] = osl_ica_preproc(OIL,RECON_RESULTS_FNAME)
 %
-%  S_out = osl_ica_preproc(OIL, D)
+%  [normResult, noNormResult] = osl_ica_preproc(OIL, D)
 %  
 %  Input contains:
 %     REQUIRED: OIL.SOURCE_RECON,   containing beamforming results
@@ -18,9 +18,9 @@ function S_out = oil_ica_preproc(oil, reconResultsFname)
 %               ss                       : spatial smoothing of down-sampled envelopes by gaussian kernel (FWHM) (default is 4mm).               
 %               gridstep                 : spatial down-sampling of data (default 8mm).
 %
-%  Output structure S_out contains:      
-%               fils_nifti           : name of the nifti file output 
-%               fils_nifti_nonorm    : name of the nifti file output for
+%  Output contains:      
+%               normResult           : name of the nifti file output 
+%               noNormResult         : name of the nifti file output for
 %                                      the un-normalised data.
 
 %
@@ -53,6 +53,8 @@ catch ME
     end%if
 end%if
 
+% we're expecting a particular arrangement of montages, otherwise the code
+% will break
 montageCheck = D.montage('getmontage', 2);
 assert(any(strfind(montageCheck.name, 'with weights normalisation')),        ...
        [mfilename ':UnexpectedMontage'],                                     ...
@@ -110,13 +112,13 @@ try
             'Saving Downsampled Envelopes as .nii files and applying ', ...
             ss, 'mm spatial smoothing and ', ds, 'mm spatial resampling.');
         
-    fnamec   = fullfile(saveDir, [saveNameStem '_winavHE_delta_' ...
+    niftiNorm   = fullfile(saveDir, [saveNameStem '_winavHE_delta_' ...
                                   num2str(window_length) 's']);
-    fnamecnn = fullfile(saveDir, [saveNameStem '_NoWeightsNorm_winavHE_delta_' ...
+    niftiNoNorm = fullfile(saveDir, [saveNameStem '_NoWeightsNorm_winavHE_delta_' ...
                                   num2str(window_length) 's']);
                               
-    nii_quicksave(unwrap_trials(Dh_norm),   fnamec,   oil.source_recon.gridstep);
-    nii_quicksave(unwrap_trials(Dh_nonorm), fnamecnn, oil.source_recon.gridstep);
+    nii_quicksave(unwrap_trials(Dh_norm),   niftiNorm,   oil.source_recon.gridstep);
+    nii_quicksave(unwrap_trials(Dh_nonorm), niftiNoNorm, oil.source_recon.gridstep);
 
 catch ME
     % there's a limit on the amount of data that a nifti will take
@@ -126,11 +128,11 @@ catch ME
             ['Unable to save as .nii. ', ...
              'Saving as .mat instead. ', ...
              'No spatial smoothing or spatial resampling will be applied.']);
-    fnamec = fullfile(saveDir, ...
+    niftiNorm   = fullfile(saveDir, ...
                       [saveNameStem '_winavHE_delta_' ...
                        num2str(window_length) 's' '_ss' num2str(ss) ...
                        'mm' '_ds' num2str(ds) 'mm']);
-    fnamec = fullfile(saveDir, ...
+    niftiNoNorm = fullfile(saveDir, ...
                       [saveNameStem '_NoWeightsNorm_winavHE_delta_' ...
                        num2str(window_length) 's' '_ss' num2str(ss) ...
                        'mm' '_ds' num2str(ds) 'mm']);
@@ -138,17 +140,17 @@ catch ME
     ica_course        = unwrap_trials(Dh_norm);
     ica_course_nonorm = unwrap_trials(Dh_nonorm);
     
-    save(fnamec,'ica_course');
-    S_out.fils_nifti = fnamec;
+    save(niftiNorm,'ica_course');
+    niftiNorm = fnamec;
     
-    save(fnamecnn,'ica_course_nonorm');
-    S_out.fils_nifti_nonorm = fnamec;
+    save(niftiNoNorm,'ica_course_nonorm');
+    niftiNoNorm = fnamecnn;
     return
 end%try
 
 %% spatial smoothing and downsample
-Sout.fils.nifti        = smooth_and_downsample(fnamec,   oil.source_recon.gridstep, ss, ds);
-Sout.fils.nifti_nonorm = smooth_and_downsample(fnamecnn, oil.source_recon.gridstep, ss, ds);
+niftiNorm   = smooth_and_downsample(niftiNorm,   oil.source_recon.gridstep, ss, ds);
+niftiNoNorm = smooth_and_downsample(niftiNoNorm, oil.source_recon.gridstep, ss, ds);
     
 end%oil_ica_preproc
 
