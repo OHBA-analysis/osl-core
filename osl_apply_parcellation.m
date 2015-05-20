@@ -87,7 +87,7 @@ end
 
 
 if D.ntrials == 1 % can just pass in the MEEG object
-    voxeldata = D;
+    voxeldata = D(:,:,:);
     good_samples = ~all(badsamples(D,':',':',':'));
 else % reshape the data first (or fix get_corrected_node_tcs to work with trialwise MEEG data)
     voxeldata = reshape(D(:,:,:),[D.nchannels,D.nsamples*D.ntrials]);
