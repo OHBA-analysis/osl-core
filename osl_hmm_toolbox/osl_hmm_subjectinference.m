@@ -63,7 +63,8 @@ end
 % Infer HMM:
 options.Hz      = D.fsample;
 options.order   = 0;
-options.initrep = 5;
+options.initrep = 1;
+options.zeromean = 1;
 %options.initcyc = 10;
 hmm = osl_hmm_infer(hmmdata,options);
 hmm.MixingMatrix = MixingMatrix;
