@@ -129,7 +129,7 @@ end
 for n = 1:length(NodeValues)
   x = abs(NodeValues(n))*X; y = abs(NodeValues(n))*Y; z = abs(NodeValues(n))*Z;
   if isempty(spherecols)
-    if NodeValues(n) < 0, spherecolour = [0 1 1]; else spherecolour = [30 144 255]/255; end
+    if NodeValues(n) < 0, spherecolour = [0 1 1]; else spherecolour = [1 0 1]; end
   else spherecolour = spherecols(n,:);
   end
   surf(x+mnipos(n,1),y+mnipos(n,2),z+mnipos(n,3),'edgecolor','none','facecolor',spherecolour,'facealpha',0.2);
