@@ -1,55 +1,73 @@
-%% osl_call_maxfilter.m
-
+function fif_out = osl_call_maxfilter(S)
 % Calls Elekta MaxFilter to apply signal space separation (SSS) to input
 % .fif file.
 %
-% Syntax: fif_name_sss = osl_call_maxfilter(S)
+% Syntax: fif_out = osl_call_maxfilter(S)
+%
 % S needs to contain:
-%   -  fif: full name of input fif file (inc. path if not in present
-%   working directory but not .fif file extention. e.g. S.fif =
-%   '/home/data/mydata'.
-%   -  fif_out (optional): manually specify name of output file.
-%   -  logfile (optional): set to 1 to produce log file of SSS output. Log file name
-%   is fif_out_log.txt. Set to 0 for no log file (default).
-%   -  downsample_factor (optional): integer number >1. Suggested value of 4 for
-%   1000KHz data. If S.downsample_factor is not set then no downsampling
-%   occurs.
-%   -  spmfile (optional): Include the name of corresponding SPM format data. Maxfilter
-%   will use bad channel information contained in SPM object to ignore bad
-%   channels.
-%   -  nosss (optional): set to 1 to call Maxfilter without applying SSS.
-%   -  maxfilt_dir (recommended): explicity tell OMT where to find
-%      MaxFilter. Defaults to S.maxfilt_dir = '/neuro/bin/util'.
-%   - st (optional): set to st.do to 1 to use temporal_extension
-%     or 0 (default) to not use it. Must be combined with SSS.
-%   - movement_compensation (optional): set to 1 to use cHPI movement
-%     compensation or 0 (default) to not use it. Must be combined with SSS.
-%   - movecomp_call (optional, default = ''): string specifying a manual movement compensation call.
-%     Setting this field overrides movement_compensation. Must be combined
-%     with SSS.
-%   - autobad_off (optional): set to 1 to switch off MaxFilter's automated
-%     badchannel detection. Default = 0.
-%   - trans_ref_file (optional, default = ''): allow transformation to the specified
-%     reference .fif file using the -trans maxfilter option
-%   - headpos (optional, default = 0): set to 1 to output head position information
-%     from the recording to a text file.
-%   - bad_epochs (optional): used in -skip call to maxfilter. Should be a
-%     matrix of dimensions num_bad_epochs x 2, where each row is the start 
-%     and stop time of the epoch to skip.'),
-% outputs
-%   - fif_name_sss: the name of the output file·
+%   -   fif: full name of input fif file (inc. path if not in present
+%       working directory, with or without .fif file extention.
+%
+%   -   fif_out (optional): manually specify name of output file.
+%
+%   -   logfile (optional): set to 1 to produce log file of SSS output. Log 
+%       file name is fif_out_log.txt. Set to 0 for no log file (default).
+%
+%   -   downsample_factor (optional): integer number >1. Suggested value of 
+%       4 for 1000KHz data. If S.downsample_factor is not set then no 
+%       downsampling occurs.
+%
+%   -   spmfile (optional): Include the name of corresponding SPM format 
+%       data. Maxfilter will use bad channel information contained in SPM 
+%       object to ignore bad channels.
+%
+%   -   nosss (optional): set to 1 to call Maxfilter without applying SSS.
+%
+%   -   maxfilt_dir (recommended): explicity tell OMT where to find
+%       MaxFilter. Defaults to S.maxfilt_dir = '/neuro/bin/util'.
+%
+%   -   st (optional): set to st.do to 1 to use temporal_extension or 0 
+%       (default) to not use it. Must be combined with SSS.
+%
+%   -   movement_compensation (optional): set to 1 to use cHPI movement
+%       compensation or 0 (default) to not use it. Must be combined with SSS.
+%
+%   -   movecomp_call (optional, default = ''): string specifying a manual 
+%       movement compensation call. Setting this field overrides 
+%       movement_compensation. Must be combined with SSS.
+%
+%   -   autobad_off (optional): set to 1 to switch off MaxFilter's automated
+%       badchannel detection. Default = 0.
+%
+%   -   trans_ref_file (optional, default = ''): allow transformation to the 
+%       specified reference .fif file using the -trans maxfilter option
+%
+%   -   headpos (optional, default = 0): set to 1 to output head position 
+%       information from the recording to a text file.
+%
+%   -   bad_epochs (optional): used in -skip call to maxfilter. Should be a
+%       matrix of dimensions num_bad_epochs x 2, where each row is the start 
+%       and stop time of the epoch to skip.'), outputs
+%
+% OUTPUTS:
+%   - fif_out: the name of the output file.
+%
 % HL 061011
 
-function fif_out=osl_call_maxfilter(S)
 
 if ~isfield(S, 'fif')
     error('No .fif file specified.')
+else
+    [pathstr,filestr,~] = fileparts(S.fif);
+    S.fif = fullfile(pathstr,filestr);
 end
+
 if ~isfield(S,'fif_out')
     fif_out=[S.fif '_sss'];
 else
     fif_out=S.fif_out;
 end
+
 if isfield(S,'downsample_factor')
     if S.downsample_factor==1
         ds_call='';
@@ -59,6 +77,7 @@ if isfield(S,'downsample_factor')
 else
     ds_call='';
 end
+
 if isfield(S,'spmfile')
     D=spm_eeg_load(S.spmfile);
     badchans=[]; chanind=D.badchannels;
