@@ -37,6 +37,8 @@ function [nodeData, voxelWeightings] = get_corrected_node_tcs(voxelData,    ...
 %     note that the mean timecourse suffers issues relating to sign
 %     ambiguities, and so is not currently an option.
 %
+% NODEDATA = GET_CORRECTED_NODE_TCS(D, ...) reads in data from an SPM MEEG object D. 
+%
 % NODEDATA = GET_CORRECTED_NODE_TCS(VOXELDATA, SPATIALBASIS, PROTOCOL, METHOD)
 %   it is also possible to use a spatial basis set (e.g. from group ICA) to
 %   infer parcel time-courses. Each spatial map (held in columns) is a
@@ -95,24 +97,24 @@ function [nodeData, voxelWeightings] = get_corrected_node_tcs(voxelData,    ...
 % include quick hack to allow saved matrices to be passed in, to save on
 % memory
 if ischar(voxelData) && strcmp(voxelData(end-3:end), '.mat') && exist(voxelData, 'file'), 
-    tmp = load(voxelData);
-    ff = fieldnames(tmp);
+    tmp       = load(voxelData);
+    ff        = fieldnames(tmp);
     voxelData = tmp.(ff{1});
     clear tmp;
+    goodSamples = true(1,ROInets.cols(voxelData));
+
 elseif ischar(voxelData),
     error([mfilename ':FileInputError'],               ...
           ['Did not recognise the filename input. \n', ...
            '  Ensure the file exists and has a .mat extension. ']);
-else
-    % carry on
-end%if
 
-
-if isa(voxelData,'meeg')
+elseif isa(voxelData,'meeg')
     goodSamples = find(~all(badsamples(voxelData,':',':',':')));
+
 else
-    goodSamples = find(true(1,ROInets.cols(voxelData)));
-end
+    % data passed in
+    goodSamples = true(1,ROInets.cols(voxelData));
+end%if
 
 nParcels = ROInets.cols(spatialBasis);
 
