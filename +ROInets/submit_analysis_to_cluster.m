@@ -44,22 +44,15 @@ ROInets.make_directory(Settings.outputDirectory);
 settingsFileName = fullfile(Settings.outputDirectory, 'ROInetworks_settings.mat');
 save(settingsFileName, 'Settings');
 
-% load parcellation
-parcelFile = Settings.spatialBasisSet;
-if ~isempty(parcelFile) && ischar(parcelFile), 
-    nii_quickread(parcelFile, Settings.gridStep);
-else
-    error([mfilename ':ParcelReadFail'], ...
-          'Failed to read parcel file %s. \n', ...
-          parcelFile);
-end%if
 
 %% Generate matlab script for each session
 fprintf('Generating matlab scripts. \n');
 for iSession = nSessions:-1:1,
+    fprintf('Generating scripts to submit session %d out of %d. \n', nSessions-iSession+1, nSessions);
+
     m_scriptName{iSession} = fullfile(Settings.outputDirectory,                                ...
-                                    sprintf('matlab_submit_individual_network_session_%d.m', ...
-                                            iSession));
+                                      sprintf('matlab_submit_individual_network_session_%d.m', ...
+                                              iSession));
     fid = fopen(m_scriptName{iSession}, 'w');
     if -1 == fid, 
         error([mfilename ':fileWritingFailed'], ...
@@ -72,13 +65,13 @@ for iSession = nSessions:-1:1,
     end%if
     
     % load D object to be analysed
-    D = spm_eeg_load(DobjNames{iSession});
-    Dfilt = Dfilt.montage('switch', 1);
+    Dfilt = spm_eeg_load(DobjNames{iSession});
+    Dfilt = Dfilt.montage('switch', 2);
     Dfilt.save;
     
     % set a save file name
     sessionName = strrep(Dfilt.fname, '.mat', '_ROInets');
-    resultsName = fullfile(outDir, sessionName);
+    resultsName = fullfile(Settings.outputDirectory, sessionName);
     
     % make file header
     fprintf(fid, '%% matlab_submit_individual_network_session_%d.m\n', iSession);
@@ -107,7 +100,7 @@ for iSession = nSessions:-1:1,
     % Run analysis
     fprintf(fid, '\n%% Run the analysis\n');
     fprintf(fid, 'fprintf(''Running run_individual_correlation_analysis \\n'');\n');
-    fprintf(fid, 'mats = ROInets.run_individual_network_analysis_osl(Dfilt, Settings, ''%s'');\n', resultsName);
+    fprintf(fid, 'mats = ROInets.run_individual_network_analysis(''%s'', Settings, ''%s'');\n', Dfilt.fnamedat, resultsName);
     fprintf(fid, 'fprintf(''All done. \\n'');\n');
     % close matlab session
     fprintf(fid, '\nexit\n\n');
@@ -118,7 +111,9 @@ end%loop over sessions
 
 %% Generate submit script for each session
 fprintf('Generating individual submit scripts. \n');
-for iSession = Settings.nSessions:-1:1,
+for iSession = nSessions:-1:1,
+    fprintf('Generating scripts to submit session %d out of %d. \n', nSessions-iSession+1, nSessions);
+
     bash_scriptName{iSession} = fullfile(Settings.outputDirectory,                                ...
                                     sprintf('shell_submit_individual_network_session_%d', ...
                                             iSession));
@@ -180,7 +175,7 @@ fprintf(fid, '# Made on %s\n', datestr(now));
 fprintf(fid, '\n\n');
 
 % submit commands
-for iSession = 1:Settings.nSessions,
+for iSession = 1:nSessions,
     jobName = sprintf('ROInetworks-sub%d', iSession);
     logName = fullfile(logfileDir, sprintf('fsl_networks_sub_log_sess_%d', iSession));
     % make file executable
@@ -195,7 +190,7 @@ clear C
 % run the file
 fprintf('Submitting ..... \n');
 GC_checked_system(sprintf('chmod a+x %s', submitFileName));
-GC_checked_system(sprintf('source %s',    submitFileName))
+% GC_checked_system(sprintf('source %s',    submitFileName))
 
 fprintf('   Done. \n');
 
