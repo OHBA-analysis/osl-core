@@ -32,6 +32,7 @@ for iSession = Settings.nSessions:-1:1,
     for iFreq = Settings.nFreqBands:-1:1,
         correlationMats{iFreq}.correlation(:,:,iSession)             = mats{iSession}{iFreq}.correlation;
         correlationMats{iFreq}.envCorrelation(:,:,iSession)          = mats{iSession}{iFreq}.envCorrelation;
+        correlationMats{iFreq}.envPrecision(:,:,iSession)            = mats{iSession}{iFreq}.envPrecision
         correlationMats{iFreq}.envPartialCorrelation(:,:,iSession)   = mats{iSession}{iFreq}.envPartialCorrelation;
         correlationMats{iFreq}.envCorrelation_z(:,:,iSession)        = mats{iSession}{iFreq}.env_z;
         correlationMats{iFreq}.envPartialCorrelation_z(:,:,iSession) = mats{iSession}{iFreq}.env_z_partial;
@@ -44,6 +45,7 @@ for iSession = Settings.nSessions:-1:1,
         correlationMats{iFreq}.nEnvSamples(iSession)                 = mats{iSession}{iFreq}.nSamples;
         if Settings.Regularize.do,
             correlationMats{iFreq}.envPartialCorrelationRegularized(:,:,iSession)   = mats{iSession}{iFreq}.envPartialCorrelationRegularized;
+            correlationMats{iFreq}.envPrecisionRegularized(:,:,iSession)            = mats{iSession}{iFreq}.envPrecisionRegularized;
             correlationMats{iFreq}.envPartialCorrelationRegularized_z(:,:,iSession) = mats{iSession}{iFreq}.env_z_partial_reg;
             correlationMats{iFreq}.Regularization(iSession)                         = mats{iSession}{iFreq}.Regularization;
         end%if
