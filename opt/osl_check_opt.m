@@ -145,6 +145,8 @@ try, opt.maxfilter.trans_ref_file=optin.maxfilter.trans_ref_file; optin.maxfilte
 try, opt.maxfilter.temporal_extension=optin.maxfilter.temporal_extension; optin.maxfilter = rmfield(optin.maxfilter,'temporal_extension'); catch, opt.maxfilter.temporal_extension=0; end; % flag to indicate whether Maxfilter temporal extension should be done
 try, opt.maxfilter.maxfilt_dir=optin.maxfilter.maxfilt_dir; optin.maxfilter = rmfield(optin.maxfilter,'maxfilt_dir'); catch, opt.maxfilter.maxfilt_dir='/neuro/bin/util'; end; % where to find MaxFilter exe. Defaults to S.maxfilt_dir = '/neuro/bin/util'.
 try, opt.maxfilter.bad_epochs=optin.maxfilter.bad_epochs; optin.maxfilter = rmfield(optin.maxfilter,'bad_epochs'); catch, opt.maxfilter.bad_epochs=cell(num_sessions,1); end; % Bad epochs to ignore (by maxfilter (passed using the -skip Maxfilter option), one cell for each session, where the cell contains a (N_epochs x 2) matrix of epochs, where each row indicates the start and end time of each bad epoch (in secs) 
+try, opt.maxfilter.cal_file = optin.maxfilter.cal_file; optin.maxfilter = rmfield(optin.maxfilter,'cal_file'); catch, opt.maxfilter.cal_file = 0;end
+try, opt.maxfilter.ctc_file = optin.maxfilter.ctc_file; optin.maxfilter = rmfield(optin.maxfilter,'ctc_file'); catch, opt.maxfilter.ctc_file = 0;end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% downsample settings
