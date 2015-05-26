@@ -85,7 +85,14 @@ for subi=1:length(opt.sessions_to_do),
         Smf.maxfilt_dir=opt.maxfilter.maxfilt_dir;
         [p fifname e] = fileparts(opt.raw_fif_files{subnum});       
         Smf.fif=[p '/' fifname];
-        
+       
+        if opt.maxfilter.ctc_file ~= 0
+            Smf.ctc_file = ctc_file;
+        end
+        if opt.maxfilter.cal_file ~= 0
+            Smf.cal_file = cal_file;
+        end
+ 
         % output fif file from maxfilter call will be placed in the opt
         % directory with a name based on opt.convert.spm_files_basenames{subnum}
         fifname_out=['nosss_fif_' opt.convert.spm_files_basenames{subnum}];        
@@ -239,6 +246,13 @@ for subi=1:length(opt.sessions_to_do),
             [p fifname e] = fileparts(opt.raw_fif_files{subnum});       
             Smf.fif=[p '/' fifname];
              
+            if opt.maxfilter.ctc_file ~= 0
+                Smf.ctc_file = ctc_file;
+            end
+            if opt.maxfilter.cal_file ~= 0
+                Smf.cal_file = cal_file;
+            end
+
             % output fif file from maxfilter call will be placed in the opt
             % directory with a name based on opt.convert.spm_files_basenames{subnum}
             fifname_out=['sss_fif_' opt.convert.spm_files_basenames{subnum}];        

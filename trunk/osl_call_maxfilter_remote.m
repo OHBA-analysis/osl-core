@@ -43,6 +43,11 @@ function fif_out = osl_call_maxfilter_remote(S, rmaxf_port, rmaxf_quit)
 %   -   headpos (optional, default = 0): set to 1 to output head position 
 %       information from the recording to a text file.
 %
+%   -   cal_file (optional):  full path to a fine calibration file to use
+%
+%   -   ctc_file (optional):  full path to a cross-talk matrix file to use
+%
+%
 % OUTPUTS:
 %   - fif_out: the name of the output file.
 % HL 061011
@@ -82,6 +87,18 @@ if ~isfield(S,'fif_out')
     fif_out=[S.fif '_sss'];
 else
     fif_out=S.fif_out;
+end
+
+if isfield(S,'cal_file')
+    cal_call = [' -cal ' S.cal_file ];
+else
+    cal_call = '';
+end
+
+if isfield(S,'ctc_file')
+    ctc_call = [' -ctc ' S.ctc_file ];
+else
+    cal_call = '';
 end
 
 if isfield(S,'downsample_factor')
@@ -196,7 +213,7 @@ else
 end
 
 if rmaxf_remote == 0
-    maxfilter_call=[max_dir '/maxfilter -f ' S.fif '.fif -o ' fif_out '.fif'  nosss_call ds_call badchan_call movecomp_call autobad_call trans_call headpos_call ' -format float -v' log_call]
+    maxfilter_call=[max_dir '/maxfilter -f ' S.fif '.fif -o ' fif_out '.fif'  nosss_call ds_call badchan_call movecomp_call autobad_call trans_call headpos_call ' -format float -v ' cal_call ctc_call log_call]
     runcmd(maxfilter_call)
     return
 end
