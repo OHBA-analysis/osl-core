@@ -277,7 +277,7 @@ fprintf('%s: starting analysis. \n', mfilename);
 %% Parse input settings
 fprintf('%s: checking inputs. \n', mfilename);
 
-Settings = ROInets.check_inputs(Settings);
+% Settings = ROInets.check_inputs(Settings);
 
 % make results directory
 ROInets.make_directory(Settings.outputDirectory);
@@ -317,6 +317,10 @@ switch lower(Settings.leakageCorrectionMethod),
 end%switch
 
 %% Extracting timecourses
+% parse any string inputs automatically
+D = spm_eeg_load(D); 
+
+% load in data
 fprintf('%s: loading data from file %s. \n', mfilename, D.fname);
 allTime            = D.time;
 Fs                 = D.fsample;
