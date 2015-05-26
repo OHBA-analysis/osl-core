@@ -88,7 +88,7 @@ end%if useFilter
 
 % convert to logarithm of power
 if takeLogs,
-    envelopedData = 2 .* log(envelopedData);
+    envelopedData = 2 .* log(envelopedData + eps(min(abs(envelopedData)))); % prevent log(0).
 end%if
 
 if verbose, 
