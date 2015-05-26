@@ -1,4 +1,4 @@
-function [oilOut, correlationMats] = retrieve_analysis_from_cluster(oil,           ...
+function [ROInetworks, correlationMats] = retrieve_analysis_from_cluster(ROInetworks,           ...
                                                                     individualSaveFileNames, ...
                                                                     deleteOriginals)
 %RETRIEVE_ANALYSIS_FROM_CLUSTER(OIL) collects and formats results after
@@ -40,14 +40,13 @@ fprintf('%s: Retrieving analysis results. \n', mfilename);
 fprintf('%s: checking inputs. \n', mfilename);
 
 % oil      = ROInets.check_inputs_osl(oil); - probably unnecessary
-Settings = oil.ROInetworks;
+Settings = ROInetworks;
 
 if nargin < 2 || isempty(individualSaveFileNames),
     % use the default vales from ROInets.submit_analysis_to_cluster
     for iSession = Settings.nSessions:-1:1;
         individualSaveFileNames{iSession} = fullfile(Settings.outputDirectory,                                 ...
-                                                     sprintf('corr_mat_individual_network_session_%d_tmp.mat', ...
-                                                             Settings.subjectsToDo(iSession)));
+                                                     Settings.sessionName{iSession});
         assert(logical(exist(individualSaveFileNames{iSession}, 'file')), ...
                [mfilename ':DataNotFoundOnDisk'], ...
                'Individual network results file not found on disk: \n%s.\n', ...
@@ -98,8 +97,7 @@ if deleteOriginals,
     end%for
 end%if
  
-oilOut = oil;
-oilOut.ROInetworks.correlationMatsFile = saveFileName;
+ROInetworks.correlationMatsFile = saveFileName;
 
 fprintf('%s: Analysis complete. \n\n', mfilename);
 end%retrieve_analysis_from_cluster
