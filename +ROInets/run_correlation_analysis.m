@@ -87,7 +87,7 @@ else
 end%if
 
 fprintf(' Running correlation analysis on enveloped data: \n');
-nodeCov       = cov(envData');
+nodeCov       = cov(real(envData'));
 nodeCorr      = corrcov(nodeCov);
 nodePrecision = pinv(nodeCov);
 nodePCorr     = ROInets.convert_precision_to_pcorr(nodePrecision);
