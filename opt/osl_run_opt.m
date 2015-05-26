@@ -143,7 +143,7 @@ for subi=1:length(opt.sessions_to_do),
         [D] = osl_convert_script(S2);
 
         % delete fif file in opt dir that is no longer needed
-        if(opt.cleanup_files)
+        if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
             runcmd(['rm -f ' S2.fif_file]);
         end;
         
@@ -200,7 +200,7 @@ for subi=1:length(opt.sessions_to_do),
                         spm_file_old=[opt.dirname '/Snosss' opt.convert.spm_files_basenames{subnum}];
                         Dold=spm_eeg_load(spm_file_old);
                         
-                        if(opt.cleanup_files)
+                        if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
                             Dold.delete;
                         end;
                         
@@ -321,7 +321,7 @@ for subi=1:length(opt.sessions_to_do),
             % delete obsolete nosss spm file with pre sss bad channels
             spm_file_old=[opt.dirname '/nosss' opt.convert.spm_files_basenames{subnum}];
             Dold=spm_eeg_load(spm_file_old);
-            if(opt.cleanup_files)
+            if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
                 Dold.delete;
             end;
             %%%
@@ -442,7 +442,7 @@ for subi=1:length(opt.sessions_to_do),
         % delete obsolete spm file
         spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];        
         Dold=spm_eeg_load(spm_file_old);
-        if(opt.cleanup_files)
+        if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
             Dold.delete;
         end;
 
@@ -535,7 +535,7 @@ for subi=1:length(opt.sessions_to_do),
         % delete obsolete spm file
         spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];        
         Dold=spm_eeg_load(spm_file_old);
-        if(opt.cleanup_files)
+        if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
             Dold.delete;
         end;
 
@@ -559,7 +559,7 @@ for subi=1:length(opt.sessions_to_do),
         % delete obsolete spm file
         spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];        
         Dold=spm_eeg_load(spm_file_old);
-        if(opt.cleanup_files)
+        if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
             Dold.delete;
         end;
 
@@ -769,7 +769,7 @@ for subi=1:length(opt.sessions_to_do),
             % delete obsolete spm file
             spm_file_old=[opt.dirname '/' spm_files_epoched_basenames{subnum}];        
             Dold=spm_eeg_load(spm_file_old);
-            if(opt.cleanup_files)
+            if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
                 Dold.delete;
             end;
 
@@ -992,7 +992,7 @@ else
     end;
 
     % delete fif file in opt dir that is no longer needed
-    if(opt.cleanup_files)
+    if(opt.cleanup_files == 2)
         runcmd(['rm -f ' S2.fif_file]);
     end;
 
