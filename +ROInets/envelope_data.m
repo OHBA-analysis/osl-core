@@ -73,9 +73,9 @@ end%if
 if ~useFilter,
     % do osl-style averaging
     [envelopedData, t_ds, newFs] = moving_average_downsample(t,            ...
-                                                      overlap,      ...
-                                                      windowLength, ...
-                                                      useHanningWindow);
+                                                             overlap,      ...
+                                                             windowLength, ...
+                                                             useHanningWindow);
     
 else
     % use a better filter, with control on edge effects. Be aware that this
@@ -84,11 +84,15 @@ else
     % use nested function to minimize memory movement
     [envelopedData, t_ds, newFs] = filter_and_downsample(t, newMaxFreq);
     
+    % still getting some issues on the last sample. Let's throw it out. 
+    envelopedData(:,end) = [];
+    t_ds(end)            = [];
+    
 end%if useFilter
 
 % convert to logarithm of power
 if takeLogs,
-    envelopedData = 2 .* log(envelopedData + eps(min(abs(envelopedData)))); % prevent log(0).
+    envelopedData = 2 .* log(real(envelopedData) + eps(min(abs(envelopedData(:))))); % prevent log(0).
 end%if
 
 if verbose, 
