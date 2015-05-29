@@ -84,7 +84,7 @@ assert(all(diff(rhoPath) > 0), ...
 
 % check for only one rho value
 if 1 == length(rhoPath), 
-    S = cov(Y', 1);
+    S = Y * Y' ./ ROInets.cols(Y); % inline cov
 %     P = ROInets.glasso_frequentist(S, rhoPath(1));
     [P, W] = ROInets.dp_glasso(S, [], rhoPath);
     rhoBest = rhoPath;
@@ -358,8 +358,8 @@ for iFold = 1:K
     Y_train = Y;
     Y_train(:, ((iFold-1) * k + 1) : (iFold * k)) = [];
     
-    S_train = cov(Y_train', 1); % normalise by N not N-1.
-    S_test  = cov(Y_test',  1);
+    S_train = Y_train * Y_train' / ROInets.cols(Y_train); % inline cov. Normalise by N not N-1.
+    S_test  = Y_test  * Y_test'  / ROInets.cols(Y_test);
     
     P = ROInets.dp_glasso(S_train, [], rhoPath, [], [], verbose);
     for jRho = 1:length(rhoPath)
@@ -375,7 +375,7 @@ ft_progress('close');
 % compute output based on best rho, using the whitest of the saved P 
 % matrices as a warm start
 rhoBest        = rhoPath(rhoBestInd);
-S              = cov(Y', 1);
+S              = Y * Y' / nSamples; % inline cov
 [Pbest, Wbest] = ROInets.dp_glasso(S, P(:,:,end), rhoBest);
 % Pbest   = ROInets.glasso_frequentist(S, rhoBest);
 end%main_glasso_cv
