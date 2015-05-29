@@ -21,11 +21,12 @@ end
 D_epoched = spm_eeg_epochs(S);
 
 if isfield(S,'epochinfo')
-    D_epoched.epochinfo=S.epochinfo; % store epoch info inside D object
+    D_epoched.epochinfo = S.epochinfo; % store epoch info inside D object
 else
-    D_epoched.epochinfo = S
+    D_epoched.epochinfo = S;
 end
-D_epoched.epochinfo.time_continuous=S.D.time;
+
+D_epoched.epochinfo.time_continuous = D.time;
 
 if ~isempty(S.bad_event_type)
     
