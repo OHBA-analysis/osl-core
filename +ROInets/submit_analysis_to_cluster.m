@@ -79,6 +79,10 @@ for iSession = nSessions:-1:1,
     fprintf(fid, '%% Made on %s\n', datestr(now));
     fprintf(fid, '\n\n');
     
+    % check for existing results - we're not going to over-write.
+    fprintf(fid, '%% Check to see if results already computed. \n');
+    fprintf(fid, 'if exist(''%s.mat'', ''file''), exit; end\n\n', fullfile(Settings.outputDirectory, sessionName));
+    
     % set up paths and osl
     fprintf(fid, '%% Open OSL\n');
     fprintf(fid, 'set(0, ''DefaultFigureVisible'', ''off'');\n');
