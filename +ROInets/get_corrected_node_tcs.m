@@ -360,7 +360,3 @@ nodeData = ROInets.remove_source_leakage(nodeDataOrig, protocol);
 
 end%get_orthogonalised_node_tcs
 % [EOF]
-
-
-
-
