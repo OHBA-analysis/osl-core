@@ -190,8 +190,10 @@ if ~isempty(S.ident.artefact_chans) && ~isempty(S.ident.artefact_chans)
             end
             ac_corr = ac_corr ./size(artefact_data,1);
 
-            
-            metrics.(char(artefact_chantype)).('value') = ac_corr(:);
+            % output correlation and timecourse
+            metrics.(char(artefact_chantype)).('value')  = ac_corr(:);
+            metrics.(char(artefact_chantype)).timeCourse = artefact_data.';
+
         end
     end
     
