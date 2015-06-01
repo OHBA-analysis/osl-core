@@ -166,7 +166,7 @@ end%do_group_level_statistics
 
 function y = take_average_correlations(x)
 if isnumeric(x), 
-    y = nanmean(x, 3); 
+    y = nanmean(real(x), 3); 
 else
     y = x; 
 end%if
