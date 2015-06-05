@@ -41,6 +41,10 @@ for in=1:N
     
     B = obslike(X(t0+1:t0+T(in),:),hmm,residuals(s0+1:s0+T(in)-order,:));
     
+    % Adam's hack to prevent zero probabilities in likelihood:
+    B(B<realmin) = realmin;
+
+    
     scale=zeros(T(in),1);
     % Scaling for delta
     dscale=zeros(T(in),1);
