@@ -107,7 +107,7 @@ end
 if isfield(S,'ctc_file')
     ctc_call = [' -ctc ' S.ctc_file ];
 else
-    cal_call = '';
+    ctc_call = '';
 end
 
 if isfield(S,'nosss')
