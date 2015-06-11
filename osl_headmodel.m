@@ -128,17 +128,22 @@ else % ~S.use_rhino
     matlabbatch{1}.spm.meeg.source.headmodel.val     = 1;
     matlabbatch{1}.spm.meeg.source.headmodel.comment = '';
     
-    matlabbatch{1}.spm.meeg.source.headmodel.meshing.meshes.mri = {[S.mri ',1']};
+    if isempty(S.mri)
+        matlabbatch{1}.spm.meeg.source.headmodel.meshing.meshes.mri = {''};
+    else
+        matlabbatch{1}.spm.meeg.source.headmodel.meshing.meshes.mri = {[S.mri ',1']};
+    end;
+       
     matlabbatch{1}.spm.meeg.source.headmodel.meshing.meshres    = 2;
     
-    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).fidname = S.fid_label.nasion;
-    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).fidname = S.fid_label.lpa;
-    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).fidname = S.fid_label.rpa;
+    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).fidname = S.fid.label.nasion;
+    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).fidname = S.fid.label.lpa;
+    matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).fidname = S.fid.label.rpa;
     
     if(isfield(S,'fid_mnicoords'))
-        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).specification.type = S.fid_mnicoords.nasion;
-        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).specification.type = S.fid_mnicoords.lpa;
-        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).specification.type = S.fid_mnicoords.rpa;
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).specification.type = S.fid.mnicoords.nasion;
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).specification.type = S.fid.mnicoords.lpa;
+        matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).specification.type = S.fid.mnicoords.rpa;
     else
         matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).specification.select = 'nas';
         matlabbatch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).specification.select = 'lpa';
