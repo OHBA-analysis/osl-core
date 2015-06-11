@@ -94,7 +94,7 @@ if(S.add_colorbar)
     freezeColors; % needed as colormaps are a property of the whole figure;
 
     snugplot(1,num_subplots,1);
-    make_colorbar([-low -high],deact_cmapname);
+    make_colorbar([-low -high],deact_cmapname,2);
     set(gca,'YColor','w');
     freezeColors; % needed as colormaps are a property of the whole figure;
 else
