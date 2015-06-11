@@ -123,8 +123,8 @@ end
 try
     S = ft_checkopt(S,'fuse','char',{'no','all','meg'});
 catch 
-    warning('fuse specification not recognised or incorrect, assuming fuse=no for now')
-    S = ft_setopt(S,'fuse','no');
+    warning('fuse specification not recognised or incorrect, assuming fuse=''meg'' for now')
+    S = ft_setopt(S,'fuse','meg');
 end
 
 % Check inverse_method Specification:
