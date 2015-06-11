@@ -36,6 +36,7 @@ modalities = intersect(fieldnames(BF.features), {'EEG', 'MEG', 'MEGMAG', 'MEGGRA
 
 for mm  = 1:numel(modalities)
 
+    
     % Get original channel types and units from first montage    
     montage = BF.output.montage.(modalities{mm})(1);
     chantypeorg = chantype(D, D.indchannel(montage.labelorg))';
@@ -65,15 +66,15 @@ for mm  = 1:numel(modalities)
         % Write a new MEEG object if a prefix is given
         if ~isempty(S.prefix) 
             if m == 1
-                D = copy(D, [S.prefix D.fname]);
+                Dnew = copy(D, [S.prefix D.fname]);
             end
         end
 
         S1.D = D;
-        D = spm_eeg_montage(S1);
-        D.save;
+        Dnew = spm_eeg_montage(S1);
+        Dnew.save;
 
     end
 end;
 
-res.files = {fullfile(D)};
+res.files = {fullfile(Dnew)};
