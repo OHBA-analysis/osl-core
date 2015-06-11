@@ -76,12 +76,12 @@ if isfield(Sin,'mask_fname'),
     % mni_coord
     clear vox_coord
     for i=1:size(mni_coords,1),
-        dists=sqrt(sum((Sin.stats.mni_coord-repmat(mni_coords(i,:)',1,size(Sin.stats.mni_coord,1))').^2,2));
+        dists=sqrt(sum((Sin.stats.mni_coords-repmat(mni_coords(i,:)',1,size(Sin.stats.mni_coords,1))').^2,2));
         [dist,vox_coord(i,:)]=min(dists); % vox_coord is the voxel index of the beamformed voxels
     end;
     vox_coord=unique(vox_coord);
     
-    mni_coords_used=Sin.stats.mni_coord(vox_coord,:);
+    mni_coords_used=Sin.stats.mni_coords(vox_coord,:);
 
 end;
 
