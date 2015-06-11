@@ -1,4 +1,4 @@
-function [dat2]=vols2matrix(dat4,mask);
+function [dat2]=vols2matrix(dat4,mask)
 %[dat2,ind]=vols2matrix(dat4,mask);
 %takes a 4d volume and mask and returns the 2d matrix 
 %(space x time) 

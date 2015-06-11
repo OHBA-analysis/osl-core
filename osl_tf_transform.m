@@ -172,7 +172,7 @@ switch S.tf_method
                 tempoutpow = zeros(size(dat,1),length(S.raw_times),length(out.tf_freqs));
                 tempoutbp = zeros(size(dat,1),length(S.raw_times),length(out.tf_freqs));
                 
-                for iTrial = 1:size(dat,1); % indexes trials
+                for iTrial = 1:size(dat,1) % indexes trials
                     dattrl=dat(iTrial,:,iChan);
                     dattrl=dattrl(:);
                     
