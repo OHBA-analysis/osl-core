@@ -177,16 +177,21 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 oat.first_level.name='roi_tf_first_level'; 
 oat.first_level.mask_fname=[OSLDIR '/std_masks/Right_Temporal_Occipital_Fusiform_Cortex'];
 
+%oat.source_recon.mask_fname=[OSLDIR '/std_masks/Right_Temporal_Occipital_Fusiform_Cortex'];
+%oat.source_recon=rmfield(oat.source_recon,'mask_fname');
+%oat.first_level=rmfield(oat.first_level,'mask_fname');
+%oat.source_recon.mni_coords=[26   -54   -16];
+
 oat.first_level.tf_freq_range=[4 48]; % frequency range in Hz
 oat.first_level.time_range=[-0.1 0.3];
-oat.first_level.tf_num_freqs=14;
+oat.first_level.tf_num_freqs=12;
 oat.first_level.tf_method='hilbert';
 oat.first_level.tf_hilbert_freq_res=8;
 oat.first_level.post_tf_downsample_factor=2;
 
 oat = osl_check_oat(oat);
 
-oat.to_do=[0 1 0 0];
+oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 
 % Spatially average the results over an ROI
@@ -223,8 +228,7 @@ S2.first_level_cons_to_do=3; % plots all of these contrasts
 
 % LOAD PREVIOUSLY RUN OAT
 % We are going to use the wholebrain OAT (which was run above for the ERF 
-% analysis), to make use of the settings already 
-% in there
+% analysis), to make use of the settings already in there
 oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband']; % directory the oat and results will be stored in
 oat.first_level.name=['wholebrain_first_level'];
 oat=osl_load_oat(oat);
