@@ -166,9 +166,10 @@ try, opt.bad_segments.wthresh_chan=optin.bad_segments.wthresh_chan; optin.bad_se
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% africa settings
 
-try, opt.africa.todo.ica=optin.africa.todo.ica; optin.africa.todo = rmfield(optin.africa.todo,'ica'); catch, opt.africa.todo.ica=1; end; % flag to do or not do ica decomposition
-try, opt.africa.todo.ident=optin.africa.todo.ident; optin.africa.todo = rmfield(optin.africa.todo,'ident'); catch, opt.africa.todo.ident=1; end; % flag to do or not do artefact rejection
-try, opt.africa.todo.remove=optin.africa.todo.remove; optin.africa.todo = rmfield(optin.africa.todo,'remove'); catch, opt.africa.todo.remove=1; end; % flag to do or not do artefactual component removal
+try, do_africa=optin.africa.do; optin.africa = rmfield(optin.africa,'do'); catch, do_africa=1; end; % flag to do or not do africa
+try, opt.africa.todo.ica=optin.africa.todo.ica; optin.africa.todo = rmfield(optin.africa.todo,'ica'); catch, opt.africa.todo.ica=do_africa; end; % flag to do or not do ica decomposition
+try, opt.africa.todo.ident=optin.africa.todo.ident; optin.africa.todo = rmfield(optin.africa.todo,'ident'); catch, opt.africa.todo.ident=do_africa; end; % flag to do or not do artefact rejection
+try, opt.africa.todo.remove=optin.africa.todo.remove; optin.africa.todo = rmfield(optin.africa.todo,'remove'); catch, opt.africa.todo.remove=do_africa; end; % flag to do or not do artefactual component removal
 
 try, opt.africa.used_maxfilter=optin.africa.used_maxfilter; optin.africa = rmfield(optin.africa,'used_maxfilter'); 
 catch, 
