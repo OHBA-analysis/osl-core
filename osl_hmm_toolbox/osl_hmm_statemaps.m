@@ -157,8 +157,8 @@ switch assignment
         for k = 1:hmm.K
             x(:,k) = double(hmm.statepath == k);
         end
-    case 'soft'
-        x = hmm.train.Gamma;
+    case 'soft' 
+        x = hmm_sub.statepath_soft;
 end
 
 if strcmp(mode,'pcorr')

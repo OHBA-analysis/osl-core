@@ -96,7 +96,11 @@ global OSLDIR
 
 statemaps=[];
 
-data_files = cellstr(data_files);
+try 
+    data_files = cellstr(data_files);
+catch
+    data_files=cellfun(@fullfile,data_files,'UniformOutput',false);
+end;
 
 data_fnames = cell(size(data_files));
 for f = 1:numel(data_files)
@@ -195,27 +199,48 @@ try savePCmaps    = options.concat.savePCmaps;    catch, savePCmaps     = 0;    
 embed=[];
 try embed.do      = options.concat.embed.do; catch, embed.do  = 0; end
 try embed.centre_freq = options.concat.embed.centre_freq; catch, embed.centre_freq  = 15; end %Hz
+try embed.rectify = options.concat.embed.rectify; catch, embed.rectify  = false; end %Hz
 
 % Default HMM settings
 try nstates     = options.hmm.nstates;      catch, nstates     = 8; end
 try nreps       = options.hmm.nreps;        catch, nreps       = 5; end
-try use_old_tbx = options.use_old_hmm_tbx;  catch, use_old_tbx = 0; end
+try use_old_tbx = options.hmm.use_old_hmm_tbx;  catch, use_old_tbx = 0; end
+try hmm_voxelwise = options.hmm.voxelwise;  catch, hmm_voxelwise = false; end
 
 % Default output settings
 try output_method       = options.output.method;                catch, output_method        = 'pcorr'; end
 try state_assignment    = options.output.assignment;            catch, state_assignment     = 'hard';  end  
 try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights   = 0;       end
 
-
+hmm=[];
+    
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %                    P R E P   D A T A
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if todo.prepare
+% check first subject to see if already parcellated
+D=spm_eeg_load(data_files{1});
+is_parcellated=isfield(D,'parcellation');
+if is_parcellated
+    use_parcels=true;
+end;
     
-    for subnum = 1:length(data_files)
+if todo.prepare
+            
+    if is_parcellated
+        parcelWeights=D.parcellation.weights;
+        parcelAssignments=D.parcellation.assignments;
+        try mask_fname=D.parcellation.mask_fname; catch mask_fname=[]; end;
+
+        % Save parcellation results:
+        pathstr = fileparts([filenames.prepare{1}]);
+        fname = fullfile(pathstr,'parcellation');
+        save(fname,'parcelAssignments','parcelWeights');
+    end;
+        
+    for subnum = 1:length(data_files)                
         
         % Compute envelopes for all voxels
         if envelope_do
@@ -234,18 +259,17 @@ if todo.prepare
             S.outfile=[pathstr '/raw_' filestr];
             D = spm_eeg_copy(S);
         end
-        
+                
         % Move MEEG object to HMM directory
         move(D,filenames.prepare{subnum}); 
         disp(['Saving envelope data for ' D.fname ' to ' filenames.prepare{subnum}])
         clear D
-        
-        
+             
         % Apply parcellation
-        if use_parcels
-            
+        if use_parcels && ~is_parcellated
+
             disp('Applying parcellation')
-    
+
             S                   = [];
             S.D                 = data_files{subnum};
             S.parcellation      = parcellation.file;
@@ -254,12 +278,14 @@ if todo.prepare
             S.prefix            = 'p'; 
             S.normalise_voxeldata = parcellation.normalise_voxeldata;
             [D,parcelWeights,parcelAssignments] = osl_apply_parcellation(S);
-            
-            % Save parcellation results:
-            pathstr = fileparts([filenames.prepare{1}]);
-            fname = fullfile(pathstr,'parcellation');
-            save(fname,'parcelAssignments','parcelWeights');
-            
+
+            if subnum==1
+                % Save parcellation results:
+                pathstr = fileparts([filenames.prepare{1}]);
+                fname = fullfile(pathstr,'parcellation');
+                save(fname,'parcelAssignments','parcelWeights');
+            end;
+                    
             % Compute envelopes for all parcels
             if envelope_do
                 S           = [];
@@ -268,14 +294,21 @@ if todo.prepare
                 S.freqbands = freqbands;
                 D = osl_spmfun(@osl_hilbenv,S); % keep same filename
             end
-            
+
             D = move(D,[fileparts(filenames.prepare{1}),filesep]);
-        
+
         end
 
-    end
-      
+    end      
+
 end
+
+% load parcel info
+if use_parcels
+    pathstr = fileparts([filenames.prepare{1}]);
+    fname   = fullfile(pathstr,'parcellation');
+    load(fname); % Loads parcelAssignments and parcelWeights
+end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
@@ -298,13 +331,19 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
         for subnum = 1:length(data_files)
             
             if use_parcels
-                D = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
+                try 
+                    D = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
+                catch
+                    warning('Loading in SPM MEG object that might not be parcellated.');
+                    D = spm_eeg_load(filenames.prepare{subnum});
+                end;
             else
                 D = spm_eeg_load(filenames.prepare{subnum});
             end
             
             embed.tres=1/D.fsample;
                             
+            %data = prepare_data(D,normalisation,logtrans,embed,'none');
             data = prepare_data(D,normalisation,logtrans,f,embed);
             
             % compute covariance (assuming zero mean data then global (over
@@ -358,12 +397,8 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             savefile_pc_maps        = [pathstr '/' filestr '_pc_maps'          bandstr];
             savefile_mean_pc_maps   = [pathstr '/' filestr '_mean_pc_maps'     bandstr];
             savefile_std_maps       = [pathstr '/' filestr '_hmmdata_std_maps' bandstr];
-                        
-            if use_parcels
-                % Load parcellation results:
-                pathstr = fileparts([filenames.prepare{1}]);
-                fname   = fullfile(pathstr,'parcellation');
-                load(fname); % Loads parcelAssignments and parcelWeights
+        
+            if use_parcels                
                 nii_settings            = [];
                 nii_settings.interp     = 'nearestneighbour';
                 nii_settings.mask_fname = mask_fname;
@@ -403,34 +438,76 @@ if todo.infer
     
     load(filenames.concat);
 
-    % Switch between Iead's & Diego's HMM toolboxes
-    if use_old_tbx
-        rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
-        addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
+    if hmm_voxelwise
+        numvox=size(D,1);
+        numembeddings=size(hmmdata,2)/size(D,1);
+        for vox=1:numvox
+            start=(vox-1)*numembeddings+1;
+            hmmdatavox=hmmdata(:,start:start+numembeddings-1);
+            hmmdatavox=normalise(hmmdatavox,1);
+            
+            % Apply PCA dimensionality reduction            
+            pcadim = floor(numembeddings/2);
+            [allsvd,M] = eigdec(hmmdatavox'*hmmdatavox,pcadim);
+       
+            M = diag(1./sqrt(allsvd)) * M';
+            hmmdatavox = [ (M * hmmdatavox')'];
+        
+            % Switch between Iead's & Diego's HMM toolboxes
+            if use_old_tbx
+                rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
+                addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
 
-        if ~envelope_do
-            hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
-        else
-            hmm = ABhmm_infer(hmmdata,nstates,nreps);
+                if envelope_do || embed.rectify
+                    hmm.hmm{vox} = ABhmm_infer(hmmdatavox,nstates,nreps);
+                else
+                    hmm.hmm{vox} = ABhmm_infer(hmmdatavox,nstates,nreps,'constrain_mean');
+                end;
+                addpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
+                rmpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
+
+            else
+
+                rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
+                addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
+
+                hmm.hmm{vox} = osl_hmm_infer(hmmdatavox,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',~envelope_do));
+                addpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
+                rmpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
+
+            end
         end;
-        addpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
-        rmpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
-
     else
-        
-        rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
-        addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
-        
-        hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',~envelope_do));
-        addpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
-        rmpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
-        
-    end
-    
+        % Switch between Iead's & Diego's HMM toolboxes
+        if use_old_tbx
+            rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
+            addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
+
+            if envelope_do || embed.rectify
+                hmm = ABhmm_infer(hmmdata,nstates,nreps);
+            else
+                hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
+            end;
+            addpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
+            rmpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
+
+        else
+
+            rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
+            addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
+
+            hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',~envelope_do));
+            %hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',false));
+            addpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
+            rmpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
+
+        end
+
+    end;
+
     hmm.MixingMatrix = MixingMatrix;
     hmm.fsample = fsample;
 
-    
     % Save results
     disp(['Saving inferred HMM to ' filenames.hmm])    
     save(filenames.hmm,'hmm');
@@ -452,7 +529,9 @@ if todo.output
         case {'pcorr','conn'}
             
             epoched_statepath_sub = cell(length(data_files),1);
-                
+             
+            % hmm.statepath   = ABhmm_statepath(hmm);
+            
             for f = 1:max([numel(freqbands),1])
                 
                 D  = spm_eeg_load(filenames.prepare{1}); % to get number of voxels
@@ -467,7 +546,12 @@ if todo.output
                 statemaps{f} = [filenames.output,'_',output_method,bandstr];
                 
                 if use_parcels
-                    Dp = spm_eeg_load(prefix(filenames.prepare{1},'p'));
+                    try 
+                        Dp = spm_eeg_load(prefix(filenames.prepare{1},'p'));
+                    catch
+                        warning('Loading in SPM MEG object that might not be parcellated.');
+                        Dp = spm_eeg_load(filenames.prepare{1});
+                    end;
                     statp = zeros(Dp.nchannels,hmm.K);
                 end
                                
@@ -483,6 +567,8 @@ if todo.output
                     hmm_sub = hmm;
                     hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
 
+                    hmm_sub.train.Gamma=hmm.train.Gamma(subj_inds==subnum,:);
+                    
                     hmm_sub = rmfield(hmm_sub,'MixingMatrix');
 
                     D = spm_eeg_load(filenames.prepare{subnum});
@@ -491,7 +577,12 @@ if todo.output
                     stat   = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,state_assignment);
                     
                     if use_parcels
-                        Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
+                        try 
+                            Dp = spm_eeg_load(prefix(filenames.prepare{subnum},'p'));
+                        catch
+                            warning('Loading in SPM MEG object that might not be parcellated.');
+                            Dp = spm_eeg_load(filenames.prepare{subnum});
+                        end;
                         datap = prepare_data(Dp,normalisation,logtrans,f,embed);
                         statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,state_assignment);
                     end
@@ -508,19 +599,18 @@ if todo.output
 
                 stat  = stat  ./ length(data_files);
 
-                S2=[];
-                S2.mask_fname=mask_fname;
-                S2.output_spat_res=2; %mm
-                nii_quicksave(stat,[statemaps{f},'_wholebrain'],S2);
-               
+                try
+                    S2=[];
+                    S2.mask_fname=mask_fname;
+                    S2.output_spat_res=2; %mm
+                    nii_quicksave(stat,[statemaps{f},'_wholebrain'],S2);
+                catch
+                end;
+                
                 if use_parcels
                     statp = statp ./ length(data_files);
                
                     % convert parcel statemaps into voxel statemaps
-                    pathstr = fileparts([filenames.prepare{1}]);
-                    fname   = fullfile(pathstr,'parcellation');
-                    load(fname); % Loads parcelAssignments and parcelWeights
-                    
                     if ~use_parcel_weights
                         S2.interp='nearestneighbour';
                         ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps{f},'_parcels'],S2);
@@ -530,18 +620,18 @@ if todo.output
                         
                         ROInets.nii_parcel_quicksave(statp,weights,[statemaps{f},'_parcels'],S2);
                     end
+                    
+                    % also store statemaps as vectors
+                    hmm.statemap_parcel_vectors=statp;
                 end
                 
             end
             
-            % resave updated hmm
+            
             hmm.epoched_statepath_sub = epoched_statepath_sub;
             hmm.statemaps = statemaps;
             hmm.filenames=filenames;
-            
-            disp(['Saving updated hmm to ' filenames.hmm]);
-            save(filenames.hmm,'hmm');
-            
+                         
         otherwise
             
             warning([output_method ' is not a supported output method']);
@@ -549,7 +639,11 @@ if todo.output
     
 end
 
-
+% save updated hmm
+hmm.filenames=filenames;
+disp(['Saving updated hmm to ' filenames.hmm]);
+save(filenames.hmm,'hmm');
+           
 HMMresults = filenames.hmm;
 
 end
@@ -579,8 +673,12 @@ if exist('embed','var') && embed.do,
     disp('Time embedding data');
     span=1/embed.centre_freq; %secs
     num_embeddings=round(span/embed.tres);        
+    %lags=round(linspace(-num_embeddings/2,num_embeddings/2,num_embeddings));
     lags=round(-num_embeddings/2:num_embeddings/2);
+    %lags=round(0:num_embeddings-1);
 
+    disp(lags);
+    
     [dataout,valid]=embedx(data',lags);
     dataout=dataout';
     data=randn(size(dataout,1),size(data,2))*std(squash(data(:,1:500)));
@@ -596,6 +694,19 @@ switch normalisation
         data = normalise(data,2);
     case 'none'
         data = demean(data,2);
+end
+
+if embed.rectify
+    data=abs(data);
+    
+    switch normalisation
+    case 'global'
+        data = demean(data,2)./std(data(:));
+    case 'voxelwise'
+        data = normalise(data,2);
+    case 'none'
+        data = demean(data,2);
+    end;
 end
 
 end
