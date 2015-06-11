@@ -229,7 +229,7 @@ S2.first_level_cons_to_do=3; % plots all of these contrasts
 % LOAD PREVIOUSLY RUN OAT
 % We are going to use the wholebrain OAT (which was run above for the ERF 
 % analysis), to make use of the settings already in there
-oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband']; % directory the oat and results will be stored in
+oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband_' oat.source_recon.method]; % directory the oat and results will be stored in
 oat.first_level.name=['wholebrain_first_level'];
 oat=osl_load_oat(oat);
 try, oat.first_level=rmfield(oat.first_level,'freq_average'); catch, end;
@@ -237,7 +237,7 @@ res=oat_load_results(oat,oat.source_recon.results_fnames{1});
 
 % RUN THE OAT:
 oat.to_do=[1 1 0 0];
-oat.source_recon.gridstep=10; % in mm, using a lower resolution here than you would normally, for computational speed
+oat.source_recon.gridstep=12; % in mm, using a lower resolution here than you would normally, for computational speed
 oat.source_recon.freq_range=[4 40]; % broadband 
 
 oat.first_level.tf_num_freqs=1;
