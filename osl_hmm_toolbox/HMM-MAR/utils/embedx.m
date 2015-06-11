@@ -30,7 +30,7 @@ function [Xe,valid] = embedx (X,lags)
 
 Xe = zeros(size(X,1),size(X,2)*length(lags));
 
-for l = 1:length(lags)
+for l = 1:length(lags)    
     Xe(:,l:length(lags):end) = circshift(X,lags(l));
 end
 

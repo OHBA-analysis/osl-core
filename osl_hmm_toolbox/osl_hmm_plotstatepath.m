@@ -41,7 +41,7 @@ else
 end
 
 for condnum = 1:num_conds,
-    if 1,%num_conds>1, 
+    if num_conds>1, 
         figure;
         subplot(1,num_conds,condnum);
         cla(gca); hold(gca,'on')
@@ -76,7 +76,7 @@ for condnum = 1:num_conds,
       ts=linspace(t0,t0+length(FO)/fs,length(FO));
 
       if ~isempty(bc)
-        FO=FO-mean(FO(intersect(ts>bc(1),ts < bc(2))))
+        FO=FO-mean(FO(ts>bc(1) & ts < bc(2)));
       end
 
       if strcmp(mode,'separate'),      

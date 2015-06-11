@@ -43,7 +43,23 @@ function fit = hmmspectramt(X,T,options)
 
 ndim = size(X,2);
 [options,Gamma] = checkoptions_spectra(options,ndim,T);
-Gamma = Gamma .* repmat( sqrt(size(Gamma,1) ./ sum(Gamma)), size(Gamma,1), 1);
+
+% remove the exceeding part of X (with no attached Gamma)
+order = (size(X,1) - size(Gamma,1)) / length(T);
+X2 = []; T2 = T;
+for in=1:length(T),
+    t0 = sum(T(1:in-1));
+    X2 = [X2; X(t0+1+order:t0+T(in),:)];
+    T2(in) = T2(in) - order;
+end
+X = X2; T = T2; clear X2 T2;
+
+%for in=1:length(T)    
+    
+%end
+    
+Gamma = sqrt(Gamma) .* repmat( sqrt(size(Gamma,1) ./ sum(Gamma)), size(Gamma,1), 1);
+
 K = size(Gamma,2);
 
 if options.p>0, options.err = [2 options.p]; end
@@ -56,15 +72,7 @@ Nf = length(f); options.Nf = Nf;
 tapers=dpsschk(options.tapers,options.win,Fs); % check tapers
 ntapers = options.tapers(2);
 
-% remove the exceeding part of X (with no attached Gamma)
-order = (size(X,1) - size(Gamma,1)) / length(T);
-X2 = [];
-for in=1:length(T),
-    t0 = sum(T(1:in-1));
-    X2 = [X2; X(t0+1+order:t0+T(in),:)];
-    T(in) = T(in) - order;
-end
-X = X2; clear X2;
+
 
 for k=1:K
     
@@ -91,8 +99,11 @@ for k=1:K
             for tp=1:ntapers,
                 Jik=J(findx,tp,:);
                 for j=1:ndim,
-                    for l=1:ndim,
-                        psdc(:,j,l,(in-1)*ntapers+tp) = psdc(:,j,l,(in-1)*ntapers+tp) + mean(conj(Jik(:,:,j)).*Jik(:,:,l),2) / double(Nwins);
+                    for l=j:ndim,
+                        psdc(:,j,l,(in-1)*ntapers+tp) = psdc(:,j,l,(in-1)*ntapers+tp) + conj(Jik(:,:,j)).*Jik(:,:,l) / double(Nwins);
+                        if l~=j
+                            psdc(:,l,j,(in-1)*ntapers+tp) =  psdc(:,j,l,(in-1)*ntapers+tp);
+                        end
                     end
                 end
             end
