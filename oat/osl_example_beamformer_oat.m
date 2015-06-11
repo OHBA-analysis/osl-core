@@ -38,9 +38,6 @@ clear spm_files_continuous spm_files_epoched;
 spm_files_continuous{1}=[workingdir '/dspm_meg1.mat'];
 spm_files_epoched{1}=[workingdir '/Sedspm_meg1.mat'];
 
-% set up a list of mris
-structural_files{1}=[workingdir '/structurals/struct1.nii'];
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % In this section we will do a wholebrain beamformer, followed by a trial-wise
 % GLM that will correspond to a comparison of the ERFs for the different
@@ -59,7 +56,6 @@ oat.source_recon.method='beamform'; % mne_eye, mne_datacov mne_diag_datacov, mne
 oat.source_recon.normalise_method='mean_eig';
 
 oat.source_recon.gridstep=8; % in mm, using a lower resolution here than you would normally, for computational speed
-oat.source_recon.mri=structural_files;
 oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband_' oat.source_recon.method]; % directory the oat and results will be stored in
 
 %oat.source_recon.forward_meg='MEG Local Spheres';
@@ -101,26 +97,10 @@ oat = osl_check_oat(oat);
 %%%%%%%%%%%%%%%%%%%
 %% RUN THE OAT:
 
-oat.to_do=[0 1 0 0];
+oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 
 % report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});disp(report.html_fname);
-
-%%%%%%%%%%%%%%%%%%%
-%% DO REGISTRATION AND RUN FORWARD MODEL BASED ON STRUCTURAL SCANS
-% This can just be done inside the oat.source_recon stage
-% However, it is worth running separately to check that
-% the results look reasonable!
-
-S2=oat.source_recon;
-S2.D = oat.source_recon.D_epoched{1}; 
-S2.mri=oat.source_recon.mri{1}; 
-
-D=osl_forward_model(S2);
-
-%spm_eeg_inv_checkmeshes(D);
-spm_eeg_inv_checkdatareg(D);
-%spm_eeg_inv_checkforward(D, 1);
 
 %%%%%%%%%%%%%%%%%%%
 %% OUTPUT SUBJECT'S NIFTII FILES
