@@ -41,7 +41,7 @@ for mm  = 1:numel(modalities)
     montage = BF.output.montage.(modalities{mm})(1);
     chantypeorg = chantype(D, D.indchannel(montage.labelorg))';
     chanunitorg = units(D, D.indchannel(montage.labelorg))';
-
+   
     % Apply multiple virtual montages
     for m = 1:numel(BF.output.montage.(modalities{mm}))
 
@@ -63,14 +63,16 @@ for mm  = 1:numel(modalities)
         S1.keepothers   = false;
         S1.mode         = 'switch';
 
-        % Write a new MEEG object if a prefix is given
-        if ~isempty(S.prefix) 
-            if m == 1
-                Dnew = copy(D, [S.prefix D.fname]);
+        if m == 1
+            % Write a new MEEG object if a prefix is given
+            if ~isempty(S.prefix)             
+                Dnew = copy(D, [S.prefix D.fname]);            
+            else
+                Dnew = D;
             end
-        end
-
-        S1.D = D;
+        end;
+        
+        S1.D = Dnew;
         Dnew = spm_eeg_montage(S1);
         Dnew.save;
 

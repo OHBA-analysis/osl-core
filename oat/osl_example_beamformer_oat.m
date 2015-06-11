@@ -237,7 +237,7 @@ res=oat_load_results(oat,oat.source_recon.results_fnames{1});
 
 % RUN THE OAT:
 oat.to_do=[1 1 0 0];
-oat.source_recon.gridstep=12; % in mm, using a lower resolution here than you would normally, for computational speed
+oat.source_recon.gridstep=14; % in mm, using a lower resolution here than you would normally, for computational speed
 oat.source_recon.freq_range=[4 40]; % broadband 
 
 oat.first_level.tf_num_freqs=1;
