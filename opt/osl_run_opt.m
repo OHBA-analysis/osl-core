@@ -550,7 +550,10 @@ for subi=1:length(opt.sessions_to_do),
         spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];        
         Dold=spm_eeg_load(spm_file_old);
         if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
-            Dold.delete;
+            if opt.africa.todo.remove ~= 0;
+                % Don't delete the old file if we haven't made a new one yet
+                Dold.delete;
+            end
         end;
 
         spm_files_basenames{subnum}=['A' spm_files_basenames{subnum}];
