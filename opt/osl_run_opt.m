@@ -374,8 +374,8 @@ for subi=1:length(opt.sessions_to_do),
             
             S2.fif_file=[p '/' fifname e];
             
-            if(isfield(opt,'trigger_channel_mask'))
-                S2.trigger_channel_mask=opt.trigger_channel_mask;
+            if(isfield(opt.convert,'trigger_channel_mask'))
+                S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
             end;
             [D tmp fig_handles fig_names ] = osl_convert_script(S2);
             
@@ -982,8 +982,8 @@ S2.spm_file=spm_file;
 [p fifname e] = fileparts(fif_sss);
 S2.fif_file=[p '/' fifname '.fif'];
 
-if(isfield(opt,'trigger_channel_mask'))
-    S2.trigger_channel_mask=opt.trigger_channel_mask;
+if(isfield(opt.convert,'trigger_channel_mask'))
+    S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
 end;
 
 [ D tmp fig_handles fig_names ] = osl_convert_script(S2);
