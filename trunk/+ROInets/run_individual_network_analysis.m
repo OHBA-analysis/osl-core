@@ -944,7 +944,7 @@ if Settings.SaveCorrected.ROIweightings,
 end%if
 
 % save node data
-if Settings.SaveCorrected.timeCourses,
+if Settings.SaveCorrected.timeCourse,
     saveDir = fullfile(Settings.outputDirectory, 'corrected-ROI-timecourses', filesep);
     ROInets.make_directory(saveDir);
     saveFile = fullfile(saveDir, [sessionName '_correction-' protocol '_' bandName '_ROI_timecourses.mat']);
