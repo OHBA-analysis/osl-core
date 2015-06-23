@@ -43,7 +43,7 @@ try,
                 opt.results.autobadoff(subi)=opt_results.maxfilter.sss_autobad_off(subnum);
             end;
 
-            if isfield(opt_results,'africa')            
+            if isfield(opt_results,'africa') && isfield(opt_results.africa, 'bad_components')
                 opt.results.icsremoved(subi)=length(opt_results.africa.bad_components);
             end;
                         
