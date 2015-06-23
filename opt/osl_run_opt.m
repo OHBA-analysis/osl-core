@@ -406,8 +406,10 @@ for subi=1:length(opt.sessions_to_do),
 
             S2.updatehistory=0;
             D = spm_eeg_copy(S2);
-            runcmd(['mv ' D.path '/' D.fname ' ' opt.dirname]);
-            runcmd(['mv ' D.fnamedat ' ' opt.dirname]);
+            if ~strcmp([D.path '/' D.fname], [opt.dirname '/' D.fname])
+                runcmd(['mv ' D.path '/' D.fname ' ' opt.dirname]);
+                runcmd(['mv ' D.fnamedat ' ' opt.dirname]);
+            end
             spm_filename=[opt.dirname '/' D.fname];
 
         end;
@@ -549,16 +551,20 @@ for subi=1:length(opt.sessions_to_do),
         % delete obsolete spm file
         spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];        
         Dold=spm_eeg_load(spm_file_old);
-        if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
+        if (opt.cleanup_files == 2)
             if opt.africa.todo.remove ~= 0;
                 % Don't delete the old file if we haven't made a new one yet
                 Dold.delete;
             end
         end;
 
-        spm_files_basenames{subnum}=['A' spm_files_basenames{subnum}];
-    end;    
-
+        if opt.africa.todo.remove
+            spm_files_basenames{subnum}=['A' spm_files_basenames{subnum}];
+        else
+            spm_files_basenames{subnum}=[spm_files_basenames{subnum}];
+        end;    
+    end
+    
     %%%%%%%%%%%%%%%%%%%
     %% High Pass Filter
     % To get rid of low frequency fluctuations in the data
