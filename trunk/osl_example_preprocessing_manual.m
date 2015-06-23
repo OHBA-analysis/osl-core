@@ -19,8 +19,7 @@
 
 global OSLDIR;
     
-tilde='/Users/woolrich';
-osldir=[tilde '/homedir/matlab/osl2'];    
+osldir = '/Users/andrew/Software/Matlab/osl2.0';
 
 addpath(osldir);
 osl_startup(osldir);
@@ -29,9 +28,7 @@ osl_startup(osldir);
 %% SPECIFY DIRS FOR THIS ANALYSIS
 
 % directory where the data is:
-datadir=[tilde '/homedir/matlab/osl_testdata_dir/faces_subject1_data'];
-%testdir=[tilde '/homedir/matlab/osl_testdata_dir/faces_subject1_data_nosss']; 
-    
+datadir = '/Users/andrew/Projects/OSL_test/osl2_tutorials/faces_subject1_data_osl2'; 
 % this is the directory the analysis files will be stored in:
 workingdir=[datadir]; 
 cmd = ['mkdir ' workingdir]; unix(cmd); % make dir to put the results in
@@ -55,7 +52,7 @@ fif_files{1}=[datadir '/fifs/sub1_face_sss.fif'];
 % spm_files{1}=[workingdir '/spm8_meg1.mat'];
 % spm_files{2}=[workingdir '/spm8_meg1.mat'];
 % etc...
-spm_files_basenames{1}=['spm8_meg1.mat'];
+spm_files_basenames{1}=['dspm_meg1.mat'];
 
 %%%%%%%%%%%%%%%%%%%%
 %% CONVERT FROM FIF TO AN SPM MEEG OBJECT:
