@@ -12,15 +12,7 @@
 
 global OSLDIR;
     
-% set this to where you have downloaded OSL and the practical data:
-practical_dir='/home/mwoolrich/Desktop'; 
-
-osldir=[practical_dir '/osl1.5.0_beta'];    
-
-practical_dir='/Users/woolrich';
-
-%osldir=[practical_dir '/homedir/matlab/osl1.5.0_beta'];  
-osldir=[practical_dir '/homedir/matlab/osl2.0'];    
+osldir = '/Users/andrew/Software/Matlab/osl2.0';
 
 addpath(osldir);
 osl_startup(osldir);
@@ -29,8 +21,7 @@ osl_startup(osldir);
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 
 % directory where the data is:
-datadir=[practical_dir '/button_press_data']; % directory where the data is
-datadir=[practical_dir '/homedir/matlab/osl2_testdata_dir/button_press_data']; % directory where the data is
+datadir = '/Users/andrew/Projects/OSL_test/osl2_tutorials/button_press_data_osl2';
  
 % Set up the list of subjects and their structural scans for the analysis 
 clear raw_fif_files input_files spm_files structural_files;
