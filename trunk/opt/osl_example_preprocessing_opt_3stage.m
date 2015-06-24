@@ -207,7 +207,7 @@ opt2.epoch.do=0;
 opt2.outliers.do=0;
 opt2.coreg.do=0;
 
-%% Check stage 1
+%% Check stage 2
 opt2 = osl_check_opt( opt2 );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
