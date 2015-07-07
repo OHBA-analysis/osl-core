@@ -19,8 +19,7 @@ if isa(X,'meeg')
     nch  = X.nchannels;
     %samples2use = reshape(squeeze(~all(badsamples(X,':',':',':'))),X.nsamples*X.ntrials,1); 
     samples2use = squeeze(~all(badsamples(X,':',':',':')));
-    samples2use = samples2use(:);
-    nsmp = sum(samples2use);
+    nsmp = sum(samples2use(:));
 else
     [nch,nsmp] = size(X);
     if nch > nsmp
@@ -34,6 +33,7 @@ chan_blks = osl_memblocks(X,1);
 M = zeros(nch,1);
 for i = 1:size(chan_blks,1)
     Xblk = X(chan_blks(i,1):chan_blks(i,2),:,:);
+    Xblk = reshape(Xblk,size(Xblk,1),[]);
     Xblk = Xblk(:,samples2use);
     M(chan_blks(i,1):chan_blks(i,2)) = mean(Xblk,2);
 end

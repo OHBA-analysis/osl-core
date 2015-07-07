@@ -68,10 +68,10 @@ if ~isdir(savedir); mkdir(savedir); end
 % Load surfaces to map to
 surf_right       = [OSLDIR '/std_masks/ParcellationPilot.R.midthickness.32k_fs_LR.surf.gii'];
 surf_left        = [OSLDIR '/std_masks/ParcellationPilot.L.midthickness.32k_fs_LR.surf.gii'];
-%surf_right  = [OSLDIR '/std_masks/ParcellationPilot.R.inflated.32k_fs_LR.surf.gii'];
-%surf_left   = [OSLDIR '/std_masks/ParcellationPilot.L.inflated.32k_fs_LR.surf.gii'];
-%surf_right = [OSLDIR '/std_masks/ParcellationPilot.R.very_inflated.32k_fs_LR.surf.gii'];
-%surf_left  = [OSLDIR '/std_masks/ParcellationPilot.L.very_inflated.32k_fs_LR.surf.gii'];
+surf_right_inf  = [OSLDIR '/std_masks/ParcellationPilot.R.inflated.32k_fs_LR.surf.gii'];
+surf_left_inf   = [OSLDIR '/std_masks/ParcellationPilot.L.inflated.32k_fs_LR.surf.gii'];
+surf_right_vinf = [OSLDIR '/std_masks/ParcellationPilot.R.very_inflated.32k_fs_LR.surf.gii'];
+surf_left_vinf  = [OSLDIR '/std_masks/ParcellationPilot.L.very_inflated.32k_fs_LR.surf.gii'];
 
 output_right    = [outfile '_right.nii'];
 output_left     = [outfile '_left.nii'];
@@ -93,7 +93,7 @@ disp(res);
 
 % View in workbench
 if visualise
-  cmd=[workbenchdir '/wb_view ' surf_left ' ' surf_right ' ' cifti_left ' ' cifti_right ' &'];
+  cmd=[workbenchdir '/wb_view ' surf_left ' ' surf_right ' ' surf_left_inf ' ' surf_right_inf ' ' surf_left_vinf ' ' surf_right_vinf ' ' cifti_left ' ' cifti_right ' &'];
   disp(cmd);
   runcmd([cleanEnvStr cmd]);
 end
