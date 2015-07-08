@@ -59,8 +59,17 @@ end
 try
     S = ft_checkopt(S,'forward_meg','char',{'Single Shell','MEG Local Spheres'});
 catch
-    warning('Forward model specification not recognised or incorrect, assigning default: "Single Shell"')
+    warning('MEG Forward model specification not recognised or incorrect, assigning default: "Single Shell"')
     S = ft_setopt(S,'forward_meg','Single Shell');
+end
+
+% Check Headmodel Specification:
+try
+    S = ft_checkopt(S,'forward_eeg','char',{'EEG BEM'});
+catch
+    if isfield(S,'forward_eeg')
+        error('EEG Forward model specification not recognised or incorrect')
+    end
 end
 
 % Check RHINO Specification:
@@ -117,6 +126,7 @@ if S.use_rhino
     S_forward               = struct();
     S_forward.D             = S.D;
     S_forward.forward_meg   = S.forward_meg;
+    S_forward.forward_eeg   = S.forward_eeg;
     osl_forward_model(S_forward);
     
     

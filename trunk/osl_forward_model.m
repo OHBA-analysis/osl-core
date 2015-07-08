@@ -10,8 +10,10 @@ function D = osl_forward_model(S)
 %
 % OPTIONAL INPUTS:
 %
-% S.forward_meg   - Specify forward model {'Single Shell' or 'MEG Local Spheres'}
+% S.forward_meg   - Specify forward model for MEG data 
+%                   {'Single Shell' or 'MEG Local Spheres'}
 %                     (default 'Single Shell')
+% S.forward_eeg   - Specify forward model for EEG data
 %
 % Adam Baker 2014
 
@@ -45,7 +47,20 @@ end
 
 % Check coregistration has been run:
 if isfield(D,'inv')
-    D.inv{1}.forward.voltype = S.forward_meg;
+    i = 1;
+    if isfield(S,'forward_meg')
+        D.inv{1}.forward(i).voltype = S.forward_meg;
+        D.inv{1}.datareg(i).modality = 'MEG';
+        i=i+1;
+    end 
+    if isfield(S,'forward_eeg')
+        if numel(D.inv{1}.forward) < i
+            D.inv{1}.forward(i) = D.inv{1}.forward(i-1);
+            D.inv{1}.datareg(i) = D.inv{1}.datareg(i-1);
+            D.inv{1}.datareg(i).modality = 'EEG';
+        end
+        D.inv{1}.forward(i).voltype = S.forward_eeg;
+    end
     D.save;
 else 
     error('Coregistration should first be run')
