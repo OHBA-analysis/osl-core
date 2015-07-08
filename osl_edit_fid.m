@@ -52,6 +52,8 @@ set(h,'Color',[1 0 0],'Enable','on');
                     brushedData = get(findall(gca,'tag','Brushing'),'Xdata');
                     brushedData = isnan(brushedData);
                     fid.pnt(~brushedData,:) = [];
+                    fid.label(~brushedData) = [];
+
                     D = fiducials(D,fid);
                     [AZ,EL] = view;
                     plotfid
