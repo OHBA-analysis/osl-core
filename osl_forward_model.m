@@ -47,19 +47,12 @@ end
 
 % Check coregistration has been run:
 if isfield(D,'inv')
-    i = 1;
-    if isfield(S,'forward_meg')
-        D.inv{1}.forward(i).voltype = S.forward_meg;
-        D.inv{1}.datareg(i).modality = 'MEG';
-        i=i+1;
-    end 
-    if isfield(S,'forward_eeg')
-        if numel(D.inv{1}.forward) < i
-            D.inv{1}.forward(i) = D.inv{1}.forward(i-1);
-            D.inv{1}.datareg(i) = D.inv{1}.datareg(i-1);
-            D.inv{1}.datareg(i).modality = 'EEG';
+    for i = 1:numel(D.inv{1}.datareg)
+        if strcmp(D.inv{1}.datareg(i).modality,'MEG')
+            D.inv{1}.forward(i).voltype = S.forward_meg;
+        elseif strcmp(D.inv{1}.datareg(i).modality,'EEG')
+            D.inv{1}.forward(i).voltype = S.forward_eeg;
         end
-        D.inv{1}.forward(i).voltype = S.forward_eeg;
     end
     D.save;
 else 

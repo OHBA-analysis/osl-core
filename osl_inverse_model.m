@@ -83,7 +83,7 @@ end
 try
     S.modalities = cellstr(S.modalities);
     S.modalities = S.modalities(:);
-    S = ft_checkopt(S,'modalities','cell',{{'MEG'},{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'},{'MEGPLANAR';'MEGMAG'}});
+    S = ft_checkopt(S,'modalities','cell',{{'MEG'},{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'},{'MEGPLANAR';'MEGMAG'},{'EEG'}});
 catch
     if any(strcmp(unique(D.chantype),'MEGPLANAR'))
         default_modality = {'MEGPLANAR'};
@@ -123,8 +123,8 @@ end
 try
     S = ft_checkopt(S,'fuse','char',{'no','all','meg'});
 catch 
-    warning('fuse specification not recognised or incorrect, assuming fuse=''meg'' for now')
-    S = ft_setopt(S,'fuse','meg');
+    warning('fuse specification not recognised or incorrect, assuming fuse=''no'' for now')
+    S = ft_setopt(S,'fuse','no');
 end
 
 % Check inverse_method Specification:

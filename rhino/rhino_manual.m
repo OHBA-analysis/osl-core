@@ -15,7 +15,7 @@ MainFig = figure('NumberTitle',           'off'     ,...
 
 
 % Display error
-err = sum(rhino_cperror(D.inv{1}.mesh.tess_rhino.vert,D.inv{1}.datareg.fid_eeg.pnt));
+err = sum(rhino_cperror(D.inv{1}.mesh.tess_rhino.vert,D.inv{1}.datareg(1).fid_eeg.pnt));
 set(MainFig,'name',['RHINO - error = ' num2str(err)])
 
 
@@ -69,10 +69,10 @@ is_modified = 0;
   
         % APPLY NEW REGISTRATION TO SPM OBJECT
         D.inv{1}.mesh.tess_rhino.vert      = p';
-        D.inv{1}.datareg.fid_mri.fid.pnt   = spm_eeg_inv_transform_points(Mr, D.inv{1}.datareg.fid_mri.fid.pnt);
-        D.inv{1}.datareg.fid_mri.pnt       = spm_eeg_inv_transform_points(Mr, D.inv{1}.datareg.fid_mri.pnt);
-        D.inv{1}.datareg.fromMNI           = Mr * D.inv{1}.datareg.fromMNI;
-        D.inv{1}.datareg.toMNI             = inv(D.inv{1}.datareg.fromMNI);
+        D.inv{1}.datareg(1).fid_mri.fid.pnt   = spm_eeg_inv_transform_points(Mr, D.inv{1}.datareg(1).fid_mri.fid.pnt);
+        D.inv{1}.datareg(1).fid_mri.pnt       = spm_eeg_inv_transform_points(Mr, D.inv{1}.datareg(1).fid_mri.pnt);
+        D.inv{1}.datareg(1).fromMNI           = Mr * D.inv{1}.datareg(1).fromMNI;
+        D.inv{1}.datareg(1).toMNI             = inv(D.inv{1}.datareg(1).fromMNI);
         %D.save;
  
         % DISPLAY NEW COREGISTRATION
@@ -80,7 +80,7 @@ is_modified = 0;
         rotate3d off
         
         % Display error
-        err = sum(rhino_cperror(D.inv{1}.mesh.tess_rhino.vert,D.inv{1}.datareg.fid_eeg.pnt));
+        err = sum(rhino_cperror(D.inv{1}.mesh.tess_rhino.vert,D.inv{1}.datareg(1).fid_eeg.pnt));
         set(MainFig,'name',['RHINO - error = ' num2str(err)])
         
     end
