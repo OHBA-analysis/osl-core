@@ -381,14 +381,14 @@ for iFreq = Settings.nFreqBands:-1:1,
             tcsMethod, Settings.leakageCorrectionMethod);
     
 
-    [nodeData, voxelWeightings] = get_corrected_node_tcs(real(spatialBasis), ...
-                                                         protocol,           ...
-                                                         tcsMethod);
-    
+    [nodeDataUnCorr, voxelWeightings] = get_node_tcs(real(spatialBasis), ...
+                                                     tcsMethod);
+    nodeData = ROInets.remove_source_leakage(nodeDataUnCorr, protocol);
     save_corrected_timecourse_results(nodeData, allROImask,               ...
                                       voxelWeightings, Settings,          ...
                                       sessionName, protocol, bandName);
-      
+    clear nodeDataUnCorr;
+    
     %% correlation analysis
     if strcmpi(Settings.leakageCorrectionMethod, 'pairwise'),
         CorrMats{iFreq} = ROInets.do_pairwise_calculation(nodeData, ...
@@ -529,15 +529,14 @@ end%filter_voxel_data
 
 
 %--------------------------------------------------------------------------
-function [nodeData, voxelWeightings] = get_corrected_node_tcs(spatialBasis, ...
-                                                              protocol,     ...
-                                                              timeCourseGenMethod)
-%GET_CORRECTED_NODE_TCS correct ROI time-courses for source leakage
+function [nodeData, voxelWeightings] = get_node_tcs(spatialBasis, ...
+                                                    timeCourseGenMethod)
+%GET_NODE_TCS correct ROI time-courses for source leakage
 %
 % methods for extracting node time courses using differing
 % orthogonalisation protocols
 %
-% NODEDATA = GET_CORRECTED_NODE_TCS(VOXELDATA, PARCELFLAG, PROTOCOL, METHOD)
+% NODEDATA = GET_NODE_TCS(VOXELDATA, PARCELFLAG, METHOD)
 %   produces orthogonalised node time-courses NODEDATA from 
 %   (nVoxels x nSamples) matrix of beamformed data VOXELDATA. VOXELDATA may
 %   be passed in as an array, or as the filename of a saved .MAT file. 
@@ -546,28 +545,13 @@ function [nodeData, voxelWeightings] = get_corrected_node_tcs(spatialBasis, ...
 %   the voxels in each parcel. Each column identifies the voxels 
 %   making up each parcel. True entries indicate membership. 
 %
-%   PROTOCOL is a string to switch between various all-to-all 
-%   orthogonalisation methods for source-spread correction. It can be:
-%     'none'          - No correction applied. 
-%     'symmetric'     - Apply orthogonalisation on the parcel time-courses.
-%                       This produces orthonormal parcel time-courses
-%                       which are as close as possible to the original
-%                       time-courses.
-%     'closest'       - Apply orthogonalisation on the parcel time-courses.
-%                       Start as for the symmetric method, then converge to
-%                       a (not orthonormal) orthogonal matrix which is as
-%                       close as possible to the original time-courses. 
-%     'householder'   - Orthogonalise using a more numerically stable
-%                       alternative to the Gram-Schmidt process, dealing
-%                       with ROI time-courses in a random order. 
-%
 %   METHOD chooses how the ROI time-course is created. It can be:
 %     'PCA'   - take 1st PC of voxels 
 %     'peakVoxel' - voxel with the maximum variance
 %     note that the mean timecourse suffers issues relating to sign
 %     ambiguities, and so is not currently an option.
 %
-% NODEDATA = GET_CORRECTED_NODE_TCS(VOXELDATA, SPATIALBASIS, PROTOCOL, METHOD)
+% NODEDATA = GET_NODE_TCS(VOXELDATA, SPATIALBASIS, METHOD)
 %   it is also possible to use a spatial basis set (e.g. from group ICA) to
 %   infer parcel time-courses. Each spatial map (held in columns) is a
 %   whole-brain map - each map can be non-binary and maps may overlap.
@@ -582,7 +566,7 @@ function [nodeData, voxelWeightings] = get_corrected_node_tcs(spatialBasis, ...
 %      'spatialBasis' - The ROI time-course for each spatial map is the 1st 
 %                       PC from all voxels, weighted by the spatial map. 
 %
-% [NODEDATA, VOXEL_WEIGHTINGS] = GET_CORRECTED_NODE_TCS(VOXELDATA, SPATIALBASIS, PROTOCOL, METHOD)
+% [NODEDATA, VOXEL_WEIGHTINGS] = GET_NODE_TCS(...)
 %    will return the relative weighting of voxels over the brain, used to
 %    construct the time-course for each ROI. 
 
@@ -710,7 +694,7 @@ switch lower(timeCourseGenMethod)
                 nodeTS = zeros(1, ROInets.cols(voxelDataScaled));
             end%if
             
-            nodeDataOrig(iParcel,:) = nodeTS;
+            nodeData(iParcel,:) = nodeTS;
         end%for
         
         clear parcelData voxelDataScaled
@@ -747,7 +731,7 @@ switch lower(timeCourseGenMethod)
                 [~, maxPowerInd]         = max(thisParcPower);
                 
                 % select voxel timecourse
-                nodeDataOrig(iParcel,:) = voxelData(maxPowerInd,:);
+                nodeData(iParcel,:) = voxelData(maxPowerInd,:);
                 
                 % save which voxel was used
                 voxelWeightings(maxPowerInd, iParcel) = 1;
@@ -762,7 +746,7 @@ switch lower(timeCourseGenMethod)
                          'with the analysis. \n'],                         ...
                          mfilename, iParcel);
                      
-                nodeDataOrig(iParcel,:) = zeros(1, ROInets.cols(voxelData));
+                nodeData(iParcel,:) = zeros(1, ROInets.cols(voxelData));
             end%if
         end%loop over parcels
         
@@ -848,7 +832,7 @@ switch lower(timeCourseGenMethod)
                 voxelWeightings(~thisMask, iParcel) = zeros(length(thisMask), 1);
             end%if
             
-            nodeDataOrig(iParcel, :) = nodeTS;
+            nodeData(iParcel, :) = nodeTS;
             
         end%loop over parcels
         
@@ -863,10 +847,7 @@ end%switch
 
 ft_progress('close');
 
-%% Do orthogonalisation
-nodeData = ROInets.remove_source_leakage(nodeDataOrig, protocol);
-
-end%get_orthogonalised_node_tcs
+end%get_node_tcs
 %--------------------------------------------------------------------------
 end%run_individual_correlation_analysis
 %--------------------------------------------------------------------------
