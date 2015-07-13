@@ -23,6 +23,8 @@ function D = osl_headmodel(S)
 %
 % S.forward_meg     - 'Single Shell' or 'MEG Local Spheres' (default)
 %
+% S.forward_eeg     - 'EEG BEM' (default)
+%
 % S.fid              - Fiducial definition: [] for manual placement, or
 %                      define coordinates using the following fields:
 %
@@ -113,8 +115,14 @@ if S.use_rhino
 %%%%%   R U N   C O R E G I S T R A T I O N   U S I N G   R H I N O   %%%%%
     
     S_coreg = S;
+    S_coreg.modality = {};
     if isfield(S_coreg, 'forward_meg'),
         S_coreg = rmfield(S_coreg, 'forward_meg');
+        S_coreg.modality(end+1) = {'MEG'};
+    end
+    if isfield(S_coreg, 'forward_eeg'),
+        S_coreg = rmfield(S_coreg, 'forward_eeg');
+        S_coreg.modality(end+1) = {'EEG'};
     end%if
     S_coreg.do_plots = 0;
     rhino(S_coreg);

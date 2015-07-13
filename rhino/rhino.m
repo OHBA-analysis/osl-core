@@ -40,6 +40,7 @@ function D = rhino(S)
 %                      .coordsys - Specify fiducial coordinate system as:
 %                                  'Native' or 'MNI' (default 'MNI')
 %
+% S.modality          - Modalities to use {'MEG','EEG'} (default, 'MEG')
 %
 %
 % S.fid_headcastcoords  - Specify headcast native coordinates with fields:
@@ -130,7 +131,10 @@ if S.useheadshape == 1 && isempty(D.fiducials.pnt)
     error('SPM file doesn''t contain any headshape points!')
 end
 
-
+% Check Headshape Specification:
+if ~isfield(S,'modality') || isempty(S.modality)  
+    S.modality = {'MEG'};
+end
 
 % Check Fiducial Specification:
 if ~isfield(S,'fid') || isempty(S.fid)  
@@ -618,15 +622,17 @@ D.inv{1}.comment = 'rhino';
 D.inv{1}.date = char({date; datestr(now,'HH:MM')});
 
 % WRITE DATAREG TO SPM OBJECT
-D.inv{1}.datareg.sensors           = D.sensors('MEG');
-D.inv{1}.datareg.fid_eeg           = D.fiducials;
-D.inv{1}.datareg.fid_mri.fid.label = fid_labels;
-D.inv{1}.datareg.fid_mri.fid.pnt   = fid_coreg;
-D.inv{1}.datareg.fid_mri.pnt       = scalp.vertices;
-%D.inv{1}.datareg.fromMNI           = M_icp * M_rigid * inv(toMNI);
-D.inv{1}.datareg.fromMNI           = M_icp * M_rigid * inv(D.inv{1}.mesh.Affine);
-D.inv{1}.datareg.toMNI             = inv(D.inv{1}.datareg.fromMNI);
-D.inv{1}.datareg.modality          = 'MEG';
+D.inv{1}.datareg = [];
+for modality = S.modality
+    D.inv{1}.datareg(end+1).modality        = char(modality);
+    D.inv{1}.datareg(end).sensors           = D.sensors(char(modality));
+    D.inv{1}.datareg(end).fid_eeg           = D.fiducials;
+    D.inv{1}.datareg(end).fid_mri.fid.label = fid_labels;
+    D.inv{1}.datareg(end).fid_mri.fid.pnt   = fid_coreg;
+    D.inv{1}.datareg(end).fid_mri.pnt       = scalp.vertices;
+    D.inv{1}.datareg(end).fromMNI           = M_icp * M_rigid * inv(D.inv{1}.mesh.Affine);
+    D.inv{1}.datareg(end).toMNI             = inv(D.inv{1}.datareg(end).fromMNI);
+end
 
 D.save;
 

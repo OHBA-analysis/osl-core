@@ -25,7 +25,9 @@ if ~isempty(D_inv)
         if isfield(D.inv,'forward')
             D.inv{ii}=rmfield(D.inv{ii},'forward');
         end
-        D.inv{ii}.datareg.sensors = D.sensors(D.inv{ii}.datareg.modality);
+        for m = 1:numel(D.inv{ii}.datareg)
+            D.inv{ii}.datareg(m).sensors = D.sensors(D.inv{ii}.datareg(m).modality);
+        end
     end
 end
 
