@@ -89,14 +89,15 @@ end
 if D.ntrials == 1 % can just pass in the MEEG object
     voxeldata = D;
     good_samples = ~all(badsamples(D,':',':',':'));
-else % reshape the data first (or fix get_corrected_node_tcs to work with trialwise MEEG data)
+else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG data)
     voxeldata = reshape(D(:,:,:),[D.nchannels,D.nsamples*D.ntrials]);
     good_samples = ~all(badsamples(D,':',':',':'));
     good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
     voxeldata = voxeldata(:,good_samples);
 end
 
-nodedata = ROInets.get_corrected_node_tcs(voxeldata, parcellation, S.orthogonalisation, S.method);
+nodedata = ROInets.get_node_tcs(voxeldata, parcellation, S.method);
+nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
 
 data = zeros(size(nodedata,1),length(good_samples));
 data(:,good_samples) = nodedata;

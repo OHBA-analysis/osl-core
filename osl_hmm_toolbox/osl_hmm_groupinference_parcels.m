@@ -40,8 +40,8 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 %                                               gridstep as data_files containing parcellation
 %                                               labels. If not provided then no parcellation is
 %                                               carried out (default)
-%                          .parcellation.method - passed to ROInets.get_corrected_node_tcs
-%                          .parcellation.protocol - passed to ROInets.get_corrected_node_tcs
+%                          .parcellation.method - passed to ROInets.get_node_tcs
+%                          .parcellation.protocol - passed to ROInets.remove_source_leakage
 %                          .log - apply log transform to envelopes
 %                          .mask_fname - mask used to get data from vols2matrix
 %                                        [default is to assume a whole brain std space MNI mask]
