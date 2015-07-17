@@ -244,14 +244,14 @@ uiwait(MainFig)
         goodbars = metrics.(metric_names{current_metric}).value(sorted_comps); 
         goodbars(ismember(sorted_comps,bad_components))=nan;
         goodbars(sorted_comps==current_comp) = nan; 
-        goodbars = barh(goodbars); set(goodbars, 'FaceColor', goodcolor) 
+        goodbars_h = barh(1:length(goodbars),goodbars); set(goodbars_h, 'FaceColor', goodcolor) 
         badbars  = metrics.(metric_names{current_metric}).value(sorted_comps); 
         badbars(~ismember(sorted_comps,bad_components))=nan;
         badbars(sorted_comps==current_comp)=nan; 
-        badbars  = barh(badbars);  set(badbars,  'FaceColor', badcolor) 
+        badbars_h  = barh(1:length(goodbars),badbars);  set(badbars_h,  'FaceColor', badcolor) 
         currentbar = nan(size(sorted_comps));
         currentbar(sorted_comps==current_comp) = metrics.(metric_names{current_metric}).value(current_comp); 
-        currentbar = barh(currentbar);  set(currentbar, 'FaceColor', currentcolor) 
+        currentbar_h = barh(1:length(goodbars),currentbar);  set(currentbar_h, 'FaceColor', currentcolor) 
         axis(metricWindow,'tight','off')
         set(metricWindow,'ydir','reverse')
         
