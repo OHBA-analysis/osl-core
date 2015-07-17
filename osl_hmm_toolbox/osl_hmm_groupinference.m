@@ -3,7 +3,7 @@ function [HMMresults,statemaps] = osl_hmm_groupinference(data_files,hmmdir,todo,
 % MEG data using the SPM12 beamformer OR any arbitrary data saved in .mat
 % data files.
 %
-% osl_hmm_groupinference(data_files,hmmdir,todo,env_settings,hmm_settings)
+% osl_hmm_groupinference(data_files,hmmdir,todo,options)
 %
 % INPUTS:
 %
@@ -250,8 +250,8 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
                 env = log10(env);
             end
             if norm_subs
-                %env = demean(env,2)./std(env(:));
-                env = normalise(env,2);
+                env = demean(env,2)./std(env(:));
+                %env = normalise(env,2);
             end
             
             env_concat = [env_concat,env];

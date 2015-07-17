@@ -32,7 +32,7 @@ seed_env  = hilbenv(seed_data,D.time,S.winsize,1);
 
 
 % Read data from file in blocks
-blks = osl_memblocks(D,1);
+blks = osl_memblocks(size(D),1);
 
 C = zeros(length(S.targetind),D.ntrials);
 

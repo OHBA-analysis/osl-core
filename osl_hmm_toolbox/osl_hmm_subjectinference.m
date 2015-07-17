@@ -51,7 +51,7 @@ end
 
 % Get PCA components:
 hmmdata = zeros(size(MixingMatrix,1),D.nsamples);
-blks = osl_memblocks(D,2);
+blks = osl_memblocks(size(D),2);
 for i = 1:size(blks,1)
     datblk = D(:,blks(i,1):blks(i,2),trl);
     if S.normalise
