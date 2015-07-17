@@ -22,6 +22,8 @@ if isa(D,'meeg')
     ntrials  = D.ntrials;
 else
     [nchans,nsamples] = size(D);
+    ntrials = 1;
+    nfreqs  = 1;
     if nchans > nsamples
         error(['Input has ' num2str(nsamples) ' rows and ' num2str(nchans) ' columns. Consider transposing']);
     end
@@ -41,7 +43,7 @@ for f = 1:nfreqs
         % Compute means
         chan_blks = osl_memblocks([nchans,sum(samples2use(:,trl))],1);
         for i = 1:size(chan_blks,1)
-            if isequal(D.transformtype,'TF')
+            if isa(D,'meeg') && isequal(D.transformtype,'TF')
                 Dblk = D(chan_blks(i,1):chan_blks(i,2),f,find(samples2use(:,trl)),trl);
             else
                 Dblk = D(chan_blks(i,1):chan_blks(i,2),find(samples2use(:,trl)),trl);
@@ -57,7 +59,7 @@ for f = 1:nfreqs
             samples2use_blk = find(samples2use(:,trl));
             samples2use_blk = samples2use_blk(smpl_blks(i,1):smpl_blks(i,2));
             
-            if isequal(D.transformtype,'TF')
+            if isa(D,'meeg') && isequal(D.transformtype,'TF')
                 Dblk = D(:,f,samples2use_blk,trl);
             else
                 Dblk = D(:,samples2use_blk,trl);
