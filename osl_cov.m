@@ -60,7 +60,7 @@ for f = 1:nfreqs
             samples2use_blk = samples2use_blk(smpl_blks(i,1):smpl_blks(i,2));
             
             if isa(D,'meeg') && isequal(D.transformtype,'TF')
-                Dblk = D(:,f,samples2use_blk,trl);
+                Dblk = squeeze(D(:,f,samples2use_blk,trl));
             else
                 Dblk = D(:,samples2use_blk,trl);
             end
