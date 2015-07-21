@@ -381,8 +381,8 @@ disp('Running scalp extraction')
         outline(:,:,k) = bwmorph(squeeze(mask(:,:,k)),'remove');
     end
     
-    % SET OUTLINE AS 1, INSIDE AS 0 AND BACKGROUND AS NAN:
-    mask(mask==0)    = nan;
+    % SET OUTLINE AS 1, INSIDE AS 0 AND BACKGROUND AS 2:
+    mask(mask==0)    = 2;
     mask(mask==1)    = 0;
     mask(outline==1) = 1;
     outline = mask;
@@ -428,7 +428,7 @@ D.inv{1}.mesh = spm_eeg_inv_mesh(sMRI,2);
 
 
 % CREATE SURFACE MESH ON WHICH TO OVERLAY ICP FIT
-mask = outline; mask(~isnan(mask)) = 1; mask(isnan(mask)) = 0;
+mask = outline; mask(mask~=2) = 1; mask(mask==2) = 0;
 %mask = permute(mask,[2 1 3]); % no idea why I need to permute this...
 [x,y,z] = meshgrid(1:size(mask,1), 1:size(mask,2), 1:size(mask,3));
 x = permute(x,[2 1 3]);
