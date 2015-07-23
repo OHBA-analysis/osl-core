@@ -3,16 +3,14 @@ function CorrMats = run_individual_network_analysis(D,        ...
                                                     resultsSaveName)
 %RUN_INDIVIDUAL_CORRELATION_ANALYSIS runs a single session network analysis
 %
-% CORRMATS = RUN_INDIVIDUAL_NETWORK_ANALYSIS(DATFILE, SETTINGS, SAVENAME)
+% CORRMATS = RUN_INDIVIDUAL_NETWORK_ANALYSIS(SPMMEEG, SETTINGS, SAVENAME)
 %   performs a network correlation analysis between ROIs on a single subject. 
 %
-%   DATFILE is a .mat file with three variables:
+%   SPMMEEG is an SPM MEEG object.
 %     data: nvoxels x time MEG data for analysis for a single subject. It
 %           is assumed that the number of voxels matches the number of voxels in
 %           the ROI basis set, which is passed in as a nifti file (see below). 
 %
-%     time: time-course for the MEG data
-%     sampleRateInHz: also required. A constant sampling rate is assumed.
 %
 %   RESULTS_SAVE_NAME sets the location where the individual session
 %   correlation matrices will be saved to disc. 
@@ -239,7 +237,7 @@ function CorrMats = run_individual_network_analysis(D,        ...
 %                                                 null correlation z-stats
 %
 %   These are also saved to disk at: 
-%   fullfile(oil.ROInetworks.outputDirectory, 'ROInetworks_correlation_mats.mat')
+%   fullfile(Settings.outputDirectory, 'ROInetworks_correlation_mats.mat')
 %   
 %   The analysis settings are also saved in the output directory. 
 %
@@ -277,7 +275,7 @@ fprintf('%s: starting analysis. \n', mfilename);
 %% Parse input settings
 fprintf('%s: checking inputs. \n', mfilename);
 
-% Settings = ROInets.check_inputs(Settings);
+Settings = ROInets.check_inputs(Settings);
 
 % make results directory
 ROInets.make_directory(Settings.outputDirectory);
