@@ -28,7 +28,7 @@ function correlationMats = example(varargin)
 
 
 % set path to source-reconstructed data
-dataFile = '/path/to/data/source_data_MNI_space_8mm.nii.gz';
+dataFile = '/path/to/data/source_data_SPM_obj.mat';
 
 % choose a binary ROI map. Take care that the resolution of the nifti file
 % matches that of the source reconstruction.
