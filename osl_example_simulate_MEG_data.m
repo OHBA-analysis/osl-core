@@ -23,15 +23,15 @@ time     = 0:1.0/Fs:duration; % s
 signalDef = get_uncorrelated_node_signals(time, Fs, nDipoles, 'oscillating');
 
 % set template and mri files
-templateDir  = '/home/gileslc/data/faces_subject1_data/';
+templateDir  = '/Users/gilesc/data/faces_subject1_data/';
 templateFile = fullfile(templateDir, 'subject1_spm_meeg');
 sMRI         = fullfile(templateDir, 'structurals/struct1.nii');
 
 % save simulated object
-saveFile = '/home/gileslc/testMegSim/simulatedMEGdata';
+saveFile = '/Users/gilesc/testMegSim/simulatedMEGdata';
 
 % allow for saving the source recon output
-saveReconFile = '/home/gileslc/testMegSim/sourceReconResults.mat';
+saveReconFile = '/Users/gilesc/testMegSim/sourceReconResults.mat';
 
 % allow for loading back in the source recon output, for multiple re-runs
 % BFresults = load(saveReconFile, 'ReconResultsOut');
@@ -41,7 +41,7 @@ saveReconFile = '/home/gileslc/testMegSim/sourceReconResults.mat';
 Dtemplate = spm_eeg_load(templateFile);
 
 % load structured noise
-noiseMat = load('/home/gileslc/OSL-Repo/osl/+MEGsim/neuromag_empty_room_noise_covariance.mat', 'emptyRoomNoiseCovariance');
+noiseMat = load('/Users/gilesc/OSL-Repo/osl/+MEGsim/neuromag_empty_room_noise_covariance.mat', 'emptyRoomNoiseCovariance');
 
 % simulate data
 [Dsimulated, ...
