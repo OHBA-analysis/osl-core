@@ -20,6 +20,7 @@ if isa(D,'meeg')
     nfreqs   = min([1,D.nfrequencies]);
     nchans   = D.nchannels;
     ntrials  = D.ntrials;
+    if isrow(samples2use), samples2use = samples2use(:); end%if
 else
     [nchans,nsamples] = size(D);
     ntrials = 1;
