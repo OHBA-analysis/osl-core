@@ -96,6 +96,7 @@ nSamples = ROInets.cols(envData);
 
 mats.nSamples              = nSamples;
 mats.correlation           = rawCorr;
+mats.envCovariance         = nodeCov;
 mats.envCorrelation        = nodeCorr;
 mats.envPrecision          = nodePrecision;
 mats.envPartialCorrelation = nodePCorr;
