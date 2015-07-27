@@ -300,7 +300,7 @@ if nargin < 4 || ~exist('rho', 'var') || isempty(rho),
 end%if
 
 W_3d = rho .* sourceCov * lf3d.' * ...      
-       inverse(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
+       osl_cholinv(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
    
 end%estimate_weights
 
@@ -327,7 +327,7 @@ if nargin < 4 || ~exist('rho', 'var') || isempty(rho),
     rho = 1;
 end%if
 
-invDataCov = inverse(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
+invDataCov = osl_cholinv(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
 
 W_3d = rho .* lf3d.' * invDataCov ./ trace(lf3d.' * invDataCov * lf3d);   
 end%estimate_weights
@@ -769,7 +769,7 @@ while iIter <= nIterMax,
     
     % use Factorize object to hold inverse of regularized covariance
     % without computation
-    invSigmaB = inverse(empirical_bayes_cov(Noise.cov, sourceCovFn(oldGamma), LeadFields.lf));
+    invSigmaB = osl_cholinv(empirical_bayes_cov(Noise.cov, sourceCovFn(oldGamma), LeadFields.lf));
     
     % update rules
     % Wipf and Nagarajan 2009 Eq. 31
@@ -869,7 +869,7 @@ end%try
 
 % use property sum(eig(B, A)) = trace(inv(A) * B)
 % or trace(AB) = sum(sum(A .* B')) (and covariance matrices are symmetric)
-L = real((trace(Data.cov * inverse(Sigma_EB, 'symmetric')) ...                  % faster than elementwise product or sum(eig()). 
+L = real((trace(Data.cov * osl_cholinv(Sigma_EB)) ...                  % faster than elementwise product or sum(eig()). 
      + logDetSigma) * Data.nSamples - 2 * prior(logGamma, scale));       
 
 
@@ -927,7 +927,7 @@ end%try
 %
 % use property sum(eig(B, A)) = trace(inv(A) * B)
 % or trace(AB) = sum(sum(A .* B')) (and covariance matrices are symmetric)
-L = (exp(2*logRho) * trace(Data.cov * inverse(Sigma_EB, 'symmetric')) ...  % faster than elementwise product or sum(eig()). 
+L = (exp(2*logRho) * trace(Data.cov * osl_cholinv(Sigma_EB)) ...  % faster than elementwise product or sum(eig()). 
      + logDetSigma - 2*logRho) .* Data.nSamples  ...
     - 2*pg(logGamma, priorScales(1)) - 2*pr(logRho, priorScales(2)); 
 
