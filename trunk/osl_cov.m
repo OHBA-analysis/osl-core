@@ -1,4 +1,4 @@
-function C = osl_cov2(D)
+function C = osl_cov(D)
 % Computes the covariance of a [channels x samples] matrix without
 % encountering memory issues. This allows the covariance matrix to be
 % computed for large data matrices without running out of memory.
@@ -17,7 +17,7 @@ function C = osl_cov2(D)
 
 if isa(D,'meeg')
     samples2use = permute(~all(badsamples(D,':',':',':')),[2 3 1]);
-    nfreqs   = min([1,D.nfrequencies]);
+    nfreqs   = max([1,D.nfrequencies]);
     nchans   = D.nchannels;
     ntrials  = D.ntrials;
     if isrow(samples2use), samples2use = samples2use(:); end%if
