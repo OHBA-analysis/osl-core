@@ -50,7 +50,7 @@ for session = 1:numel(GLEAN.data)
 %        S.demean    = 1; % to ensure later normalisation/PCA is correct
         S.demean    = 0;
         S.prefix    = '';
-        D = glean_hilbenv_fastest(S);
+        D = glean_hilbenv(S);
         
         % Rename file
         D = move(D,GLEAN.data(session).enveloped);
