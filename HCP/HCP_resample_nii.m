@@ -28,7 +28,7 @@ kernelsize = str2double(kernelsize);
 runcmd(['fslmaths ' input_fname ' -kernel gauss ' kernelsize ' -dilM ' output_fname]);
 
 % Flirt to MNI space:
-runcmd(['flirt -in ' input_fname ' -applyxfm -init ' 'test.mat' ' -out ' output_fname ' -paddingsize 0.0 -interp ' 'trilinear' ' -ref ' std_brain]);
+runcmd(['flirt -in ' input_fname ' -applyxfm -init ' trans ' -out ' output_fname ' -paddingsize 0.0 -interp ' 'trilinear' ' -ref ' std_brain]);
 dos(['rm ' trans]);
 
 % Mask to remove edges:
