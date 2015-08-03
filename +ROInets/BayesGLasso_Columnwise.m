@@ -50,16 +50,15 @@ cleanProgressDisplay = onCleanup(@() ft_progress('close'));
 for iter = 1: burnin+nmc    
             
        if(mod(iter,1000)==0),
-           ft_progress(iter / (burnin+nmc),            ...
-                       '    MCMC iter = %d out of %d', ...
-                       iter, burnin+nmc)
-        fprintf('iter = %d \n',iter);
-       end
+           ft_progress(iter / (burnin+nmc),              ...
+                       '    MCMC iter = %d out of %d\n', ...
+                       iter, burnin+nmc);
+       end%if
 
        
     % %%% Sample lambda 
-    bpost = b_lambda + sum(abs(C(:)))/2;    
-    lambda = (1/bpost) .* randgamma(apost); % replaced gamrnd(apost,1/bpost,1); using Lightspeed Mex file. Uses properties of scale 1/bpost: see code in randgamma, gamrnd, randg, and http://en.wikipedia.org/wiki/Gamma_distribution#Scaling
+    bpost  = b_lambda + sum(abs(C(:)))/2;    
+    lambda = ROInets.randgamma(apost, 1.0/bpost); % replaced gamrnd(apost,1/bpost,1); using Lightspeed Mex file. Uses properties of scale 1/bpost: see code in randgamma, gamrnd, randg, and http://en.wikipedia.org/wiki/Gamma_distribution#Scaling
     
 %%% sample tau off-diagonal        
     Cadjust = max(abs(C(upperind)),10^-6);        

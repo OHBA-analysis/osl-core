@@ -1,11 +1,12 @@
-function [oilOut, correlationMats] = osl_network_analysis(oil)
+function correlationMats = osl_network_analysis(Dlist, Settings)
 %OSL_NETWORK_ANALYSIS	ROI correlation and partial correlation matrices
 %
-% [OIL, CORRELATIONMATS] = osl_network_analysis(OIL) runs a
+% [CORRELATIONMATS] = osl_network_analysis(DLIST, Settings) runs a
 %   correlation-based network analysis between ROIs on a set of
-%   source-reconstructed data. 
+%   source-reconstructed data. These are provided as a cell array of SPM12
+%   MEEG objects, or their filenames, in DLIST. 
 %
-%   Relevant input parameters are held in oil.ROInetworks:
+%   Relevant input parameters are held in Settings:
 %      spatialBasisSet          - the name of a binary nifti file which 
 %                                 holds the voxel allocation for each ROI
 %                                 (each ROI allocation is a volume), or a
@@ -147,7 +148,7 @@ function [oilOut, correlationMats] = osl_network_analysis(oil)
 %
 %   The ROI time-courses, corrected for source spread, and their envelopes, 
 %   are saved in 
-%     fullfile(oil.ROInetworks.outputDirectory, 'corrected-ROI-timecourses')
+%     fullfile(Settings.outputDirectory, 'corrected-ROI-timecourses')
 %
 %   Various correlation matrices are output in CORRELATIONMATS. The
 %   variable is a cell array, with one cell for each frequency band in the
@@ -206,9 +207,13 @@ function [oilOut, correlationMats] = osl_network_analysis(oil)
 %                                                 null correlation z-stats
 %
 %   These are also saved to disk at: 
-%   fullfile(oil.ROInetworks.outputDirectory, 'ROInetworks_correlation_mats.mat')
+%   fullfile(Settings.outputDirectory, 'ROInetworks_correlation_mats.mat')
 %   
 %   The analysis settings are also saved in the output directory. 
+%
+%   References:
+%   Colclough, G.L. et al., "A symmetric multivariate leakage correction
+%   for MEG connectomes," NeuroImage 117, pp. 439-448 (2015). 
 
 
 
@@ -237,86 +242,38 @@ fprintf('%s: starting analysis. \n', mfilename);
 
 %% Parse input settings
 fprintf('%s: checking inputs. \n', mfilename);
+Settings = ROInets.check_inputs(Settings);
 
-oil = ROInets.check_inputs(oil);
+assert(numel(Dlist) == Settings.nSessions, ...
+       [mfilename ':WrongNoSessions'],     ...
+       'Number of sessions should match number of D objects passed in. \n');
 
 % make results directory
-ROInets.make_directory(oil.ROInetworks.outputDirectory);
+ROInets.make_directory(Settings.outputDirectory);
 
 % save settings
-Settings        = oil.ROInetworks;
 outputDirectory = Settings.outputDirectory;
 save(fullfile(outputDirectory, 'ROInetworks_settings.mat'), 'Settings');
 
-% load parcellation
-parcelFile = oil.ROInetworks.spatialBasisSet;
-if ~isempty(parcelFile) && ischar(parcelFile), 
-    spatialBasis = nii_quickread(parcelFile, Settings.gridStep);
-else
-    error([mfilename ':ParcelReadFail'], ...
-          'Failed to read parcel file %s. \n', ...
-          parcelFile);
-end%if
-
 %% Run correlation analysis on each subject
 
-% change syntax based on use of parallelisation
-if oil.ROInetworks.nParallelWorkers,
-    fprintf(['%s: Running correlation analysis in parallel. \n',        ...
-             '    Comments to standard output may not be ordered. \n'], ...
-            mfilename);
-        
-    if 0 == matlabpool('size'),
-        nWorkers = Settings.nParallelWorkers;
-        matlabpool('open', nWorkers);
-        cleanMe = onCleanup(@() matlabpool('close'));
-    end%if
-    
-    nSessions         = Settings.nSessions;
-    reconResultsFiles = Settings.reconResultsFiles;
-    sessionNames      = Settings.sessionNames;
-    
-    mats = cell(1,nSessions);
-    
-    parfor iSession = 1:nSessions,
-        fprintf('\n\n%s: Individual correlation analysis for file %d out of %d\n', ...
-                mfilename, iSession, nSessions);
-        
-        reconFileName  = reconResultsFiles{iSession};
-        sessionName    = sessionNames{iSession};
-        matsSaveFileName{iSession} = fullfile(outputDirectory,                                      ...
-                                              sprintf('%s_single_session_correlation_mats_tmp.mat', ...
-                                                      sessionName));
-                                                  
-        mats{iSession} = ROInets.run_individual_correlation_analysis(oil,           ...
-                                                                     reconFileName, ...
-                                                                     spatialBasis,  ...
-                                                                     Settings,      ...
-                                                                     sessionName,   ...
-                                                                     matsSaveFileName{iSession});
-    end%parfor
-    clear reconFileName;
-else
-    fprintf('%s: Running correlation analysis. \n', mfilename);
-    
-    for iSession = Settings.nSessions:-1:1,
-        fprintf('\n\n%s: Individual correlation analysis for file %d out of %d\n', ...
-                mfilename, iSession, Settings.nSessions);
-        
-        reconFileName              = Settings.reconResultsFiles{iSession};
-        sessionName                = Settings.sessionNames{iSession};
-        matsSaveFileName{iSession} = fullfile(outputDirectory,                                      ...
-                                              sprintf('%s_single_session_correlation_mats_tmp.mat', ...
-                                                      sessionName));
-                                                  
-        mats{iSession} = ROInets.run_individual_correlation_analysis(oil,           ...
-                                                                     reconFileName, ...
-                                                                     spatialBasis,  ...
-                                                                     Settings,      ...
-                                                                     sessionName,   ...
-                                                                     matsSaveFileName{iSession});
-    end%for
-end%if
+fprintf('%s: Running correlation analysis. \n', mfilename);
+
+for iSession = Settings.nSessions:-1:1,
+    fprintf('\n\n%s: Individual correlation analysis for file %d out of %d\n', ...
+            mfilename, Settings.nSessions - iSession + 1, Settings.nSessions);
+
+    D                          = Dlist{iSession};
+    sessionName                = Settings.sessionNames{iSession};
+    matsSaveFileName{iSession} = fullfile(outputDirectory,                                      ...
+                                          sprintf('%s_single_session_correlation_mats_tmp.mat', ...
+                                                  sessionName));
+
+    mats{iSession} = ROInets.run_individual_correlation_analysis(D,                          ...
+                                                                 Settings,                   ...
+                                                                 matsSaveFileName{iSession}, ...
+                                                                 iSession);
+end%for
 
 % reformat results - correlationMats is a cell array of frequency bands
 correlationMats = ROInets.reformat_results(mats, Settings);
@@ -339,8 +296,8 @@ for iSession = 1:length(matsSaveFileName),
 end%for
  
 % tidy output of funciton
-oilOut = oil;
-oilOut.ROInetworks.correlationMatsFile = saveFileName;
+Settings.correlationMatsFile = saveFileName;
+save(fullfile(outputDirectory, 'ROInetworks_settings.mat'), 'Settings');
 
 fprintf('%s: Analysis complete. \n\n\n', mfilename);
 end%osl_network_analysis

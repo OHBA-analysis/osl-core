@@ -1,6 +1,7 @@
 function CorrMats = run_individual_network_analysis(D,        ...
                                                     Settings, ...
-                                                    resultsSaveName)
+                                                    resultsSaveName, ...
+                                                    iSession)
 %RUN_INDIVIDUAL_CORRELATION_ANALYSIS runs a single session network analysis
 %
 % CORRMATS = RUN_INDIVIDUAL_NETWORK_ANALYSIS(SPMMEEG, SETTINGS, SAVENAME)
@@ -275,7 +276,7 @@ fprintf('%s: starting analysis. \n', mfilename);
 %% Parse input settings
 fprintf('%s: checking inputs. \n', mfilename);
 
-Settings = ROInets.check_inputs(Settings);
+% Settings = ROInets.check_inputs(Settings);
 
 % make results directory
 ROInets.make_directory(Settings.outputDirectory);
@@ -297,12 +298,17 @@ else
 end%if
 clear parcelFile
 
-sessionName     = Settings.sessionName;
+% is this function being run as part of a loop?
+if nargin < 4 || ~exist('iSession', 'var') || isempty(iSession),
+    iSession    = 1;
+    sessionName = Settings.sessionName;
+else
+    sessionName = Settings.sessionName{iSession};
+end%if
 doRegularize    = Settings.Regularize.do;
 nH0Iter         = Settings.nEmpiricalSamples;
 ARorder         = Settings.ARmodelOrder;
 tcsMethod       = Settings.timecourseCreationMethod;
-iSession        = 1; % for this function. To run in a loop with osl, use osl_network_analysis and run_individual_network_analysis_osl.
 
 switch lower(Settings.leakageCorrectionMethod),
     case 'pairwise',
@@ -923,7 +929,7 @@ if Settings.SaveCorrected.ROIweightings,
 end%if
 
 % save node data
-if Settings.SaveCorrected.timeCourse,
+if Settings.SaveCorrected.timeCourses,
     saveDir = fullfile(Settings.outputDirectory, 'corrected-ROI-timecourses', filesep);
     ROInets.make_directory(saveDir);
     saveFile = fullfile(saveDir, [sessionName '_correction-' protocol '_' bandName '_ROI_timecourses.mat']);
