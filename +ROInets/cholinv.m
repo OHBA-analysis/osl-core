@@ -47,8 +47,9 @@ if 1==nargin || ~isSparse,
         end%if
         U    = Rinv * Rinv';
     else
-        error([mfilename ':NotPosDef'], ...
-              'Input matrix not positive definite. \n');
+        warning([mfilename ':NotPosDef'], ...
+              'Input matrix not positive definite. Using svd method. \n');
+        U = pinv(M);
     end%if
 else
     % run sparse algorithms

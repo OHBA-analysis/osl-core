@@ -89,7 +89,7 @@ end%if
 fprintf(' Running correlation analysis on enveloped data: \n');
 nodeCov       = cov(real(envData'));
 nodeCorr      = corrcov(nodeCov);
-nodePrecision = pinv(nodeCov);
+nodePrecision = ROInets.cholinv(nodeCov);
 nodePCorr     = ROInets.convert_precision_to_pcorr(nodePrecision);
 
 nSamples = ROInets.cols(envData);
@@ -139,7 +139,7 @@ if Regularize.do,
         case 'Friedman'
         % do Friedman (2008)'s graphical lasso. May be faster. 
         fprintf('   Regularizing using graphical lasso and x-validation \n');
-        Kfold     = 10;
+        Kfold                  = 10;
         [regPrecision, rhoOpt] = ROInets.glasso_cv(real(normalise_vectors(...
                                            ROInets.demean(envData,2),2)), ...
                                                    Regularize.path,       ...
