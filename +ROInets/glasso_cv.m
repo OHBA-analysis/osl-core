@@ -154,6 +154,7 @@ switch criterion
         scoreFun = @(P, S, n) -1 * log_likelihood(P, S, n); 
         
     otherwise
+
         error([mfilename ':UnrecognisedCriterion'], ...
               'Unrecognised scoring criterion\n');
 end%switch
