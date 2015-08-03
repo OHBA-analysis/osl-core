@@ -1,4 +1,4 @@
-function U = osl_cholinv(M, isSparse)
+function U = cholinv(M, isSparse)
 %CHOLINV matrix inverse via cholesky decomposition
 %
 % U = CHOLINV(M) inverts M using the cholesky decomposition. M must be
@@ -40,7 +40,11 @@ if 1==nargin || ~isSparse,
     [R,p] = chol(M);
     
     if ~p,
-        Rinv = inv(R); % fast for triu. Faster: solve_triu(R, eye(size(R))); from lightspeed toolbox
+        if 3 == exist('solve_triu', 'file'),
+            Rinv = solve_triu(R, eye(size(R,1)));
+        else
+            Rinv = inv(R); % fast for triu. Faster: solve_triu(R, eye(size(R))); from lightspeed toolbox
+        end%if
         U    = Rinv * Rinv';
     else
         error([mfilename ':NotPosDef'], ...

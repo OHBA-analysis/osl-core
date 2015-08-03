@@ -142,7 +142,7 @@ if useQP % use method from L1precisionBCD, a little stripped down
     
     for iter = 1 : (maxIter+1),
         % Check Primal-Dual gap
-        P   = pinv(W); %W ^ -1; % W should be PD
+        P   = ROInets.cholinv(W); %W ^ -1; % W should be PD
         gap = trace(S*P) + rho * sum(sum(abs(P))) - p;
         if verbose == 2,
             fprintf('      Iter = %d, OptCond = %.5f\n', iter, gap);
@@ -195,7 +195,7 @@ else % use Wang's matlab method, as it seems to be a little faster
     
     avgSoff = mean(S(~eye(p))); % average of off-diagonal elements of empirical covariance matrix S
     
-    t = 0.001; % a fixed threshold ;
+    t = 1e-4; % a fixed threshold ;
     
     % Initial value
     W = S + diag(diag(rho));
@@ -275,7 +275,7 @@ else % use Wang's matlab method, as it seems to be a little faster
         end%if
     end%for
     
-    P = pinv(W);
+    P = ROInets.cholinv(W);
     
     if verbose,
         fprintf('   glasso: Solution Found\n');
