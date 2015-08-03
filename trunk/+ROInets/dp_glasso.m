@@ -20,7 +20,7 @@ function [Theta, W, objCon] = dp_glasso(S, ThetaInit, lambda, varargin)
 %
 %   By default, a maximum of 100 iterations of the block coordinate descent
 %   routine are run. The algorithm converges when the relative change in
-%   the Frobenius norm of the precision matrix THETA is less than 10^-6. 
+%   the Frobenius norm of the precision matrix THETA is less than 10^-4. 
 %
 %   LAMBDA can be a path of regularisation parameters, passed in as a
 %   vector. In this case, THETA and W are 3D arrays, with the results for
@@ -165,7 +165,7 @@ elseif 0 == lambda,
         W      = S;
         objCon = 0;
     end%if
-    Theta = pinv(S);
+    Theta = ROInets.cholinv(S);
     return
     
 else
@@ -270,7 +270,7 @@ P.KeepUnmatched = false; % If true, accept unexpected inputs
 
 defaults = struct('DEBUG',   false, ...
                   'verbose', 1,     ...
-                  'optTol',  1e-6,  ...
+                  'optTol',  1e-4,  ...
                   'maxIter', 100);
               
 numValidFcn = @(n) isempty(n) || ( isnumeric(n) &&  isscalar(n) && ...
@@ -455,10 +455,10 @@ if PRINT_SPEED_WARNING,
 end%if
 
 % Tell the user about change of algorithm
-if ~useQP, 
-    warning([mfilename ':ChangeOfAlgorithm'],            ...
-            ['%s: Running lasso with glasso algorithm ', ...
-             'as qpas not available. \n'],               ...
+if ~useQP && PRINT_SPEED_WARNING, 
+    warning([mfilename ':ChangeOfAlgorithm'],                           ...
+            ['%s: Running lasso with L1precisionBSD glasso algorithm ', ...
+             'as qpas not available. \n'],                              ...
             mfilename);
 end%if
 end%check_for_qp
