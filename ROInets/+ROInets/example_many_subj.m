@@ -1,7 +1,7 @@
-function correlationMats = example(varargin)
+function correlationMats = example_many_subj(varargin)
 %EXAMPLE  example analysis for a single subject
 %
-% correlationMats = EXAMPLE()
+% correlationMats = EXAMPLE_MANY_SUBJ()
 % for help, type
 % `help ROInets.run_individual_network_analysis'
 
@@ -28,7 +28,7 @@ function correlationMats = example(varargin)
 
 
 % set path to source-reconstructed data
-dataFile = '/path/to/data/source_data_SPM_obj.mat';
+dataDir = '/path/to/data/';
 
 % choose a binary ROI map. Take care that the resolution of the nifti file
 % matches that of the source reconstruction.
@@ -39,9 +39,12 @@ parcelFile = fullfile(parcellationDirectory, ...
 % choose a results directory
 outDir = '/path/to/results/';
 
-% set a save file name
-resultsName = fullfile(outDir, 'myResults');
-sessionName = 'myBestSubject';
+% set objects in and names for each session
+for iFile = 1:10; % loop over D objects in directory
+    Dlist{iFile}       = fullfile(dataDir, ...
+                                  sprintf('source_data_SPM_obj_%d.mat', iFile));
+    sessionName{iFile} = sprintf('obj_%d', iFile);
+end%for
 
 % setup the ROI network settings
 Settings = struct();
@@ -62,9 +65,11 @@ Settings.outputDirectory          = outDir;                         % Set a dire
 Settings.groupStatisticsMethod    = 'mixed-effects';                % 'mixed-effects' or 'fixed-effects'
 Settings.FDRalpha                 = 0.05;                           % false determination rate significance threshold
 Settings.sessionName              = sessionName; 
+Settings.SaveCorrected            = struct('timeCourses',   false, ...  % save corrected timecourses
+                                           'envelopes',     true,  ...  % save corrected power envelopes
+                                           'variances',     false);     % save mean power in each ROI before correction
 
 % run the ROI network analysis
-Settings        = ROInets.check_inputs(Settings);
-correlationMats = ROInets.run_individual_network_analysis(dataFile, Settings, resultsName);
-end%example_1subj
+correlationMats = osl_network_analysis(Dlist, Settings);
+end%example_many_subj
 % [EOF]

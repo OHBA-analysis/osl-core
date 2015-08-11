@@ -17,12 +17,24 @@ function CorrMats = run_individual_network_analysis(D,        ...
 %   correlation matrices will be saved to disc. 
 %
 %
+% CORRMATS = RUN_INDIVIDUAL_NETWORK_ANALYSIS(VOXELDATAFILE, SETTINGS, SAVENAME)
+%   uses the name of a .mat file on disk, VOXELDATAILE. This .mat file
+%   should contain three variables:
+%     data: nvoxels x time MEG data for analysis for a single subject. It
+%           is assumed that the number of voxels matches the number of voxels in
+%           the ROI basis set. 
+%
+%     time: time-course for the MEG data
+%     sampleRateInHz: also required. A constant sampling rate is assumed.
+%
 %   Relevant input parameters are held in SETTINGS:
 %      spatialBasisSet          - the name of a binary nifti file which 
 %                                 holds the voxel allocation for each ROI
 %                                 (each ROI allocation is a volume), or a
 %                                 spatial basis set from ICA (each spatial
 %                                 map is a volume)
+%                               - alternatively, pass in a voxels x ROIs
+%                                 matrix. 
 %
 %      gridStep                 - grid step in mm of spatialBasisSet nifti
 %                                 file. 
@@ -202,39 +214,27 @@ function CorrMats = run_individual_network_analysis(D,        ...
 %                                                 correlation between BLP 
 %                                                 envelopes
 %
-%       envCorrelation_z                        : z-stats for envelope
+%       env_z                                   : z-stats for envelope
 %                                                 correlations
 %                                                 nROIs x nROIs x nSessions
 %
-%       envPartialCorrelation_z                 : z-stats for envelope
+%       env_z_partial                           : z-stats for envelope
 %                                                 partial correlations
 %                                                 nROIs x nROIs x nSessions
 %
-%       envPartialCorrelationRegularized_z      : z-stats for envelope
-%                                                 partial correlaitons
+%       env_z_partial_reg                       : z-stats for envelope
+%                                                 partial correlations
 %                                                 nROIs x nROIs x nSessions
 %
-%       meanRegularization                      : Chosen rho-parameter for
+%       Regularization                          : Chosen rho-parameter for
 %                                                 L1 regularization in each
 %                                                 subject
 %
-%       groupEnvCorrelation_z                   : group result of z-test on
-%                                                 mean of first-level
-%                                                 z-statistics
-%
-%       groupEnvPartialCorrelation_z            : group result of z-test on
-%                                                 mean of first-level
-%                                                 z-statistics
-%
-%       groupEnvPartialCorrelationRegularized_z : group result of z-test on
-%                                                 mean of first-level
-%                                                 z-statistics
-%
-%       AR_coeffs                               : AR coefficients estimated
+%       ARmodel                                 : AR coefficients estimated
 %                                                 from MEG data for each
 %                                                 session
 %
-%       sigma                                   : Width of empirical H0
+%       H0sigma                                 : Width of empirical H0
 %                                                 null correlation z-stats
 %
 %   These are also saved to disk at: 
@@ -321,24 +321,46 @@ switch lower(Settings.leakageCorrectionMethod),
 end%switch
 
 %% Extracting timecourses
-% parse any string inputs automatically
-D = spm_eeg_load(D); 
-
 % load in data
-fprintf('%s: loading data from file %s. \n', mfilename, D.fname);
-allTime            = D.time;
-Fs                 = D.fsample;
-badSamples         = any(D.badsamples(:,:,:));
-voxelDataBroadBand = D(:,find(~badSamples),:);                                 %#ok<FNDSB>
+try
+    % assume spm meeg object
+    % parse any string inputs automatically
+    D                  = spm_eeg_load(D); 
+    fprintf('%s: loading data from file %s. \n', mfilename, D.fname);
+    allTime            = D.time;
+    Fs                 = D.fsample;
+    badSamples         = any(D.badsamples(:,:,:));
+    voxelDataBroadBand = D(:,find(~badSamples),:);                         %#ok<FNDSB>
+
+catch ME
+    try % what about the name of a .mat file?
+        assert(2 == exist(D, 'file'),                           ...
+               [mfilename ':UnrecognisedDataInput'],            ...
+               ['The first input should be an spm MEEG object', ...
+                'or path to a .mat file. \n']);
+        fprintf('%s: loading data from file %s. \n', mfilename, D);
+        tmpInput           = load(D);
+        voxelDataBroadBand = tmpInput.data;
+        Fs                 = tmpInput.sampleRateInHz;                      
+        allTime            = tmpInput.time;
+        badSamples         = false(size(allTime));                         
+        clear tmpInput
+    catch
+        rethrow(ME);
+    end%try
+end%try
+
 
 % select time range from user-defined input
-[time, timeInd, timeRange] = time_range(allTime(~badSamples), Settings.timeRange, iSession);
+[time, timeInd, timeRange] = time_range(allTime(~badSamples), ...
+                                        Settings.timeRange, iSession);
+
 % apply to source data, too.
 voxelDataBroadBand(:,~timeInd) = [];
 nTimeSamples                   = ROInets.cols(voxelDataBroadBand);
 nNodes                         = ROInets.cols(spatialBasis);
 
-assert(sum(timeInd) == nTimeSamples, ...
+assert(sum(timeInd) == nTimeSamples,           ...
        [mfilename ':InconsistentTimeIndices'], ...
        'There''s been an internal error in selecting the time range. \n');
    
@@ -405,9 +427,9 @@ for iFreq = Settings.nFreqBands:-1:1,
         fprintf('  Enveloping \n');
         
         % take power envelopes
-        nodeEnv = ROInets.envelope_data(nodeData,        ...
-                                        time,            ...
-                                        Settings.EnvelopeParams);
+        [nodeEnv, time_ds] = ROInets.envelope_data(nodeData,        ...    
+                                                   time,            ...
+                                                   Settings.EnvelopeParams); %#ok<ASGLU>
         
         % save power envelopes
         if Settings.SaveCorrected.envelopes,
@@ -416,7 +438,7 @@ for iFreq = Settings.nFreqBands:-1:1,
             saveFile = fullfile(saveDir,                                      ...
                                 sprintf('%s_%s_ROI_envelope_timecourses.mat', ...
                                         sessionName, bandName));
-            save(saveFile, 'nodeEnv');
+            save(saveFile, 'nodeEnv', 'time_ds');
         end%if
         
         % calculate correlation matrices. 
@@ -775,7 +797,7 @@ switch lower(timeCourseGenMethod)
         for iParcel = nParcels:-1:1, % allocate memory on the fly
             progress = nParcels - iParcel + 1;
             ft_progress(progress / nParcels, ...
-                        [mfilename ...
+                        [' ' mfilename ...
                          ':    Finding spatial basis time course for ROI %d out of %d'], ...
                         iParcel, nParcels);
             
@@ -925,7 +947,11 @@ if Settings.SaveCorrected.ROIweightings,
                                    [sessionName '_' protocol '_' ...
                                     bandName '_ROI_timecourse_weightings']);
     ROInets.make_directory(saveDir);
-    nii_quicksave(allVoxelWeightings, ROItcWeightSaveFile, Settings.gridStep);
+    try
+        nii_quicksave(allVoxelWeightings, ROItcWeightSaveFile, Settings.gridStep);
+    catch % perhaps we have a weird number of voxels
+        save(ROItcWeightSaveFile, 'allVoxelWeightings');
+    end%try
 end%if
 
 % save node data
