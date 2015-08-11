@@ -31,7 +31,7 @@ ROInets - a Matlab package for performing leakage-robust network inference
    The methodology used in this pipeline is set out in 
    Colclough, G. L., Brookes, M., Smith, S. M. and Woolrich, M. W., "A
    symmetric multivariate leakage correction for MEG connectomes,"
-   NeuroImage [in revision]. 
+   NeuroImage 117, pp. 439-448 (2015).
 
 This package provides tools for network analysis between regions of interest
 in source-reconstructured MEG data, analysing amplitude correlations in 
@@ -86,7 +86,7 @@ Most of the functions have an attempt at informative help text.
 What paper to cite:
 Colclough, G. L., Brookes, M., Smith, S. M. and Woolrich, M. W., "A
    symmetric multivariate leakage correction for MEG connectomes,"
-   NeuroImage [in revision].
+   NeuroImage 117, pp. 439-448 (2015).
 
 
 
