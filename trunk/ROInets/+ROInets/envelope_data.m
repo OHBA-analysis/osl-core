@@ -64,6 +64,10 @@ clear dipoleMag
 % Hilbert Envelope with nested function
 HE = hilbert_envelope(verbose);
 clear signal
+
+% remove 1st sample bias
+HE(:,1) = [];
+t(1)    = [];
     
 if verbose,
     fprintf('%s: downsampling. \n', mfilename);
@@ -167,7 +171,7 @@ for iFactor = 1:length(factorList),
                                              factorList(iFactor),     ...
                                              filterType);
     end%loop over parcels
-    t_ds = decimate(t, factorList(iFactor), filterType);
+    t_ds = decimate(t(1:end), factorList(iFactor), filterType);
     
     if iFactor < length(factorList), % if we're not in last iteration of loop
         HE = envelopedDataDS;

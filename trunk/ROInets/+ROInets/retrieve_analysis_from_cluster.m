@@ -1,10 +1,10 @@
 function [ROInetworks, correlationMats] = retrieve_analysis_from_cluster(ROInetworks,           ...
                                                                     individualSaveFileNames, ...
                                                                     deleteOriginals)
-%RETRIEVE_ANALYSIS_FROM_CLUSTER(OIL) collects and formats results after
+%RETRIEVE_ANALYSIS_FROM_CLUSTER collects and formats results after
 %   batching off to fmrib cluster. 
 %
-% RETRIEVE_ANALYSIS_FROM_CLUSTER(OIL, SAVE_FILES, DELETE_ORIGINALS) uses
+% RETRIEVE_ANALYSIS_FROM_CLUSTER(SETTINGS, SAVE_FILES, DELETE_ORIGINALS) uses
 %   individual session network matrices specified by full paths in cell
 %   array SAVE_FILES. 
 %   If DELETE_ORIGINALS is true, the session-specific matrices will be 
