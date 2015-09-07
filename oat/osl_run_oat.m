@@ -7,14 +7,14 @@ function oat = osl_run_oat(oat)
 %
 % MWW 2011
 
-global OSLDIR;  
+global OSLDIR;
 
 % check settings
 oat = osl_check_oat(oat);
 
-% make dir for the results: 
+% make dir for the results:
 if(isempty(findstr(oat.source_recon.dirname, '.oat')))
-    oat.source_recon.dirname=[oat.source_recon.dirname, '.oat']; 
+    oat.source_recon.dirname=[oat.source_recon.dirname, '.oat'];
 end;
 
 warning off;
@@ -31,8 +31,8 @@ oat.results.logfile=[oat.results.plotsdir '/log-' date '.txt']
 % delete any existing diary file with the same name
 runcmd(['rm -f ' oat.results.logfile]);
 
-% set first level diagnostic report up    
-oat_report=osl_report_setup(oat.results.plotsdir,['OAT report'],oat.results.logfile);  
+% set first level diagnostic report up
+oat_report=osl_report_setup(oat.results.plotsdir,['OAT report'],oat.results.logfile);
 diary(oat.results.logfile);
 
 % turns figure plotting on or off in SPM calls
@@ -40,15 +40,15 @@ spm_get_defaults('cmdline',~oat.do_plots);
 
 try,
     if(oat.to_do(1)),
-        
+
         disp('*************************************************************');
         disp('Running source_recon');
         disp('*************************************************************');
 
         if(strcmp(oat.source_recon.method,'none')),
-            [results_fnames results]=oat_run_source_recon_sensorspace(oat); 
+            [results_fnames results]=oat_run_source_recon_sensorspace(oat);
         else,
-            [results_fnames results]=oat_run_source_recon(oat); 
+            [results_fnames results]=oat_run_source_recon(oat);
 %         else
 %             error('recon_method is invalid');
         end;
@@ -57,7 +57,7 @@ try,
         oat.source_recon.results_fnames(oat.source_recon.sessions_to_do)=results_fnames(oat.source_recon.sessions_to_do);
 
         oat_report=osl_report_add_sub_report(oat_report, results.report);
-    
+
         % save OAT to disk
         oat = osl_save_oat(oat);
 
@@ -70,7 +70,7 @@ end;
 
 try,
     if(oat.to_do(2)),
-        
+
         disp('*************************************************************');
         disp('Running first_level');
         disp('*************************************************************');
@@ -88,30 +88,30 @@ try,
             end;
         end;
 
-        [results_fnames results] = oat_run_first_level(oat); 
-       
+        [results_fnames results] = oat_run_first_level(oat);
+
         % for those that have just been run, overwrite results_fnames:
         oat.first_level.results_fnames(oat.first_level.sessions_to_do)=results_fnames(oat.first_level.sessions_to_do);
-        
+
         oat_report=osl_report_add_sub_report(oat_report, results.report);
-    
+
         % save OAT to disk
         oat = osl_save_oat(oat);
 
     end;
-catch ME,    
+catch ME,
     disp('First level OAT stage has failed');
     ME.getReport
     return;
-end; 
+end;
 
 try,
-    if(oat.to_do(3)), 
+    if(oat.to_do(3)),
 
         disp('*************************************************************');
         disp('Running subject_level');
         disp('*************************************************************');
-        
+
         try,
             tmp = oat.first_level.results_fnames;
         catch,
@@ -123,13 +123,13 @@ try,
             catch,
                 error('Failed: First level stage has not been run.');
             end;
-            
+
         end;
 
         results_fnames = oat_run_subject_level(oat);
 
         oat.subject_level.results_fnames(oat.subject_level.subjects_to_do) = results_fnames(oat.subject_level.subjects_to_do);
-        
+
         % save OAT to disk
         oat = osl_save_oat(oat);
     end;
@@ -140,8 +140,8 @@ catch ME,
 end;
 
 try,
-    if(oat.to_do(4)), 
-        
+    if(oat.to_do(4)),
+
         disp('*************************************************************');
         disp('Running group_level');
         disp('*************************************************************');
@@ -156,13 +156,13 @@ try,
                 disp(['Loaded in ' oatin.fname]);
             catch,
                 error('Failed: Subject level stage has not been run.');
-            end;                        
+            end;
         end;
 
         [oat.group_level.results_fnames results]= oat_run_group_level(oat);
 
         oat_report=osl_report_add_sub_report(oat_report, results.report);
-  
+
         % save OAT to disk
         oat = osl_save_oat(oat);
     end;
@@ -174,7 +174,7 @@ end;
 
 %%%%%%%%%%%%%%%%%%%
 %% generate web report
-oat.results.report=osl_report_write(oat_report);        
+oat.results.report=osl_report_write(oat_report);
 disp(['To view OAT report, point your browser to <a href="' oat.results.report.html_fname '">' oat.results.report.html_fname '</a>']);
 
 diary off;
