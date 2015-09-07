@@ -12,8 +12,8 @@ function opt = osl_check_opt(optin)
 % opt.raw_fif_files: A list of the existing raw fif files for subjects (need these if
 % want to do SSS Maxfiltering)
 % e.g.:
-% raw_fif_files{1}=[testdir '/fifs/sub1_face']; 
-% raw_fif_files{2}=[testdir '/fifs/sub2_face']; 
+% raw_fif_files{1}=[testdir '/fifs/sub1_face'];
+% raw_fif_files{2}=[testdir '/fifs/sub2_face'];
 % etc...
 %
 % OR:
@@ -21,8 +21,8 @@ function opt = osl_check_opt(optin)
 % opt.input_files: A list of the base input (e.g. fif) files for input into the SPM
 % convert call
 % e.g.:
-% input_files{1}=[testdir '/fifs/sub1_face_sss']; 
-% input_files{2}=[testdir '/fifs/sub2_face_sss']; 
+% input_files{1}=[testdir '/fifs/sub1_face_sss'];
+% input_files{2}=[testdir '/fifs/sub2_face_sss'];
 % etc...
 %
 % OR:
@@ -30,8 +30,8 @@ function opt = osl_check_opt(optin)
 % opt.spm_files: A list of the spm meeg files for input into SPM (require
 % .mat extensions).
 % e.g.:
-% spm_files{1}=[testdir '/spm_files/sub1.mat']; 
-% spm_files{2}=[testdir '/spm_files/sub2.mat']; 
+% spm_files{1}=[testdir '/spm_files/sub1.mat'];
+% spm_files{2}=[testdir '/spm_files/sub2.mat'];
 % etc...
 %
 % AND:
@@ -66,14 +66,14 @@ if(~isempty(opt.raw_fif_files)),
     opt.input_file_type='raw_fif_files';
 elseif(~isempty(opt.input_files)),
     sess=opt.input_files;
-    opt.input_file_type='input_files';    
+    opt.input_file_type='input_files';
 elseif(~isempty(opt.spm_files)),
     sess=opt.spm_files;
     opt.input_file_type='spm_files';
 else
     error('Either opt.raw_fif_files, or opt.input_files, or opt.spm_files need to be specified');
 end;
-disp(['Using opt.' opt.input_file_type ' as input']); 
+disp(['Using opt.' opt.input_file_type ' as input']);
 try, optin = rmfield(optin,'input_file_type');catch, end;
 
 num_sessions=length(sess);
@@ -94,14 +94,14 @@ try, opt.sessions_to_do=optin.sessions_to_do; optin = rmfield(optin,'sessions_to
 
 try, opt.dirname=optin.dirname; optin = rmfield(optin,'dirname'); catch, opt.dirname=[sess{1} '.opt']; end; % directory name which will be created and within which all results associated with this source recon will be stored
 
-try, opt.modalities=optin.modalities; optin = rmfield(optin,'modalities'); 
-catch, 
+try, opt.modalities=optin.modalities; optin = rmfield(optin,'modalities');
+catch,
     switch opt.datatype
         case 'neuromag'
             opt.modalities={'MEGMAG';'MEGPLANAR'};
-        case 'ctf' 
+        case 'ctf'
             opt.modalities={'MEGGRAD'};
-        case 'eeg' 
+        case 'eeg'
             opt.modalities={'EEG'};
     end;
 end;
@@ -111,7 +111,7 @@ end;
 % nothing will be deleted, 1 means most files will be deleted (apart from
 % post-sss fif and pre/post africa files) and 2 means that everything will be
 % cleaned up
-try, opt.cleanup_files=optin.cleanup_files; optin = rmfield(optin,'cleanup_files'); catch, opt.cleanup_files=1; end;  
+try, opt.cleanup_files=optin.cleanup_files; optin = rmfield(optin,'cleanup_files'); catch, opt.cleanup_files=1; end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% convert settings
@@ -122,17 +122,17 @@ try, opt.convert.bad_epochs=optin.convert.bad_epochs; optin.convert = rmfield(op
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% maxfilter settings
-try, opt.maxfilter.remote_port=optin.maxfilter.remote_port; optin.maxfilter = rmfield(optin.maxfilter,'remote_port'); 
+try, opt.maxfilter.remote_port=optin.maxfilter.remote_port; optin.maxfilter = rmfield(optin.maxfilter,'remote_port');
 catch
     opt.maxfilter.remote_port = 0;
 end
 
-try, opt.maxfilter.do=optin.maxfilter.do; optin.maxfilter = rmfield(optin.maxfilter,'do'); 
-catch, 
+try, opt.maxfilter.do=optin.maxfilter.do; optin.maxfilter = rmfield(optin.maxfilter,'do');
+catch,
     switch opt.datatype
-        case 'neuromag'            
-            opt.maxfilter.do=1;            
-        otherwise 
+        case 'neuromag'
+            opt.maxfilter.do=1;
+        otherwise
             opt.maxfilter.do=0;
     end;
 end; % flag to indicate whether to do maxfilter or not (e.g. would not do it because it has been pre-run or because we are not using neuromag data)
@@ -144,7 +144,7 @@ try, opt.maxfilter.movement_compensation=optin.maxfilter.movement_compensation; 
 try, opt.maxfilter.trans_ref_file=optin.maxfilter.trans_ref_file; optin.maxfilter = rmfield(optin.maxfilter,'trans_ref_file'); catch, opt.maxfilter.trans_ref_file=[]; end; % trans reference file to pass to maxfilter call using the -trans flag
 try, opt.maxfilter.temporal_extension=optin.maxfilter.temporal_extension; optin.maxfilter = rmfield(optin.maxfilter,'temporal_extension'); catch, opt.maxfilter.temporal_extension=0; end; % flag to indicate whether Maxfilter temporal extension should be done
 try, opt.maxfilter.maxfilt_dir=optin.maxfilter.maxfilt_dir; optin.maxfilter = rmfield(optin.maxfilter,'maxfilt_dir'); catch, opt.maxfilter.maxfilt_dir='/neuro/bin/util'; end; % where to find MaxFilter exe. Defaults to S.maxfilt_dir = '/neuro/bin/util'.
-try, opt.maxfilter.bad_epochs=optin.maxfilter.bad_epochs; optin.maxfilter = rmfield(optin.maxfilter,'bad_epochs'); catch, opt.maxfilter.bad_epochs=cell(num_sessions,1); end; % Bad epochs to ignore (by maxfilter (passed using the -skip Maxfilter option), one cell for each session, where the cell contains a (N_epochs x 2) matrix of epochs, where each row indicates the start and end time of each bad epoch (in secs) 
+try, opt.maxfilter.bad_epochs=optin.maxfilter.bad_epochs; optin.maxfilter = rmfield(optin.maxfilter,'bad_epochs'); catch, opt.maxfilter.bad_epochs=cell(num_sessions,1); end; % Bad epochs to ignore (by maxfilter (passed using the -skip Maxfilter option), one cell for each session, where the cell contains a (N_epochs x 2) matrix of epochs, where each row indicates the start and end time of each bad epoch (in secs)
 try, opt.maxfilter.cal_file = optin.maxfilter.cal_file; optin.maxfilter = rmfield(optin.maxfilter,'cal_file'); catch, opt.maxfilter.cal_file = 0;end
 try, opt.maxfilter.ctc_file = optin.maxfilter.ctc_file; optin.maxfilter = rmfield(optin.maxfilter,'ctc_file'); catch, opt.maxfilter.ctc_file = 0;end
 
@@ -161,8 +161,8 @@ try, opt.bad_segments.do=optin.bad_segments.do; optin.bad_segments = rmfield(opt
 try, opt.bad_segments.dummy_epoch_tsize=optin.bad_segments.dummy_epoch_tsize; optin.bad_segments = rmfield(optin.bad_segments,'dummy_epoch_tsize'); catch, opt.bad_segments.dummy_epoch_tsize=2; end; % size of dummy epochs (in secs) to do outlier bad segment marking
 try, opt.bad_segments.outlier_measure_fns=optin.bad_segments.outlier_measure_fns; optin.bad_segments = rmfield(optin.bad_segments,'outlier_measure_fns'); catch, opt.bad_segments.outlier_measure_fns={'min','std'}; end; % list of outlier metric func names to use for bad segment marking
 try, opt.bad_segments.wthresh_ev=optin.bad_segments.wthresh_ev; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_ev'); catch, opt.bad_segments.wthresh_ev=0.4*ones(length(opt.bad_segments.outlier_measure_fns),1); end; % list of robust GLM weights thresholds to use on EVs for bad segment marking
-try, opt.bad_segments.wthresh_chan=optin.bad_segments.wthresh_chan; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_chan'); catch, opt.bad_segments.wthresh_chan=0.01*ones(length(opt.bad_segments.outlier_measure_fns),1); end;% list of robust GLM weights thresholds to use on chans for bad segment marking    
-    
+try, opt.bad_segments.wthresh_chan=optin.bad_segments.wthresh_chan; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_chan'); catch, opt.bad_segments.wthresh_chan=0.01*ones(length(opt.bad_segments.outlier_measure_fns),1); end;% list of robust GLM weights thresholds to use on chans for bad segment marking
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% africa settings
 
@@ -171,18 +171,18 @@ try, opt.africa.todo.ica=optin.africa.todo.ica; optin.africa.todo = rmfield(opti
 try, opt.africa.todo.ident=optin.africa.todo.ident; optin.africa.todo = rmfield(optin.africa.todo,'ident'); catch, opt.africa.todo.ident=do_africa; end; % flag to do or not do artefact rejection
 try, opt.africa.todo.remove=optin.africa.todo.remove; optin.africa.todo = rmfield(optin.africa.todo,'remove'); catch, opt.africa.todo.remove=do_africa; end; % flag to do or not do artefactual component removal
 
-try, opt.africa.used_maxfilter=optin.africa.used_maxfilter; optin.africa = rmfield(optin.africa,'used_maxfilter'); 
-catch, 
+try, opt.africa.used_maxfilter=optin.africa.used_maxfilter; optin.africa = rmfield(optin.africa,'used_maxfilter');
+catch,
     switch opt.datatype
-        case 'neuromag' 
-            if strcmp(opt.input_file_type,'raw_fif_files'), 
+        case 'neuromag'
+            if strcmp(opt.input_file_type,'raw_fif_files'),
                 opt.africa.used_maxfilter=opt.maxfilter.do_sss;
             else
-                opt.africa.used_maxfilter=1; 
-                warning('opt.datatype is neuromag, Will assume that data has been maxfiltered and will set opt.africa.used_maxfilter=1');  
+                opt.africa.used_maxfilter=1;
+                warning('opt.datatype is neuromag, Will assume that data has been maxfiltered and will set opt.africa.used_maxfilter=1');
             end;
-        otherwise 
-            opt.africa.used_maxfilter=0;             
+        otherwise
+            opt.africa.used_maxfilter=0;
     end;
 end; % flag to indicate if SSS Maxfilter has been done
 
@@ -211,7 +211,7 @@ try, opt.highpass.cutoff=optin.highpass.cutoff; optin.highpass = rmfield(optin.h
 try, opt.epoch.do=optin.epoch.do; optin.epoch = rmfield(optin.epoch,'do'); catch, opt.epoch.do=1; end; % flag to indicate if epoching should be done
 try, opt.epoch.time_range=optin.epoch.time_range; optin.epoch = rmfield(optin.epoch,'time_range'); catch, opt.epoch.time_range=[0.5 2]; end; % epoch time range
 try, opt.epoch.timing_delay=optin.epoch.timing_delay; optin.epoch = rmfield(optin.epoch,'timing_delay'); catch, opt.epoch.timing_delay=0; end; % time delay adjustment (e.g. due to delay in visual presentations) in secs
-try, opt.epoch.trialdef=optin.epoch.trialdef; optin.epoch = rmfield(optin.epoch,'trialdef'); catch, opt.epoch.trialdef=1; end; 
+try, opt.epoch.trialdef=optin.epoch.trialdef; optin.epoch = rmfield(optin.epoch,'trialdef'); catch, opt.epoch.trialdef=1; end;
 % trialdef, e.g.:
 %opt.epoch.trialdef(1).conditionlabel = 'StimLRespL';
 %opt.epoch.trialdef(1).eventtype = 'STI101_down';
@@ -224,7 +224,7 @@ try, opt.outliers.do=optin.outliers.do; optin.outliers = rmfield(optin.outliers,
 try, opt.outliers.outlier_measure_fns=optin.outliers.outlier_measure_fns; optin.outliers = rmfield(optin.outliers,'outlier_measure_fns'); catch, opt.outliers.outlier_measure_fns={'min','std'}; end; % list of outlier metric func names to use
 try, opt.outliers.wthresh_ev=optin.outliers.wthresh_ev; optin.outliers = rmfield(optin.outliers,'wthresh_ev'); catch, opt.outliers.wthresh_ev=0.4*ones(length(opt.outliers.outlier_measure_fns),1); end; % list of robust GLM weights thresholds to use on EVs
 try, opt.outliers.wthresh_chan=optin.outliers.wthresh_chan; optin.outliers = rmfield(optin.outliers,'wthresh_chan'); catch, opt.outliers.wthresh_chan=0.01*ones(length(opt.outliers.outlier_measure_fns),1); end;% list of robust GLM weights thresholds to use on chans
-        
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% coreg settings
 
@@ -233,15 +233,15 @@ try, opt.coreg.useheadshape = optin.coreg.useheadshape; optin.coreg = rmfield(op
 try, opt.coreg.mri = optin.coreg.mri; optin.coreg = rmfield(optin.coreg,'mri'); catch, for i=1:num_sessions, opt.coreg.mri{i}=''; end; end
 try, opt.coreg.use_rhino = optin.coreg.use_rhino; optin.coreg = rmfield(optin.coreg,'use_rhino'); catch, opt.coreg.use_rhino = 1; end % Use RHINO coregistration
 
-try, opt.coreg.fid_label = optin.coreg.fid_label; optin.coreg = rmfield(optin.coreg,'fid_label'); 
-catch, 
+try, opt.coreg.fid_label = optin.coreg.fid_label; optin.coreg = rmfield(optin.coreg,'fid_label');
+catch,
     switch opt.datatype
         case 'neuromag'
-            opt.coreg.fid_label.nasion='Nasion'; opt.coreg.fid_label.lpa='LPA'; opt.coreg.fid_label.rpa='RPA'; 
-        case 'ctf' 
-            opt.coreg.fid_label.nasion='nas'; opt.coreg.fid_label.lpa='lpa'; opt.coreg.fid_label.rpa='rpa'; 
-        case 'eeg' 
-            opt.coreg.fid_label.nasion='Nasion'; opt.coreg.fid_label.lpa='LPA'; opt.coreg.fid_label.rpa='RPA'; 
+            opt.coreg.fid_label.nasion='Nasion'; opt.coreg.fid_label.lpa='LPA'; opt.coreg.fid_label.rpa='RPA';
+        case 'ctf'
+            opt.coreg.fid_label.nasion='nas'; opt.coreg.fid_label.lpa='lpa'; opt.coreg.fid_label.rpa='rpa';
+        case 'eeg'
+            opt.coreg.fid_label.nasion='Nasion'; opt.coreg.fid_label.lpa='LPA'; opt.coreg.fid_label.rpa='RPA';
         otherwise
             opt.coreg.fid_label=[];
     end;
@@ -261,7 +261,7 @@ if isfield(optin,'epoch'),
 wierdfields = fieldnames(optin.epoch);
 if ~isempty(wierdfields)
     disp('The following opt.epoch settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
@@ -273,7 +273,7 @@ if isfield(optin,'outliers'),
 wierdfields = fieldnames(optin.outliers);
 if ~isempty(wierdfields)
     disp('The following opt.outliers settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
@@ -285,7 +285,7 @@ if isfield(optin,'bad_segments'),
 wierdfields = fieldnames(optin.bad_segments);
 if ~isempty(wierdfields)
     disp('The following opt.bad_segments settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
@@ -297,12 +297,12 @@ if isfield(optin,'highpass'),
 wierdfields = fieldnames(optin.highpass);
 if ~isempty(wierdfields)
     disp('The following opt.highpass settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
     error('Invalid osl_check_opt settings');
-    
+
 end % if ~isempty(wierdfields)
 end;
 
@@ -310,12 +310,12 @@ if isfield(optin,'downsample'),
 wierdfields = fieldnames(optin.downsample);
 if ~isempty(wierdfields)
     disp('The following opt.downsample settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
     error('Invalid osl_check_opt settings');
-    
+
 end % if ~isempty(wierdfields)
 end;
 
@@ -324,11 +324,11 @@ if isfield(optin,'coreg'),
 wierdfields = fieldnames(optin.coreg);
 if ~isempty(wierdfields)
     disp('The following opt.coreg settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
-    error('Invalid osl_check_opt settings');    
+    error('Invalid osl_check_opt settings');
 end % if ~isempty(wierdfields)
 end;
 
@@ -336,7 +336,7 @@ if isfield(optin,'maxfilter'),
 wierdfields = fieldnames(optin.maxfilter);
 if ~isempty(wierdfields)
     disp('The following opt.maxfilter settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
@@ -348,7 +348,7 @@ if isfield(optin,'convert'),
 wierdfields = fieldnames(optin.convert);
 if ~isempty(wierdfields)
     disp('The following opt.convert settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
@@ -362,12 +362,12 @@ if isfield(optin,'africa'),
 wierdfields = fieldnames(optin.africa);
 if ~isempty(wierdfields)
     disp('The following opt.africa settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
     error('Invalid osl_check_opt settings');
-    
+
 end % if ~isempty(wierdfields)
 end;
 
@@ -386,7 +386,7 @@ try, optin = rmfield(optin,'fname'); catch, end;
 wierdfields = fieldnames(optin);
 if ~isempty(wierdfields)
     disp('The following opt settings were not recognized by osl_check_opt');
-    
+
     for iprint = 1:numel(wierdfields)
         disp([' ' wierdfields{iprint} ' '])
     end
