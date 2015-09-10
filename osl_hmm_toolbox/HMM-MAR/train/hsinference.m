@@ -90,8 +90,6 @@ Pi=hmm.Pi;
 [~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
 
 B = obslike(X,hmm,residuals);
-
-% Adam's hack to ensure no NaNs
 B(B<realmin) = realmin;
 
 scale=zeros(T,1);
@@ -107,13 +105,13 @@ for i=2+order:T
     alpha(i,:)=alpha(i,:)/scale(i);
 end;
 
-% Adam's hack to ensure no NaNs
 scale(scale<realmin) = realmin;
 
 beta(T,:)=ones(1,K)/scale(T);
 for i=T-1:-1:1+order
-    % Adam's hack to ensure no NaNs
-    beta(i,:)=min([repmat(realmax,1,K);(beta(i+1,:).*B(i+1,:))*(P')/scale(i)]);
+    beta(i,:)=(beta(i+1,:).*B(i+1,:))*(P')/scale(i);
+    beta(i,:)=min([repmat(realmax,1,K);...
+        (beta(i+1,:).*B(i+1,:))*(P')/scale(i)]);
 end;
 Gamma=(alpha.*beta);
 Gamma=Gamma(1+order:T,:);

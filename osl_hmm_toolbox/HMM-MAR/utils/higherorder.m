@@ -12,6 +12,9 @@ while 1
    orders = formorders(order,orderoffset,0,exptimelag); 
    if length(orders)>L
        exptimelag = exptimelag * INC;
+   elseif length(orders)<L
+       INC = 0.99;
+       exptimelag = exptimelag * INC;
    else
        break
    end

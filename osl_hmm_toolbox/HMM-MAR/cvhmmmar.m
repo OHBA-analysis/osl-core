@@ -9,8 +9,8 @@ function [mcv,cv] = cvhmmmar (data,T,options)
 % options       structure with the training options - see documentation
 %
 % OUTPUT
-% mcverror      the averaged cross-validated likelihood and/or fractional mean squared error
-% cverror       the averaged cross-validated likelihood and/or fractional mean squared error per fold
+% mcv      the averaged cross-validated likelihood and/or fractional mean squared error
+% cv       the averaged cross-validated likelihood and/or fractional mean squared error per fold
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford
 

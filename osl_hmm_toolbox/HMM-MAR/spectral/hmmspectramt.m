@@ -40,6 +40,7 @@ function fit = hmmspectramt(X,T,options)
 % fit.state(k).f: frequencies (Nf x 1)
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford (2014)
+%  the code uses some parts from Chronux
 
 ndim = size(X,2);
 [options,Gamma] = checkoptions_spectra(options,ndim,T);
@@ -98,12 +99,15 @@ for k=1:K
             J=mtfftc(Xwin,tapers,nfft,Fs); % use detrend on X?
             for tp=1:ntapers,
                 Jik=J(findx,tp,:);
-                for j=1:ndim,
-                    for l=j:ndim,
-                        psdc(:,j,l,(in-1)*ntapers+tp) = psdc(:,j,l,(in-1)*ntapers+tp) + conj(Jik(:,:,j)).*Jik(:,:,l) / double(Nwins);
-                        if l~=j
-                            psdc(:,l,j,(in-1)*ntapers+tp) =  psdc(:,j,l,(in-1)*ntapers+tp);
-                        end
+                for j=1:ndim
+                    for l=1:ndim
+                %for j=1:ndim,
+                %    for l=j:ndim,
+%                        psdc(:,j,l,(in-1)*ntapers+tp) = psdc(:,j,l,(in-1)*ntapers+tp) + conj(Jik(:,:,j)).*Jik(:,:,l) / double(Nwins);
+%                        if l~=j
+%                            psdc(:,l,j,(in-1)*ntapers+tp) =  psdc(:,j,l,(in-1)*ntapers+tp);
+%                        end
+                        psdc(:,j,l,(in-1)*ntapers+tp) = psdc(:,j,l,(in-1)*ntapers+tp) + mean(conj(Jik(:,:,j)).*Jik(:,:,l),2) / double(Nwins);
                     end
                 end
             end

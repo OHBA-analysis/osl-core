@@ -65,10 +65,10 @@ switch hmm.train.covtype,
                     end
                 end
             end
-            hmm.Omega.Gam_rate(regressed,regressed) = hmm.Omega.Gam_rate(regressed,regressed) + 0.5*(e + swx2(regressed,regressed));
+            hmm.Omega.Gam_rate(regressed,regressed) = hmm.Omega.Gam_rate(regressed,regressed) + (e + swx2(regressed,regressed));
         end
         hmm.Omega.Gam_irate(regressed,regressed) = inv(hmm.Omega.Gam_rate(regressed,regressed));
-        hmm.Omega.Gam_shape = hmm.prior.Omega.Gam_shape + 0.5*Tres;
+        hmm.Omega.Gam_shape = hmm.prior.Omega.Gam_shape + Tres;
         
     case 'full'
         for k=1:K
@@ -89,9 +89,9 @@ switch hmm.train.covtype,
                 end
             end
             hmm.state(k).Omega.Gam_rate(regressed,regressed) = hmm.state(k).prior.Omega.Gam_rate(regressed,regressed) + ...
-                0.5*(e + swx2(regressed,regressed));
+                (e + swx2(regressed,regressed));
             hmm.state(k).Omega.Gam_irate(regressed,regressed) = inv(hmm.state(k).Omega.Gam_rate(regressed,regressed));
-            hmm.state(k).Omega.Gam_shape = hmm.state(k).prior.Omega.Gam_shape + 0.5*Gammasum(k);
+            hmm.state(k).Omega.Gam_shape = hmm.state(k).prior.Omega.Gam_shape + Gammasum(k);
         end
 end;
 

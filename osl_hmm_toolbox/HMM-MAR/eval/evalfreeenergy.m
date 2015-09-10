@@ -31,34 +31,37 @@ Entr=0;
 for in=1:length(T);
     j = sum(T(1:in-1)) - order*(in-1) + 1;
     logGamma = log(Gamma(j,:));
-    logGamma(isinf(-logGamma)) = log(eps);
+    logGamma(isinf(-logGamma)) = log(realmin);
     Entr = Entr - sum(Gamma(j,:).*logGamma);
     jj = j+1:j+T(in)-1-order;
     Gammajj = Gamma(jj,:);
     logGamma = log(Gammajj);
-    logGamma(isinf(-logGamma)) = log(eps);
+    logGamma(isinf(-logGamma)) = log(realmin);
     Entr = Entr + sum(Gammajj(:).*logGamma(:));
 end
 sXi = Xi(:); 
 logsXi = log(sXi);
-logsXi(isinf(-logsXi)) = log(eps);
+logsXi(isinf(-logsXi)) = log(realmin);
 Entr = Entr - sum(sXi .* logsXi);
 
-% Xi(Xi==0)=eps;				% avoid log(0)
+% Entr=0;
+% Xi(Xi==0)=realmin;				% avoid log(0)
 % Psi=zeros(size(Xi));			% P(S_t|S_t-1)
 % for k=1:K,
 %     sXi=sum(squeeze(Xi(:,:,k)),2);
 %     Psi(:,:,k)=Xi(:,:,k)./repmat(sXi,1,K);
 % end;
-% Psi(Psi==0)=eps;				% avoid log(0)
+% Psi(Psi==0)=realmin;				% avoid log(0)
 % Entr=Entr+sum(Xi(:).*log(Psi(:)),1);
-%Entr=Entr+sum(Xi(:).*log(Psi(:) ./  Xi(:)),1);	% entropy of hidden states
+% Entr=Entr+sum(Xi(:).*log(Psi(:) ./  Xi(:)),1);	% entropy of hidden states
 
 % Free energy terms for model not including obs. model
 % avLL for hidden state parameters and KL-divergence
 KLdiv=dirichlet_kl(hmm.Dir_alpha,hmm.prior.Dir_alpha);
-avLL = -length(T) * psi(sum(hmm.Dir_alpha));
-jj = zeros(length(T),1);
+PsiDir_alphasum=psi(sum(hmm.Dir_alpha,2));
+
+avLL = 0;  
+jj = zeros(length(T),1); % reference to first time point of the segments
 for in=1:length(T);
     jj(in) = sum(T(1:in-1)) - order*(in-1) + 1;
 end
@@ -66,14 +69,15 @@ for l=1:K,
     % KL-divergence for transition prob
     KLdiv=[KLdiv dirichlet_kl(hmm.Dir2d_alpha(l,:),hmm.prior.Dir2d_alpha(l,:))];
     % avLL initial state  
-    avLL = avLL + sum(Gamma(jj,l)) * psi(hmm.Dir_alpha(l));
-end    
-% avLL remaining states  
+    avLL = avLL + sum(Gamma(jj,l)) * (psi(hmm.Dir_alpha(l)) - PsiDir_alphasum);
+end     
+% avLL remaining time points  
 for k=1:K,
-    sXi = Xi(:,:,k); sXi = sum(sXi(:));  
-    avLL = avLL - sXi * psi(sum(hmm.Dir2d_alpha(:,k)));
+    PsiDir2d_alphasum=psi(sum(hmm.Dir2d_alpha(k,:),2));
+    %avLL = avLL - sXi * psi(sum(hmm.Dir2d_alpha(:,k)));
+    %PsiDir2d_alphasum=psi(sum(hmm.Dir2d_alpha(:,k)));
     for l=1:K,
-        avLL = avLL + sum(Xi(:,l,k)) * psi(hmm.Dir2d_alpha(l,k));
+        avLL = avLL + sum(Xi(:,l,k)) * (psi(hmm.Dir2d_alpha(l,k))-PsiDir2d_alphasum);
     end;
 end;
 
@@ -140,7 +144,7 @@ for k=1:K,
     end;
     
     meand = zeros(size(XX,1),sum(regressed));
-    if order>0
+    if order>0 || ~hmm.train.zeromean
         meand = XX * hs.W.Mu_W(:,regressed);
     end
     d = residuals(:,regressed) - meand;
@@ -259,6 +263,6 @@ for k=1:K,
     
 end;
 
-% [errY]=hmmerror(X,T,hmm,Gamma,ones(sum(T),1),residuals);
-% fprintf('XXX: %f %f %f %g \n',Entr, -avLL, +sum(KLdiv),errY(1)+errY(2))
-FrEn=[Entr -avLL +KLdiv];
+%[errY]=hmmerror(X,T,hmm,Gamma,ones(sum(T),1),residuals);
+%fprintf('XXX: %f %f %f %g \n',Entr, -avLL, +sum(KLdiv),errY(1)+errY(2))
+FrEn=[-Entr -avLL +KLdiv];

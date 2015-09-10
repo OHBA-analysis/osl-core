@@ -46,13 +46,11 @@ while mean_change>obs_tol && obs_it<=obs_maxit,
     hmm = updateOmega(hmm,Gamma,Gammasum,residuals,orders,Tres,XX,XXGXX,XW);
     
     %%% sigma - channel x channel coefficients
+    %%% alpha - one per order
     if order>0 
         hmm = updateSigma(hmm,orders);
-    end
-    %%% alpha - one per order
-    if order>0
         hmm = updateAlpha(hmm,orders);
-    end;
+    end
     
     %%% termination conditions
     obs_it = obs_it + 1;

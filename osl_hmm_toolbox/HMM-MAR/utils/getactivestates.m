@@ -2,12 +2,14 @@ function [actstates,hmm,Gamma,Xi] = getactivestates(X,hmm,Gamma,Xi)
 
 ndim = size(X,2);
 K = hmm.K;
-[~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
+orders = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
 Gammasum = sum(Gamma);
 
 actstates = ones(1,K);
 for k=1:K
-    if sum(Gamma(:,k)) < size(order*ndim,2)*10, actstates(k) = 0; end
+    if sum(Gamma(:,k)) < max(length(orders)*ndim,5) 
+        actstates(k) = 0; 
+    end
 end
 
 Gamma = Gamma(:,actstates==1);

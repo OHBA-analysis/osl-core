@@ -52,24 +52,22 @@ for k=1:hmm.K,
     end
     priorcov_rate = rangeerror(X,T,orders,residuals);
     
-    if strcmp(hmm.train.covtype,'diag') || strcmp(hmm.train.covtype,'full')
+    if strcmp(hmm.train.covtype,'full')
+        defstateprior(k).Omega.Gam_rate = diag(priorcov_rate);
         defstateprior(k).Omega.Gam_shape = ndim+0.1-1;
-        if strcmp(hmm.train.covtype,'full')
-            defstateprior(k).Omega.Gam_rate = diag(priorcov_rate);
-        else
-            defstateprior(k).Omega.Gam_rate = priorcov_rate;
-        end
+    elseif strcmp(hmm.train.covtype,'diag')
+        defstateprior(k).Omega.Gam_rate = 0.5 * priorcov_rate;
+        defstateprior(k).Omega.Gam_shape = 0.5 * (ndim+0.1-1);
     end
     
 end;
 
-if strcmp(hmm.train.covtype,'uniquediag') || strcmp(hmm.train.covtype,'uniquefull')
+if strcmp(hmm.train.covtype,'uniquefull')
     hmm.prior.Omega.Gam_shape = ndim+0.1-1;
-    if strcmp(hmm.train.covtype,'uniquefull')
-        hmm.prior.Omega.Gam_rate = diag(priorcov_rate);
-    else
-        hmm.prior.Omega.Gam_rate = priorcov_rate;
-    end
+    hmm.prior.Omega.Gam_rate = diag(priorcov_rate);
+elseif strcmp(hmm.train.covtype,'uniquediag')
+    hmm.prior.Omega.Gam_shape = 0.5 * (ndim+0.1-1);
+    hmm.prior.Omega.Gam_rate = 0.5 * priorcov_rate;
 end
 
 % assigning default priors for observation models
@@ -141,7 +139,7 @@ switch hmm.train.covtype
         hmm.Omega.Gam_rate = zeros(1,ndim);
         hmm.Omega.Gam_rate(regressed) = hmm.prior.Omega.Gam_rate(regressed);
         for k=1:hmm.K
-            if order>0
+            if order>0 || ~hmm.train.zeromean 
                 e = residuals(:,regressed) - XX * hmm.state(k).W.Mu_W(:,regressed);
             else
                 e = residuals(:,regressed);
@@ -154,7 +152,7 @@ switch hmm.train.covtype
         hmm.Omega.Gam_rate = zeros(ndim,ndim); hmm.Omega.Gam_irate = zeros(ndim,ndim); 
         hmm.Omega.Gam_rate(regressed,regressed) = hmm.prior.Omega.Gam_rate(regressed,regressed);
         for k=1:hmm.K
-            if order>0
+            if order>0 || ~hmm.train.zeromean
                 e = residuals(:,regressed) - XX * hmm.state(k).W.Mu_W(:,regressed);
             else
                 e = residuals(:,regressed);
@@ -166,7 +164,7 @@ switch hmm.train.covtype
     case 'diag'
         for k=1:hmm.K
             hmm.state(k).Omega.Gam_shape = hmm.state(k).prior.Omega.Gam_shape + gammasum(k) / 2;
-            if order>0
+            if order>0 || ~hmm.train.zeromean
                 e = residuals(:,regressed) - XX * hmm.state(k).W.Mu_W(:,regressed);
             else
                 e = residuals(:,regressed);
@@ -178,7 +176,7 @@ switch hmm.train.covtype
     case 'full'
         for k=1:hmm.K
             hmm.state(k).Omega.Gam_shape = hmm.state(k).prior.Omega.Gam_shape + gammasum(k);
-            if order>0
+            if order>0 || ~hmm.train.zeromean
                 e = residuals(:,regressed) - XX * hmm.state(k).W.Mu_W(:,regressed);
             else
                 e = residuals(:,regressed);
