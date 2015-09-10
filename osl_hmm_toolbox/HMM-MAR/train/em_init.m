@@ -56,4 +56,5 @@ if op.verbose
     fprintf('%i-th was the best iteration with LL=%f \n',s,LL)
 end
 
+end
 

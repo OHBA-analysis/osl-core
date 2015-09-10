@@ -35,8 +35,11 @@ for it=1:options.initrep
         fprintf('Init run %d, Free Energy %f \n',it,fehist0(end));
     end
     if fehist0(end)<fehist(end),
-        fehist = fehist0; Gamma = Gamma0; 
+        fehist = fehist0; Gamma = Gamma0; s = it;
     end
+end
+if options.verbose
+    fprintf('%i-th was the best iteration with FE=%f \n',s,fehist(end))
 end
 
 end

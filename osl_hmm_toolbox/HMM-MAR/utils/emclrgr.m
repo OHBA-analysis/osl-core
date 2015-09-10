@@ -90,7 +90,6 @@ it = 0; p0 = p;
 while 1
     
     %if it>2 && LL-LL0 > tol*abs(LL), break; end
-  
     if it>2 && LL0>LL, warning('error in the initialization - likelihood decreasing\n'); end
     
     if trace==1, fprintf('Iteration %d, LL: %f \n',it,LL); end
@@ -114,7 +113,6 @@ while 1
     end
     pi = mean(p);
     
-    
     % M step
     for k=1:K
         if N>0
@@ -134,8 +132,7 @@ while 1
         omega(predicting,k) = sum( er.^2 ) / sum(p(:,k));
     end
     
-    
-    % LL calculation    
+    % LL calculation
     if isempty(beta)
         LL = getLL(X,Y(:,predicting),[],omega(predicting,:),pi);
     else

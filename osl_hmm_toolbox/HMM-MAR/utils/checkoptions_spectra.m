@@ -1,13 +1,10 @@
 function [options,Gamma] = checkoptions_spectra (options,ndim,T)
 
-if nargin==3,
-    if ~isfield(options,'Gamma'),
-        Gamma = ones(sum(T),1);
-    else
-        Gamma = options.Gamma;
-    end
+if ~isfield(options,'Gamma'),
+    %if ~isfield(options,'order'), error('If you do not supply Gamma, you need to provide order'); end
+    Gamma = ones(sum(T),1);
 else
-    Gamma = [];
+    Gamma = options.Gamma;
 end
 
 % MT and common
@@ -22,6 +19,10 @@ if ~isfield(options,'fpass'),  options.fpass=[0 options.Fs/2]; end;
 if ~isfield(options,'tapers'), options.tapers = [4 7]; end;
 if ~isfield(options,'win'), options.win = min(T); end
 if ~isfield(options,'to_do'), options.to_do = ones(2,1); end;
+
+if any(T<options.win),
+    error('The specified window is larger than some of the segments')
+end
 
 % MAR 
 if ~isfield(options,'loadings'), options.loadings=eye(ndim); end;

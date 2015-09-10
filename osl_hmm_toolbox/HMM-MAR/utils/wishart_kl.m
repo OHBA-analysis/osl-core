@@ -28,8 +28,8 @@ end;
 
 K=size(B_p,1);
 
-Lq = -logdet(B_q,'chol') + K * log(2);
-Lp = -logdet(B_p,'chol') + K * log(2);
+Lq = -logdet(B_q,'chol'); 
+Lp = -logdet(B_p,'chol');  
 
 lZq = log(2) * (alpha_q*K/2)  - Lq * (-alpha_q/2) + K*(K-1)/4 * log(pi); 
 lZp = log(2) * (alpha_p*K/2)  - Lp * (-alpha_p/2) + K*(K-1)/4 * log(pi); 

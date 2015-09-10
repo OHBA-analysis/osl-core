@@ -1,19 +1,13 @@
-function [hmm] = hmmhsinit (hmm,d)
+function [hmm] = hmmhsinit (hmm)
 %
 % Initialise variables related to the Markov chain
 %
 % hmm		hmm data structure
-% d         hyperparameter for the diagonal elements of the transition matrix
 %
 % OUTPUT
 % hmm           hmm structure
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford
-
-
-if nargin<3
-    d = 1;
-end;
 
 % Initialising the posteriors
 for k=1:hmm.K,
@@ -22,7 +16,7 @@ for k=1:hmm.K,
   hmm.Pi(k)=hmm.Dir_alpha(k)./hmm.K;
   % State transitions
   hmm.Dir2d_alpha(k,:)=ones(1,hmm.K);
-  hmm.Dir2d_alpha(k,k)=d; 
+  hmm.Dir2d_alpha(k,k)=hmm.train.DirichletDiag; 
   hmm.P(k,:)=hmm.Dir2d_alpha(k,:)./sum(hmm.Dir2d_alpha(k,:),2);
 end;
 
@@ -32,7 +26,7 @@ defhmmprior=struct('Dir2d_alpha',[],'Dir_alpha',[]);
 defhmmprior.Dir_alpha=ones(1,hmm.K);
 defhmmprior.Dir2d_alpha=ones(hmm.K);
 for k=1:hmm.K,
-    defhmmprior.Dir2d_alpha(k,k) = d;
+    defhmmprior.Dir2d_alpha(k,k) = hmm.train.DirichletDiag;
 end;
 
 % assigning default priors for hidden states

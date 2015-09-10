@@ -1,6 +1,5 @@
 function [options,data] = checkoptions (options,data,T,cv)
 
-
 if ~isfield(options,'K'), error('K was not specified'); end
 if ~isfield(options,'order'), error('order was not specified'); end
 if ~isfield(options,'Fs'), options.Fs = 1; end
@@ -18,31 +17,27 @@ if ~isfield(options,'initcyc'), options.initcyc = 100; end
 if ~isfield(options,'initrep'), options.initrep = 5; end
 if ~isfield(options,'inittype'), options.inittype = 'EM'; end
 if ~isfield(options,'Gamma'), options.Gamma = []; end
+if ~isfield(options,'hmm'), options.hmm = []; end
+if ~isfield(options,'fehist'), options.fehist = []; end
 if ~isfield(options,'timelag'), options.timelag = 1; end
 if ~isfield(options,'exptimelag'), options.exptimelag = 1; end
 if ~isfield(options,'orderoffset'), options.orderoffset = 0; end
 if ~isfield(options,'symmetricprior'), options.symmetricprior = 1; end
+if ~isfield(options,'DirichletDiag'), options.DirichletDiag = 1; end
 if ~isfield(options,'whitening'), options.whitening = 0; end
 if ~isfield(options,'embeddedlags'), options.embeddedlags = 0; end
 if ~isfield(options,'repetitions'), options.repetitions = 1; end
 if ~isfield(options,'updateGamma'), options.updateGamma = 1; end
 if ~isfield(options,'keepS_W'), options.keepS_W = 1; end
 if ~isfield(options,'verbose'), options.verbose = 1; end
-if ~isfield(options,'checkpt_fname'), options.checkpt_fname=''; end
+
+if isempty(options.Gamma) && ~isempty(options.hmm)
+    error('Gamma must be provided in options if you want a warm restart')
+end
 
 if ~strcmp(options.inittype,'random') && options.initrep == 0,
     options.inittype = 'random';
     warning('Non random init was set, but initrep==0')
-end
-
-if isempty(options.checkpt_fname) && length(options.cyc)>1,
-    warning('cyc was a specified as a vector but checkpt_fname is empty')
-    options.cyc = options.cyc(end);
-end
-    
-if ~isempty(options.checkpt_fname) && length(options.cyc)==1,
-    warning('checkpt_fname has no effect if cyc is not specified as a vector')
-    options.checkpt_fname='';
 end
 
 if (options.order>0) && (options.order <= options.orderoffset)
@@ -59,7 +54,7 @@ if ~isfield(data,'C'),
     else data.C = ones(size(data.X,1),1); 
     end
 end
-if ~isfield(options,'S'), options.S=ones(size(data.X,2),size(data.X,2)); end
+if ~isfield(options,'S'), options.S=ones(length(options.embeddedlags)*size(data.X,2),length(options.embeddedlags)*size(data.X,2)); end
 if ~issymmetric(options.S) && options.symmetricprior==0,
    error('In order to use a symmetric prior, you need S to be symmetric as well') 
 end
@@ -94,9 +89,6 @@ if cv==1
     if length(options.cvfolds)>1 && ~isempty(options.Gamma), error('Set options.Gamma=[] for cross-validating'); end
     if length(options.cvfolds)==1 && options.cvfolds==0, error('Set options.cvfolds to a positive integer'); end
     if options.K==1 && isfield(options,'cvrep')>1, warning('If K==1, cvrep>1 has no point; cvrep is set to 1 \n'); end
-    if ~isempty(options.checkpt_fname), warning('Intermediate files are not saved for CV \n'); options.checkpt_fname = ''; end
-else
-    if ~isempty(options.checkpt_fname) && options.repetitions>1, warning('Intermediate files are not saved repetitions>1 \n'); options.checkpt_fname = ''; end 
 end
 
 end

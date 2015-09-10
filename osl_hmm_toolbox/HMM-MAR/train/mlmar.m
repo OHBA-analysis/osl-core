@@ -5,11 +5,8 @@ function [W,covm,pred,residuals,fracerr] = mlmar (X,T,Sind,order,orderoffset,tim
 % INPUT
 % X             observations
 % T             length of series
-% order         order of the ML MAR estimations 
-% timelag       time separation between lags
-% lambda        L2-regularisation parameter (ridge estimation)
+% order,orderoffset,timelag,exptimelag,zeromean - check documentation
 % W             MAR parameters - not to be computed if they are supplied
-% exclude       which variables to exclude from the regression
 % Gamma         weights
 %
 % OUTPUT
@@ -25,8 +22,9 @@ ndim = size(X,2);
 if nargin<5, orderoffset=0; end
 if nargin<6, timelag=1; end
 if nargin<7, exptimelag=1; end
-if nargin<8, W = []; end
-if nargin<9, Gamma = []; end
+if nargin<8, zeromean=1; end
+if nargin<9, W = []; end
+if nargin<10, Gamma = []; end
 
 [orders,order] = formorders(order,orderoffset,timelag,exptimelag);
 [XX,Y] = formautoregr(X,T,orders,order,zeromean);

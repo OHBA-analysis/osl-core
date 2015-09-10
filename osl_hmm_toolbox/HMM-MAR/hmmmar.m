@@ -44,7 +44,6 @@ end
 [orders,order] = formorders(options.order,options.orderoffset,options.timelag,options.exptimelag);
 Sind = formindexes(orders,options.S);
 
-
 if isempty(options.Gamma),
     if options.K > 1
         if options.initrep>0 && strcmp(options.inittype,'HMM-MAR')
@@ -52,6 +51,8 @@ if isempty(options.Gamma),
         elseif options.initrep>0 && strcmp(options.inittype,'EM')
             options.nu = sum(T)/200;
             options.Gamma = em_init(data,T,options,Sind,options.zeromean);
+        elseif options.initrep>0 && strcmp(options.inittype,'GMM')
+            options.Gamma = gmm_init(data,T,options);
         else
             options.Gamma = [];
             for in=1:length(T)
@@ -65,17 +66,28 @@ if isempty(options.Gamma),
 end   
 
 GammaInit = options.Gamma;
-
 fehist = Inf;
+if isempty(options.hmm) % Initialisation of the hmm
+    hmm_wr = struct('train',struct());
+    hmm_wr.K = options.K;
+    hmm_wr.train = options; 
+    hmm_wr.train.Sind = Sind; 
+    if options.whitening, hmm_wr.train.A = A; hmm_wr.train.iA = iA;  end
+    hmm_wr=hmmhsinit(hmm_wr);
+    [hmm_wr,residuals_wr]=obsinit(data,T,hmm_wr,options.Gamma);
+else % using a warm restart from a previous run
+    hmm_wr = options.hmm;
+    options = rmfield(options,'hmm');
+    hmm_wr.train = options; 
+    hmm_wr.train.Sind = Sind; 
+    residuals_wr = getresiduals(data.X,T,Sind,hmm_wr.train.order,...
+        hmm_wr.train.orderoffset,hmm_wr.train.timelag,hmm_wr.train.exptimelag,hmm_wr.train.zeromean);
+end
+
 for it=1:options.repetitions
-    hmm0=struct('train',struct());
-    hmm0.K = options.K;
-    hmm0.train = options; 
-    hmm0.train.Sind = Sind; 
-    if options.whitening, hmm0.train.A = A; hmm0.train.iA = iA;  end
-    hmm0=hmmhsinit(hmm0);
-    [hmm0,residuals0]=obsinit(data,T,hmm0,options.Gamma);
-    [hmm0,Gamma0,Xi0,fehist0] = hmmtrain(data,T,hmm0,options.Gamma,residuals0);
+    hmm0 = hmm_wr;
+    residuals0 = residuals_wr;
+    [hmm0,Gamma0,Xi0,fehist0] = hmmtrain(data,T,hmm0,options.Gamma,residuals0,options.fehist);
     if options.updateGamma==1 && fehist0(end)<fehist(end),
         fehist = fehist0; hmm = hmm0; 
         residuals = residuals0; Gamma = Gamma0; Xi = Xi0;
