@@ -24,7 +24,6 @@ function [D,parcellation,assignments] = osl_apply_parcellation(S)
 % parcellation  - the parcellation weights for each voxel
 % assignments   - parcel assignments for each voxel from a winner takes all
 %                 voting
-%
 
 global OSLDIR 
 
