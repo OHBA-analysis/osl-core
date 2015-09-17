@@ -77,7 +77,6 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 %                          .assignment - Use hard or soft (probabilistic)
 %                                        state assignment ['soft','hard']
 %                                        (default 'hard')
-%                          .use_parcel_weights - uses parcel weights rather
 %                          than binary parcels [0/1] (default 1)
 %                          .filename   - filename to save/load HMM results from
 %                            (default <hmmdir>/HMM<_method.*>)
@@ -210,7 +209,6 @@ try hmm_voxelwise = options.hmm.voxelwise;  catch, hmm_voxelwise = false; end
 % Default output settings
 try output_method       = options.output.method;                catch, output_method        = 'pcorr'; end
 try state_assignment    = options.output.assignment;            catch, state_assignment     = 'hard';  end  
-try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights   = 0;       end
 
 hmm=[];
     
@@ -302,6 +300,12 @@ if todo.prepare
     end      
 
 end
+
+% for subnum = 1:length(data_files)
+%     D=spm_eeg_load(filenames.prepare{subnum});
+%     D.parcellation.S=S;
+%     D.save;
+% end;
 
 % load parcel info
 if use_parcels
@@ -572,7 +576,7 @@ if todo.output
                     hmm_sub = rmfield(hmm_sub,'MixingMatrix');
 
                     D = spm_eeg_load(filenames.prepare{subnum});
-                                        
+                    
                     data = prepare_data(D,normalisation,logtrans,f,embed);
                     stat   = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,state_assignment);
                     
@@ -603,22 +607,24 @@ if todo.output
                     S2=[];
                     S2.mask_fname=mask_fname;
                     S2.output_spat_res=2; %mm
-                    nii_quicksave(stat,[statemaps{f},'_wholebrain'],S2);
+                    if isfield(D.parcellation.S,'hcp_sourcemodel3d') 
+                        hcp_nii_quicksave(stat, [statemaps{f},'_wholebrain'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)
+                    else
+                        nii_quicksave(stat,[statemaps{f},'_wholebrain'],S2);
+                    end;
                 catch
                 end;
                 
                 if use_parcels
                     statp = statp ./ length(data_files);
                
-                    % convert parcel statemaps into voxel statemaps
-                    if ~use_parcel_weights
-                        S2.interp='nearestneighbour';
+                    % convert parcel statemaps into voxel statemaps                    
+                    S2.interp='nearestneighbour';
+
+                    if isfield(D.parcellation.S,'hcp_sourcemodel3d') 
+                        hcp_nii_parcel_quicksave(statp, parcelAssignments, [statemaps{f},'_parcels'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)
+                    else
                         ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps{f},'_parcels'],S2);
-                    else % Question: Isn't it cheating to use the parcel weights to generate the maps?
-                        weights = abs(parcelWeights);
-                        weights = weights/mean(weights(logical(weights)));
-                        
-                        ROInets.nii_parcel_quicksave(statp,weights,[statemaps{f},'_parcels'],S2);
                     end
                     
                     % also store statemaps as vectors

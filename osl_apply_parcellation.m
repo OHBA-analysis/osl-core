@@ -50,7 +50,7 @@ S.method            = ft_getopt(S,'method','PCA');
 
 if ~isempty(S.hcp_sourcemodel3d)
     % HCP data
-    parcellation = HCP_mni2hcp(S.hcp_sourcemodel3d,S.parcellation);
+    parcellation = HCP_mni2hcp(S.hcp_sourcemodel3d,S.parcellation,S.hcp_mask_fname_out);
 else
     switch class(S.parcellation)
         case {'char','cell'}
@@ -120,5 +120,11 @@ Dnode(:,:,:) = data;
 Dnode.save;
 
 D = Dnode; % For output
+
+D.parcellation.weights=parcellation;
+D.parcellation.assignments=assignments;
+D.parcellation.S=S;        
+  
+D.save;
 
 end
