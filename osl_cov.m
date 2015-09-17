@@ -25,7 +25,7 @@ else
     [nchans,nsamples] = size(D);
     ntrials = 1;
     nfreqs  = 1;
-    if nchans > nsamples
+    if nchans > 2*nsamples
         error(['Input has ' num2str(nsamples) ' rows and ' num2str(nchans) ' columns. Consider transposing']);
     end
     samples2use = true(nsamples,1);
