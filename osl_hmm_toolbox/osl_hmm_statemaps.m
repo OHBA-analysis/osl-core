@@ -163,6 +163,7 @@ end
 
 if strcmp(mode,'pcorr')
   x = devar(x,1);
+  x(isnan(x))=0;
 else
   x = demean(x,1);
 end

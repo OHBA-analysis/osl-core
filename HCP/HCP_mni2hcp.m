@@ -60,4 +60,3 @@ dos(['fslorient -setqform ' num2str(xform) ' ' fname_out])
 %dos(['fslview ' fname_out ' &'])
 %dos(['fslview ' fname_in ' &'])
 end
-

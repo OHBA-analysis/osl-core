@@ -15,6 +15,8 @@ function [D,parcellation,assignments] = osl_apply_parcellation(S)
 % S.method              - method for reconstructing parcel time course:
 %                           ['PCA','mean','peakVoxel']
 % S.prefix              - filename prefix for new MEEG object (default 'p')
+% S.hcp_sourcemodel3d   - if it is HCP data, then need to pass in the 
+%                           sourcemodel3d
 %
 % OUTPUTS:
 %
@@ -46,20 +48,24 @@ S.prefix            = ft_getopt(S,'prefix','p');
 S.orthogonalisation = ft_getopt(S,'orthogonalisation','none');
 S.method            = ft_getopt(S,'method','PCA');
 
-switch class(S.parcellation)
-    case {'char','cell'}
-        try
-            stdbrain = read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz']);
-            parcellation = vols2matrix(read_avw(S.parcellation),stdbrain); %nVoxels x nSamples
-        catch
-            error('Make sure the parcellation file and the data are compatible, including having the same spatial resolution.');
-        end
-    case {'single','double','logical'}
-        parcellation = S.parcellation;
-    otherwise
-        error('Unrecognized parcellation');
+if ~isempty(S.hcp_sourcemodel3d)
+    % HCP data
+    parcellation = HCP_mni2hcp(S.hcp_sourcemodel3d,S.parcellation,S.hcp_mask_fname_out);
+else
+    switch class(S.parcellation)
+        case {'char','cell'}
+            try
+                stdbrain = read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz']);
+                parcellation = vols2matrix(read_avw(S.parcellation),stdbrain); %nVoxels x nSamples
+            catch
+                error('Make sure the parcellation file and the data are compatible, including having the same spatial resolution.');
+            end
+        case {'single','double','logical'}
+            parcellation = S.parcellation;
+        otherwise
+            error('Unrecognized parcellation');
+    end
 end
-
 
 if size(parcellation,2) == 1
     % Currently nvoxels x 1 with a index at each voxel indicating
@@ -115,4 +121,9 @@ Dnode.save;
 
 D = Dnode; % For output
 
+D.parcellation.weights=parcellation;
+D.parcellation.assignments=assignments;
+D.parcellation.S=S;        
+  
+D.save;
 end

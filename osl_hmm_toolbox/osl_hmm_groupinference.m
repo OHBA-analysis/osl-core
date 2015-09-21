@@ -69,7 +69,8 @@ function [HMMresults,statemaps] = osl_hmm_groupinference(data_files,hmmdir,todo,
 %
 % AB 2014
 
-%global OSLDIR
+global OSLDIR
+
 
 HMMresults = [];
 statemaps  = [];
@@ -147,6 +148,9 @@ try todo.envelope = todo.envelope; catch, todo.envelope = 1; end
 try todo.concat   = todo.concat;   catch, todo.concat   = 1; end
 try todo.hmm      = todo.hmm;      catch, todo.hmm      = 1; end
 
+% Default prepare settings
+try envelope_do = options.prepare.envelope;   catch, envelope_do = 1;   end
+
 % Default envelope settings
 try windowsize = options.envelope.windowsize; catch, windowsize = 0.1;  end
 try multiband  = options.envelope.multiband;  catch, multiband  = [];   end
@@ -160,7 +164,7 @@ try whiten    = options.concat.whiten;     catch, whiten     = 1;  end
 % Default HMM settings
 try nstates = options.hmm.nstates; catch, nstates = 8; end
 try nreps   = options.hmm.nreps;   catch, nreps   = 5; end
-    
+try use_old_tbx = options.hmm.use_old_hmm_tbx;  catch, use_old_tbx = 0; end
 % Default output settings
 try output_method = options.output.method; catch, output_method = 'pcorr'; end
 
@@ -307,7 +311,35 @@ if todo.infer
     end
     
     
-    hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',0));
+    %hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',0));
+    
+    
+    % Switch between Iead's & Diego's HMM toolboxes
+    if use_old_tbx
+        rmpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
+        addpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
+
+        if envelope_do 
+            hmm = ABhmm_infer(hmmdata,nstates,nreps);
+        else
+            hmm = ABhmm_infer(hmmdata,nstates,nreps,'constrain_mean');
+        end;
+        addpath(genpath(fullfile(OSLDIR,'osl2/osl_hmm_toolbox/HMM-MAR')));
+        rmpath(genpath(fullfile(OSLDIR,'hmmbox_4_1')));
+
+    else
+
+        rmpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
+        addpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
+
+        hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',~envelope_do));
+        %hmm = osl_hmm_infer(hmmdata,struct('K',nstates,'order',0,'Ninits',nreps,'Hz',fsample,'zeromean',false));
+        addpath(genpath(fullfile(OSLDIR,'osl2/hmmbox_4_1')));
+        rmpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
+
+    end
+    
+    
     hmm.MixingMatrix = MixingMatrix;
     hmm.fsample = fsample;
     
