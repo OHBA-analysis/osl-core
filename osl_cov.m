@@ -1,4 +1,4 @@
-function C = osl_cov(D)
+function [C,M] = osl_cov(D)
 % Computes the covariance of a [channels x samples] matrix without
 % encountering memory issues. This allows the covariance matrix to be
 % computed for large data matrices without running out of memory.
@@ -10,8 +10,7 @@ function C = osl_cov(D)
 % Usage:
 % C = osl_cov(D)
 %
-% OR:
-% C = osl_cov(D)
+% [C,M] = osl_cov(D) also returns the mean
 %
 % Adam Baker 2014
 

@@ -14,12 +14,14 @@ else
     tra = eye(size(C));
 end
 
-ft_progress('init', 'etf');
+if D.ntrials > 1, ft_progress('init', 'etf'); end
 for trl = 1:D.ntrials
-    ft_progress(trl/D.ntrials, 'Processing trial %d of %d', trl, D.ntrials);
+    if D.ntrials > 1
+        ft_progress(trl/D.ntrials, 'Processing trial %d of %d', trl, D.ntrials); 
+    end
     V(:,trl) = diag(tra * C(:,:,trl) * tra');
 end
-ft_progress('close')
+if D.ntrials > 1, ft_progress('close'); end
 
 
 end
