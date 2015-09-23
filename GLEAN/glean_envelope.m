@@ -37,6 +37,10 @@ for session = 1:numel(GLEAN.data)
             move(D,tempdata); % overwrite temporary file with enveloped data
         end
         
+        % Compute standard deviation of data for normalisation
+        D.normalisation = sqrt(osl_source_variance(D));
+        D.save;
+        
         % Compute envelopes
         S               = [];
         S.D             = tempdata;

@@ -31,6 +31,9 @@ envelopeData = fullfile(envelopeDir,'data',strcat(sessionNames,'.mat'));
 if ~isdir(envelopeDir)
     mkdir(envelopeDir);
 end
+if ~isdir(fullfile(envelopeDir,'data'))
+    mkdir(fullfile(envelopeDir,'data'));
+end
 
 
 %% SUBSPACE
@@ -54,6 +57,9 @@ subspaceData = fullfile(subspaceDir,'data',strcat(sessionNames,'.mat'));
 [GLEAN.data.subspace] = deal(subspaceData{:});
 if ~isdir(subspaceDir)
     mkdir(subspaceDir);
+end
+if ~isdir(fullfile(subspaceDir,'data'))
+    mkdir(fullfile(subspaceDir,'data'));
 end
 
 
