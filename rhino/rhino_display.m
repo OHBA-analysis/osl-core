@@ -28,14 +28,19 @@ rotate3d(hf);
 
 D = montage(D,'switch');
 
-mesh_rhino = spm_eeg_inv_transform_mesh(D.inv{1}.datareg(1).fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh.tess_rhino);
 mesh       = spm_eeg_inv_transform_mesh(D.inv{1}.datareg(1).fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh);
+mesh_rhino = spm_eeg_inv_transform_mesh(D.inv{1}.datareg(1).fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh.tess_rhino);
+
+% Reduce mesh size for faster plotting
+mesh_rhino = struct('faces',mesh_rhino.face,'vertices',mesh_rhino.vert);
+reduce_factor = 1e3/size(mesh_rhino.vertices,1);
+mesh_rhino = reducepatch(mesh_rhino,reduce_factor);
 
 headshape_polhemus = D.inv{1}.datareg(1).fid_eeg.pnt;
 fid_polhemus = D.inv{1}.datareg(1).fid_eeg.fid.pnt;
 fid_mri = D.inv{1}.datareg(1).fid_mri.fid.pnt;
 
-patch(struct('faces',mesh_rhino.face,'vertices',mesh_rhino.vert),'FaceColor',[238,206,179]./255,'EdgeColor','none','FaceAlpha',0.7,'Parent',ha);
+patch(mesh_rhino,'FaceColor',[238,206,179]./255,'EdgeColor','none','FaceAlpha',0.7,'Parent',ha);
 
 patch(struct('faces',mesh.tess_ctx.face,'vertices',mesh.tess_ctx.vert),'FaceColor',[1 0.7 0.7],'EdgeColor','none','Parent',ha);
 %patch(struct('faces',mesh.tess_scalp.face,'vertices',mesh.tess_scalp.vert),'EdgeColor','g','FaceColor','none','Parent',ha);
@@ -53,7 +58,7 @@ if ~isempty(headshape_polhemus)
     %h_hsp   = plot3(headshape_polhemus(:,1),headshape_polhemus(:,2),headshape_polhemus(:,3),'dm');
     %set(h_hsp,'MarkerFaceColor','r','MarkerSize',4,'MarkerEdgeColor','r');
 
-    err = rhino_cperror(mesh_rhino.vert,headshape_polhemus);
+    err = rhino_cperror(mesh_rhino.vertices,headshape_polhemus);
     err(err>5) = 5;
     h_hsp = scatter3(headshape_polhemus(:,1),headshape_polhemus(:,2),headshape_polhemus(:,3),50,err,'filled');
     colormap(jet)
