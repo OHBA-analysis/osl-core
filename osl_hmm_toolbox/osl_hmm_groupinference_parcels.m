@@ -621,7 +621,7 @@ if todo.output
                     % convert parcel statemaps into voxel statemaps                    
                     S2.interp='nearestneighbour';
 
-                    if isfield(D.parcellation.S,'hcp_sourcemodel3d') 
+                    if isfield(D.parcellation,'S') && isfield(D.parcellation.S,'hcp_sourcemodel3d') 
                         hcp_nii_parcel_quicksave(statp, parcelAssignments, [statemaps{f},'_parcels'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)
                     else
                         ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps{f},'_parcels'],S2);
