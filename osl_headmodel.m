@@ -1,5 +1,5 @@
 function D = osl_headmodel(S)
-% NOSL_HEADMODEL runs MEG coregistration and forward model in SPM8 or 
+% OSL_HEADMODEL runs MEG coregistration and forward model in SPM8 or 
 % SPM12. These two tasks are separately performed by nosl_datareg.m and 
 % osl_forward_model.m which are wrapped together to ensure functionality 
 % of local spheres forward model when montaging has been applied
@@ -116,14 +116,14 @@ if S.use_rhino
     
     S_coreg = S;
     S_coreg.modality = {};
-    if isfield(S_coreg, 'forward_meg'),
+    if isfield(S, 'forward_meg'),
         S_coreg = rmfield(S_coreg, 'forward_meg');
         S_coreg.modality(end+1) = {'MEG'};
     end
-    if isfield(S_coreg, 'forward_eeg'),
+    if isfield(S, 'forward_eeg'),
         S_coreg = rmfield(S_coreg, 'forward_eeg');
         S_coreg.modality(end+1) = {'EEG'};
-    end%if
+    end
     S_coreg.do_plots = 0;
     rhino(S_coreg);
     close all
@@ -133,8 +133,12 @@ if S.use_rhino
     
     S_forward               = struct();
     S_forward.D             = S.D;
-    S_forward.forward_meg   = S.forward_meg;
-    S_forward.forward_eeg   = S.forward_eeg;
+    if isfield(S, 'forward_meg')
+        S_forward.forward_meg   = S.forward_meg;
+    end
+    if isfield(S, 'forward_eeg')
+        S_forward.forward_eeg   = S.forward_eeg;
+    end
     osl_forward_model(S_forward);
     
     

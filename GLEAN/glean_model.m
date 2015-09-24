@@ -10,7 +10,10 @@ if ~exist(GLEAN.model,'file')
         D = spm_eeg_load(GLEAN.data(session).subspace);
         %if isfield(GLEAN.settings.envelope,'freqbands') && numel(GLEAN.settings.envelope.freqbands) > 1
         %    % rearrange channels x frequencies as [c1f1, ... ,c1fn, c2f1, ...]
-            dataConcat{session} = reshape(D(:,:,:,:),[],D.nsamples,D.ntrials);
+            dat = reshape(D(:,:,:,:),[],D.nsamples,D.ntrials);
+            
+            %dataConcat{session} = normalise(dat,2);
+            dataConcat{session} = dat;
         %else
         %    dataConcat{session} = D(:,:,:);
         %end

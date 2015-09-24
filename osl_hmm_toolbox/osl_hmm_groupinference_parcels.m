@@ -77,6 +77,7 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 %                          .assignment - Use hard or soft (probabilistic)
 %                                        state assignment ['soft','hard']
 %                                        (default 'hard')
+%                          .use_parcel_weights - uses parcel weights rather
 %                          than binary parcels [0/1] (default 1)
 %                          .filename   - filename to save/load HMM results from
 %                            (default <hmmdir>/HMM<_method.*>)
@@ -209,6 +210,8 @@ try hmm_voxelwise = options.hmm.voxelwise;  catch, hmm_voxelwise = false; end
 % Default output settings
 try output_method       = options.output.method;                catch, output_method        = 'pcorr'; end
 try state_assignment    = options.output.assignment;            catch, state_assignment     = 'hard';  end  
+try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights   = 0;       end
+
 
 hmm=[];
     
@@ -576,7 +579,7 @@ if todo.output
                     hmm_sub = rmfield(hmm_sub,'MixingMatrix');
 
                     D = spm_eeg_load(filenames.prepare{subnum});
-                    
+
                     data = prepare_data(D,normalisation,logtrans,f,embed);
                     stat   = stat + osl_hmm_statemaps(hmm_sub,data,~envelope_do,output_method,state_assignment);
                     
@@ -618,6 +621,7 @@ if todo.output
                 if use_parcels
                     statp = statp ./ length(data_files);
                
+
                     % convert parcel statemaps into voxel statemaps                    
                     S2.interp='nearestneighbour';
 

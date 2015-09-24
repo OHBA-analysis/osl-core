@@ -1,4 +1,4 @@
-function C = osl_cov(D)
+function [C,M] = osl_cov(D)
 % Computes the covariance of a [channels x samples] matrix without
 % encountering memory issues. This allows the covariance matrix to be
 % computed for large data matrices without running out of memory.
@@ -10,8 +10,7 @@ function C = osl_cov(D)
 % Usage:
 % C = osl_cov(D)
 %
-% OR:
-% C = osl_cov(D)
+% [C,M] = osl_cov(D) also returns the mean
 %
 % Adam Baker 2014
 
@@ -25,8 +24,8 @@ else
     [nchans,nsamples] = size(D);
     ntrials = 1;
     nfreqs  = 1;
-    if nchans > 2*nsamples
-        error(['Input has ' num2str(nsamples) ' rows and ' num2str(nchans) ' columns. Consider transposing']);
+    if nchans > nsamples
+        warning(['Input has ' num2str(nsamples) ' rows and ' num2str(nchans) ' columns. Consider transposing']);
     end
     samples2use = true(nsamples,1);
 end

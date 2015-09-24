@@ -16,6 +16,10 @@ if ~all(cellfun(@exist,{GLEAN.data.subspace}))
         S.D             = prefix(GLEAN.data(session).subspace,'tmp');
         S.normalisation = GLEAN.settings.subspace.normalisation;
         glean_normalise(S);
+
+        %D(:,:,:,:) = D(:,:,:,:) ./ repmat(D.normalisation,1,D.nfrequencies,D.nsamples,D.ntrials);
+        %D.save;
+
     end
     
     
@@ -29,22 +33,7 @@ if ~all(cellfun(@exist,{GLEAN.data.subspace}))
             
         case 'pca'
             
-            % Compute the PCA subspace from the eigendecompositition of the
-            % group covariance matrix, which (assuming zero mean data) may be
-            % computed as (N1*C1 + N2*C2 + ... + Nk*Ck) / (N1 + N2 + ... + Nk)
-                               
-            C = 0;
-            nTotal = 0;
-            for session = 1:numel(GLEAN.data)
-                D = spm_eeg_load(prefix(GLEAN.data(session).subspace,'tmp'));
-                nTotal = nTotal + D.nsamples;
-                C = C + (D.nsamples - 1) * osl_cov(D);
-            end
-            if length(size(C)) > 2
-                C = mean(mean(C,4),3);
-                warning('Averaging covariance over all frequencies & trials. This method has not been fully tested!');
-            end
-            C = C / (nTotal-1);
+            C = osl_groupcov(prefix({GLEAN.data.subspace},'tmp'));
             pcadim = min(GLEAN.settings.subspace.pca.dimensionality,D.nchannels);
             [allsvd,M] = eigdec(C,pcadim);
             

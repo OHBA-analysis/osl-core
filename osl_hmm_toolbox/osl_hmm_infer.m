@@ -50,7 +50,7 @@ T = size(data,1);
 FrEn = Inf;
 for i = 1:Ninits
     %options.inittype='EM';
-    options.inittype = 'GMM';
+    options.inittype = 'EM';
     options.initcyc = 100;
     options.initrep = 5;
     %options.covtype='diag';
@@ -77,7 +77,7 @@ for i = 1:Ninits
     end
 end 
 hmm.FrEn = fehist(end);
-    
+hmm.FrEn_hist = fehist;    
 
 % Set sampling rate
 if isfield(options,'Fs')

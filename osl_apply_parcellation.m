@@ -65,7 +65,7 @@ else
         otherwise
             error('Unrecognized parcellation');
     end
-end;
+end
 
 if size(parcellation,2) == 1
     % Currently nvoxels x 1 with a index at each voxel indicating
@@ -126,5 +126,4 @@ D.parcellation.assignments=assignments;
 D.parcellation.S=S;        
   
 D.save;
-
 end

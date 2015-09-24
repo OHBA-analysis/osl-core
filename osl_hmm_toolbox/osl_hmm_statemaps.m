@@ -168,6 +168,7 @@ else
   x = demean(x,1);
 end
 
+
 pinvxtx = pinv(x'*x);
 pinvx = pinv(x);
   

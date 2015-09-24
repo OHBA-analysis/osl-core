@@ -71,6 +71,7 @@ function [HMMresults,statemaps] = osl_hmm_groupinference(data_files,hmmdir,todo,
 
 global OSLDIR
 
+
 HMMresults = [];
 statemaps  = [];
 
@@ -164,7 +165,6 @@ try whiten    = options.concat.whiten;     catch, whiten     = 1;  end
 try nstates = options.hmm.nstates; catch, nstates = 8; end
 try nreps   = options.hmm.nreps;   catch, nreps   = 5; end
 try use_old_tbx = options.hmm.use_old_hmm_tbx;  catch, use_old_tbx = 0; end
-
 % Default output settings
 try output_method = options.output.method; catch, output_method = 'pcorr'; end
 
@@ -338,7 +338,6 @@ if todo.infer
         rmpath(genpath(fullfile(OSLDIR,'osl_hmm_toolbox/HMM-MAR')));
 
     end
-    
     
     
     hmm.MixingMatrix = MixingMatrix;
