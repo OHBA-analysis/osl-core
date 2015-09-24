@@ -48,7 +48,7 @@ S.prefix            = ft_getopt(S,'prefix','p');
 S.orthogonalisation = ft_getopt(S,'orthogonalisation','none');
 S.method            = ft_getopt(S,'method','PCA');
 
-if ~isempty(S.hcp_sourcemodel3d)
+if isfield(S,'hcp_sourcemodel3d') && ~isempty(S.hcp_sourcemodel3d)
     % HCP data
     parcellation = HCP_mni2hcp(S.hcp_sourcemodel3d,S.parcellation,S.hcp_mask_fname_out);
 else
