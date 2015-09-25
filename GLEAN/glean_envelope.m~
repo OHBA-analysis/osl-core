@@ -10,14 +10,14 @@ for session = 1:numel(GLEAN.data)
         data     = GLEAN.data(session).(char(dataset));
         envelope = GLEAN.data(session).([char(dataset) '_envelopes']);
         
-        if ~exist(envelope,'file')
+        if ~exist(GLEAN.data(session).([char(dataset) '_envelopes']),'file')
             
             % Make a temporary filename to copy raw data to
             [~,tempdata] = fileparts(tempname);
-            tempdata = fullfile(fileparts(envelope),[tempdata '.mat']);
+            tempdata = fullfile(fileparts(GLEAN.data(1).enveloped),[tempdata '.mat']);
             
             % Copy data to HMM directory with a temporary filename
-            D = spm_eeg_load(data);
+            D = spm_eeg_load(GLEAN.data(session).subspace);
             copy(D,tempdata);
             clear D
             
@@ -36,7 +36,7 @@ for session = 1:numel(GLEAN.data)
             D = glean_hilbenv(S);
             
             % Rename file
-            D = move(D,envelope);
+            D = move(D,GLEAN.data(session).enveloped);
             system(['rm ',strrep(tempdata,'.mat','.*at')])
             
         end

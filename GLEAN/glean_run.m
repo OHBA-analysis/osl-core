@@ -50,19 +50,16 @@ function glean_run(GLEAN)
 % Either create a new GLEAN or load an existing one and modify its
 % parameters
 
-save(GLEAN.name,'GLEAN')
+save(GLEAN.name,'GLEAN')   
 
 % COMPUTE ENVELOPES
 glean_envelope(GLEAN)
-       
 
 % COMPUTE SUBSPACE DATA
 glean_subspace(GLEAN)
 
-
 % RUN THE NETWORK MODEL (ICA/HMM)
 glean_model(GLEAN)
-
 
 % CREATE OUTPUT MAPS/STATS
 glean_output(GLEAN)

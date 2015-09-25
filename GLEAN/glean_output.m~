@@ -32,6 +32,13 @@ for output_type = fieldnames(GLEAN.settings.output)'
             
             for session = 1:numel(GLEAN.data)
                 
+                switch GLEAN.settings.output.(output).space
+                    case 'subspace'
+                        data = GLEAN.data(session).enveloped;
+                    case 'full'
+                        data = GLEAN.data(session).beamformed;
+                end
+                
                 if F == 1
                     session_maps(:,:,1,session) = glean_regress(GLEAN.data(session).enveloped,regressors(model.subIndx==session,:),output);
                 else 

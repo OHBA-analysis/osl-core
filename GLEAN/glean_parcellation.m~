@@ -52,9 +52,7 @@ clear voxeldata_concat nodedata_concat;
 
 % Save data to new MEEG object
 outfile = fullfile(D.path,D.fname);
-Dnode = clone(montage(D,'switch',0),outfile,[size(data,1),D.nsamples,D.ntrials]);
-Dnode = chantype(Dnode,1:Dnode.nchannels,'VE');
-Dnode(:,:,:) = data;
+D(:,:,:) = data;
 D = Dnode; % For output
 D.save;
 end

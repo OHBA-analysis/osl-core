@@ -57,13 +57,15 @@ if ~all(cellfun(@exist,{GLEAN.data.subspace}))
         case 'parcellation'
             
             for session = 1:numel(GLEAN.data)        
+                tempdata = prefix(GLEAN.data(session).subspace,'tmp');
                 S                   = [];
-                S.D                 = GLEAN.data(session).subspace;
+                S.D                 = tempdata;
                 S.parcellation      = GLEAN.settings.subspace.parcellation.file;
                 S.mask              = GLEAN.settings.subspace.parcellation.mask;
                 S.orthogonalisation = GLEAN.settings.subspace.parcellation.orthogonalisation;
                 S.method            = GLEAN.settings.subspace.parcellation.method;
-                glean_parcellation(S);
+                D = glean_parcellation(S);
+                move(D,tempdata); % overwrite temporary file with enveloped data
             end
             
         otherwise
