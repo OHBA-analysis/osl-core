@@ -72,6 +72,7 @@ for i = 1:Ninits
     if fehist(end) < FrEn
         hmm = hmm_new;
         hmm.statepath = vpath;
+        hmm.train.Gamma=Gamma;
         FrEn = fehist(end);
     end
 end 
