@@ -7,7 +7,7 @@ if ~exist(GLEAN.model,'file')
     dataConcat = cell(1,numel(GLEAN.data)); % cell arrays grow better than arrays
     subIndx    = cell(1,numel(GLEAN.data)); % cell arrays grow better than arrays
     for session = 1:numel(GLEAN.data)
-        D = spm_eeg_load(GLEAN.data(session).enveloped);
+        D = spm_eeg_load(GLEAN.data(session).subspace);
         %if isfield(GLEAN.settings.envelope,'freqbands') && numel(GLEAN.settings.envelope.freqbands) > 1
         %    % rearrange channels x frequencies as [c1f1, ... ,c1fn, c2f1, ...]
             dat = reshape(D(:,:,:,:),[],D.nsamples,D.ntrials);

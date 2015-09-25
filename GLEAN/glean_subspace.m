@@ -1,13 +1,22 @@
 function glean_subspace(GLEAN)
 % Runs the subspace stage of GLEAN
 
+
+method = lower(char(intersect(fieldnames(GLEAN.settings.subspace),{'pca','parcellation','voxel'})));
+
+switch method
+    case {'voxel','pca'}
+        data = 'enveloped';
+    case 'parcellation'
+        data = 'beamformed';     
+end
+
+
 if ~all(cellfun(@exist,{GLEAN.data.subspace}))
       
-    method = lower(char(intersect(fieldnames(GLEAN.settings.subspace),{'pca','parcellation','voxel'})));
-    
-    % Copy beamformed data to subspace directory
+    % Copy data to subspace directory
     for session = 1:numel(GLEAN.data)
-        D = spm_eeg_load(GLEAN.data(session).beamformed);
+        D = spm_eeg_load(GLEAN.data(session).(data));
         D = copy(D,GLEAN.data(session).subspace);
     end
     
@@ -56,7 +65,9 @@ if ~all(cellfun(@exist,{GLEAN.data.subspace}))
             
         case 'parcellation'
             
-            for session = 1:numel(GLEAN.data)        
+            for session = 1:numel(GLEAN.data)   
+                
+                % Compute parcellation:
                 S                   = [];
                 S.D                 = GLEAN.data(session).subspace;
                 S.parcellation      = GLEAN.settings.subspace.parcellation.file;
@@ -64,6 +75,21 @@ if ~all(cellfun(@exist,{GLEAN.data.subspace}))
                 S.orthogonalisation = GLEAN.settings.subspace.parcellation.orthogonalisation;
                 S.method            = GLEAN.settings.subspace.parcellation.method;
                 glean_parcellation(S);
+                
+                % Compute envelopes:
+                S               = [];
+                S.D             = GLEAN.data(session).subspace;
+                S.fsample_new   = GLEAN.settings.envelope.fsample;
+                S.logtrans      = GLEAN.settings.envelope.log;
+                if isfield(GLEAN.settings.envelope,'freqbands')
+                    S.freqbands = GLEAN.settings.envelope.freqbands;
+                else
+                    S.freqbands = [];
+                end
+                S.demean    = 0;
+                S.prefix    = '';
+                D = glean_hilbenv(S);
+                move(D,GLEAN.data(session).subspace)
             end
             
         otherwise
