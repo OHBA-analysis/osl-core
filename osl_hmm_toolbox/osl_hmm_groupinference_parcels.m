@@ -574,7 +574,7 @@ if todo.output
                     hmm_sub = hmm;
                     hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
 
-                    hmm_sub.train.Gamma=hmm.train.Gamma(subj_inds==subnum,:);
+%                    hmm_sub.train.Gamma=hmm.train.Gamma(subj_inds==subnum,:);
                     
                     hmm_sub = rmfield(hmm_sub,'MixingMatrix');
 
