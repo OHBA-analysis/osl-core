@@ -23,17 +23,18 @@ function [errY,fracerrY,errR,fracerrR,response]=hmmerror(X,T,hmm,Gamma,test,resi
 % Author: Diego Vidaurre, OHBA, University of Oxford
 
 N = length(T);
-tr = hmm.train;
-[orders,order] = formorders(tr.order,tr.orderoffset,tr.timelag,tr.exptimelag);
+train = hmm.train;
+orders = formorders(train.order,train.orderoffset,train.timelag,train.exptimelag);
 S = hmm.train.S==1;
-Sind = formindexes(orders,tr.S);
+Sind = formindexes(orders,train.S);
 regressed = sum(S,1)>0;
 
 if nargin<5,
     test = ones(sum(T),1);
 end
 if nargin<6 || isempty(residuals),
-    residuals = getresiduals(X,T,Sind,tr.order,tr.orderoffset,tr.timelag,tr.exptimelag,tr.zeromean);
+    residuals = ...
+        getresiduals(X,T,Sind,train.maxorder,train.order,train.orderoffset,train.timelag,train.exptimelag,train.zeromean);
 end
 if nargin<7,
     actstates = ones(hmm.K,1);
@@ -43,11 +44,12 @@ Y = [];
 te = [];
 for in=1:N
     t0 = sum(T(1:in-1));
-    Y = [Y; X(t0+1+order:t0+T(in),:)];
-    te = [te; test(t0+1+order:t0+T(in))];
+    Y = [Y; X(t0+1+hmm.train.maxorder:t0+T(in),:)];
+    te = [te; test(t0+1+hmm.train.maxorder:t0+T(in))];
 end
 
-[response,responseR] = hmmpred(X,T,hmm,Gamma,residuals,actstates); response = response(te==1,:); responseR = responseR(te==1,:);
+[response,responseR] = hmmpred(X,T,hmm,Gamma,residuals,actstates); 
+response = response(te==1,:); responseR = responseR(te==1,:);
 errY = mean((Y(te==1,regressed) - response(:,regressed)).^2);
 fracerrY = errY ./ mean( (Y(te==1,regressed) - repmat(mean(Y(te==1,regressed)),sum(te),1) ).^2 );
 errR = mean((residuals(te==1,regressed) - responseR(:,regressed)).^2);

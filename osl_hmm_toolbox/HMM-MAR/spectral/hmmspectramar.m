@@ -33,23 +33,20 @@ sT = sum(T);
 ndim = size(hmm.state(1).W.Mu_W,2);
 [options,Gamma] = checkoptions_spectra(options,ndim,T);
 if length(T)<5 && options.p>0,  error('You need at least 5 trials to compute error bars for MAR spectra'); end
-zeromean = hmm.train.zeromean;
 
-loadings = options.loadings;
-if hmm.train.whitening, loadings = loadings * iA; end
+%loadings = options.loadings;
+%if hmm.train.whitening, loadings = loadings * iA; end
+%M = size(options.loadings,1);
 
-M = size(options.loadings,1);
 freqs = (0:options.Nf-1)*( (options.fpass(2) - options.fpass(1)) / (options.Nf-1)) + options.fpass(1);
 w=2*pi*freqs/options.Fs;
-
-[orders,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
 K = length(hmm.state);
 
-if options.p==0, Tm = 1; 
-else Tm = length(T); end
+if options.p==0, N = 1; 
+else N = length(T); end
 
-psdc = zeros(options.Nf,ndim,ndim,size(Tm,1),K);
-pdcc = zeros(options.Nf,ndim,ndim,size(Tm,1),K);
+psdc = zeros(options.Nf,ndim,ndim,N,K);
+pdcc = zeros(options.Nf,ndim,ndim,N,K);
 % ipsdc = zeros(options.Nf,ndim,ndim,size(Tm,1),K);
 % cohc = zeros(options.Nf,ndim,ndim,size(Tm,1),K);
 % pcohc = zeros(options.Nf,ndim,ndim,size(Tm,1),K);
@@ -57,37 +54,42 @@ pdcc = zeros(options.Nf,ndim,ndim,size(Tm,1),K);
 
 if size(T,1)==1, T=T'; end
 
-for j=1:Tm
+for j=1:N
     
     if options.p==0
         Gammaj = Gamma; Xj = X; Tj = T;
     else
         t0 = sum(T(1:j-1)); jj = [1:t0 (sum(T(1:j))+1):sT]; 
         Xj = X(jj,:); Tj = [T(1:j-1); T(j+1:end) ]; 
-        t0 = sum(T(1:j-1)) - (j-1)*order; jj = [1:t0 (sum(T(1:j))-j*order+1):(sT-length(T)*order)]; 
+        t0 = sum(T(1:j-1)) - (j-1)*hmm.train.maxorder; 
+        jj = [1:t0 (sum(T(1:j))-j*hmm.train.maxorder+1):(sT-length(T)*hmm.train.maxorder)]; 
         Gammaj = Gamma(jj,:);
     end
     
-    hmmj = mlhmmmar(Xj,Tj,hmm,Gammaj);
+    hmm0 = hmm;
+    hmm = mlhmmmar(Xj,Tj,hmm0,Gammaj,options.completelags);
     
     for k=1:K
-        W = zeros(order,M,M);
+
+        setstateoptions;
+        W = zeros(order,ndim,ndim);
         for i=1:length(orders),
-            W(i,:,:) = loadings *  hmmj.state(k).W.Mu_W(~zeromean + ((1:ndim) + (i-1)*ndim),:) * loadings' ;
+            %W(i,:,:) = loadings *  hmmj.state(k).W.Mu_W(~zeromean + ((1:ndim) + (i-1)*ndim),:) * loadings' ;
+            W(i,:,:) = hmmj.state(k).W.Mu_W(~train.zeromean + ((1:ndim) + (i-1)*ndim),:);
         end
         
-        switch hmmj.train.covtype
+        switch train.covtype
             case 'uniquediag'
-                covmk = diag(hmmj.Omega.Gam_rate / hmmj.Omega.Gam_shape);
-                preck = diag(hmmj.Omega.Gam_shape ./ hmmj.Omega.Gam_rate);
+                covmk = diag(hmm.Omega.Gam_rate / hmm.Omega.Gam_shape);
+                preck = diag(hmm.Omega.Gam_shape ./ hmm.Omega.Gam_rate);
             case 'diag'
-                covmk = diag(hmmj.state(k).Omega.Gam_rate / hmmj.state(k).Omega.Gam_shape);
-                preck = diag(hmmj.state(k).Omega.Gam_shape ./ hmmj.state(k).Omega.Gam_rate);
+                covmk = diag(hmm.state(k).Omega.Gam_rate / hmm.state(k).Omega.Gam_shape);
+                preck = diag(hmm.state(k).Omega.Gam_shape ./ hmm.state(k).Omega.Gam_rate);
             case 'uniquefull'
-                covmk = hmmj.Omega.Gam_rate ./ hmmj.Omega.Gam_shape;
+                covmk = hmm.Omega.Gam_rate ./ hmm.Omega.Gam_shape;
                 preck = inv(covmk);
             case 'full'
-                covmk = hmmj.state(k).Omega.Gam_rate ./ hmmj.state(k).Omega.Gam_shape;
+                covmk = hmm.state(k).Omega.Gam_rate ./ hmm.state(k).Omega.Gam_shape;
                 preck = inv(covmk);
         end
         
@@ -124,6 +126,7 @@ for j=1:Tm
 %         end
         
     end
+    hmm = hmm0; clear hmm0
 end
     
 for k=1:K

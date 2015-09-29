@@ -1,6 +1,6 @@
-function [W,covm,pred,residuals,fracerr] = mlmar (X,T,Sind,order,orderoffset,timelag,exptimelag,zeromean,W,Gamma)
+function [W,covm,pred,residuals,fracerr] = mlmar (X,T,Sind,maxorder,order,orderoffset,timelag,exptimelag,zeromean,W,Gamma)
 %
-% Estimates maximum-likelihood (ML) MAR model
+% Estimates maximum-likelihood (ML) MAR model 
 %
 % INPUT
 % X             observations
@@ -19,15 +19,15 @@ function [W,covm,pred,residuals,fracerr] = mlmar (X,T,Sind,order,orderoffset,tim
 % Author: Diego Vidaurre, OHBA, University of Oxford
 
 ndim = size(X,2);
-if nargin<5, orderoffset=0; end
-if nargin<6, timelag=1; end
-if nargin<7, exptimelag=1; end
-if nargin<8, zeromean=1; end
-if nargin<9, W = []; end
-if nargin<10, Gamma = []; end
+if nargin<6, orderoffset=0; end
+if nargin<7, timelag=1; end
+if nargin<8, exptimelag=1; end
+if nargin<9, zeromean=1; end
+if nargin<10, W = []; end
+if nargin<11, Gamma = []; end
 
 [orders,order] = formorders(order,orderoffset,timelag,exptimelag);
-[XX,Y] = formautoregr(X,T,orders,order,zeromean);
+[XX,Y] = formautoregr(X,T,orders,maxorder,zeromean);
 
 if isempty(Sind)
     Sind = true(ndim*length(orders),ndim);

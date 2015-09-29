@@ -19,12 +19,13 @@ orders = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.
 Sind = formindexes(orders,hmm.train.S);
 
 % get global residuals
-[~,~,~,r0] = mlmar(X,T,Sind==1,hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag,hmm.train.zeromean);
+[~,~,~,r0] = mlmar(X,T,Sind==1,hmm.train.maxorder,hmm.train.order,hmm.train.orderoffset, ...
+    hmm.train.timelag,hmm.train.exptimelag,hmm.train.zeromean);
 e0 = sum(sum( r0(:,regressed).^2 ) ./ var0);
 
 % get local residuals
 [~,~,gcovm] = mlhmmmar(X,T,hmm,Gamma);
-nsamples = sum(T) - length(T)*hmm.train.order;
+nsamples = sum(T) - length(T)*hmm.train.maxorder;
 e2 = sum( (diag(gcovm)' * nsamples) ./ var0);
 sp = e2/e0;
 

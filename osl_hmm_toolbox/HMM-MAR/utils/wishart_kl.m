@@ -45,7 +45,7 @@ for k=1:K
 end
 
 D = (alpha_q/2-0.5-0.5*K)*Lq - (alpha_p/2-0.5-0.5*K)*Lp ...
-    - alpha_q * K / 2 + alpha_q * trace(B_p*inv(B_q)) / 2 + lZp - lZq;
+    - alpha_q * K / 2 + alpha_q * trace(B_p / B_q) / 2 + lZp - lZq;
 
 return;
 

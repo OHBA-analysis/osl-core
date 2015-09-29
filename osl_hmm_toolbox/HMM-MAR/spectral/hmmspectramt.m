@@ -74,7 +74,6 @@ tapers=dpsschk(options.tapers,options.win,Fs); % check tapers
 ntapers = options.tapers(2);
 
 
-
 for k=1:K
     
     Xk = X .* repmat(Gamma(:,k),1,ndim);

@@ -14,9 +14,6 @@ function [hmm] = obsupdate (X,T,Gamma,hmm,residuals)
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford
 
-[orders,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
-Tres = sum(T) - length(T)*order;
-ndim = size(X,2);
 K=hmm.K;
 
 obs_tol = 0.00005;
@@ -26,31 +23,25 @@ obs_it = 1;
 
 % Some stuff that will be later used
 Gammasum = sum(Gamma);
-XX = formautoregr(X,T,orders,order,hmm.train.zeromean);
-XXGXX = zeros(size(XX,2),size(XX,2),K);
-for k=1:K
-    XXGXX(:,:,k) = (XX' .* repmat(Gamma(:,k)',(~hmm.train.zeromean)+ndim*length(orders),1)) * XX;
-end
+XXGXX = cell(K,1);
+setxx;
+Tres = sum(T) - length(T)*hmm.train.maxorder;
 
 while mean_change>obs_tol && obs_it<=obs_maxit,
     
     last_state = hmm.state;
         
     %%% W
-    XW = zeros(K,Tres,ndim);
-    if order>0 || hmm.train.zeromean==0
-        [hmm,XW] = updateW(hmm,Gamma,residuals,orders,XX,XXGXX);
-    end
-       
+    [hmm,XW] = updateW(hmm,Gamma,residuals,XX,XXGXX);
+
     %%% Omega
-    hmm = updateOmega(hmm,Gamma,Gammasum,residuals,orders,Tres,XX,XXGXX,XW);
+    hmm = updateOmega(hmm,Gamma,Gammasum,residuals,Tres,XX,XXGXX,XW);
     
     %%% sigma - channel x channel coefficients
+    hmm = updateSigma(hmm);
+    
     %%% alpha - one per order
-    if order>0 
-        hmm = updateSigma(hmm,orders);
-        hmm = updateAlpha(hmm,orders);
-    end
+    hmm = updateAlpha(hmm);
     
     %%% termination conditions
     obs_it = obs_it + 1;

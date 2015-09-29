@@ -1,6 +1,7 @@
-function [Gamma,LL] = em_init(data,T,op,Sind,zeromean)
+function [Gamma,LL] = em_init(data,T,op,Sind)
 %
 % Initialise the hidden Markov chain using an EM algorithm for clusterwise regression in time series.
+% (It uses the default state configuration for all states)
 %
 % INPUT
 % data      observations, a struct with X (time series) and C (classes, optional)
@@ -16,7 +17,7 @@ function [Gamma,LL] = em_init(data,T,op,Sind,zeromean)
 %
 % Author: Diego Vidaurre, University of Oxford
 
-[orders,order] = formorders(op.order,op.orderoffset,op.timelag,op.exptimelag);
+orders = formorders(op.order,op.orderoffset,op.timelag,op.exptimelag);
 
 N = length(T);
 Gamma = [];
@@ -24,12 +25,12 @@ Gamma = [];
 Y = []; C = [];
 for in=1:N
     t0 = sum(T(1:in-1));
-    Y = [Y; data.X(t0+1+order:t0+T(in),:)];
-    C = [C; data.C(t0+1+order:t0+T(in),:)];
+    Y = [Y; data.X(t0+1+op.maxorder:t0+T(in),:)];
+    C = [C; data.C(t0+1+op.maxorder:t0+T(in),:)];
 end
 
-XX = formautoregr(data.X,T,orders,order,zeromean);
-if ~zeromean, Sind = [true(1,size(Sind,2)); Sind]; end
+XX = formautoregr(data.X,T,orders,op.maxorder,op.zeromean);
+if ~op.zeromean, Sind = [true(1,size(Sind,2)); Sind]; end
 
 LL = -Inf; 
 for n=1:op.initrep
