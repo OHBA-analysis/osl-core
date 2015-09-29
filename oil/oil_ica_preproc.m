@@ -46,7 +46,7 @@ catch ME
         % passed in as results structure from an oat
         [~, saveNameStem]  = fileparts(reconResultsFname);
         sourceReconResults = oat_load_results(oil, saveNameStem);
-        D                  = sourceReconResults.BF.data.D;
+        D                  = spm_eeg_load(sourceReconResults.BF.write.spmeeg.files{1});
     else
         % another error
         rethrow(ME);
