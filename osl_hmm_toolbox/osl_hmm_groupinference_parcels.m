@@ -431,7 +431,7 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
     fsample = D.fsample;
    
     disp(['Saving group concatenated data to ' filenames.concat])
-    save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds');   
+    save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds','-v7.3');   
     
 end
 
