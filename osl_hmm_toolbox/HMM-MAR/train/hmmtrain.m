@@ -26,8 +26,6 @@ function [hmm,Gamma,Xi,fehist,actstates]=hmmtrain(data,T,hmm,Gamma,residuals,feh
 N = length(T); K = hmm.train.K;
 ndim = size(data.X,2); 
 
-[~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
-
 if nargin<6, fehist=[]; 
 elseif ~isempty(fehist), fprintf('Restarting at cycle %d \n',length(fehist)+1); 
 end
@@ -35,15 +33,17 @@ end
 actstates = ones(1,K);
 cyc_to_go = 0;
 
-for cycle=1:hmm.train.cyc
+for cycle=1:hmm.train.cyc    
     
     if hmm.train.updateGamma,
               
         %%%% E step
         if hmm.K>1 || cycle==1
+         
             [Gamma,Gammasum,Xi]=hsinference(data,T,hmm,residuals);
             if size(Gammasum,1)>1, Gammasum = sum(Gammasum); end
-            if (hmm.K>1 && any(round(Gammasum) == sum(T)-N*order))
+                        
+            if (hmm.K>1 && any(round(Gammasum) >= sum(T)-N*hmm.train.maxorder))
                 fprintf('cycle %i: All the points collapsed in one state \n',cycle)
                 break
             end
@@ -58,13 +58,17 @@ for cycle=1:hmm.train.cyc
         fehist = [fehist; sum(evalfreeenergy(data.X,T,Gamma,Xi,hmm,residuals))];
         strwin = ''; if hmm.train.meancycstop>1, strwin = 'windowed'; end
         if cycle>(hmm.train.meancycstop+1) && cyc_to_go==0
-            chgFrEn = mean( fehist(end:-1:(end-hmm.train.meancycstop+1)) - fehist(end-1:-1:(end-hmm.train.meancycstop)) )  ...
+            chgFrEn = mean( fehist(end:-1:(end-hmm.train.meancycstop+1)) - ...
+                fehist(end-1:-1:(end-hmm.train.meancycstop)) )  ...
                 / (fehist(1) - fehist(end));
             %/ abs(mean(fehist(end-1:-1:(end-hmm.train.meancycstop)))) * 100;
             %if chgFrEn>0.03, keyboard; end
-            if hmm.train.verbose, fprintf('cycle %i free energy = %g, %s relative change = %g \n',cycle,fehist(end),strwin,chgFrEn); end
-            if (-chgFrEn < hmm.train.tol), break; end
-        elseif hmm.train.verbose && cycle>1, fprintf('cycle %i free energy = %g \n',cycle,fehist(end));
+            if hmm.train.verbose, 
+                fprintf('cycle %i free energy = %g, %s relative change = %g \n',...
+                    cycle,fehist(end),strwin,chgFrEn); 
+            end
+            if (abs(chgFrEn) < hmm.train.tol), break; end
+        elseif hmm.train.verbose, fprintf('cycle %i free energy = %g \n',cycle,fehist(end)); %&& cycle>1
         end
         if cyc_to_go>0, cyc_to_go = cyc_to_go - 1; end
         

@@ -21,8 +21,12 @@ function [Gamma,Gammasum,Xi,LL]=hsinference(data,T,hmm,residuals)
 
 N = length(T);
 
-[~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
-
+if ~hmm.train.multipleConf
+    [~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
+else
+    order = hmm.train.maxorder;
+end
+    
 K=hmm.K;
 Gamma=[]; LL = [];
 Gammasum=zeros(N,K);
@@ -31,8 +35,13 @@ Xi=[];
 for in=1:N
     t0 = sum(T(1:in-1)); s0 = t0 - order*(in-1);
     X = data.X(t0+1:t0+T(in),:);
-    C = data.C(t0+1:t0+T(in),:);
-    R = [zeros(order,size(residuals,2));  residuals(s0+1:s0+T(in)-order,:)];
+    if order>0
+        C = [zeros(order,K); data.C(s0+1:s0+T(in)-order,:)];
+        R = [zeros(order,size(residuals,2));  residuals(s0+1:s0+T(in)-order,:)];
+    else
+        C = data.C(s0+1:s0+T(in)-order,:);
+        R = residuals(s0+1:s0+T(in)-order,:);
+    end
     % we jump over the fixed parts of the chain
     t = order+1;
     xi = []; gamma = []; gammasum = zeros(1,K); ll = [];
@@ -87,7 +96,12 @@ function [Gamma,Xi,B]=nodecluster(X,K,hmm,residuals)
 T = size(X,1);
 P=hmm.P;
 Pi=hmm.Pi;
-[~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
+
+if ~hmm.train.multipleConf
+    [~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
+else
+    order = hmm.train.maxorder;
+end
 
 B = obslike(X,hmm,residuals);
 B(B<realmin) = realmin;
@@ -110,8 +124,7 @@ scale(scale<realmin) = realmin;
 beta(T,:)=ones(1,K)/scale(T);
 for i=T-1:-1:1+order
     beta(i,:)=(beta(i+1,:).*B(i+1,:))*(P')/scale(i);
-    beta(i,:)=min([repmat(realmax,1,K);...
-        (beta(i+1,:).*B(i+1,:))*(P')/scale(i)]);
+    beta(i,beta(i,:)>realmax) = realmax;
 end;
 Gamma=(alpha.*beta);
 Gamma=Gamma(1+order:T,:);

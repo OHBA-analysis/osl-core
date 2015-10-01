@@ -21,11 +21,12 @@ function [responseY,responseR,Gamma] = hmmpred(X,T,hmm,Gamma,residuals,actstates
 % Author: Diego Vidaurre, OHBA, University of Oxford
 
 K = hmm.K; ndim = size(X,2);
-tr = hmm.train;
-[orders,order] = formorders(tr.order,tr.orderoffset,tr.timelag,tr.exptimelag);
+train = hmm.train;
+[orders,order] = formorders(train.order,train.orderoffset,train.timelag,train.exptimelag);
 
 if nargin<5 || isempty(residuals),
-    [residuals,Wgl] = getresiduals(X,T,tr.Sind,tr.order,tr.orderoffset,tr.timelag,tr.exptimelag,tr.zeromean);
+    [residuals,Wgl] = getresiduals(X,T,train.Sind,train.order.maxorder,train.order,...
+        train.orderoffset,train.timelag,train.exptimelag,train.zeromean);
 else
     Wgl = zeros(length(orders)*ndim+(~hmm.train.zeromean),ndim);
 end
@@ -36,23 +37,25 @@ end
 if K<length(actstates), % populate hmm with empty states up to K
     hmm2 = hmm; hmm2 = rmfield(hmm2,'state');
     acstates1 = find(actstates==1);
-    if strcmp(tr.covtype,'diag') || strcmp(tr.covtype,'full')    
+    if strcmp(train.covtype,'diag') || strcmp(train.covtype,'full')    
         omegashape = 0;
-        if strcmp(tr.covtype,'diag'), omegarate = zeros(1,ndim);
+        if strcmp(train.covtype,'diag'), omegarate = zeros(1,ndim);
         else omegarate = zeros(ndim); end
         for k=1:K
             omegashape = omegashape + hmm.state(k).Omega.Gam_shape / K;
             omegarate = omegarate + hmm.state(k).Omega.Gam_rate / K;
         end
-        if strcmp(tr.covtype,'diag'), iomegarate = omegarate.^(-1);
+        if strcmp(train.covtype,'diag'), iomegarate = omegarate.^(-1);
         else iomegarate = inv(omegarate); end
     end
-    W = zeros(size(hmm.state(1).W.Mu_W)); S_W = zeros(size(hmm.state(1).W.S_W));
+    W = zeros((~train.zeromean)+ndim*length(orders),ndim);
+    S_W = zeros(ndim,(~train.zeromean)+ndim*length(orders),(~train.zeromean)+ndim*length(orders));
     for k=1:length(actstates)
         if actstates(k)==1
             hmm2.state(k) = struct('Omega',hmm.state(acstates1==k).Omega,'W',hmm.state(acstates1==k).W);
         else
-            hmm2.state(k) = struct('Omega',struct('Gam_shape',omegashape,'Gam_rate',omegarate,'Gam_irate',iomegarate),'W',struct('Mu_W',W,'S_W',S_W));
+            hmm2.state(k) = struct('Omega',struct('Gam_shape',omegashape,'Gam_rate',omegarate,'Gam_irate',iomegarate),...
+                'W',struct('Mu_W',W,'S_W',S_W));
         end
     end
     K = length(actstates);
@@ -70,13 +73,27 @@ if any(isnan(Gamma)),
     Gamma=hsinference(data,T,hmm,residuals);
 end
 
-XX = formautoregr(X,T,orders,order,hmm.train.zeromean);
+setxx; % build XX 
 
-responseR = zeros(size(XX,1), ndim);
-responseY = zeros(size(XX,1), ndim);
+responseR = zeros(size(XX{1},1), ndim);
+responseY = zeros(size(XX{1},1), ndim);
 for k=1:K,
-    if actstates(k)
-        responseR = responseR + repmat(Gamma(:,acstates1==k),1,ndim) .*  (XX * hmm.state(k).W.Mu_W);
+    if hmm.train.multipleConf, 
+        kk = k;
+        if isfield(hmm.state(k),'train') && hmm.state(k).train.uniqueAR
+            W = repmat(hmm.state(k).W.Mu_W,1,ndim);
+        else
+            W = hmm.state(k).W.Mu_W;
+        end
+    else
+        kk = 1; W = hmm.state(k).W.Mu_W;
     end
-    responseY = responseR + XX * Wgl;
+    if actstates(k)
+        responseR = responseR + repmat(Gamma(:,acstates1==k),1,ndim) .*  (XX{kk} * W);
+    end
+    if isempty(Wgl)
+        responseY = responseR;
+    else
+        responseY = responseR + XX{kk} * Wgl;
+    end
 end;

@@ -1,4 +1,4 @@
-function Gamma = hmmmar_init(data,T,options)
+function Gamma = hmmmar_init(data,T,options,Sind)
 %
 % Initialise the hidden Markov chain using HMM-MAR
 %
@@ -6,22 +6,20 @@ function Gamma = hmmmar_init(data,T,options)
 % data      observations, a struct with X (time series) and C (classes, optional)
 % T         length of observation sequence
 % options,  structure with the training options  
+% Sind
 %
 % OUTPUT
 % Gamma     p(state given X)
 %
 % Author: Diego Vidaurre, University of Oxford
 
-[orders,order] = formorders(options.order,options.orderoffset,options.timelag,options.exptimelag);
-Sind = formindexes(orders,options.S);
+if isfield(options,'maxorder'), order = options.maxorder;
+else order = options.order;
+end
 
 fehist = Inf;
 for it=1:options.initrep
-    options.Gamma = [];
-    for in=1:length(T)
-        gamma = rand(T(in)-order,options.K);
-        options.Gamma = [options.Gamma; gamma ./ repmat(sum(gamma,2),1,options.K)];
-    end
+    options.Gamma = initGamma_random(T-options.maxorder,options.K,options.DirichletDiag);
     hmm0=struct('train',struct());
     hmm0.K = options.K;
     hmm0.train = options; 
@@ -31,6 +29,10 @@ for it=1:options.initrep
     hmm0=hmmhsinit(hmm0);
     [hmm0,residuals0]=obsinit(data,T,hmm0,options.Gamma);
     [~,Gamma0,~,fehist0] = hmmtrain(data,T,hmm0,options.Gamma,residuals0);
+    if size(Gamma0,2)<options.K
+        Gamma0 = [Gamma0 0.0001*rand(size(Gamma0,1),options.K-size(Gamma0,2))];
+        Gamma0 = Gamma0 ./ repmat(sum(Gamma0,2),1,options.K);
+    end
     if options.verbose,
         fprintf('Init run %d, Free Energy %f \n',it,fehist0(end));
     end

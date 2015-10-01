@@ -21,7 +21,8 @@ ndim = size(data.X,2);
 if any(~isnan(data.C(:,1))),
     error('Fixing part of the Markov chain is not implemented for GMM initialisation')
 end
-[~,order] = formorders(options.order,options.orderoffset,options.timelag,options.exptimelag);
+%[~,order] = formorders(options.order,options.orderoffset,options.timelag,options.exptimelag);
+order = options.maxorder;
 
 LL = -Inf;
 for n=1:options.initrep

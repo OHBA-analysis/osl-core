@@ -431,7 +431,7 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
     fsample = D.fsample;
    
     disp(['Saving group concatenated data to ' filenames.concat])
-    save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds');   
+    save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds','-v7.3');   
     
 end
 
@@ -574,7 +574,7 @@ if todo.output
                     hmm_sub = hmm;
                     hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
 
-                    hmm_sub.train.Gamma=hmm.train.Gamma(subj_inds==subnum,:);
+%                    hmm_sub.train.Gamma=hmm.train.Gamma(subj_inds==subnum,:);
                     
                     hmm_sub = rmfield(hmm_sub,'MixingMatrix');
 

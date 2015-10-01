@@ -15,14 +15,16 @@ function [vpath]=hmmdecode(X,T,hmm,residuals)
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford
 
-tiny=exp(-700);
 N = length(T);
 K=hmm.K;
 P=hmm.P;
 Pi=hmm.Pi;
 
-[~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
-
+if ~hmm.train.multipleConf
+    [~,order] = formorders(hmm.train.order,hmm.train.orderoffset,hmm.train.timelag,hmm.train.exptimelag);
+else
+    order = hmm.train.maxorder;
+end
 
 for in=1:N
     
@@ -48,14 +50,14 @@ for in=1:N
     
     alpha(1+order,:)=Pi(:)'.*B(1+order,:);
     scale(1+order)=sum(alpha(1+order,:));
-    alpha(1+order,:)=alpha(1+order,:)/(scale(1+order)+tiny);
+    alpha(1+order,:)=alpha(1+order,:)/(scale(1+order)+realmin);
     
     delta(1+order,:) = alpha(1+order,:);    % Eq. 32(a) Rabiner (1989)
     % Eq. 32(b) Psi already zero
     for i=2+order:T(in)
         alpha(i,:)=(alpha(i-1,:)*P).*B(i,:);
         scale(i)=sum(alpha(i,:));
-        alpha(i,:)=alpha(i,:)/(scale(i)+tiny);
+        alpha(i,:)=alpha(i,:)/(scale(i)+realmin);
         
         for k=1:K,
             v=delta(i-1,:).*P(:,k)';
@@ -74,7 +76,7 @@ for in=1:N
         
         % SCALING FOR DELTA ????
         dscale(i)=sum(delta(i,:));
-        delta(i,:)=delta(i,:)/(dscale(i)+tiny);
+        delta(i,:)=delta(i,:)/(dscale(i)+realmin);
     end;
     
     % Get beta values for single state decoding

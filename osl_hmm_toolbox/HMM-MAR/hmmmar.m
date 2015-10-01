@@ -32,68 +32,61 @@ if length(options.embeddedlags)>1
    data.X = X; data.C = C;
 end
 
-if options.whitening>0  
-    mu = mean(data.X);
-    data.X = bsxfun(@minus, data.X, mu);
-    [V,D] = svd(data.X'*data.X);
-    A = sqrt(size(data.X,1)-1)*V*sqrtm(inv(D + eye(size(D))*0.00001))*V';
-    data.X = data.X*A;
-    iA = pinv(A);
-end
-
-[orders,order] = formorders(options.order,options.orderoffset,options.timelag,options.exptimelag);
-Sind = formindexes(orders,options.S);
+% if options.whitening>0  
+%     mu = mean(data.X);
+%     data.X = bsxfun(@minus, data.X, mu);
+%     [V,D] = svd(data.X'*data.X);
+%     A = sqrt(size(data.X,1)-1)*V*sqrtm(inv(D + eye(size(D))*0.00001))*V';
+%     data.X = data.X*A;
+%     iA = pinv(A);
+% end
 
 if isempty(options.Gamma),
     if options.K > 1
+        Sind = options.Sind;
         if options.initrep>0 && strcmp(options.inittype,'HMM-MAR')
-            options.Gamma = hmmmar_init(data,T,options);
+            options.Gamma = hmmmar_init(data,T,options,Sind);
         elseif options.initrep>0 && strcmp(options.inittype,'EM')
             options.nu = sum(T)/200;
-            options.Gamma = em_init(data,T,options,Sind,options.zeromean);
+            options.Gamma = em_init(data,T,options,Sind);
         elseif options.initrep>0 && strcmp(options.inittype,'GMM')
             options.Gamma = gmm_init(data,T,options);
-        else
-            options.Gamma = [];
-            for in=1:length(T)
-                gamma = rand(T(in)-order,options.K);
-                options.Gamma = [options.Gamma; gamma ./ repmat(sum(gamma,2),1,options.K)];
-            end
+        else % options.inittype=='random'
+            options.Gamma = initGamma_random(T-options.maxorder,options.K,options.DirichletDiag);
         end
     else
-       options.Gamma = ones(sum(T)-length(T)*order,1); 
+       options.Gamma = ones(sum(T)-length(T)*options.maxorder,1); 
     end
 end   
 
 GammaInit = options.Gamma;
+options = rmfield(options,'Gamma');
 fehist = Inf;
 if isempty(options.hmm) % Initialisation of the hmm
     hmm_wr = struct('train',struct());
     hmm_wr.K = options.K;
     hmm_wr.train = options; 
-    hmm_wr.train.Sind = Sind; 
-    if options.whitening, hmm_wr.train.A = A; hmm_wr.train.iA = iA;  end
+    %if options.whitening, hmm_wr.train.A = A; hmm_wr.train.iA = iA;  end
     hmm_wr=hmmhsinit(hmm_wr);
-    [hmm_wr,residuals_wr]=obsinit(data,T,hmm_wr,options.Gamma);
+    [hmm_wr,residuals_wr]=obsinit(data,T,hmm_wr,GammaInit);
 else % using a warm restart from a previous run
     hmm_wr = options.hmm;
     options = rmfield(options,'hmm');
     hmm_wr.train = options; 
-    hmm_wr.train.Sind = Sind; 
-    residuals_wr = getresiduals(data.X,T,Sind,hmm_wr.train.order,...
+    residuals_wr = getresiduals(data.X,T,hmm_wr.train.Sind,hmm_wr.train.maxorder,hmm_wr.train.order,...
         hmm_wr.train.orderoffset,hmm_wr.train.timelag,hmm_wr.train.exptimelag,hmm_wr.train.zeromean);
 end
 
 for it=1:options.repetitions
     hmm0 = hmm_wr;
     residuals0 = residuals_wr;
-    [hmm0,Gamma0,Xi0,fehist0] = hmmtrain(data,T,hmm0,options.Gamma,residuals0,options.fehist);
+    [hmm0,Gamma0,Xi0,fehist0] = hmmtrain(data,T,hmm0,GammaInit,residuals0,options.fehist);
     if options.updateGamma==1 && fehist0(end)<fehist(end),
         fehist = fehist0; hmm = hmm0; 
         residuals = residuals0; Gamma = Gamma0; Xi = Xi0;
     elseif options.updateGamma==0,
         fehist = []; hmm = hmm0; 
-        residuals = []; Gamma = options.Gamma; Xi = [];
+        residuals = []; Gamma = GammaInit; Xi = [];
     end
 end
 

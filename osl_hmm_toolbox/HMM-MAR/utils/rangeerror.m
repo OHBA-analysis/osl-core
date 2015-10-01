@@ -1,16 +1,16 @@
-function [r] = rangeerror(X,T,orders,Y,lambda)
+function [r] = rangeerror(X,T,maxorder,orders,Y,lambda)
 % estimates the range of the error
 
 if isempty(orders),
     r = range(X);
     
 else
-    if nargin<5
+    if nargin<6
         lambda=0.01;
     end
     ndim=size(X,2);
     
-    XX = formautoregr(X,T,orders,orders(end));
+    XX = formautoregr(X,T,orders,maxorder);
     
     if lambda==0
         W = pinv(XX) * Y;
