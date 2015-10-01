@@ -38,7 +38,7 @@ function glean_run(GLEAN)
 % - sort out input parsing & logic
 % - add multiband support
 % - add ability to switch montages
-% - add more output options (conn. profile, stats, graphs etc)
+% - add more results options (conn. profile, stats, graphs etc)
 % - normalisation of PCs/parcels pre-concatentation
 % - write some default settings for the usual pipelines
 %   (eLife,parcellation,ica)
@@ -62,7 +62,7 @@ glean_subspace(GLEAN)
 glean_model(GLEAN)
 
 % CREATE OUTPUT MAPS/STATS
-glean_output(GLEAN)
+glean_results(GLEAN)
 
 
 

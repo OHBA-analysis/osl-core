@@ -1,35 +1,35 @@
-function glean_output(GLEAN)
-% Runs the output stage of GLEAN
+function glean_results(GLEAN)
+% Runs the results stage of GLEAN
 
-model = load(GLEAN.model);
+model = load(GLEAN.model.model);
 
-if isfield(GLEAN.settings.envelope,'freqbands')
-    F = numel(GLEAN.settings.envelope.freqbands);
+if isfield(GLEAN.envelope.settings,'freqbands')
+    F = numel(GLEAN.envelope.settings.freqbands);
 else
     F = 1;
 end
 
 
-for output_type = fieldnames(GLEAN.settings.output)'
+for results_type = fieldnames(GLEAN.results.settings)'
     
-    output = lower(char(output_type));
+    results = lower(char(results_type));
     
-    switch output
+    switch results
         
         case 'pcorr'
             
-            for subspace = fieldnames(GLEAN.output.pcorr)'
+            for subspace = fieldnames(GLEAN.results.pcorr)'
                 
                 switch char(subspace)
                     case 'voxel'
-                        data = 'enveloped';
+                        data = 'envelope';
                     case 'parcel'
                         data = 'subspace';
                 end
                 
-                D = spm_eeg_load(GLEAN.data(1).(data));
+                D = spm_eeg_load(GLEAN.(data).data{1});
                 
-                switch lower(char(fieldnames(GLEAN.settings.model)))
+                switch lower(char(fieldnames(GLEAN.model.settings)))
                     case 'hmm'
                         regressors = cell2mat(arrayfun(@(k) model.hmm.statepath==k,1:model.hmm.K,'UniformOutput',0));
                         session_maps = nan(D.nchannels,model.hmm.K,F,numel(GLEAN.data));
@@ -42,19 +42,19 @@ for output_type = fieldnames(GLEAN.settings.output)'
                 for session = 1:numel(GLEAN.data)
                     
                     if F == 1
-                        session_maps(:,:,1,session) = glean_regress(GLEAN.data(session).(data),regressors(model.subIndx==session,:),output);
+                        session_maps(:,:,1,session) = glean_regress(GLEAN.(data).data{session).(data),regressors(model.subIndx==session,:),results);
                     else
-                        session_maps(:,:,:,session) = glean_regress(GLEAN.data(session).(data),regressors(model.subIndx==session,:),output);
+                        session_maps(:,:,:,session) = glean_regress(GLEAN.(data).data{session}.(data),regressors(model.subIndx==session,:),results);
                     end
                     % Save the session specific maps
                     disp(['Saving partial correlation maps for session ' num2str(session)])
                     for f = 1:F
                         map = session_maps(:,:,f,session);
-                        switch GLEAN.settings.output.(output).format
+                        switch GLEAN.results.settings.(results).format
                             case 'mat'
-                                save(GLEAN.output.(output).(char(subspace)).sessionmaps{session}{f},'map');
+                                save(GLEAN.results.(results).(char(subspace)).sessionmaps{session}{f},'map');
                             case 'nii'
-                                save2nii(map,GLEAN.output.(output).(char(subspace)).sessionmaps{session}{f},char(subspace))
+                                save2nii(map,GLEAN.results.(results).(char(subspace)).sessionmaps{session}{f},char(subspace))
                         end
                     end
                     
@@ -66,11 +66,11 @@ for output_type = fieldnames(GLEAN.settings.output)'
                 disp('Saving group partial correlation map')
                 for f = 1:F
                     map = group_maps(:,:,f);
-                    switch GLEAN.settings.output.(output).format
+                    switch GLEAN.results.settings.(results).format
                         case 'mat'
-                            save(GLEAN.output.(output).(char(subspace)).groupmaps{f},'map');
+                            save(GLEAN.results.(results).(char(subspace)).groupmaps{f},'map');
                         case 'nii'
-                            save2nii(map,GLEAN.output.(output).(char(subspace)).groupmaps{f},char(subspace))
+                            save2nii(map,GLEAN.results.(results).(char(subspace)).groupmaps{f},char(subspace))
                     end
                 end
             end
@@ -86,11 +86,11 @@ for output_type = fieldnames(GLEAN.settings.output)'
             disp('Saving group connectivity_profile map')
             for f = 1:F
                 map = group_maps(:,:,f);
-                switch GLEAN.settings.output.(output).format
+                switch GLEAN.results.settings.(results).format
                     case 'mat'
-                        save(GLEAN.output.(output).groupmaps{f},'map');
+                        save(GLEAN.results.(results).groupmaps{f},'map');
                     case 'nii'
-                        save2nii(map,GLEAN.output.(output).groupmaps{f},'parcel')
+                        save2nii(map,GLEAN.results.(results).groupmaps{f},'parcel')
                 end
             end
             
@@ -109,13 +109,12 @@ end
         
         switch space
             case 'voxel'
-                writenii(map,fname,GLEAN.settings.output.(output).mask);
+                writenii(map,fname,GLEAN.results.settings.(results).mask);
             case 'parcel'
-                map = parcellation2map(map,GLEAN.settings.subspace.parcellation.file,GLEAN.settings.subspace.parcellation.mask);
-                writenii(map,fname,GLEAN.settings.output.(output).mask);
+                map = parcellation2map(map,GLEAN.subspace.settings.parcellation.file,GLEAN.subspace.settings.parcellation.mask);
+                writenii(map,fname,GLEAN.results.settings.(results).mask);
         end
-       
-        
+
     end
 
 end

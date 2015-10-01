@@ -34,14 +34,16 @@ if isempty(pathstr)
 end
 
 GLEAN.name = fullfile(pathstr,[filestr,extstr]);
+GLEAN.data = data;
 
 % Settings:
 %GLEAN.settings = glean_settings(settings);
-GLEAN.settings = settings;
+GLEAN.envelope.settings = settings.envelope;
+GLEAN.subspace.settings = settings.subspace;
+GLEAN.model.settings    = settings.model;
+GLEAN.results.settings   = settings.results;
 
-% Set up data directories:
-GLEAN.data = repmat(struct,numel(data),1);
-[GLEAN.data.beamformed] = deal(data{:});
+% Data:
 GLEAN = glean_data(GLEAN);
 
 

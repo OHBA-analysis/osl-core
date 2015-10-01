@@ -3,134 +3,107 @@ function GLEAN = glean_data(GLEAN)
 %
 % GLEAN = glean_data(GLEAN)
 
-% Todo - refactor dir setup
-
-GLEANdir = fileparts(GLEAN.name);
-
 % Check beamformed data exists and is in the right format
-if ~isfield(GLEAN,'data')            || ... 
-   ~isstruct(GLEAN.data)             || ...
-   ~isfield(GLEAN.data,'beamformed') || ...
-   ~all(cellfun(@ischar,{GLEAN.data.beamformed}))
-    error('Must specify GLEAN.data as a [sessions x 1] struct array with field "beamformed"')
+if ~isfield(GLEAN,'data') || ~all(cellfun(@ischar,GLEAN.data))
+    error('Must specify GLEAN.data as a [sessions x 1] cell array"')
 end
         
-[~,sessionNames] = cellfun(@fileparts,{GLEAN.data.beamformed},'UniformOutput',0);
-
-
-%% VOXELWISE ENVELOPES
-% Setup sub directory for envelopes "envelope_R[fsample]_L[log]_F[f1l-f1h_f2l-f2h]"
-dirStr = sprintf('%s%s%d%s%d%s%s','envelope', ...
-                 '_L',GLEAN.settings.envelope.log, ...
-                 '_R',GLEAN.settings.envelope.fsample);
-                 
-if isfield(GLEAN.settings.envelope,'freqbands');
-    dirStr = [dirStr '_F',fbandstr(GLEAN.settings.envelope.freqbands)];
-end
-
-% Voxelwise envelopes:
-envelopeDir = fullfile(GLEANdir,dirStr);
-envelopeData = fullfile(envelopeDir,'data',strcat(sessionNames,'.mat'));
-[GLEAN.data.enveloped] = deal(envelopeData{:});
-if ~isdir(envelopeDir)
-    mkdir(envelopeDir);
-end
-if ~isdir(fullfile(envelopeDir,'data'))
-    mkdir(fullfile(envelopeDir,'data'));
+for module = {'envelope','subspace','model','results'}
+    GLEAN = setup_dir(GLEAN,module);
+    GLEAN = setup_files(GLEAN,module);
 end
 
 
-%% SUBSPACE
-% Setup sub directory for subspace "[method]_$[method_setting1]_$[method_setting2]_..."
-switch char(intersect(fieldnames(GLEAN.settings.subspace),{'pca','parcellation','voxel'}))
-    case 'pca'
-        dirStr = sprintf('%s%s%d%s%d%s%s','pca','_D',GLEAN.settings.subspace.pca.dimensionality, ... 
-                                                '_W',GLEAN.settings.subspace.pca.whiten, ...
-                                                '_N',GLEAN.settings.subspace.normalisation(1));
-    case 'parcellation'  
-        [~,parcellation_fname,~] = fileparts(GLEAN.settings.subspace.parcellation.file);
-        parcellation_fname = strrep(parcellation_fname,'.nii','');
-        dirStr = sprintf('%s%s%s%s%s%s',parcellation_fname,'_M',GLEAN.settings.subspace.parcellation.method(1), ...
-                                                           '_N',GLEAN.settings.subspace.normalisation(1));
-    case 'voxel'
-        dirStr = sprintf('%s%s%s','voxel','_N',GLEAN.settings.subspace.normalisation(1));
-end
-
-subspaceDir = fullfile(envelopeDir,dirStr);
-subspaceData = fullfile(subspaceDir,'data',strcat(sessionNames,'.mat'));
-[GLEAN.data.subspace] = deal(subspaceData{:});
-if ~isdir(subspaceDir)
-    mkdir(subspaceDir);
-end
-if ~isdir(fullfile(subspaceDir,'data'))
-    mkdir(fullfile(subspaceDir,'data'));
 end
 
 
 
-%% MODEL
-% Setup sub directory for model "[method]_$[method_setting1]_$[method_setting2]_..."
-switch lower(char(fieldnames(GLEAN.settings.model)))
-    case 'hmm'
-        dirStr = sprintf('%s%s%d','hmm','_K',GLEAN.settings.model.hmm.nstates);
-    case 'ica'
-        dirStr = sprintf('%s%s%d','ica','_O',GLEAN.settings.model.ica.order);
-end
-modelDir = fullfile(envelopeDir,dirStr);
-GLEAN.model = fullfile(modelDir,'model.mat');
-if ~isdir(modelDir)
-    mkdir(modelDir);
-end
-
-
-%% OUTPUT
-% Setup sub directory for each output "[method]_$[method_setting1]_$[method_setting2]_..."
-if ~isempty(fieldnames(GLEAN.settings.output))
-    for field = fieldnames(GLEAN.settings.output)'
-        
-        output = char(field);
-        
-        dirStr = sprintf('%s',output);
-        
-        for subspace = {'voxel','parcel'}
-            
-            outputDir = fullfile(modelDir,dirStr);
-            
-            switch output
-                case 'pcorr'
-                    sessionMaps = fullfile(outputDir,strcat(sessionNames,'_',output));
-                    groupMaps   = fullfile(outputDir,strcat('group_',output));
-                case 'connectivity_profile'
-                    sessionMaps = '';
-                    groupMaps   = fullfile(outputDir,strcat('group_',output));
-            end
-            
-            % Duplicate maps across each frequency band:
-            if isfield(GLEAN.settings.envelope,'freqbands')
-                fstr      = cellfun(@(s) regexprep(num2str(s),'\s+','-'), GLEAN.settings.envelope.freqbands,'UniformOutput',0);
-                groupMaps = strcat(groupMaps,'_',fstr,'Hz.',GLEAN.settings.output.(output).format);
-                if ~isempty(sessionMaps)
-                    sessionMaps = cellfun(@(s) strcat(s,'_',fstr,'Hz.',GLEAN.settings.output.(output).format),sessionMaps,'UniformOutput',0);
-                end
-            else
-                if ~isempty(sessionMaps)
-                    sessionMaps = cellfun(@(s) {strcat(s,'.',GLEAN.settings.output.(output).format)},sessionMaps,'UniformOutput',0);
-                end
-                groupMaps = {strcat(groupMaps,'.',GLEAN.settings.output.(output).format)};
-            end
-            
-            GLEAN.output.(output).(char(subspace)).sessionmaps  = sessionMaps;
-            GLEAN.output.(output).(char(subspace)).groupmaps    = groupMaps;
-            
-            if ~isdir(outputDir)
-                mkdir(outputDir);
-            end
+function GLEAN = setup_dir(GLEAN,module)
+    if isfield(GLEAN.(char(module)).settings,'dir')
+        dirname = GLEAN.(char(module)).settings.dir;
+        if dirname(end) == '/'
+            dirname(end) = [];
         end
+    else
+        dirname = get_default_dirname(GLEAN,module);
     end
+    [parentDir,subDir,~] = fileparts(dirname);
+    
+    if isempty(parentDir)
+        parentDir = get_default_parentdir(GLEAN,module);
+    end
+    fulldir = fullfile(parentDir,subDir);
+    if ~isdir(fulldir)
+        mkdir(fulldir)
+    end
+    GLEAN.(char(module)).dir = fulldir;
 end
 
 
+
+function dirname = get_default_dirname(GLEAN,module)
+
+switch char(module)
+    
+    case 'envelope'
+        % envelope_R[fsample]_L[log]_F[f1l-f1h_f2l-f2h]
+        dirname = sprintf('%s%s%d%s%d%s%s','envelope', ...
+                         '_L',GLEAN.envelope.settings.log, ...
+                         '_R',GLEAN.envelope.settings.fsample);
+        if isfield(GLEAN.envelope.settings,'freqbands');
+            dirname = [dirname '_F',fbandstr(GLEAN.envelope.settings.freqbands)];
+        end
+        
+    case 'subspace'
+        % [method]_$[method_setting1]_$[method_setting2]_..."
+            switch char(intersect(fieldnames(GLEAN.subspace.settings),{'pca','parcellation','voxel'}))
+                case 'pca'
+                    dirname = sprintf('%s%s%d%s%d%s%s','pca', ...
+                                      '_D',GLEAN.subspace.settings.pca.dimensionality, ...
+                                      '_W',GLEAN.subspace.settings.pca.whiten, ...
+                                      '_N',GLEAN.subspace.settings.normalisation(1));
+                case 'parcellation'
+                    [~,parcellation_fname,~] = fileparts(GLEAN.subspace.settings.parcellation.file);
+                    parcellation_fname = strrep(parcellation_fname,'.nii','');
+                    dirname = sprintf('%s%s%s%s%s%s',parcellation_fname,'_M',GLEAN.subspace.settings.parcellation.method(1), ...
+                                      '_N',GLEAN.subspace.settings.normalisation(1));
+                case 'voxel'
+                    dirname = sprintf('%s%s%s','voxel', ...
+                                      '_N',GLEAN.subspace.settings.normalisation(1));
+            end
+            
+    case 'model'
+        % [method]_$[method_setting1]_$[method_setting2]_..."
+        switch lower(char(fieldnames(GLEAN.model.settings)))
+            case 'hmm'
+                dirname = sprintf('%s%s%d','hmm', ...
+                                  '_K',GLEAN.model.settings.hmm.nstates);
+            case 'ica'
+                dirname = sprintf('%s%s%d','ica', ...
+                                   '_O',GLEAN.model.settings.ica.order);
+        end
+        
+    case 'results'    
+        dirname = 'results';
 end
+end
+
+
+
+function parentDir = get_default_parentdir(GLEAN,module)
+switch char(module)
+    case 'envelope'
+        parentDir = fileparts(GLEAN.name);
+    case 'subspace'
+        parentDir = GLEAN.envelope.dir;
+    case 'model'
+        parentDir = GLEAN.subspace.dir;
+    case 'results'
+        parentDir = GLEAN.model.dir;
+end
+end
+
+
 
 function str = fbandstr(fbands)
 
@@ -142,4 +115,74 @@ str(3:4:end) = tmpstr(2:2:end);
 [str{cellfun(@isempty,str)}] = deal('_');
 str = [str{:}];
 
+end
+
+
+
+function GLEAN = setup_files(GLEAN,module)
+
+[~,sessionNames] = cellfun(@fileparts,GLEAN.data,'UniformOutput',0);
+
+switch char(module)
+    
+    case {'envelope','subspace'}
+        % Place data files under subdirectory "data"
+        GLEAN.(char(module)).data = fullfile(GLEAN.(char(module)).dir,'data',strcat(sessionNames,'.mat'));
+        if ~isdir(fullfile(GLEAN.(char(module)).dir,'data'))
+            mkdir(fullfile(GLEAN.(char(module)).dir,'data'));
+        end
+        
+    case 'model'
+
+        GLEAN.model.model = fullfile(GLEAN.model.dir,'model.mat');
+        
+    case 'results'
+        
+        if ~isempty(fieldnames(GLEAN.results.settings))
+            for field = fieldnames(GLEAN.results.settings)'
+                
+                results = char(field);
+                resultsDir = fullfile(GLEAN.results.dir,'results');
+                if ~isdir(resultsDir)
+                    mkdir(resultsDir);
+                end
+
+                for subspace = {'voxel','parcel'}
+                         
+                    resultsDir = fullfile(GLEAN.results.dir,'results');
+if ~isdir(resultsDir)
+                    mkdir(resultsDir);
+end
+                
+                    switch results
+                        case 'pcorr'
+                            sessionMaps = fullfile(GLEAN.results.dir,strcat(sessionNames,'_',results));
+                            groupMaps   = fullfile(GLEAN.results.dir,strcat('group_',results));
+                        case 'connectivity_profile'
+                            sessionMaps = '';
+                            groupMaps   = fullfile(resultsDir,strcat('group_',results));
+                    end
+                    
+                    % Duplicate maps across each frequency band:
+                    if isfield(GLEAN.envelope.settings,'freqbands')
+                        fstr      = cellfun(@(s) regexprep(num2str(s),'\s+','-'), GLEAN.envelope.settings.freqbands,'UniformOutput',0);
+                        groupMaps = strcat(groupMaps,'_',fstr,'Hz.',GLEAN.results.settings.(results).format);
+                        if ~isempty(sessionMaps)
+                            sessionMaps = cellfun(@(s) strcat(s,'_',fstr,'Hz.',GLEAN.results.settings.(results).format),sessionMaps,'UniformOutput',0);
+                        end
+                    else
+                        if ~isempty(sessionMaps)
+                            sessionMaps = cellfun(@(s) {strcat(s,'.',GLEAN.results.settings.(results).format)},sessionMaps,'UniformOutput',0);
+                        end
+                        groupMaps = {strcat(groupMaps,'.',GLEAN.results.settings.(results).format)};
+                    end
+                    
+                    GLEAN.results.(results).(char(subspace)).sessionmaps  = sessionMaps;
+                    GLEAN.results.(results).(char(subspace)).groupmaps    = groupMaps;
+
+                end
+            end
+        end
+        
+end
 end
