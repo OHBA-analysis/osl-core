@@ -88,9 +88,9 @@ for results_type = fieldnames(GLEAN.results.settings)'
                 map = group_maps(:,:,f);
                 switch GLEAN.results.settings.(results).format
                     case 'mat'
-                        save(GLEAN.results.(results).groupmaps{f},'map');
+                        save(GLEAN.results.(results),'map');
                     case 'nii'
-                        save2nii(map,GLEAN.results.(results).groupmaps{f},'parcel')
+                        save2nii(map,GLEAN.results.(results),'parcel')
                 end
             end
             

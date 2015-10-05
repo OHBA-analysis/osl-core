@@ -145,40 +145,39 @@ switch char(module)
 
                 for subspace = {'voxel','parcel'}
                          
-                    resultsDir = fullfile(GLEAN.results.dir,results,char(subspace));
+                    resultsDir = fullfile(GLEAN.results.dir,results);
                     if ~isdir(resultsDir)
                         mkdir(resultsDir);
                     end
                     
                     switch results
+                        
                         case 'pcorr'
-                            sessionMaps = fullfile(resultsDir,strcat(sessionNames,'_',results));
-                            groupMaps   = fullfile(resultsDir,strcat('group_',results));
+                            sessionMaps = fullfile(resultsDir,char(subspace),strcat(sessionNames,'_',results));
+                            groupMaps   = fullfile(resultsDir,char(subspace),strcat('group_',results));
+                            
+                            % Duplicate maps across each frequency band:
+                            if isfield(GLEAN.envelope.settings,'freqbands')
+                                fstr      = cellfun(@(s) regexprep(num2str(s),'\s+','-'), GLEAN.envelope.settings.freqbands,'UniformOutput',0);
+                                groupMaps = strcat(groupMaps,'_',fstr,'Hz.',GLEAN.results.settings.(results).format);
+                                if ~isempty(sessionMaps)
+                                    sessionMaps = cellfun(@(s) strcat(s,'_',fstr,'Hz.',GLEAN.results.settings.(results).format),sessionMaps,'UniformOutput',0);
+                                end
+                            else
+                                if ~isempty(sessionMaps)
+                                    sessionMaps = cellfun(@(s) {strcat(s,'.',GLEAN.results.settings.(results).format)},sessionMaps,'UniformOutput',0);
+                                end
+                                groupMaps = {strcat(groupMaps,'.',GLEAN.results.settings.(results).format)};
+                            end
+                            
+                            GLEAN.results.(results).(char(subspace)).sessionmaps  = sessionMaps;
+                            GLEAN.results.(results).(char(subspace)).groupmaps    = groupMaps;
+                            
                         case 'connectivity_profile'
-                            sessionMaps = '';
-                            groupMaps   = fullfile(resultsDir,strcat('group_',results));
+                            GLEAN.results.(results) = fullfile(resultsDir,strcat('group_',results,'.',GLEAN.results.settings.(results).format));
                     end
-                    
-                    % Duplicate maps across each frequency band:
-                    if isfield(GLEAN.envelope.settings,'freqbands')
-                        fstr      = cellfun(@(s) regexprep(num2str(s),'\s+','-'), GLEAN.envelope.settings.freqbands,'UniformOutput',0);
-                        groupMaps = strcat(groupMaps,'_',fstr,'Hz.',GLEAN.results.settings.(results).format);
-                        if ~isempty(sessionMaps)
-                            sessionMaps = cellfun(@(s) strcat(s,'_',fstr,'Hz.',GLEAN.results.settings.(results).format),sessionMaps,'UniformOutput',0);
-                        end
-                    else
-                        if ~isempty(sessionMaps)
-                            sessionMaps = cellfun(@(s) {strcat(s,'.',GLEAN.results.settings.(results).format)},sessionMaps,'UniformOutput',0);
-                        end
-                        groupMaps = {strcat(groupMaps,'.',GLEAN.results.settings.(results).format)};
-                    end
-                    
-                    GLEAN.results.(results).(char(subspace)).sessionmaps  = sessionMaps;
-                    GLEAN.results.(results).(char(subspace)).groupmaps    = groupMaps;
-
                 end
             end
         end
-        
 end
 end
