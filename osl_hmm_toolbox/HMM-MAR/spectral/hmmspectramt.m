@@ -113,7 +113,7 @@ for k=1:K
         end
     end
     psd = mean(psdc,4); ipsd = zeros(Nf,ndim,ndim);
-    for ff=1:Nf, ipsd(ff,:,:) = inv(permute(psd(ff,:,:),[3 2 1])); end
+    for ff=1:Nf, ipsd(ff,:,:) = pinv(permute(psd(ff,:,:),[3 2 1])); end
     
     % coherence
     coh = []; pcoh = []; phase = []; pdc = [];
