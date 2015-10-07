@@ -50,7 +50,7 @@ S.method            = ft_getopt(S,'method','PCA');
 
 if isfield(S,'hcp_sourcemodel3d') && ~isempty(S.hcp_sourcemodel3d)
     % HCP data
-    parcellation = HCP_mni2hcp(S.hcp_sourcemodel3d,S.parcellation,S.hcp_mask_fname_out);
+    parcellation = hcp_mni2hcp_giles(S.hcp_sourcemodel3d,S.parcellation,S.hcp_mask_fname_out);
 else
     switch class(S.parcellation)
         case {'char','cell'}
