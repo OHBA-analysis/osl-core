@@ -92,7 +92,7 @@ try oat.source_recon.bandstop_filter_mains=oatin.source_recon.bandstop_filter_ma
 try oat.source_recon.artefact_chanlabel = oatin.source_recon.artefact_chanlabel; oatin.source_recon = rmfield(oatin.source_recon,'artefact_chanlabel'); catch, oat.source_recon.artefact_chanlabel = []; end % the label of the channel in the input data which contains a vector picking out periods with blinks / artefact. If empty, assumed no artefact rejection desired.
 
 try oat.source_recon.modalities=oatin.source_recon.modalities; oatin.source_recon = rmfield(oatin.source_recon,'modalities'); 
-    oat.source_recon.modalities = ft_checkopt(oat.source_recon,'modalities','cell',{{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'}});      
+    oat.source_recon = ft_checkopt(oat.source_recon,'modalities','cell',{{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'}});      
 catch, 
     switch datatype
         case 'neuromag'
