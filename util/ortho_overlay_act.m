@@ -91,12 +91,12 @@ if(S.add_colorbar)
     snugplot(1,num_subplots,5);
     try make_colorbar([low high],act_cmapname); catch, warning('colour bar generation failed'); end;
     set(gca,'YColor','w');
-    freezeColors; % needed as colormaps are a property of the whole figure;
+    %freezeColors; % needed as colormaps are a property of the whole figure;
 
     snugplot(1,num_subplots,1);
     try make_colorbar([-low -high],deact_cmapname,2); catch, warning('colour bar generation failed'); end;    
     set(gca,'YColor','w');
-    freezeColors; % needed as colormaps are a property of the whole figure;
+    %freezeColors; % needed as colormaps are a property of the whole figure;
 else
     ind_start=1;
     num_subplots=3;    
