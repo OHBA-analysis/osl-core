@@ -16,12 +16,6 @@ do_glm_statewise=oat.first_level.hmm_do_glm_statewise;
 first_level=oat.first_level;
 source_recon_name='source_recon';
 
-if strcmp(oat.source_recon.modalities{1},'EEG')   % added by DM
-    modality_meeg='EEG';
-else
-    modality_meeg='MEG';
-end
-
 % check if user has asked not to do GLM
 if(~isfield(first_level,'doGLM')),
     first_level.doGLM = 1;
@@ -86,15 +80,14 @@ if(length(oat.first_level.contrast_name)~=length(oat.first_level.contrast))
     error('oat.first_level.contrast and oat.first_level.contrast_name need to be same length');
 end;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% loop over sessions
-
-clear stats;
-
-% set first level diagnostic report up
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% set first level diagnostic report up
 report_dir=[oat.results.plotsdir '/' oat.first_level.name];
 first_level_results.report=osl_report_setup(report_dir,'First level (epoched)');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% loop over sessions
+clear stats;
 for subi_todo=1:length(first_level.sessions_to_do),
     
     sub=first_level.sessions_to_do(subi_todo);
@@ -123,6 +116,11 @@ for subi_todo=1:length(first_level.sessions_to_do),
             
             is_sensor_space=1;
             
+            if strcmp(oat.source_recon.modalities{1},'EEG')   % added by DM
+                modality_meeg='EEG';
+            else
+                modality_meeg='MEG';
+            end
             chanindmeg = strmatch(modality_meeg, D.chantype);
             
             first_level_results.chanind=chanindmeg;
