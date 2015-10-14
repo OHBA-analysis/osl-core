@@ -167,6 +167,16 @@ try oat.source_recon.hmm_pca_dim    = oatin.source_recon.hmm_pca_dim;    oatin.s
 try oat.source_recon.hmm_block      = oatin.source_recon.hmm_block;      oatin.source_recon = rmfield(oatin.source_recon,'hmm_block');      catch, end; 
 try oat.source_recon.hmm_av_class_occupancy=oatin.source_recon.hmm_av_class_occupancy; oatin.source_recon = rmfield(oatin.source_recon,'hmm_av_class_occupancy');  catch, oat.source_recon.hmm_av_class_occupancy=35; end; % average HMM occupancy to aim for (in secs) when using the oat.source_recon.hmm_num_states=-1 option
 
+% report settings
+if ~isfield(oatin.source_recon,'report')
+    oatin.source_recon.report=struct;
+end;
+oat.source_recon.report=struct;
+try oat.source_recon.report.do_source_variance_maps=oatin.source_recon.report.do_source_variance_maps; oatin.source_recon.report = rmfield(oatin.source_recon.report,'do_source_variance_maps'); 
+catch
+    oat.source_recon.report.do_source_variance_maps=1;
+end;
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  FIRST LEVEL (WITHIN SUBJECT) GLM settings
 
@@ -459,6 +469,17 @@ try oat.group_level.results=oatin.group_level.results;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% check people haven't set any weird fields
 
+weirdfields = fieldnames(oatin.source_recon.report);
+if ~isempty(weirdfields)
+    disp('The following oat.source_recon.report settings were not recognized by osl_check_oat');
+    
+    for iprint = 1:numel(weirdfields)
+        disp([' ' weirdfields{iprint} ' '])
+    end
+    error('Invalid oat.source_recon.report settings');
+end % if ~isempty(weirdfields)
+
+
 weirdfields = fieldnames(oatin.first_level.report);
 if ~isempty(weirdfields)
     disp('The following oat.first_level.report settings were not recognized by osl_check_oat');
@@ -479,6 +500,7 @@ if ~isempty(weirdfields)
     error('Invalid oat.group_level.report settings');
 end % if ~isempty(weirdfields)
 
+oatin.source_recon = rmfield(oatin.source_recon,'report');
 oatin.first_level = rmfield(oatin.first_level,'report');
 oatin.group_level = rmfield(oatin.group_level,'report');
 

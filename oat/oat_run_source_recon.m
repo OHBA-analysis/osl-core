@@ -68,7 +68,7 @@ if(~strcmp(mask_fname,''))
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Set first level diagnostic report up    
+%% Set diagnostic report up    
 report_dir=[oat.results.plotsdir '/' oat.results.date '_source_recon'];
 source_recon_report=osl_report_setup(report_dir,['Source recon (epoched)']);   
 
@@ -183,7 +183,7 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% generate source recon web report for this session
     
-    source_recon_results.report = osl_report_write(source_recon_results.report);        
+    source_recon_results.report = osl_report_write(source_recon_results.report);         
     source_recon_report         = osl_report_add_sub_report(source_recon_report, source_recon_results.report);
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -209,43 +209,11 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     
 end;
 
+oat.source_recon.results_fnames=results_fnames;
+
 %%%%%%%%%%%%%%%%%%%
 %% summary plots over sessions
-source_recon_results.pca_order=nan(length(oat.source_recon.sessions_to_do),1);    
-source_recon_results.normalisation=nan(length(source_recon_results.normalisation),length(oat.source_recon.sessions_to_do),1);    
-oat.source_recon.results_fnames=results_fnames;
-          
-for sessi=1:length(oat.source_recon.sessions_to_do), sessnum=oat.source_recon.sessions_to_do(sessi);
+[source_recon_report source_recon_results] = oat_source_recon_report(oat, source_recon_report, source_recon_results);
 
-    try,
-        % load in opt results for this session:            
-        res=oat_load_results(oat, oat.source_recon.results_fnames{sessnum});
-        
-        source_recon_results.pca_order(sessi)=res.pca_order;
-        
-        for ff=1:length(res.normalisation),
-            source_recon_results.normalisation(ff,sessi)=res.normalisation(ff);
-        end;
-
-    catch ME,
-        disp(['Could not get summary diagnostics for ' oat.source_recon.results_fnames{sessnum}]);
-        ME.getReport
-    end;
-end;
-
-source_recon_report=osl_report_set_figs(source_recon_report,['pca_order']);
-plot(oat.source_recon.sessions_to_do,source_recon_results.pca_order,'*');xlabel('sess no.');ylabel(['PCA dim used']); 
-source_recon_report=osl_report_print_figs(source_recon_report);
-
-for ff=1:length(res.normalisation),
-    source_recon_report=osl_report_set_figs(source_recon_report,[source_recon_results.source_recon.modalities{ff} ' normalisation']);
-    plot(oat.source_recon.sessions_to_do,source_recon_results.normalisation(ff,:),'*');xlabel('sess no.');ylabel([source_recon_results.source_recon.modalities{ff} ' normalisation']); 
-    source_recon_report=osl_report_print_figs(source_recon_report);
-end;
-
-%%%%%%%%%%%%%%%%%%%
-%% generate source recon web report
-source_recon_report=osl_report_write(source_recon_report);        
-source_recon_results.report=source_recon_report;
 
 end

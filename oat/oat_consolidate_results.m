@@ -8,6 +8,8 @@ function [ oat ] = oat_consolidate_results( oat )
 %
 % Note that this overwrites any existing results_fnames
 
+oat=osl_load_oat(oat);
+
 %%%%%%%%%%%%%%%%%%%%%%
 %% source recon stage
 
