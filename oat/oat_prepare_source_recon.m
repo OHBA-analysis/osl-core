@@ -222,15 +222,15 @@ end
 if strcmp(source_recon_sess.modalities{1},'EEG')
     modality_meeg='EEG';
 else
-    modality_meeg='MEG';
+    modality_meeg='MEGANY';
 end
-
-chanindmeg = strmatch(modality_meeg, D.chantype);
-
-chanind = setdiff(chanindmeg, D.badchannels);
-if isempty(chanind)
-    error(['No good ' modality_meeg ' channels were found.']);
-end
+% 
+% chanindmeg = strmatch(modality_meeg, D.chantype);
+% 
+% chanind = setdiff(chanindmeg, D.badchannels);
+% if isempty(chanind)
+%     error(['No good ' modality_meeg ' channels were found.']);
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Normalise modalities using, e.g., mean or smallest eigenvalues
@@ -262,6 +262,7 @@ if ~strcmp(source_recon_sess.normalise_method,'none'),
     D.delete;
     D=Dnew;
 else
+    chanind=indchantype(D,modality_meeg,'GOOD');
     pcadim=length(chanind);
     normalisation=1;
 end;
@@ -304,6 +305,8 @@ if(isfield(source_recon_sess,'hmm_num_states') && source_recon_sess.hmm_num_stat
         
         Sh=[];
         
+        chanind=indchantype(D,modality_meeg,'GOOD');
+    
         Sh.data=reshape(D(chanind,find(samples2use),trials),length(chanind),(numel(find(samples2use))*length(trials)))';
         
         if(source_recon_sess.hmm_pca_dim>0)
@@ -452,7 +455,7 @@ source_recon_results.samples2use=samples2use;
 source_recon_results.pca_order = pcadim;
 source_recon_results.normalisation = normalisation;
 source_recon_results.trials=trials;
-source_recon_results.chanind=chanind;
+%source_recon_results.chanind=chanind;
 
 end
 

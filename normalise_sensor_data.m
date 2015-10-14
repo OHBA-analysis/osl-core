@@ -8,7 +8,7 @@ function [ Dnew, pcadims, pcadim_all, norm_vec, normalisation_used, fig_handles 
 if strcmp(S.modalities{1},'EEG')
     modality_meeg='EEG';
 else
-    modality_meeg='MEG';
+    modality_meeg='MEGANY';
 end
 
 use_fixed_scaling=0;
@@ -17,7 +17,7 @@ D=S.D;
 
 do_plots = S.do_plots;
 
-badind = D.badchannels;
+badind = indchantype(D,modality_meeg,'BAD');
 
 samples2use = S.samples2use;
 trials = S.trials;
@@ -179,24 +179,56 @@ normalisation_used=normalisation;
 
 % setup montage to do normalisation (using a montage will ensure that the
 % leadfield will also receive the same normalisation)
-montage=[];
-montage.labelorg = D.chanlabels;
-montage.tra = diag(norm_vec);
-montage.labelnew = montage.labelorg;
-montage.name = 'normalised_sensors';
-montage.chanunitnew = D.units;
+if 0
+    montage=[];
+    montage.labelorg = D.chanlabels;
+    montage.tra = diag(norm_vec);
+    montage.labelnew = montage.labelorg;
+    montage.name = 'normalised_sensors';
+    montage.chanunitnew = D.units;
+else
+
+    % Apply normalisation via SPM montage:
+    montage             =  [];
+    montage.tra         =  diag(norm_vec(indchantype(D,S.modalities)));
+    montage.labelnew    =  D.chanlabels(indchantype(D,S.modalities));
+    montage.labelorg    =  D.chanlabels(indchantype(D,S.modalities));
+
+    [~,indx] = ismember(montage.labelnew,D.sensors('MEG').label);
+
+    montage.chanunitnew =  D.sensors('MEG').chanunit(indx);
+    montage.chanunitorg =  D.sensors('MEG').chanunit(indx);
+    montage.chantypenew =  lower(D.sensors('MEG').chantype(indx));
+    montage.chantypeorg =  lower(D.sensors('MEG').chantype(indx));
+
+    montage.name = 'normalised_sensors';
+end;
 
 S1 = [];
 S1.D = D;
 S1.montage = montage;
-S1.keepothers = 'yes';
+S1.keepothers = true;
 S1.updatehistory  = 0;
 Dnew = osl_montage(S1);
 
 %% establish dim of ALL normalised data
 
-badind = Dnew.badchannels;
+badind = indchantype(Dnew,modality_meeg,'BAD');
+
 chanindall = setdiff(find(strncmpi(Dnew.chantype,modality_meeg,3)), badind);
+
+% recalc chaninds
+clear chanind;
+
+for ff=1:length(S.modalities),
+    
+    % get good channels
+    chanind{ff} = strmatch(S.modalities{ff}, Dnew.chantype);
+    chanind{ff} = setdiff(chanind{ff}, Dnew.badchannels);
+    if isempty(chanind{ff})
+        error(['No good ' S.modalities{ff} ' channels were found.']);
+    end    
+end;
 
 %dat=reshape(Dnew(chanindall,find(samples2use),trials),length(chanindall),(numel(find(samples2use))*length(trials)))';
 tmpdat=Dnew(chanindall,find(samples2use),trials);
