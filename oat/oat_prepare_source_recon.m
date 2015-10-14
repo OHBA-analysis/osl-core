@@ -262,9 +262,13 @@ if ~strcmp(source_recon_sess.normalise_method,'none'),
     D.delete;
     D=Dnew;
 else
-    pcadim=length(chanind);
+    if source_recon_sess.force_pca_dim,
+        pcadim = source_recon_sess.pca_dim;
+    else
+        pcadim=length(chanind);
+    end%if
     normalisation=1;
-end;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% DO HMM
