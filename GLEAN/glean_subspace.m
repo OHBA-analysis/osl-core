@@ -23,6 +23,7 @@ if ~all(cellfun(@exist,GLEAN.subspace.data))
             case 'none'
                 % Do nothing
             case {'voxel','global'}
+                D = spm_eeg_load(GLEAN.subspace.data{session});
                 stdev = sqrt(osl_source_variance(D));
                 if strcmp(GLEAN.subspace.settings.normalisation,'global')
                     stdev = mean(stdev);
@@ -44,19 +45,41 @@ if ~all(cellfun(@exist,GLEAN.subspace.data))
         
         case 'voxel'
             
-            % Do nothing
+            Do nothing
             
-%        case 'pca'
-%             
-%             C = osl_groupcov(prefix({GLEAN.data.subspace},'tmp'));
-%             pcadim = min(GLEAN.subspace.settings.pca.dimensionality,D.nchannels);
-%             [allsvd,M] = eigdec(C,pcadim);
-%             
-%             if GLEAN.subspace.settings.pca.whiten
-%                 M = diag(1./sqrt(allsvd)) * M';
-%             else
-%                 M = M';
-%             end
+       case 'pca'
+            
+            C = glean_groupcov(GLEAN.subspace.data);
+            pcadim = min(GLEAN.subspace.settings.pca.dimensionality,D.nchannels);
+            [allsvd,M] = eigdec(C,pcadim);
+            
+            if GLEAN.subspace.settings.pca.whiten
+                M = diag(1./sqrt(allsvd)) * M';
+            else
+                M = M';
+            end
+            
+            % Apply spatial basis and write output files
+            for session = 1:numel(GLEAN.data)
+                
+                D = spm_eeg_load(GLEAN.subspace.data{session});
+                
+                montnew             = [];
+                montnew.name        = method;
+                montnew.labelnew    = arrayfun(@(x) strcat(method,num2str(x)),1:size(M,1),'uniformoutput',0)';
+                montnew.labelorg    = D.chanlabels;
+                montnew.tra         = M;
+                
+                S2 = [];
+                S2.D            = GLEAN.subspace.data{session};
+                S2.montage      = montnew;
+                S2.keepsensors  = false;
+                S2.keepothers   = false;
+                S2.mode         = 'write';
+                
+                D = spm_eeg_montage(S2);
+                move(D,GLEAN.subspace.data{session});
+            end
             
             
             
@@ -93,41 +116,5 @@ if ~all(cellfun(@exist,GLEAN.subspace.data))
             error('I don''t know what to do!')
             
     end
-%     
-%     
-%     % Apply spatial basis and write output files
-%     for session = 1:numel(GLEAN.data)
-%         
-%         D = spm_eeg_load(prefix(GLEAN.data(session).subspace,'tmp'));
-%         
-%         montnew             = [];
-%         montnew.name        = 'spatialbasis';
-%         montnew.labelnew    = arrayfun(@(x) strcat(method,num2str(x)),1:size(M,1),'uniformoutput',0)';
-%         montnew.labelorg    = D.chanlabels;
-%         montnew.tra         = M;     
-%         
-%         S2 = [];
-%         S2.D            = prefix(GLEAN.data(session).subspace,'tmp');
-%         S2.montage      = montnew;
-%         S2.keepsensors  = false;
-%         S2.keepothers   = false;
-%         S2.mode         = 'write';
-%         
-%         D = spm_eeg_montage(S2);
-%         D.save;
-%         
-%         move(D,GLEAN.data(session).subspace)
-%         unix(['rm ' strrep(prefix(GLEAN.data(session).subspace,'tmp'),'.mat','.*at')]);
-%     end
-%     
-
-
-
+    
 end
-% 
-% 
-% 
-% 
-% 
-%         
-% 

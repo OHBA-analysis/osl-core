@@ -94,7 +94,6 @@ for results_type = fieldnames(GLEAN.results.settings)'
                 end
             end
             
-            
     end
     
 end
@@ -102,11 +101,8 @@ end
 
 
     function save2nii(map,fname,space)
-        % Have to work out what spatial basis set we're in:
-        % pre-envelope parcellation (orthogonalisation) - use parcellation as mask
-        % post-envelope parcellation or pca - use full voxelwise mask for pcorr,
-        %                                   - use parcellation for connectivity profile
-        
+    % Save a matrix MAP to a nifti file with filename FNAME using a mask
+    % appropriate for the SPACE the map is in (voxelwise or parcelwise)
         switch space
             case 'voxel'
                 writenii(map,fname,GLEAN.results.settings.(results).mask);

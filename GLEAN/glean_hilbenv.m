@@ -80,7 +80,7 @@ Denv = fsample(Denv,fsample_new);
 % Make a temporary filename for each frequency band to hold filtered data
 for f = 1:numel(S.freqbands)
     
-    blks = memblocks(D,1);
+    blks = memblocks(size(D),1);
     
     [~,tempfile] = fileparts(tempname);
     tempfile = fullfile(D.path,[tempfile '.bin']);

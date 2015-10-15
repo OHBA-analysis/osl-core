@@ -24,7 +24,7 @@ ha = axes('parent',hf); hold on
 
 set(hf,'WindowButtonMotionFcn',@movelight,'Interruptible','off','busyaction','cancel');
 
-rotate3d(hf);
+rotate3d(hf,'ON');
 
 D = montage(D,'switch');
 
@@ -33,8 +33,8 @@ mesh_rhino = spm_eeg_inv_transform_mesh(D.inv{1}.datareg(1).fromMNI*D.inv{1}.mes
 
 % Reduce mesh size for faster plotting
 mesh_rhino = struct('faces',mesh_rhino.face,'vertices',mesh_rhino.vert);
-reduce_factor = 1e3/size(mesh_rhino.vertices,1);
-mesh_rhino = reducepatch(mesh_rhino,reduce_factor);
+%reduce_factor = 1e3/size(mesh_rhino.vertices,1);
+%mesh_rhino = reducepatch(mesh_rhino,reduce_factor);
 
 headshape_polhemus = D.inv{1}.datareg(1).fid_eeg.pnt;
 fid_polhemus = D.inv{1}.datareg(1).fid_eeg.fid.pnt;

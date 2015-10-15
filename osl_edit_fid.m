@@ -59,7 +59,8 @@ set(h,'Color',[1 0 0],'Enable','on');
                     plotfid
                     view(AZ,EL);
                     pause(1)
-                    D.save;
+                    D.save
+                    D = spm_eeg_load(D.path,D.fname);
                 case 'No'
                     
                 case 'Cancel'

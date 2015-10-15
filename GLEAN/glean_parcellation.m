@@ -36,16 +36,12 @@ elseif ~isempty(strfind(S.parcellation,'.mat'))
 end
 
 
-nodedata = ROInets.get_node_tcs(D, parcellation, S.method);
-nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
+nodedata = get_node_tcs(D, parcellation, S.method);
+nodedata = remove_source_leakage(nodedata, S.orthogonalisation);
 
 good_samples = ~all(badsamples(D,':',':',':'));
-
-
-
 data = zeros(size(nodedata,1),length(good_samples));
 data(:,good_samples) = nodedata;
-
 data = reshape(data,[size(data,1),D.nsamples,D.ntrials]);
 
 clear voxeldata_concat nodedata_concat;

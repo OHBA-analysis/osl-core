@@ -41,7 +41,7 @@ GLEAN.data = data;
 GLEAN.envelope.settings = settings.envelope;
 GLEAN.subspace.settings = settings.subspace;
 GLEAN.model.settings    = settings.model;
-GLEAN.results.settings   = settings.results;
+GLEAN.results.settings  = settings.results;
 
 % Data:
 GLEAN = glean_data(GLEAN);

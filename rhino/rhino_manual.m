@@ -21,7 +21,13 @@ set(MainFig,'name',['RHINO - error = ' num2str(err)])
 
 uitools.toolbar = uitoolbar;
 rotateicon = load(fullfile(matlabroot,'toolbox','matlab','icons','rotate.mat'));
-uitools.rotate = uipushtool(uitools.toolbar,'ClickedCallback',@togglerot,'CData',rotateicon.cdata,'TooltipString','Toggle rotation');
+uitools.rotate = uitoggletool(uitools.toolbar,'ClickedCallback',@togglerot,'CData',rotateicon.cdata,'TooltipString','Toggle rotation','state','on');
+
+uicontrol('Style','text',...
+          'String',sprintf('Translate using cursor keys and N/M keys. Rotate using Q/E,W/S,A/D keys'),...
+          'Units','Normalized',...
+          'Position',[0 0 1 0.05],...
+          'Parent',MainFig);
 
 rhino_display(D,MainFig)
 %set(MainFig,'busyaction','queue','KeyPressFcn',@key_press);
@@ -39,30 +45,30 @@ is_modified = 0;
         inc_trans = 1;
         
         switch evnt.Key
-            case 'q'
-                [p,Mr] = rhino_rigidtransform(p,inc_rot,0,0,0,0,0);
-            case 'e'
-                [p,Mr] = rhino_rigidtransform(p,-inc_rot,0,0,0,0,0);
-            case 's'
-                [p,Mr] = rhino_rigidtransform(p,0,inc_rot,0,0,0,0);
             case 'w'
+                [p,Mr] = rhino_rigidtransform(p,inc_rot,0,0,0,0,0);
+            case 's'
+                [p,Mr] = rhino_rigidtransform(p,-inc_rot,0,0,0,0,0);
+            case 'q'
+                [p,Mr] = rhino_rigidtransform(p,0,inc_rot,0,0,0,0);
+            case 'e'
                 [p,Mr] = rhino_rigidtransform(p,0,-inc_rot,0,0,0,0);
             case 'd'
                 [p,Mr] = rhino_rigidtransform(p,0,0,inc_rot,0,0,0);
             case 'a'
                 [p,Mr] = rhino_rigidtransform(p,0,0,-inc_rot,0,0,0);
                 
-            case 'uparrow'
-                [p,Mr] = rhino_rigidtransform(p,0,0,0,inc_trans,0,0);
-            case 'downarrow'
-                [p,Mr] = rhino_rigidtransform(p,0,0,0,-inc_trans,0,0);
-            case 'leftarrow'
-                [p,Mr] = rhino_rigidtransform(p,0,0,0,0,inc_trans,0);
             case 'rightarrow'
-                [p,Mr] = rhino_rigidtransform(p,0,0,0,0,-inc_trans,0);
+                [p,Mr] = rhino_rigidtransform(p,0,0,0,inc_trans,0,0);
+            case 'leftarrow'
+                [p,Mr] = rhino_rigidtransform(p,0,0,0,-inc_trans,0,0);
             case 'n'
-                [p,Mr] = rhino_rigidtransform(p,0,0,0,0,0,inc_trans);
+                [p,Mr] = rhino_rigidtransform(p,0,0,0,0,inc_trans,0);
             case 'm'
+                [p,Mr] = rhino_rigidtransform(p,0,0,0,0,-inc_trans,0);
+            case 'downarrow'
+                [p,Mr] = rhino_rigidtransform(p,0,0,0,0,0,inc_trans);
+            case 'uparrow'
                 [p,Mr] = rhino_rigidtransform(p,0,0,0,0,0,-inc_trans);
         end
         
@@ -86,7 +92,11 @@ is_modified = 0;
     end
 
     function togglerot(~,evnt)
-        rotate3d
+        if strcmp(get(uitools.rotate,'state'),'on')
+            rotate3d ON
+        else
+            rotate3d off
+        end
     end
 
     function closefig(src,evnt)

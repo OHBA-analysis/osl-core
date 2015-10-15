@@ -35,7 +35,7 @@ dof     = D.nsamples - nRegressors;
 
 % It's slow(ish) to read data from D channel by channel so read in as much
 % as possible:
-blks = memblocks(D,1);
+blks = memblocks(size(D),1);
 
 for iblk = 1:size(blks,1)
     

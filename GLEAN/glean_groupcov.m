@@ -1,10 +1,10 @@
-function C = osl_groupcov(spmfiles)
+function C = glean_groupcov(spmfiles)
 % Efficiently compute a group covariance from multiple SPM files without
 % requiring prior concatenatation of the data.
 % See https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
 %
 % Usage:
-% C = osl_groupcov(spmfiles)  where spmfiles is a cell array of filenames
+% C = glean_groupcov(spmfiles)  where spmfiles is a cell array of filenames
 %                               for SPM MEEG objects
 %
 % Adam Baker 2015
@@ -17,11 +17,11 @@ C = 0;
 N = 0;
 Mu = 0;
 
-for file = spmfiles
+for file = spmfiles(:)'
     
     % Compute session-level moments
     D = spm_eeg_load(char(file));
-    [c,mu] = osl_cov(D);
+    [c,mu] = glean_cov(D);
     n = sum(~all(badsamples(D,':',':',':')));
 
     % Update group-level moments:
