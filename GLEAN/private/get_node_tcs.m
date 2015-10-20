@@ -120,7 +120,7 @@ switch lower(timeCourseGenMethod)
         % variance normalise as MEG data are very smooth, and power is a
         % good indication of true sources
         if isa(voxelData,'meeg')
-            temporalSTD = max(sqrt(osl_source_variance(voxelData)), eps);
+            temporalSTD = max(sqrt(glean_variance(voxelData)), eps);
         else
             temporalSTD = max(std(voxelData, [], 2), eps);
         end
@@ -190,7 +190,7 @@ switch lower(timeCourseGenMethod)
         
         % find rms power in each voxel
         if isa(D,'meeg')
-            voxelPower = osl_source_variance(D); % I'm going to use variance instead, because it's fast to compute
+            voxelPower = glean_variance(D); % I'm going to use variance instead, because it's fast to compute
         else
             voxelPower = sqrt(row_sum(voxelData.^2) ./ ...
                               cols(voxelData));
@@ -254,7 +254,7 @@ switch lower(timeCourseGenMethod)
         
         % estimate temporal-STD for normalisation
         if isa(voxelData,'meeg')
-            temporalSTD = max(sqrt(osl_source_variance(voxelData)), eps);
+            temporalSTD = max(sqrt(glean_variance(voxelData)), eps);
         else
             temporalSTD = max(std(voxelData, [], 2), eps);
         end      

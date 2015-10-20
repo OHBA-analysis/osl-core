@@ -1,5 +1,18 @@
 function D = glean_normalise(S)
-% Performs normalisation of MEEG data
+% Performs normalisation of MEEG data.
+%
+% D = GLEAN_NORMALISE(S)
+%
+% REQUIRED INPUTS:
+%   S.D              - Name of the SPM12 MEEG object
+%   S.normalisation  - Type of normalisation to apply
+%                      ['none','voxel','global']
+%
+% OUTPUTS:
+%   D         - Normalised SPM12 MEEG data 
+%
+% Adam Baker 2015
+
 
 D = spm_eeg_load(S.D);
 

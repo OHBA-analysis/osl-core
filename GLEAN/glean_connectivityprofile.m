@@ -1,7 +1,18 @@
 function P = glean_connectivityprofile(hmm)
-% Computes the connectivity profile P for each HMM state
+% Computes the "connectivity profile" P for each HMM state. 
+% The connectivity profile is defined for each state as the Euclidean 
+% difference between a particular voxel's covariance with all other voxels
+% within the state versus outside of the state.
 %
-% P = glean_connectivityprofile(hmm)
+% P = GLEAN_CONNECTIVITYPROFILE(hmm)
+%
+% REQUIRED INPUTS:
+%   hmm     - HMM structure inferred by glean_infer_hmm()
+% 
+% OUTPUTS:
+%   P       - [channels x states] connectivity profiles
+%
+% Adam Baker 2015
 
 Nchannels = size(hmm.state(1).Cov,1);
 

@@ -1,13 +1,17 @@
 function hmm = glean_infer_hmm(data,options)
-% Runs an HMM with nstates multiple times
-% hmm = glean_infer_hmm(data,options)
+% Infers an hidden Markov model (HMM) with particular options.
 %
-% INPUT
-% data              observations (channels x samples)
-% options           structure with the training options - see documentation
+% hmm = GLEAN_INFER_HMM(data,options)
 %
-% OUTPUT
-% hmm               estimated HMM model
+% REQUIRED INPUTS:
+%   data     - observations (channels x samples)
+%   options  - structure with the training options - see documentation in
+%              HMM-MAR toolbox
+%
+% OUTPUTS:
+%   hmm      - estimated HMM model
+%
+% Adam Baker 2015
 
 Ninits = options.Ninits;
 options = rmfield(options,'Ninits');

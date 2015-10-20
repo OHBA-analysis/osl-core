@@ -1,21 +1,24 @@
 function D = glean_parcellation(S)
-% Computes node time series from a source space MEEG object using a
-% parcellation
+% Computes node time series from a MEEG object using a parcellation.
 %
-% [D,assignments] = glean_parcellation(S)
+% D = GLEAN_PARCELLATION(S)
 %
-% INPUTS:
+% REQUIRED INPUTS:
 %
-% S.D                   - source space MEEG object
-% S.parcellation        - .nii or .nii.gz file at the same gridstep as S.D
-%                         OR a matrix of dimensions voxels x parcels
-%                         with the same number of voxels as S.D
-% S.mask                - mask for this parcellation
-% S.orthogonalisation   - Orthogonalisation protocol to apply:
-%                           ['none','symmetric','closest','householder']
-% S.method              - method for reconstructing parcel time course:
-%                           ['PCA','mean','peakVoxel','spatialBasis']
-
+%   S.D                 - SPM12 MEEG object
+%   S.parcellation      - .nii or .nii.gz file at the same gridstep as S.D
+%                         OR a .mat file containing a matrix of dimensions 
+%                         voxels x parcels with the same number of voxels 
+%                         as S.D
+%   S.mask              - mask for this parcellation
+%   S.orthogonalisation - Orthogonalisation protocol to apply:
+%                         ['none','symmetric','closest','householder']
+%   S.method            - method for reconstructing parcel time course:
+%                         ['PCA','mean','peakVoxel','spatialBasis']
+% OUTPUTS:
+%   D                   - Newly created SPM12 MEEG object
+%
+% Adam Baker 2015
 
 D = spm_eeg_load(S.D);
 

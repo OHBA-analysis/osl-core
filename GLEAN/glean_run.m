@@ -1,76 +1,31 @@
 function glean_run(GLEAN)                                 
-% Top level function for running GLEAN 
+% Runs a GLEAN analysis.
 %
-%         ____ _     _____    _    _   _ 
-%        / ___| |   | ____|  / \  | \ | |
-%       | |  _| |   |  _|   / _ \ |  \| |
-%       | |_| | |___| |___ / ___ \| |\  |
-%        \____|_____|_____/_/   \_|_| \_|
+% GLEAN = GLEAN_RUN(GLEAN)
 %
-%   Group Level Exploratory Analysis of Networks                              
-%
-%                  GLEAN v0.1 
-%                Adam Baker 2015
-%
-% OSL GLEAN
-% OSL Group Level Exploratory Analysis of Networks
+% Adam Baker 2015
 
-% FILE STRUCTURE:
-% 
-% - ENVELOPES_{settings}
-%   - data
-%   - SUBSPACE_{settings}
-%     - data
-%     - model_{settings}
-%       - RESULTS_{settings}
-%         - PLOTS_{settings}
-%
-% GLEAN STRUCTURE:
-%
-% SETTINGS
-% DATA
-% MODEL
-% OUTPUT
-%
 
-% TODO
-% - allow running the GLEAN using the GLEAN
-% - sort out input parsing & logic
-% - add multiband support
-% - add ability to switch montages
-% - add more results options (conn. profile, stats, graphs etc)
-% - normalisation of PCs/parcels pre-concatentation
-% - write some default settings for the usual pipelines
-%   (eLife,parcellation,ica)
-% - If new envelope files are added then it needs to redo everything!
-% - Add some helpful command line print outs
-% - Consider moving the filename set up to the individual stages
-% - Make single frequency mode a special case of multiband (i.e. make TF)
+% Check settings and directories before running
+GLEAN = glean_check(GLEAN);
+save(GLEAN.name,'GLEAN')
 
-% Either create a new GLEAN or load an existing one and modify its
-% parameters
+pretty_string('RUNNING GLEAN ANALYSIS')
 
-save(GLEAN.name,'GLEAN')   
+fprintf('Running GLEAN specified in: \n%s',GLEAN.name);
 
-% COMPUTE ENVELOPES
+% Run the envelope state:
 glean_envelope(GLEAN)
 
-% COMPUTE SUBSPACE DATA
+% Run the subspace state:
 glean_subspace(GLEAN)
 
-% RUN THE NETWORK MODEL (ICA/HMM)
+% Run the model state:
 glean_model(GLEAN)
 
-% CREATE OUTPUT MAPS/STATS
+% Run the results state:
 glean_results(GLEAN)
 
-
+pretty_string('GLEAN ANALYSIS COMPLETE')
 
 end
-
-
-
-
-
-
-                    

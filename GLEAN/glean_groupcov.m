@@ -1,17 +1,18 @@
 function C = glean_groupcov(spmfiles)
-% Efficiently compute a group covariance from multiple SPM files without
-% requiring prior concatenatation of the data.
+% Efficiently compute a group covariance from multiple SPM files.
+% This does not requiring prior concatenatation of the data.
 % See https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
 %
-% Usage:
-% C = glean_groupcov(spmfiles)  where spmfiles is a cell array of filenames
-%                               for SPM MEEG objects
+% C = GLEAN_GROUPCOV(spmfiles)
+%
+% REQUIRED INPUTS:
+%   spmfiles  - A list of SPM12 MEEG objects to compute covariance across
+% 
+% OUTPUTS:
+%   C         - Group covariance matrix
 %
 % Adam Baker 2015
-%
-% TODO: there is currently a small difference when compared to the
-% covariance computed over concatenated data - could be precision errors,
-% could be a bug...
+
  
 C = 0;
 N = 0;

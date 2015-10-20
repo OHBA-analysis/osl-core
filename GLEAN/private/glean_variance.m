@@ -1,12 +1,12 @@
-function V = osl_source_variance(D)
+function V = glean_variance(D)
 % Computes the temporal variance of data in MEEG object
-% V = osl_source_variance(D)
+% V = glean_variance(D)
 currentMontage = montage(D,'getindex');
 
 V = zeros(D.nchannels,D.ntrials);
 
 D = D.montage('switch');
-C = osl_cov(D);
+C = glean_cov(D);
 
 if currentMontage ~= 0
     tra = D.montage('getmontage',currentMontage).tra;

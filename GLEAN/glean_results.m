@@ -1,5 +1,12 @@
 function glean_results(GLEAN)
-% Runs the results stage of GLEAN
+% Runs the results stage of GLEAN.
+%
+% GLEAN_RESULTS(GLEAN)
+%
+% Adam Baker 2015
+
+
+pretty_string('RUNNING RESULTS STAGE')
 
 model = load(GLEAN.model.model);
 
@@ -9,14 +16,13 @@ else
     F = 1;
 end
 
-
-for results_type = fieldnames(GLEAN.results.settings)'
+for results_type = setdiff(fieldnames(GLEAN.results.settings),'dir')'
     
     results = lower(char(results_type));
     
     switch results
         
-        case 'pcorr'
+        case 'pcorr' % Partial correlation with inferred time courses
             
             for subspace = fieldnames(GLEAN.results.pcorr)'
                 
@@ -29,7 +35,8 @@ for results_type = fieldnames(GLEAN.results.settings)'
                 
                 D = spm_eeg_load(GLEAN.(data).data{1});
                 
-                switch lower(char(fieldnames(GLEAN.model.settings)))
+                % Regressors are the state time courses (HMM) or independent components (ICA)
+                switch char(intersect(lower(fieldnames(GLEAN.model.settings)),{'hmm','ica'}));
                     case 'hmm'
                         regressors = cell2mat(arrayfun(@(k) model.hmm.statepath==k,1:model.hmm.K,'UniformOutput',0));
                         session_maps = nan(D.nchannels,model.hmm.K,F,numel(GLEAN.data));
@@ -38,7 +45,7 @@ for results_type = fieldnames(GLEAN.results.settings)'
                         session_maps = nan(D.nchannels,size(model.ica.tICs,1),F,numel(GLEAN.data));
                 end
                 
-                
+                % Compute partial correlation map for each subject
                 for session = 1:numel(GLEAN.data)
                     
                     if F == 1
@@ -47,7 +54,8 @@ for results_type = fieldnames(GLEAN.results.settings)'
                         session_maps(:,:,:,session) = glean_regress(GLEAN.(data).data{session},regressors(model.subIndx==session,:),results);
                     end
                     % Save the session specific maps
-                    disp(['Saving partial correlation maps for session ' num2str(session)])
+                    disp(['Saving ' char(subspace) ' partial correlation maps for session ' num2str(session)])
+
                     for f = 1:F
                         map = session_maps(:,:,f,session);
                         switch GLEAN.results.settings.(results).format
@@ -59,11 +67,11 @@ for results_type = fieldnames(GLEAN.results.settings)'
                     end
                     
                 end
+                % Compute group map as the average of the session maps
                 group_maps = nanmean(session_maps,4);
                 
-                
                 % Save the group averaged maps
-                disp('Saving group partial correlation map')
+                disp(['Saving ' char(subspace) ' group partial correlation map'])
                 for f = 1:F
                     map = group_maps(:,:,f);
                     switch GLEAN.results.settings.(results).format
@@ -105,10 +113,10 @@ end
     % appropriate for the SPACE the map is in (voxelwise or parcelwise)
         switch space
             case 'voxel'
-                writenii(map,fname,GLEAN.results.settings.(results).mask);
+                writenii(map,fname,GLEAN.envelope.settings.mask);
             case 'parcel'
-                map = parcellation2map(map,GLEAN.subspace.settings.parcellation.file,GLEAN.subspace.settings.parcellation.mask);
-                writenii(map,fname,GLEAN.results.settings.(results).mask);
+                map = parcellation2map(map,GLEAN.subspace.settings.parcellation.file,GLEAN.envelope.settings.mask);
+                writenii(map,fname,GLEAN.envelope.settings.mask);
         end
 
     end

@@ -1,5 +1,5 @@
 function nodeData = remove_source_leakage(nodeDataOrig, protocol)
-%REMOVE_SOURCE_LEAKAGE correct ROI time-courses for source leakage
+% REMOVE_SOURCE_LEAKAGE correct ROI time-courses for source leakage
 %
 % NODEDATA = REMOVE_SOURCE_LEAKAGE(NODEDATAORIG, PROTOCOL)
 %   produces orthogonalised node time-courses NODEDATA from 

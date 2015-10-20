@@ -1,5 +1,19 @@
 function map = glean_regress(D,regressors,mode)
-% Create spatial maps via mutliple regression of HMM or ICA time courses
+% Create spatial maps via mutliple regression of HMM or ICA time courses.
+%
+% D = GLEAN_REGRESS(D,regressors,mode)
+%
+% REQUIRED INPUTS:
+%   D           - Name of an SPM12 MEEG object
+%   regressors  - [samples x regressors] matrix of temporal regressors
+%   mode        - Type of map to create. 'pcorr' - partial correlation
+%                 'tstat' - t-statistic
+% 
+% OUTPUTS:
+%   map         - [voxels x regressors (x frequency)] spatial map
+%
+% Adam Baker 2015
+
 
 D = spm_eeg_load(D);
 

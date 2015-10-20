@@ -1,6 +1,10 @@
 function glean_plot_timecourse(GLEAN)
-% Plots GLEAN inferred time courses (state time courses for HMM and
-% component time courses for ICA)
+% Plots GLEAN inferred time courses.
+% (state time courses for HMM and component time courses for ICA)
+%
+% GLEAN_PLOT_TIMECOURSE(GLEAN)
+%
+% Adam Baker 2015
 
 load(GLEAN.model.model)
 

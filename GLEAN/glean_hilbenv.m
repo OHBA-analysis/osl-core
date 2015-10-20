@@ -1,23 +1,29 @@
 function Denv = glean_hilbenv(S)
-% Faster code for computing the Hilbert envelope of MEEG data. 
+% Optimised Hilbert envelope computation for of MEEG data. 
 % Speed improvements come from using resampling (with anti-aliasing) and 
-% DATAIO for writing intermediate data to disk
+% fast data writing via dataio.m for writing intermediate data to disk
 %
-% Dnew = glean_hilbenv_fastest(S)
+% Dnew = GLEAN_HILBENV(S)
 %
-% S.D           - MEEG object
-% S.fsample_new - New sampling rate of the envelope
-% S.prefix      - filename prefix for new MEEG object
-% S.freqbands   - cell array of frequency bands to use [Hz]
-%                   i.e. {[f1_low f1_high],[f2_low f2_high]}
-% S.logtrans    - apply log transform [0/1] (default 0)
-% S.demean      - remove mean from envelope (default 0)
+% REQUIRED INPUTS:
+%   S.D           - MEEG object
+%
+% OPTIONAL INPUTS:
+%   S.fsample_new - New sampling rate of the envelope (default original)
+%   S.prefix      - filename prefix for new MEEG object (default 'h')
+%   S.freqbands   - cell array of frequency bands to use [Hz]
+%                     i.e. {[f1_low f1_high],[f2_low f2_high]} 
+%                    (default [0 Inf])
+%   S.logtrans    - apply log transform [0/1] (default 0)
+%   S.demean      - remove mean from envelope (default 0)
+%
+% OUTPUTS:
+%   Denv          - Newly created SPM12 MEEG object containing envelopes
 %
 % Adam Baker 2015
 
+
 % Check SPM File Specification:
-
-
 try
     if isa(S.D,'meeg')
         D = S.D;
@@ -33,10 +39,8 @@ catch
 end
 
 S.prefix = ft_getopt(S,'prefix','h');
-
 S.logtrans = ft_getopt(S,'logtrans',0);
 S.demean   = ft_getopt(S,'demean',0);
-
 
 fsample_new = ft_getopt(S,'fsample_new');
 if isempty(S.fsample_new)
@@ -51,7 +55,6 @@ if rem(D.fsample,1) ~= 0
     error('D.fsample must be an integer');
 end
 
-
 S.freqbands = ft_getopt(S,'freqbands',{[0 Inf]});
 if ~iscell(S.freqbands)
     error('S.freqbands must be a cell array');
@@ -62,7 +65,6 @@ bad_samples = unique([1 bad_samples D.nsamples]); % ensure edge effects are remo
 
 trl     = 1; % Sort this out!
 Nvoxels = D.nchannels;
-
 
 % Get size of downsampled envelope
 t_env = D.time;
@@ -75,7 +77,6 @@ Denv = clone(montage(D,'switch',0),prefix(D.fnamedat,S.prefix),[Nvoxels,numel(S.
 Denv = timeonset(Denv,t_env(1));
 Denv = events(Denv,1,[]); %won't be needing these
 Denv = fsample(Denv,fsample_new);
-
 
 % Make a temporary filename for each frequency band to hold filtered data
 for f = 1:numel(S.freqbands)
@@ -97,10 +98,13 @@ for f = 1:numel(S.freqbands)
         else
             dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl);
         end
+        
+        % Hilbert envelope
         dat_blk = transpose(dat_blk);
         dat_blk = abs(hilbert(dat_blk));
         dat_blk(bad_samples,:) = nan;
 
+        % Downsample envelope
         env = zeros(length(t_env),size(dat_blk,2));
         for vox = 1:size(dat_blk,2)
             tmp = resample(dat_blk(:,vox),fsample_new,D.fsample);
@@ -119,10 +123,9 @@ for f = 1:numel(S.freqbands)
     ft_progress('close');
     
     Denv(:,f,:,1) = permute(dataio(tempfile),[2,3,1,4]);
-    unix(['rm ' tempfile]);
+    system(['rm ' tempfile]);
     
 end
-
 
 Denv.save;
 
