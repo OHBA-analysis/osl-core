@@ -215,17 +215,12 @@ try
     topos = S.ica_res.topos;
 catch
     topos = [];
-    h = figure('visible','off');
-    modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3))));
+    modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
     for m = 1:numel(modalities)
         disp(['Precomputing sensor topographies for modality ' modalities{m}]);
-        topos_m = component_topoplot(D,sm,modalities(m));
-        topos = [topos handle2struct(topos_m)];
+        topos = [topos component_topoplot(D,sm,modalities(m))];
     end
-
-    close(h)
 end
-
 
 
 % Save topos & metrics
@@ -309,8 +304,10 @@ cfg.title       = modality{:};
 
 %cfg.layout = ft_prepare_layout(cfg);
 
+tmp_fig = figure('visible','off');
 [~] = evalc('ft_topoplotIC(cfg,data);');
-topos = get(gcf,'children');
-
+topos = handle2struct(get(gcf,'children'));
+topos = topos(end:-1:1); % handles are LIFO
+close(tmp_fig)
 end
 
