@@ -21,7 +21,7 @@ try,
         try,
             % load in opt results for this session:            
             opt_results=opt_load_results(opt, opt.results.fnames{subnum});
-            
+           
             S2=[];
             if opt.epoch.do, 
                 spm_file = fullfile(opt.dirname, opt_results.spm_files_epoched_basename);

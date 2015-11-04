@@ -391,26 +391,28 @@ for subi=1:length(opt.sessions_to_do),
             % use passed in SPM MEEG objects
             cd(opt.dirname);
 
-            S2=[];
             [p fname e] = fileparts(opt.spm_files{subnum});
+            
+            spm_files_basenames{subnum}=[fname '.mat'];
+           
+            S2=[];
             S2.D=[p '/' fname '.mat'];
-
-            [p2 spmname e2] = fileparts(opt.convert.spm_files_basenames{subnum});
-            spm_files_basenames{subnum}=[spmname '.mat'];
-
+    
             tempstring = tempname;
             tempstring = tempstring(end-12:end);
             S2.outfile=[spm_files_basenames{subnum} tempstring];
-            [p spmname e] = fileparts(S2.outfile);
-            S2.outfile=[spmname '.mat'];
+            [p fname e] = fileparts(S2.outfile);
+            S2.outfile=[fname '.mat'];
 
             S2.updatehistory=0;
             D = spm_eeg_copy(S2);
+            
             if ~strcmp([D.path '/' D.fname], [opt.dirname '/' D.fname])
                 runcmd(['mv ' D.path '/' D.fname ' ' opt.dirname]);
                 runcmd(['mv ' D.fnamedat ' ' opt.dirname]);
             end
-            spm_filename=[opt.dirname '/' D.fname];
+            
+            %spm_filename=[opt.dirname '/' D.fname];
 
         end;
 
@@ -762,43 +764,51 @@ for subi=1:length(opt.sessions_to_do),
         D = osl_epoch(S3);
 
         spm_files_epoched_basenames{subnum}=['e' spm_files_basenames{subnum}];
+        
+        opt_results.spm_files_epoched_basename=spm_files_epoched_basenames{subnum};
 
-        if(opt.outliers.do),
-            %%%%%%%%%%%%%%%%%%%%
-            %% Detect bad events and chans
+    end;
+    
+    if(opt.outliers.do),
+        %%%%%%%%%%%%%%%%%%%%
+        %% Detect bad events and chans
 
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  BAD CHAN/EVENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+        disp(['%%%%%%%%%%%%%%%%%%%%%%%  BAD CHAN/EVENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
-            spm_file=[opt.dirname '/' spm_files_epoched_basenames{subnum}];
-            D2=spm_eeg_load(spm_file);
-
-            S = [];
-            S.D = D2;
-            S.modalities=opt.modalities;
-            S.do_plot=1;
-            S.max_iter=5;
-            S.outlier_measure_fns=opt.outliers.outlier_measure_fns;%{'min','std'};
-            S.outlier_wthresh_ev=opt.outliers.wthresh_ev;%[0.5 0.5];
-            S.outlier_wthresh_chan=opt.outliers.wthresh_chan;%[0.01 0.01];
-            S.just_chans=0;
-            S.plot_basename='outliers';
-            S.plot_basetitle='OUTLIERS: ';
-
-            [D2 fig_names fig_handles fig_titles]=osl_detect_badevent(S);
-
-            report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
-            report=osl_report_print_figs(report);
-
-            % delete obsolete spm file
-            spm_file_old=[opt.dirname '/' spm_files_epoched_basenames{subnum}];
-            Dold=spm_eeg_load(spm_file_old);
-            if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
-                Dold.delete;
-            end;
-
-            spm_files_epoched_basenames{subnum}=['S' spm_files_epoched_basenames{subnum}];
-
+        if ~opt.epoch.do
+            spm_files_epoched_basenames{subnum}=spm_files_basenames{subnum};
         end;
+        spm_file=[opt.dirname '/' spm_files_epoched_basenames{subnum}];
+        
+        D2=spm_eeg_load(spm_file);
+
+        S = [];
+        S.D = D2;
+        S.modalities=opt.modalities;
+        S.do_plot=1;
+        S.max_iter=5;
+        S.outlier_measure_fns=opt.outliers.outlier_measure_fns;%{'min','std'};
+        S.outlier_wthresh_ev=opt.outliers.wthresh_ev;%[0.5 0.5];
+        S.outlier_wthresh_chan=opt.outliers.wthresh_chan;%[0.01 0.01];
+        S.just_chans=0;
+        S.plot_basename='outliers';
+        S.plot_basetitle='OUTLIERS: ';
+
+        [D2 fig_names fig_handles fig_titles]=osl_detect_badevent(S);
+
+        report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
+        report=osl_report_print_figs(report);
+
+        % delete obsolete spm file
+        spm_file_old=[opt.dirname '/' spm_files_epoched_basenames{subnum}];
+        Dold=spm_eeg_load(spm_file_old);
+        
+        [p fname] = fileparts(opt.spm_files{subnum});
+        if ((opt.cleanup_files == 1) || (opt.cleanup_files == 2)) && ~strcmp(Dold.fname, [fname '.mat'])
+            Dold.delete;
+        end;
+
+        spm_files_epoched_basenames{subnum}=['S' spm_files_epoched_basenames{subnum}];
 
         opt_results.spm_files_epoched_basename=spm_files_epoched_basenames{subnum};
 
