@@ -40,6 +40,9 @@ plotfid
 h = brush;
 set(h,'Color',[1 0 0],'Enable','on');
 
+togglerot;
+set(uitools.rotate,'state','on');
+
     function closefig(~,~)
         delete(hf)
     end
@@ -51,16 +54,17 @@ set(h,'Color',[1 0 0],'Enable','on');
                 case 'Yes'
                     brushedData = get(findall(gca,'tag','Brushing'),'Xdata');
                     brushedData = isnan(brushedData);
-                    fid.pnt(~brushedData,:) = [];
-                    fid.label(~brushedData) = [];
-
+                    fid.pnt(~brushedData,:) = [];                  
+                    if isfield(fid,'label')
+                        fid.label(~brushedData) = [];
+                    end
                     D = fiducials(D,fid);
                     [AZ,EL] = view;
                     plotfid
                     view(AZ,EL);
                     pause(1)
                     D.save
-                    D = spm_eeg_load(D.path,D.fname);
+                    D = spm_eeg_load(fullfile(D.path,D.fname));
                 case 'No'
                     
                 case 'Cancel'

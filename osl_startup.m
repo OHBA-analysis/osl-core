@@ -127,6 +127,10 @@ OSLDIR=osldir;
 % Ensure osl2 dir gets priority in path
 addpath(genpath([osldir '/osl2/']))
 
+% Remove SPM12 from path and re-add only top level folder
+spm_rmpath
+addpath([osldir '/spm12/'])
+
 spm_get_defaults('cmdline',true);
 spm eeg;
 close all;
