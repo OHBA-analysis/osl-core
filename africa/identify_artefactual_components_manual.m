@@ -174,14 +174,14 @@ if ~isempty(S.ident.artefact_chans) && ~isempty(S.ident.artefact_chans)
     for artefact_chantype = unique(S.ident.artefact_chans)
         if ~isfield(metrics,artefact_chantype)
 
-            if isempty( str2num(cell2mat( artefact_chantype ) ) )
+            if isempty(str2num(cell2mat(artefact_chantype)))
                 % We have a string, extract relevant channels matching channel type name
-                artefact_data = D(find(strcmp(D.chantype,artefact_chantype)),find(samples_of_interest));
+                artefact_data = D(find(strcmp(D.chantype,artefact_chantype)),:);
                 artefact_data = reshape(artefact_data,size(artefact_data,1),[]);
-                metric_name = cell2mat( artefact_chantype );
+                metric_name = cell2mat(artefact_chantype);
             else
                 % We have a channel number
-                artefact_data = D(str2num(cell2mat(artefact_chantype)), find(samples_of_interest));
+                artefact_data = D(str2num(cell2mat(artefact_chantype)),:);
                 metric_name = ['Chan_' cell2mat(artefact_chantype)];
             end
 
@@ -195,7 +195,7 @@ if ~isempty(S.ident.artefact_chans) && ~isempty(S.ident.artefact_chans)
                 tc_bp = bandpass(tc(ic,samples_of_interest),[0.1 48],D.fsample);
                 %ac_corr(ic) = sum(abs(corr(tc_bp',artefact_data')));
                 for ac = 1:size(artefact_data,1)
-                    ac_corr(ic) = ac_corr(ic) + abs(nanmedian(osl_movcorr(tc_bp',artefact_data(ac,:)',D.fsample*10,0)));
+                    ac_corr(ic) = ac_corr(ic) + abs(nanmedian(osl_movcorr(tc_bp',artefact_data(ac,find(samples_of_interest))',D.fsample*10,0)));
                 end
             end
             ac_corr = ac_corr ./size(artefact_data,1);
@@ -203,7 +203,7 @@ if ~isempty(S.ident.artefact_chans) && ~isempty(S.ident.artefact_chans)
             % output correlation and timecourse
             metrics.(metric_name).('value')  = ac_corr(:);
             metrics.(metric_name).timeCourse = artefact_data.';
-
+            metrics.(metric_name).timeCourse(~samples_of_interest,:) = nan;
         end
     end
 
