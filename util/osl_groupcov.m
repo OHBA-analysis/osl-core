@@ -4,7 +4,7 @@ function C = osl_groupcov(spmfiles)
 % See https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
 %
 % Usage:
-% C = osl_group_cov(spmfiles)   where spmfiles is a cell array of filenames
+% C = osl_groupcov(spmfiles)  where spmfiles is a cell array of filenames
 %                               for SPM MEEG objects
 %
 % Adam Baker 2015
@@ -35,34 +35,3 @@ end
 C = C ./ (N-1);
 
 end
-
-
-
-% Check:
-% 
-% X = {};
-% 
-% C = 0;
-% N = 0;
-% Mu = 0;
-% 
-% for i = 1:10
-% 
-% X{end+1} = rand(10,750+randi(500));
-% 
-% n = size(X{end},2);
-% c = osl_cov(X{end}) * (n-1);
-% mu = mean(X{end},2);
-% 
-% C = C + c + (Mu-mu)*(Mu-mu)'*(N*n)/(N+n);
-% 
-% Mu = (Mu*N + mu*n)/(N + n);
-% N = N + n;
-% 
-% end
-% 
-% C = C ./ (N-1);
-% 
-% end
-
-

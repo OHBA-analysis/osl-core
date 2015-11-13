@@ -117,6 +117,11 @@ targetdir{end+1}='spm12';
 filelist{end+1} = 'osl2/spm-changes/private/spm_eeg_inv_mesh_ui.m';
 targetdir{end+1}='spm12';
 
+filelist{end+1} ='osl2/spm-changes/private/subsref.m';
+targetdir{end+1}='spm12/@meeg';
+
+subsref.m
+
 for kk=1:length(filelist),
     runcmd(['cp -f ' osldir '/' filelist{kk} ' ' osldir '/' targetdir{kk}]);
 end;
@@ -126,6 +131,10 @@ OSLDIR=osldir;
 
 % Ensure osl2 dir gets priority in path
 addpath(genpath([osldir '/osl2/']))
+
+% Remove SPM12 from path and re-add only top level folder
+spm_rmpath
+addpath([osldir '/spm12/'])
 
 spm_get_defaults('cmdline',true);
 spm eeg;

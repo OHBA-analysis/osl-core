@@ -10,14 +10,14 @@ function fif_out = osl_call_maxfilter_remote(S, rmaxf_port, rmaxf_quit)
 %
 %   -   fif_out (optional): manually specify name of output file.
 %
-%   -   logfile (optional): set to 1 to produce log file of SSS output. 
+%   -   logfile (optional): set to 1 to produce log file of SSS output.
 %       Log file name is fif_out_log.txt. Set to 0 for no log file (default).
 %
-%   -   downsample_factor (optional): integer number >1. Suggested value of 
-%       4 for 1000KHz data. If S.downsample_factor is not set then no 
+%   -   downsample_factor (optional): integer number >1. Suggested value of
+%       4 for 1000KHz data. If S.downsample_factor is not set then no
 %       downsampling occurs.
 %
-%   -   spmfile (optional): Include the name of corresponding SPM format 
+%   -   spmfile (optional): Include the name of corresponding SPM format
 %       data. Maxfilter
 %       will use bad channel information contained in SPM object to ignore bad
 %       channels.
@@ -30,18 +30,18 @@ function fif_out = osl_call_maxfilter_remote(S, rmaxf_port, rmaxf_quit)
 %   -   movement_compensation (optional): set to 1 to use cHPI movement
 %       compensation or 0 (default) to not use it. Must be combined with SSS.
 %
-%   -   movecomp_call (optional, default = ''): string specifying a manual 
-%       movement compensation call. Setting this field overrides 
+%   -   movecomp_call (optional, default = ''): string specifying a manual
+%       movement compensation call. Setting this field overrides
 %       movement_compensation. Must be combined with SSS.
 %
 %   -   autobad_off (optional): set to 1 to switch off MaxFilter's automated
 %       badchannel detection. Default = 0.
 %
-%   -   trans_ref_file (optional, default = ''): allow transformation to the 
+%   -   trans_ref_file (optional, default = ''): allow transformation to the
 %       specified reference .fif file using the -trans maxfilter option
 %
-%   -   headpos (optional, default = 0): set to 1 to output head position 
-%       information from the recording to a text file.
+%   -   headpos (optional, default = 1): set to 0 to output head position
+%       information from the recording to a text file or 0 not to.
 %
 %   -   cal_file (optional):  full path to a fine calibration file to use
 %
@@ -62,7 +62,7 @@ rmaxf_client = '/net/aton/data/OHBA/legacy/licence-workaround/remote_maxf_client
 
 if 1 < nargin
     rmaxf_remote = 1;
-    
+
     if ~isnumeric(rmaxf_port) || ~isscalar(rmaxf_port)
         error('port must be a scalar number');
     end
@@ -159,11 +159,11 @@ else
 end
 if isfield(S,'movecomp_call') % ICG ADDITION, ALLOW CUSTOM MOVECOMP CALLS
     movecomp_call=S.movecomp_call;
-    
+
     if rmaxf_remote == 1
         warning('remote custom movecomp class not fully supported, please check result');
     end
-    
+
     if isfield(S,'movement_compensation') && S.movement_compensation==0
         warning('Movement compensation call is specifed, even though movemen_compensation == 0!');
     end
@@ -192,14 +192,14 @@ if isfield(S,'headpos') % ICG ADDITION, ALLOW OUTPUT OF HEAD MOVEMENT INFO
         else
             headpos_call = [fif_out '_headpos.txt'];
         end
-        
+
         if isempty(movecomp_call)
             warning('''-hp'': cHPI option(s) not found');
         end
     else
-        headpos_call='';
+        headpos_call = [' -hp ' fif_out '_headpos.txt'];
     end
-else 
+else
     headpos_call='';
 end
 if isfield(S,'autobad_off')
@@ -270,10 +270,10 @@ switch status
         error('remote: user not identified');
     case 12
         warning('remote: maxfilter exited with error, please check files');
-        
+
     case 20
         warning('local: server did not acknowledge job, please check files');
-        
+
     case 21
         warning('local: output file(s) not found/writable, please check files');
 end

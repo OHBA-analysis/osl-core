@@ -62,7 +62,7 @@ D = spm_eeg_load(D);
 [threshVal, threshType, channels, Is] = assign_inputs(varargin{:});
 
 if isempty(channels),
-    channels = D.indchantype('MEG');
+    channels = D.indchantype('MEGANY');
 end%if
 
 % create a new file

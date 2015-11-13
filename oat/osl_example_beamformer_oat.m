@@ -19,7 +19,7 @@ practical_dir='/home/mwoolrich/Desktop';
 osldir=[practical_dir '/osl2.0'];    
 
 practical_dir='/Users/woolrich';
-osldir=[practical_dir '/homedir/matlab/osl2.0'];    
+osldir=[practical_dir '/Dropbox/osl2.0'];    
 
 addpath(osldir);
 osl_startup(osldir);
@@ -28,7 +28,7 @@ osl_startup(osldir);
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 
 % directory where the data is:
-workingdir=[practical_dir '/homedir/matlab/osl2_testdata_dir/faces_subject1_data_osl2']; % directory where the data is
+workingdir=[practical_dir '/homedir/vols_data/osl_testdata/osl2_testdata_dir/faces_subject1_data_osl2']; % directory where the data is
 
 cmd = ['mkdir ' workingdir]; if ~exist(workingdir, 'dir'), unix(cmd); end % make dir to put the results in
 
@@ -55,13 +55,14 @@ oat.source_recon.method='beamform'; % mne_eye, mne_datacov mne_diag_datacov, mne
 %oat.source_recon.method='beamform_bilateral'; % mne_eye, mne_datacov mne_diag_datacov
 oat.source_recon.normalise_method='mean_eig';
 
-oat.source_recon.gridstep=8; % in mm, using a lower resolution here than you would normally, for computational speed
+oat.source_recon.gridstep=14; % in mm, using a lower resolution here than you would normally, for computational speed
 oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband_' oat.source_recon.method]; % directory the oat and results will be stored in
 
 %oat.source_recon.forward_meg='MEG Local Spheres';
 oat.source_recon.forward_meg='Single Shell';
+oat.source_recon.modalities{1}={'MEGPLANAR', 'MEGMAG'};
 oat.source_recon.modalities{1}='MEGPLANAR';
-oat.source_recon.modalities{2}='MEGMAG';
+oat.source_recon.report.do_source_variance_maps=1;
 
 do_hmm=0;
 if(do_hmm)
@@ -97,9 +98,10 @@ oat = osl_check_oat(oat);
 %%%%%%%%%%%%%%%%%%%
 %% RUN THE OAT:
 
-oat.to_do=[1 1 0 0];
+oat.to_do=[1 0 0 0];
 oat = osl_run_oat(oat);
 
+% report = oat_source_recon_report(oat);
 % report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});disp(report.html_fname);
 
 %%%%%%%%%%%%%%%%%%%

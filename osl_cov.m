@@ -44,9 +44,11 @@ for f = 1:nfreqs
         chan_blks = osl_memblocks([nchans,sum(samples2use(:,trl))],1);
         for i = 1:size(chan_blks,1)
             if isa(D,'meeg') && isequal(D.transformtype,'TF')
-                Dblk = D(chan_blks(i,1):chan_blks(i,2),f,find(samples2use(:,trl)),trl);
+                Dblk = D(chan_blks(i,1):chan_blks(i,2),f,:,trl);
+                Dblk = Dblk(:,:,samples2use(:,trl));
             else
-                Dblk = D(chan_blks(i,1):chan_blks(i,2),find(samples2use(:,trl)),trl);
+                Dblk = D(chan_blks(i,1):chan_blks(i,2),:,trl);
+                Dblk = Dblk(:,samples2use(:,trl));
             end
             Dblk = squeeze(Dblk);
             M(chan_blks(i,1):chan_blks(i,2),trl,f) = mean(Dblk,2);
@@ -60,9 +62,11 @@ for f = 1:nfreqs
             samples2use_blk = samples2use_blk(smpl_blks(i,1):smpl_blks(i,2));
             
             if isa(D,'meeg') && isequal(D.transformtype,'TF')
-                Dblk = squeeze(D(:,f,samples2use_blk,trl));
+                Dblk = squeeze(D(:,f,:,trl));
+                Dblk = Dblk(:,samples2use_blk);
             else
-                Dblk = D(:,samples2use_blk,trl);
+                Dblk = D(:,:,trl);
+                Dblk = Dblk(:,samples2use_blk);
             end
             
             Dblk = bsxfun(@minus,Dblk,M(:,trl,f));
