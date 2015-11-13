@@ -60,3 +60,11 @@ osl2.0/spm12/@meeg/path.m
 % Solution: copy patched spm_eeg_montage (provided by Vlad) to the SPM12 directory via spm-changes
 
 osl2.0/spm12/spm_eeg_montage.m
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Problem: @meeg/subsref.m has been updated on the SPM12 SVN to fix a bug when indexing badsamples when online montages are used.
+
+% Solution: copy local copy to the SPM12 directory
+
+osl2.0/spm12/@meeg/subsref.mm
