@@ -116,7 +116,7 @@ function correlationMats = osl_network_analysis(Dlist, Settings)
 %                                 The bandpass filtering is performed 
 %                                 before orthogonalisation. 
 %
-%      timecourseCreationMethod - 'PCA', 'peakVoxel' or 'mean' for binary 
+%      timecourseCreationMethod - 'PCA' or 'peakVoxel'  for binary 
 %                                 parcellations. 
 %                                 Sets whether an ROI time-course is 
 %                                 created using the mean over all voxels in 
@@ -144,6 +144,18 @@ function correlationMats = osl_network_analysis(Dlist, Settings)
 %                                 to produce interpretable results.
 %
 %      outputDirectory          - Set a directory for the results output
+%
+%      sessionName              - string used to construct filenames for
+%                                 saving outputs.
+%
+%      SaveCorrected            - Structure determining what is saved to
+%                                 disc. Has fields:
+%
+%          .timeCourses     : orthgonalised ROI time-courses
+%          .envelopes       : corrected ROI envelopes
+%          .variances       : variances in each ROI
+%          .ROIweightings   : weights used in each ROI used to construct
+%                             single time-course
 %
 %
 %   The ROI time-courses, corrected for source spread, and their envelopes, 
@@ -264,15 +276,15 @@ for iSession = Settings.nSessions:-1:1,
             mfilename, Settings.nSessions - iSession + 1, Settings.nSessions);
 
     D                          = Dlist{iSession};
-    sessionName                = Settings.sessionNames{iSession};
+    sessionName                = Settings.sessionName{iSession};
     matsSaveFileName{iSession} = fullfile(outputDirectory,                                      ...
                                           sprintf('%s_single_session_correlation_mats_tmp.mat', ...
                                                   sessionName));
 
-    mats{iSession} = ROInets.run_individual_correlation_analysis(D,                          ...
-                                                                 Settings,                   ...
-                                                                 matsSaveFileName{iSession}, ...
-                                                                 iSession);
+    mats{iSession} = ROInets.run_individual_network_analysis(D,                          ...
+                                                             Settings,                   ...
+                                                             matsSaveFileName{iSession}, ...
+                                                             iSession);
 end%for
 
 % reformat results - correlationMats is a cell array of frequency bands

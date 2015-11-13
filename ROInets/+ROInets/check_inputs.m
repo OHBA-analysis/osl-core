@@ -76,6 +76,9 @@ isGroupStatsMethodFcn = @(c) ischar(validatestring(c,                   ...
                                                    Inputs.FunctionName, ...
                                                    'groupStatisticsMethod'));
                                                
+% check session names
+isSessionNameFcn = @(c) ischar(c) || (iscell(c) && all(cellfun(@ischar, c)));
+
 %% Inputs
 Inputs.addParamValue('spatialBasisSet', [], isParcellationFcn);
 
@@ -122,7 +125,7 @@ SaveCorrectedDef = struct('timeCourses',   false, ...
                           'ROIweightings', false);
 Inputs.addParamValue('SaveCorrected', SaveCorrectedDef, @isstruct);
 
-Inputs.addParamValue('sessionName', 'session1', @ischar);
+Inputs.addParamValue('sessionName', 'session1', isSessionNameFcn);
 Inputs.addParamValue('gridStep',    8,          numericValidFcn);
 
 %% Parse inputs

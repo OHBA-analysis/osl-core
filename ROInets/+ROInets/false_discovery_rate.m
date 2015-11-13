@@ -55,33 +55,42 @@ elseif ~isscalar(alpha) || alpha < 0 || alpha > 1,
 end%if
 
 validateattributes(z, {'numeric'}, {'2d'}, mfilename, 'z');
-tol = 1e-10; % z-scores are order(1)
-symmetricDifference = abs(z - z');
-assert(all(symmetricDifference(~isnan(symmetricDifference)) < tol),  ...
-       [mfilename ':NonSymmetricInput'], ...
-       'Expecting a symmetric input matrix z. \n');
+tol = 1e-10; % z-scores are order(1)   
    
-% properties of input
-nNodes      = size(z, 1);
-uniqueEdges = triu(true(nNodes), 1);
-
 % use Benjamini and Yekutieli procedure to convert z to q.
 FDRmethod   = 'dep';
 doReporting = false;
 
-[sig_vals, crit_p, FDR] = fdr_bh(ROInets.z_to_p_two_tailed(z(uniqueEdges)), ...
-                                 alpha, FDRmethod, doReporting);
+if isvector(z),
+    [h, crit_p, q] = fdr_bh(ROInets.z_to_p_two_tailed(z), ...
+                                     alpha, FDRmethod, doReporting);
+else    
+    % input check
+    symmetricDifference = abs(z - z');
+    assert(all(symmetricDifference(~isnan(symmetricDifference)) < tol),  ...
+           [mfilename ':NonSymmetricInput'], ...
+           'Expecting a symmetric input matrix z. \n');
+   
+    % properties of input
+    nNodes      = size(z, 1);
+    uniqueEdges = triu(true(nNodes), 1);
 
-% declare memory and initialise diagonal
-h = zeros(nNodes);
-q = eye(nNodes);
 
-% reformat results to desired output
-h(uniqueEdges) = sig_vals;
-h = h + triu(h,1)';
+    [sig_vals, crit_p, FDR] = fdr_bh(ROInets.z_to_p_two_tailed(z(uniqueEdges)), ...
+                                     alpha, FDRmethod, doReporting);
 
-q(uniqueEdges) = FDR;
-q = q + triu(q,1)';
+    % declare memory and initialise diagonal
+    h = zeros(nNodes);
+    q = eye(nNodes);
+
+    % reformat results to desired output
+    h(uniqueEdges) = sig_vals;
+    h = h + triu(h,1)';
+
+    q(uniqueEdges) = FDR;
+    q = q + triu(q,1)';
+
+end%if is vector
 
 z_thresh = ROInets.p_to_z_two_tailed(crit_p);
 
