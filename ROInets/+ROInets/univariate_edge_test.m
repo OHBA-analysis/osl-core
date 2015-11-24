@@ -5,6 +5,39 @@ function [T, p, corrp] = univariate_edge_test(netmats, designMatrix, contrasts, 
 %    univariate testing for significance on each edge of a network matrix. 
 %    Testing is performed using FSL's randomise, and uses 5000 permutations
 %    of the group labels to perform nonparametric inference. 
+%
+%    Pass in NETMATS, which are symmetric network matrices with subjects in
+%    the third dimension. The diagonals will be ignored. The DESIGN matrix
+%    should have as many rows as subjects. The CONTRAST matrix should have
+%    as many columns as the design matrix has columns. 
+%
+% [T, P, CORRP] = UNIVARIATE_EDGE_TEST(..., STANDARDISE) demeans and
+%    variance normalises the design matrix, if TRUE. 
+%
+%   T provides single-edge T-stats; P the uncorrected p-Values; and CORRP the
+%   FWE-corrected p-values. To use the weaker FDR correction, see
+%   ROINETS.FALSE_DISCOVERY_RATE. 
+
+%	Copyright 2015 OHBA, FMRIB
+%	This program is free software: you can redistribute it and/or modify
+%	it under the terms of the GNU General Public License as published by
+%	the Free Software Foundation, either version 3 of the License, or
+%	(at your option) any later version.
+%	
+%	This program is distributed in the hope that it will be useful,
+%	but WITHOUT ANY WARRANTY; without even the implied warranty of
+%	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%	GNU General Public License for more details.
+%	
+%	You should have received a copy of the GNU General Public License
+%	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+%	$LastChangedBy: GilesColclough $
+%	$Revision: 763 $
+%	$LastChangedDate: 2015-10-21 11:52:19 +0100 (Wed, 21 Oct 2015) $
+%	Contact: giles.colclough@eng.ox.ac.uk
+%	Originally written on: MACI64 by Giles Colclough, 25-Sep-2014 15:20:18
 
 
 %% Input checking
