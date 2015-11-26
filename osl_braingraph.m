@@ -84,7 +84,11 @@ if ~isempty(G)
     edgecolour  = cmap(colorInd(p),:);
     
     if exist('scaleEdges', 'var') && ~isempty(scaleEdges),
-        weightInd  = closest(colorInd(p), linspace(min(colorInd), max(colorInd), size(cmap, 1)));
+        if isSingleColour,
+            weightInd  = closest(colorInd(p), linspace(min(colorInd), max(colorInd), size(cmap, 1)));
+        else
+            weightInd = 2*closest(abs(colorInd(p) - round(size(cmap,1)./2)), linspace(0, round(max(colorInd)./2), round(size(cmap, 1)./2)));
+        end
         edgeWeight = weightMap(weightInd);
     else
         edgeWeight = 3;
