@@ -4,7 +4,7 @@ function x=oat_setup_designmatrix(S)
 %
 % Need S to contain:
 % - Xsummary: a parsimonious description of the design matrix 
-% contains values Xsummary{reg,cond}, where reg is regressor no. and cond is condition no.  
+% contains values Xsummary{reg}(cond), where reg is regressor no. and cond is condition no.  
 %
 % - trialtypes: vector num_trials long indicating which condition each trial in the MEG data belongs to 
 % OR

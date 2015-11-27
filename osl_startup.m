@@ -120,6 +120,7 @@ targetdir{end+1}='spm12';
 filelist{end+1} ='osl2/spm-changes/private/subsref.m';
 targetdir{end+1}='spm12/@meeg';
 
+
 for kk=1:length(filelist),
     runcmd(['cp -f ' osldir '/' filelist{kk} ' ' osldir '/' targetdir{kk}]);
 end;
@@ -145,3 +146,8 @@ if ~isdeployed
         end;
     end;
 end % if ~ isdeployed
+
+
+% remove fieldtrip replication
+rmpath(genpath(fullfile(osldir, 'spm12/external/fieldtrip/external/')));
+

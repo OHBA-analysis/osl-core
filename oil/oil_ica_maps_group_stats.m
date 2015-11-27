@@ -13,6 +13,7 @@
 function oil = oil_ica_maps_group_stats(oil)
 
 global OSLDIR
+fprintf('Oil group-level analysis. \n');
 
 %% Set-Up Variables
 if isfield(oil.ica_group_level, 'group_design_matrix');                design_matrix                     = oil.ica_group_level.group_design_matrix;                             else, error('Group Design Matrix unspecified');      end
@@ -41,6 +42,7 @@ copes = zeros(Nvoxels,oil.ica.num_ics,Nsubs);
 group_copes = zeros(Nvoxels,Nics,Ncontrasts);
 group_stdcopes = zeros(Nvoxels,Nics,Ncontrasts);
 for subnum = 1:Nsubs
+    fprintf('Loading in first-level results for subject %d out of %d. \n', subnum, Nsubs);
     copes(:,:,subnum) = nii_quickread(cope_files{subnum},oil.enveloping.gridstep);
 end
 copes = copes(:,comps2use,:);
@@ -50,6 +52,7 @@ wwt_mean = get_weights_norm(oil);
 copes = copes./repmat(wwt_mean,[1 size(copes,2),size(copes,3)]);
 
 %% Perform GLM
+fprintf('Running GLM. \n');
 if demean_designmatrix
     design_matrix=demean(design_matrix,1);
 end%if
@@ -81,8 +84,9 @@ group_tstats(:,comps2use,:) = group_copes./group_stdcopes;
 group_copes_tmp = zeros(Nvoxels,oil.ica.num_ics,Ncontrasts);
 group_copes_tmp(:,comps2use,:) = group_copes;
 group_copes = group_copes_tmp;
-%% Output nifti files
 
+%% Output nifti files
+fprintf('Preparing output. \n');
 for c = 1:Ncontrasts
     fname_cope = [stats_dir '/copes_group_analysis_components_' num2str(comps2use(1)) '_to_' num2str(comps2use(end)) '_contrast_' num2str(c)];
     fname_tstats=[stats_dir '/tstats_group_analysis_components_' num2str(comps2use(1)) '_to_' num2str(comps2use(end)) '_contrast_' num2str(c)];
@@ -92,6 +96,8 @@ end
 
 %% Permutations testing using RANDOMISE
 if use_randomise
+    
+    fprintf('Permutation testing. \n');
     group_pvals=zeros(Nvoxels,oil.ica.num_ics,Ncontrasts);
     group_clustered_t_stats=zeros(Nvoxels,oil.ica.num_ics,Ncontrasts);
     
@@ -137,6 +143,8 @@ if use_randomise
     
     
 end
+
+fprintf('Group level OIL complete. \n');
 end
 
 function vol_as_matrix=smooth_vol(vol_as_matrix, lower_level_stdbrain, fwhm, gridstep, tmp_fname)

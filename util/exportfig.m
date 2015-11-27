@@ -585,8 +585,10 @@ try
 	if ~strcmpi(get(allAxes(k),'Tag'),'legend')
 	  axesR = apos{k};
 	  r = LocalAxesTightBoundingBox(axesR, allAxes(k));
+      if ~isempty(r)
 	  r(1:2) = r(1:2) + axesR(1:2);
 	  fr = LocalUnionRect(fr,r);
+      end
 	end
       end
       if isempty(fr)
@@ -691,7 +693,7 @@ try
   end
   warning(oldwarn);
   
-catch
+catch ME
   warning(oldwarn);
   hadError = 1;
 end
@@ -709,7 +711,8 @@ else
 end
 
 if hadError
-  error(deblank(lasterr));
+    rethrow(ME);
+%   error(deblank(lasterr));
 end
 
 %
