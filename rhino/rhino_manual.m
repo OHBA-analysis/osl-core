@@ -1,4 +1,10 @@
 function rhino_manual(D)
+% Interactive tool for manual tweaking of RHINO coregistration.
+%
+% rhino_manual(D) - displays the coregistration for MEEG object D in a 
+%                   new figure
+% 
+% Adam Baker 2015
 
 try 
     D.inv{1}.mesh.tess_rhino;

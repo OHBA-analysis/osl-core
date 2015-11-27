@@ -1,4 +1,14 @@
 function rhino_display(D,hf)
+% Display of the coregistered RHINO meshes and polhemus/sensor locations.
+%
+% RHINO_DISPLAY(D)    - displays the coregistration for MEEG object D in a 
+%                       new figure
+%
+% RHINO_DISPLAY(D,hf) - displays the coregistration for MEEG object D in an
+%                       existing figure with handle hf
+% 
+% Adam Baker 2015
+
 
 try 
     D.inv{1}.mesh.tess_rhino;

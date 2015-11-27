@@ -11,6 +11,7 @@ if ~isa(D,'meeg')
 end
 
 fid = D.fiducials;
+hfid = [];
 
 hf = figure('NumberTitle',                'off'     ,...
     'Menubar',               'none'    ,...
@@ -37,8 +38,8 @@ uitools.brush  = uitoggletool(uitools.toolbar,'ClickedCallback',@togglebrush,'CD
 
 ha = axes('parent',hf);
 plotfid
-h = brush;
-set(h,'Color',[1 0 0],'Enable','on');
+brushedData = [];
+hBrush = brush;
 
 togglerot;
 set(uitools.rotate,'state','on');
@@ -48,21 +49,20 @@ set(uitools.rotate,'state','on');
     end
 
     function save_meeg(~,~)
-        if any(get(findall(gca,'tag','Brushing'),'Xdata'))
+        brushedData = get_brushed_data;
+        if any(brushedData)
             selection = questdlg('Remove selected points?');
             switch selection,
                 case 'Yes'
-                    brushedData = get(findall(gca,'tag','Brushing'),'Xdata');
-                    brushedData = isnan(brushedData);
-                    fid.pnt(~brushedData,:) = [];                  
+                    fid.pnt(brushedData,:) = [];                  
                     if isfield(fid,'label')
-                        fid.label(~brushedData) = [];
+                        fid.label(brushedData) = [];
                     end
                     D = fiducials(D,fid);
                     [AZ,EL] = view;
                     plotfid
                     view(AZ,EL);
-                    pause(1)
+                    pause(0.1)
                     D.save
                     D = spm_eeg_load(fullfile(D.path,D.fname));
                 case 'No'
@@ -87,10 +87,35 @@ set(uitools.rotate,'state','on');
     end
 
     function plotfid
-        plot3(fid.pnt(:,1),fid.pnt(:,2),fid.pnt(:,3),'color','g','marker','.','LineStyle','none','parent',ha)
+        hfid = plot3(fid.pnt(:,1),fid.pnt(:,2),fid.pnt(:,3),'color','g','marker','.','LineStyle','none','parent',ha);
         axis(ha,'image');
         axis(ha,'off');
     end
 
-
+    function brushedData = get_brushed_data
+        
+        if verLessThan('matlab', '8.4') % is HG1
+            brushedData = get(findall(gca,'tag','Brushing'),'Xdata');
+            brushedData = ~isnan(brushedData);
+        else % is HG2
+            brushedData = hfid.BrushData;
+        end
+            
+    end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
