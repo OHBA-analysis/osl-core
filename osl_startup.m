@@ -146,3 +146,8 @@ if ~isdeployed
         end;
     end;
 end % if ~ isdeployed
+
+
+% remove fieldtrip replication
+rmpath(genpath(fullfile(osldir, 'spm12/external/fieldtrip/external/')));
+
