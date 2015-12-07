@@ -3,7 +3,7 @@ function first_level_results = oat_stats_combine_grads( oat, first_level_results
 global OSLDIR;
 
 first_level=oat.first_level;
-% contrasts                                  
+% contrasts
 contrast_list=oat.first_level.contrast;
 for c=1:length(contrast_list),
     contrast_list{c}=contrast_list{c}(:);
@@ -14,7 +14,7 @@ nfreqs                      = length(first_level_results.frequencies);
 
 % get D and update path in case OAT dir has been moved
 D = oat_get_sensordata( first_level_results );
-    
+
 %% combine the planar gradiometers if in sensorspace
 if strcmp(first_level_results.recon_method,'none')
     switch first_level.sensor_space_combine_planars
@@ -149,6 +149,14 @@ if strcmp(first_level_results.recon_method,'none')
             % modify the sensorspace D object stored in first_level_results
             if size(newcmblabels,1)~=102; newcmblabels=newcmblabels.';end
             if size(maglabels,1)~=102; maglabels=maglabels.';end
+
+            % preserve Class channel label if necessary
+            if ~isempty(strcmp(first_level_results.D_sensor_data.chanlabels,'Class'));
+                classchanind=find(strcmp(first_level_results.D_sensor_data.chanlabels,'Class'));
+            else
+                classchanind = -1;
+            end
+
             alllabels    = [newcmblabels; maglabels];
             first_level_results.D_sensor_data = chanlabels(first_level_results.D_sensor_data,1:numel(alllabels),alllabels);
             nExcessChans = numel(first_level_results.D_sensor_data.chanlabels) - numel(alllabels);
@@ -163,18 +171,23 @@ if strcmp(first_level_results.recon_method,'none')
             otherlab = repmat(otherlab,[nExcessChans,1]);
             first_level_results.D_sensor_data = chantype(first_level_results.D_sensor_data,numel(alllabels)+1:numel(alllabels)+nExcessChans,otherlab);
 
-            first_level_results.D_sensor_data.save;            
-            
+            % Need to preserve this label if running sensorspace oat
+            if classchanind > 0
+                first_level_results.D_sensor_data = chanlabels(first_level_results.D_sensor_data,classchanind, 'Class');
+            end
+
+            first_level_results.D_sensor_data.save;
+
         case 'dont_combine'
 
     end % switch first_level.sensor_space_combine_planars
 
-    chanindmeg = strmatch('MEG', first_level_results.D_sensor_data.chantype);            
+    chanindmeg = strmatch('MEG', first_level_results.D_sensor_data.chantype);
     first_level_results.chanind=chanindmeg;
     first_level_results.chanlabels=first_level_results.D_sensor_data.chanlabels(chanindmeg);
     first_level_results.chantype=first_level_results.D_sensor_data.chantype(chanindmeg);
 
-end % if strcmp(source_recon_results.recon_method,'none')       
+end % if strcmp(source_recon_results.recon_method,'none')
 
 
 end
