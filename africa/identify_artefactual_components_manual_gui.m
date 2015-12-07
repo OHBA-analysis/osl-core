@@ -6,16 +6,15 @@ MainFig = figure('Name',            ['AFRICA: ' D.fname], ...
                  'Menubar',         'none'              , ...
                  'DockControls',    'on'                , ...
                  'KeyPressFcn',     @key_press          , ...
-                 'BusyAction',      'cancel'            , ...
+                 'Interruptible',   'off'               , ... 
+                 'BusyAction',      'queue'            , ...
                  'Visible',         'off'               , ...
                  'ResizeFcn',       @createlayout); % ,...
 %'CloseRequestFcn', @close_fig);
 
-goodcolor    = [ 48   128    20] / 255; % [0 0.5 0];50    205    50
-badcolor     = [  0.8   0     0];
-currentcolor = [100   149   237] / 255;  % [  0     0.9   1];
-% tcplotcolor  = [ 39	   64   139] / 255;
-pwplotcolor  = [100   149   237] / 255;
+goodcolor    = [ 48   128    20] / 255;
+badcolor     = [204     0     0] / 255;
+currentcolor = [100   149   237] / 255;
 covcolor     = [121   121   121] / 255;
 FONTSIZE     = 14;
 
@@ -52,23 +51,7 @@ uitools.zoom       = uitoggletool(uitools.toolbar,  'ClickedCallback',@cb_zoom, 
 uitools.metrics = uicontrol('Style', 'popup', 'String', metric_names, 'Position', [1 1 1 1], 'Callback', @switchmetric);   
 
 
-
-% Add dropdown list of metrics to the toolbar
-% warning off
-% jToolbar = get(get(uitools.toolbar,'JavaContainer'),'ComponentPeer');
-% if ~isempty(jToolbar)
-%    jCombo = javax.swing.JComboBox(metric_names);
-%    set(jCombo, 'ActionPerformedCallback', @switchmetric);
-%    jToolbar(1).add(jCombo); 
-%    jToolbar(1).repaint;
-%    jToolbar(1).revalidate;
-% end
-% warning on
-
-
-
 drawnow
-
 redraw
 
 jFig = get(handle(MainFig),'JavaFrame');
@@ -168,16 +151,15 @@ uiwait(MainFig)
 
 
     function redraw % UPDATE PLOTS
-        
+          
+        drawnow expose
         
         t = (1:size(tc,2))./D.fsample;
         
         if ismember(current_comp,bad_components)
             thistcplotcolor = badcolor;
-            thispwplotcolor = badcolor;
         else
             thistcplotcolor = goodcolor; %tcplotcolor;
-            thispwplotcolor = pwplotcolor;
         end
              
         
@@ -196,21 +178,15 @@ uiwait(MainFig)
             set(topoWindow(m),'Visible','off')
             set(topoWindow(m), 'CLim', cmax*[-1 1]);
             set(MainFig,'CurrentAxes',topoWindow(m)); colormap(bluewhitered);
-            
-            %colorbar('peer', topoWindow(mWindow)); % AB disabled due to
-            %overlapping bars & topos for Elekta data
-
-            
-            %freezeColors
 
         end
         
         % Redraw spectrum window
         axes(specWindow); 
-        pwelch(tc(current_comp,~isnan(tc(current_comp,:))),[],[],[],D.fsample); 
-        set(findobj(specWindow,'type','line'),'color', thispwplotcolor);
+        pwelch(tc(current_comp,~isnan(tc(current_comp,:))),1024,512,1024,D.fsample);
+        set(findobj(specWindow,'type','line'),'color', thistcplotcolor,'linewidth',2);
+        title(specWindow,'')
         tidyAxes(specWindow, FONTSIZE);
-        title('Component Power Spectrum', 'FontSize', FONTSIZE);
         
         % redraw covariate window
         axes(covWindow);
@@ -225,38 +201,55 @@ uiwait(MainFig)
         axis tight
         set(covWindow,'xlim',[t(1) t(end)]);
         set(covWindow,'ylim',max(abs(get(covWindow,'ylim')))*[-1 1]);
-        title('Covariate Time Course', 'FontSize', FONTSIZE);
         xlabel('Time (s)', 'FontSize', FONTSIZE);
         tidyAxes(covWindow, FONTSIZE)
         
         % Redraw tIC window
-        axes(tICWindow);  
+        axes(tICWindow); 
+        cla(tICWindow);
         plot(t,tc(current_comp,:),'color',thistcplotcolor), 
         set(tICWindow,'ylim',max(abs(get(tICWindow,'ylim')))*[-1 1]);
         set(tICWindow,'xlim',[t(1) t(end)]);
         tidyAxes(tICWindow, FONTSIZE);
-        title('Component Time Course', 'FontSize', FONTSIZE);
-        %xlabel('Time (s)', 'FontSize', FONTSIZE);
 
         
         % Redraw metric window
         axes(metricWindow), cla(metricWindow), hold(metricWindow,'on');
-        goodbars = metrics.(metric_names{current_metric}).value(sorted_comps); 
-        goodbars(ismember(sorted_comps,bad_components))=nan;
-        goodbars(sorted_comps==current_comp) = nan; 
-        goodbars_h = barh(1:length(goodbars),goodbars); set(goodbars_h, 'FaceColor', goodcolor) 
-        badbars  = metrics.(metric_names{current_metric}).value(sorted_comps); 
-        badbars(~ismember(sorted_comps,bad_components))=nan;
-        badbars(sorted_comps==current_comp)=nan; 
-        badbars_h  = barh(1:length(goodbars),badbars);  set(badbars_h,  'FaceColor', badcolor) 
-        currentbar = nan(size(sorted_comps));
-        currentbar(sorted_comps==current_comp) = metrics.(metric_names{current_metric}).value(current_comp); 
-        currentbar_h = barh(1:length(goodbars),currentbar);  set(currentbar_h, 'FaceColor', currentcolor) 
-        axis(metricWindow,'tight','off')
-        set(metricWindow,'ydir','reverse')
+        
+        barMetric = metrics.(metric_names{current_metric}).value(sorted_comps); 
+        barInd = 1:length(barMetric);
+        
+        goodbars    = barh(barInd(~ismember(sorted_comps,bad_components)), ...
+                           barMetric(~ismember(sorted_comps,bad_components)));
+        badbars     = barh(barInd(ismember(sorted_comps,bad_components)),  ...
+                           barMetric(ismember(sorted_comps,bad_components)));
+        currentbar  = barh(barInd(ismember(sorted_comps,current_comp)),    ... 
+                           barMetric(ismember(sorted_comps,current_comp)));
+        
+        set(goodbars,   'FaceColor', goodcolor,     'EdgeColor','none')
+        set(badbars,    'FaceColor', badcolor,      'EdgeColor','none')
+        set(currentbar, 'FaceColor', currentcolor,  'EdgeColor','none')
+        
+        tidyAxes(metricWindow)
+        set(metricWindow,'ytick',find(ismember(sorted_comps,current_comp)),'yticklabel','>')
+        set(metricWindow,'xtick',[])
+        set(metricWindow,'fontweight','bold','fontsize',16)
+        axis(metricWindow,'tight')
+        set(metricWindow,'ydir','reverse')      
         
         linkaxes([tICWindow,covWindow],'x');
 
+        drawnow
+
+        % Add info about metrics as title above tICWindow
+        titlestr = '';
+        rank_metric = @(a,b) sum(a<=b);
+        for metric_name = metric_names'
+            r = rank_metric(metrics.(char(metric_name)).value(current_comp),metrics.(char(metric_name)).value);
+            titlestr = [titlestr sprintf('%s: %i   ',char(metric_name),r)];
+        end  
+        title(tICWindow,titlestr,'fontsize',FONTSIZE)
+        
     end
 
 
@@ -332,8 +325,7 @@ uiwait(MainFig)
         %current_metric = find(strcmp(metric_names,get(hCombo,'SelectedItem')));
         current_metric = get(uitools.metrics,'Value');
         [~,sorted_comps] = sort(metrics.(metric_names{current_metric}).value,'descend');
-        current_comp = sorted_comps(1);
-        current_comp_ind = 1;
+        current_comp_ind = find(sorted_comps == current_comp);
         redraw
     end
 
