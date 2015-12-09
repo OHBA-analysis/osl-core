@@ -15,6 +15,12 @@ nfreqs                      = length(first_level_results.frequencies);
 % get D and update path in case OAT dir has been moved
 D = oat_get_sensordata( first_level_results );
 
+% Check that grads haven't already been combined
+if ~isempty(D.indchantype('MEGCMB'))
+    warning('Grads have already been combined! skipping this step...');
+    return
+end
+
 %% combine the planar gradiometers if in sensorspace
 if strcmp(first_level_results.recon_method,'none')
     switch first_level.sensor_space_combine_planars
@@ -156,6 +162,7 @@ if strcmp(first_level_results.recon_method,'none')
             else
                 classchanind = -1;
             end
+            
 
             alllabels    = [newcmblabels; maglabels];
             first_level_results.D_sensor_data = chanlabels(first_level_results.D_sensor_data,1:numel(alllabels),alllabels);
