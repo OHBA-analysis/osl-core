@@ -50,6 +50,10 @@ uitools.setbad     = uipushtool(uitools.toolbar,    'ClickedCallback',@setbad,  
 uitools.zoom       = uitoggletool(uitools.toolbar,  'ClickedCallback',@cb_zoom, 'CData',icon_zoom,  'TooltipString','Set component as bad');    
 uitools.metrics = uicontrol('Style', 'popup', 'String', metric_names, 'Position', [1 1 1 1], 'Callback', @switchmetric);   
 
+% Create context menu for side window
+metricContext.menu   = uicontextmenu;
+metricContext.switch = uimenu(metricContext.menu, 'label','Reorder channels on metric switch','Checked','on','callback',@cb_metricContext);
+set(metricWindow,'uicontextmenu',metricContext.menu);      
 
 drawnow
 redraw
@@ -219,16 +223,19 @@ uiwait(MainFig)
         barMetric = metrics.(metric_names{current_metric}).value(sorted_comps); 
         barInd = 1:length(barMetric);
         
-        goodbars    = barh(barInd(~ismember(sorted_comps,bad_components)), ...
-                           barMetric(~ismember(sorted_comps,bad_components)));
-        badbars     = barh(barInd(ismember(sorted_comps,bad_components)),  ...
-                           barMetric(ismember(sorted_comps,bad_components)));
-        currentbar  = barh(barInd(ismember(sorted_comps,current_comp)),    ... 
-                           barMetric(ismember(sorted_comps,current_comp)));
+        [goodbars,badbars,currentbar] = deal(barMetric);
         
-        set(goodbars,   'FaceColor', goodcolor,     'EdgeColor','none')
-        set(badbars,    'FaceColor', badcolor,      'EdgeColor','none')
-        set(currentbar, 'FaceColor', currentcolor,  'EdgeColor','none')
+        goodbars(   ismember(sorted_comps,bad_components)) = nan;
+        badbars(   ~ismember(sorted_comps,bad_components)) = nan;
+        currentbar(~ismember(sorted_comps,current_comp))   = nan;
+
+        h_goodbars      = barh(barInd,goodbars);
+        h_badbars       = barh(barInd,badbars);
+        h_currentbar    = barh(barInd,currentbar);
+        
+        set(h_goodbars,  'FaceColor', goodcolor,    'EdgeColor', 'none');
+        set(h_badbars,   'FaceColor', badcolor,     'EdgeColor', 'none');        
+        set(h_currentbar,'FaceColor', currentcolor, 'EdgeColor', 'none');
         
         tidyAxes(metricWindow)
         set(metricWindow,'ytick',find(ismember(sorted_comps,current_comp)),'yticklabel','>')
@@ -242,7 +249,7 @@ uiwait(MainFig)
         drawnow
 
         % Add info about metrics as title above tICWindow
-        titlestr = '';
+        titlestr = 'Component ranking: ';
         rank_metric = @(a,b) sum(a<=b);
         for metric_name = metric_names'
             r = rank_metric(metrics.(char(metric_name)).value(current_comp),metrics.(char(metric_name)).value);
@@ -322,11 +329,28 @@ uiwait(MainFig)
 
 
     function switchmetric(~,~)
-        %current_metric = find(strcmp(metric_names,get(hCombo,'SelectedItem')));
         current_metric = get(uitools.metrics,'Value');
         [~,sorted_comps] = sort(metrics.(metric_names{current_metric}).value,'descend');
-        current_comp_ind = find(sorted_comps == current_comp);
+        
+        switch lower(get(metricContext.switch,'checked'))
+            case 'on'
+                current_comp_ind = 1;
+            case 'off'
+                current_comp_ind = find(sorted_comps == current_comp); 
+        end
+        current_comp = sorted_comps(current_comp_ind);
         redraw
+    end
+
+
+    function cb_metricContext(src,~)
+        
+        switch lower(get(metricContext.switch,'checked'))
+            case 'on'
+                set(metricContext.switch,'checked','off');
+            case 'off'
+                set(metricContext.switch,'checked','on');
+        end
     end
 
 
