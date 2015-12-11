@@ -11,8 +11,6 @@ function [hmm,stats] = osl_hmm_infer(data,options)
 % stats (optional)  HMM state statistics
 % AB 2014
 
-addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'HMM-MAR')))
-
 if nargin == 1
     options = struct;
 end
