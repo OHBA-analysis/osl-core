@@ -291,7 +291,11 @@ for subi_todo=1:length(first_level.sessions_to_do),
         % setup result freq dimension
         if ~isfield(out,'tf_freq_ranges')
             out.tf_freq_ranges=repmat(out.tf_freqs,2,1)';
-        end;
+            if isfield(out,'tf_freq_res')
+                out.tf_freq_ranges(:,1) = out.tf_freq_ranges(:,1) - out.tf_freq_res/2;
+                out.tf_freq_ranges(:,2) = out.tf_freq_ranges(:,2) + out.tf_freq_res/2;
+            end;
+        end
 
         first_level_results.frequency_ranges=out.tf_freq_ranges;
         first_level_results.frequencies = out.tf_freqs;
