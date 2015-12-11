@@ -529,7 +529,11 @@ for subi_todo=1:length(first_level.sessions_to_do),
         tf_settings.ds_factor               = post_tf_ds_factor;
         tf_settings.tf_morlet_factor        = first_level.tf_morlet_factor;
         tf_settings.tf_hanning_ncycles      = first_level.tf_hanning_ncycles;
-        tf_settings.tf_calc_amplitude=0; % we will calc the amplitude after applying recon weights
+        if is_sensor_space == 1
+            tf_settings.tf_calc_amplitude = 1;
+        else
+            tf_settings.tf_calc_amplitude=0; % we will calc the amplitude after applying recon weights
+        end
         if nfreqs>1,
             tf_settings.tf_hilbert_do_bandpass_for_single_freq = 1;
         else
