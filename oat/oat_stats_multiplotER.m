@@ -168,7 +168,6 @@ fig_handle=[];
 if do_plots,
     if(length(dats{1}.time)>1)
         fig_handle=sfigure; ft_multiplotER(cfg,dats{1});
-        fig_handle=sfigure; ft_multiplotER(cfg,dats{:});
     else
         fig_handle=sfigure; ft_topoplotER(cfg,dats{:});
     end;
