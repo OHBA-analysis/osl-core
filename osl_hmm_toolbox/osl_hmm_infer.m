@@ -75,7 +75,8 @@ for i = 1:Ninits
     end
 end 
 hmm.FrEn = fehist(end);
-hmm.FrEn_hist = fehist;    
+hmm.FrEn_hist = fehist;
+hmm.options=options;
 
 % Set sampling rate
 if isfield(options,'Fs')
