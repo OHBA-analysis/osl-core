@@ -3,13 +3,16 @@ function D = osl_erase_trigger_artefact(D, triggerChan, triggerTime, deleteWindo
 %
 % Use this function to clean your images before publication, and to make it
 % clear in any subsequent analyses if you've forgotten to exclude this
-% window.
+% window. Use it after any filtering processes you intend to do. 
+% Alternatively, run your whole analyses, and zero out the artefact from
+% your final TF/ERF plots.
 %
 % D = OSL_ERASE_TRIGGER_ARTEFACT(D, TRIGGERCHAN) zeros a window of 40ms 
 %  around t = 0s  every trial. TRIGGERCHAN is the string giving the label
 %  of the trigger channel
 %
-%  The function will clean the data, over-writing D. 
+%  The function will clean the data, over-writing D. It will set the
+%  zeroed-out data as artefact events, flagging the bad samples.
 %
 % D = OSL_ERASE_TRIGGER_ARTEFACT(D, TRIGGERCHAN, TRIGGERTIME, DELETEWINDOW, TRIALINDS)
 %  optionally pass in a set of times to use, TRIGGERTIME, in seconds. 
@@ -152,6 +155,7 @@ for iTrial = 1:nTrialsToUse,
     D(megInd, toZero, trial) = zeros(length(megInd), length(toZero));
 end%for
 
+D = set_bad(D, zeroInds, trialInds);
                                    
                                    
                                    
@@ -208,6 +212,33 @@ for iTrial = length(trialInds):-1:1,
 end%for
 
 end%get_zero_inds
+
+function D = set_bad(D, zeroInds, trialInds)
+%SET_BAD marks artefact chunks
+
+for iTrial = 1:length(trialInds),
+    trial = trialInds(iTrial);
+    % get old events
+    Events = D.events(trial);
+    
+    BadEvents = struct([]);
+    if ~isempty(zeroInds{iTrial}),
+        BadEvents(1).type     = 'artefact_OHBA_trigger';
+        BadEvents(1).value    = 'all';
+        BadEvents(1).time     = D.time(zeroInds{iTrial}(1));
+        BadEvents(1).duration = (zeroInds{iTrial}(end) - zeroInds{iTrial}(1) + 1) ...
+                                     / D.fsample;
+        BadEvents(1).offset   = 0;
+    end%if
+    
+    % Concatenate new and old events
+    if ~isempty(BadEvents)
+        Events = [Events{:}; BadEvents(:)];
+    end
+    % Save new events with previous
+    D = events(D,trial,Events);
+end%for
+end%set_bad
 
 % make a quick function to create epoch averages
 function average = epoch_average(D, chanInds, trialInds)
