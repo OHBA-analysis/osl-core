@@ -141,7 +141,7 @@ for coni=1:length(S.first_level_copes_to_do),
 
     % setup gauss for temporal smoothing  
     if(S.group_varcope_time_smooth_std>0)
-        fft_gauss=fftshift(mwgauss(S.group_varcope_time_smooth_std/tres,1,nT)');
+        fft_gauss=fftshift(gauss(S.group_varcope_time_smooth_std/tres,1,nT)');
     end;
     
     dm=S.oat.group_level.group_design_matrix';

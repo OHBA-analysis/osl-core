@@ -50,7 +50,7 @@ cr = reshape(c,nS,nF*nT);
 
 % setup gauss for temporal smoothing  
 if(varcope_time_smooth_std>0)
-    fft_gauss=fftshift(mwgauss(varcope_time_smooth_std/tres,1,nT)');
+    fft_gauss=fftshift(gauss(varcope_time_smooth_std/tres,1,nT)');
 end;
 
 %build up a null distribution of the maximum cluster size for each
