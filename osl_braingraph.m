@@ -156,6 +156,7 @@ set(gca,'xColor','w')
 set(gca,'yColor','w')
 set(gca,'zColor','w')
 set(gcf,'color','w')
+axis image
 axis vis3d
 hold off
 rotate3d('on')
