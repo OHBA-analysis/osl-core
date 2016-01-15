@@ -384,6 +384,17 @@ num_subjects=length(oat.subject_level.session_index_list);
 try oat.subject_level.subjects_to_do=oatin.subject_level.subjects_to_do; oatin.subject_level = rmfield(oatin.subject_level,'subjects_to_do'); catch, oat.subject_level.subjects_to_do=oat.first_level.sessions_to_do; end; % list of subject indexes to run on.
 try oat.subject_level.name=oatin.subject_level.name; oatin.subject_level = rmfield(oatin.subject_level,'name'); catch, oat.subject_level.name='sub_level'; end;
 
+try oat.subject_level.compute_laterality=oatin.subject_level.compute_laterality;
+    oatin.subject_level = rmfield(oatin.subject_level,'compute_laterality');
+catch
+    oat.subject_level.compute_laterality = [];
+end
+
+try oat.subject_level.merge_contraipsi=oatin.subject_level.merge_contraipsi;
+    oatin.subject_level = rmfield(oatin.subject_level,'merge_contraipsi');
+catch
+    oat.subject_level.merge_contraipsi = [];
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% group stats setting
 
