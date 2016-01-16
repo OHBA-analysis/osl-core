@@ -281,4 +281,4 @@ S2.stats_dir=[oat.source_recon.dirname '/' oat.first_level.name '_f' num2str(S2.
 S2.resamp_gridstep=oat.source_recon.gridstep;
 [statsdir,times]=oat_save_nii_stats(S2);
 
-fslview('/Users/andrew/Projects/OSL_test/osl2_tutorials/faces_subject1_data_osl2/dspm_meg1.mat_erf_wideband_beamform.oat/wholebrain_first_level_f1_stats_dir/tstat4_6mm.nii.gz');
+fslview([ workingdir '/fdspm_meg19.mat_erf_wideband_beamform.oat/wholebrain_first_level_f1_stats_dir/tstat4_6mm.nii.gz']);
