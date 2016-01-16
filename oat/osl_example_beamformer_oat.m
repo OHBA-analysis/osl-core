@@ -29,15 +29,16 @@ osl_startup(osldir);
 
 % directory where the data is:
 %workingdir=[practical_dir '/homedir/vols_data/osl_testdata/osl2_testdata_dir/faces_subject1_data_osl2']; % directory where the data is
-workingdir = '/Users/andrew/Projects/OSL_test/osl2_tutorials/faces_subject1_data_osl2';
+
+workingdir = '/Users/andrew/Software/Matlab/osl_test_data/face_data_sub1_osl2_new';
 
 cmd = ['mkdir ' workingdir]; if ~exist(workingdir, 'dir'), unix(cmd); end % make dir to put the results in
 
 clear spm_files_continuous spm_files_epoched;
 
 % set up a list of SPM MEEG object file names (we only have one here)
-spm_files_continuous{1}=[workingdir '/dspm_meg1.mat'];
-spm_files_epoched{1}=[workingdir '/Sedspm_meg1.mat'];
+spm_files_continuous{1}=[workingdir '/fdspm_meg19.mat'];
+spm_files_epoched{1}=[workingdir '/efdspm_meg19.mat'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % In this section we will do a wholebrain beamformer, followed by a trial-wise
@@ -62,6 +63,7 @@ oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband_' oat.source_re
 %oat.source_recon.forward_meg='MEG Local Spheres';
 oat.source_recon.forward_meg='Single Shell';
 oat.source_recon.modalities{1}={'MEGPLANAR', 'MEGMAG'};
+
 oat.source_recon.report.do_source_variance_maps=1;
 
 % design_matrix_summary is a parsimonious description of the design matrix.
