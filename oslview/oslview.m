@@ -53,12 +53,13 @@ MainFig = figure('Name',                  ['OSLview - ' strtok(D.fname,'.')] ,..
                  'ResizeFcn',             @resize   ,...
                  'CloseRequestFcn',       @close_fig,...
                  'Visible',               'off');               
-               
+           
+c = onCleanup(@() delete(MainFig));
              
 % Create plotting windows
-MainWindow = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
-PanWindow  = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
-SideWindow = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
+MainWindow = axes('parent',MainFig, 'units','pixels');
+PanWindow  = axes('parent',MainFig, 'units','pixels');
+SideWindow = axes('parent',MainFig, 'units','pixels');
 
 % Load tool icons
 icons = load([viewer_dir 'oslview.mat']);
@@ -146,8 +147,10 @@ set(uitools.save,'Enable','off');
 set(MainFig,'visible','on');
 
 drawnow
+warning off MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
 jFig = get(handle(MainFig),'JavaFrame');
 jFig.setMaximized(true);
+warning on MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
 
 pointer_wait;
 
