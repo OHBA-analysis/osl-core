@@ -264,7 +264,9 @@ runcmd(['fslview ' mni_brain ' ' statsdir '/tstat' num2str(contrast_num) '_' num
 
 %% Compute a laterality contrast for the faces condition
 
-oat.subject_level.compute_laterality = [1 2];
+oat.subject_level.compute_laterality = [2];
+%oat.subject_level.merge_contraipsi = [1 2]; % this will flip 1 and not 2.
+
 oat.to_do = [ 0 0 1 0];
 
 oat = osl_check_oat( oat );
@@ -275,7 +277,7 @@ res=oat_load_results(oat,oat.subject_level.results_fnames{1});
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.subject_level.results_fnames{1};
-S2.first_level_contrasts=[1:5]; % list of first level contrasts to output
+S2.first_level_contrasts=[1:4]; % list of first level contrasts to output
 S2.freq_bin=1;
 S2.stats_dir=[oat.source_recon.dirname '/' oat.first_level.name '_f' num2str(S2.freq_bin) '_stats_dir']; % directory to put niis in
 S2.resamp_gridstep=oat.source_recon.gridstep;
