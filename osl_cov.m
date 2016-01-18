@@ -40,44 +40,39 @@ for f = 1:nfreqs
             
         nsamples = sum(samples2use(:,trl));
         
-        if nsamples,            
-            % Compute means
-            chan_blks = osl_memblocks([nchans,sum(samples2use(:,trl))],1);
-            for i = 1:size(chan_blks,1)
-                if isa(D,'meeg') && isequal(D.transformtype,'TF')
-                    Dblk = D(chan_blks(i,1):chan_blks(i,2),f,:,trl);
-                    Dblk = Dblk(:,:,samples2use(:,trl));
-                else
-                    Dblk = D(chan_blks(i,1):chan_blks(i,2),:,trl);
-                    Dblk = Dblk(:,samples2use(:,trl));
-                end
-                Dblk = squeeze(Dblk);
-                M(chan_blks(i,1):chan_blks(i,2),trl,f) = mean(Dblk,2);
+        % Compute means
+        chan_blks = osl_memblocks([nchans,sum(samples2use(:,trl))],1);
+        for i = 1:size(chan_blks,1)
+            if isa(D,'meeg') && isequal(D.transformtype,'TF')
+                Dblk = D(chan_blks(i,1):chan_blks(i,2),f,:,trl);
+                Dblk = Dblk(:,:,samples2use(:,trl));
+            else
+                Dblk = D(chan_blks(i,1):chan_blks(i,2),:,trl);
+                Dblk = Dblk(:,samples2use(:,trl));
             end
-
-            % Compute covariance
-            smpl_blks = osl_memblocks([nchans,nsamples],2);
-            for i = 1:size(smpl_blks,1)
-
-                samples2use_blk = find(samples2use(:,trl));
-                samples2use_blk = samples2use_blk(smpl_blks(i,1):smpl_blks(i,2));
-
-                if isa(D,'meeg') && isequal(D.transformtype,'TF')
-                    Dblk = squeeze(D(:,f,:,trl));
-                    Dblk = Dblk(:,samples2use_blk);
-                else
-                    Dblk = D(:,:,trl);
-                    Dblk = Dblk(:,samples2use_blk);
-                end
-
-                Dblk = bsxfun(@minus,Dblk,M(:,trl,f));
-                C(:,:,trl,f) = C(:,:,trl,f) + Dblk*Dblk';
-            end
-
-            C(:,:,trl,f) = C(:,:,trl,f)./(nsamples-1);
-        else % trial is bad or empty
-            C(:,:,trl,f) = zeros(nchans);
+            Dblk = squeeze(Dblk);
+            M(chan_blks(i,1):chan_blks(i,2),trl,f) = mean(Dblk,2);
         end
+        
+        % Compute covariance
+        smpl_blks = osl_memblocks([nchans,nsamples],2);
+        for i = 1:size(smpl_blks,1)
+            
+            samples2use_blk = find(samples2use(:,trl));
+            samples2use_blk = samples2use_blk(smpl_blks(i,1):smpl_blks(i,2));
+            
+            if isa(D,'meeg') && isequal(D.transformtype,'TF')
+                Dblk = squeeze(D(:,f,:,trl));
+                Dblk = Dblk(:,samples2use_blk);
+            else
+                Dblk = D(:,:,trl);
+                Dblk = Dblk(:,samples2use_blk);
+            end
+            
+            Dblk = bsxfun(@minus,Dblk,M(:,trl,f));
+            C(:,:,trl,f) = C(:,:,trl,f) + Dblk*Dblk';
+        end
+        C(:,:,trl,f) = C(:,:,trl,f)./(nsamples-1);
         
     end
 end
