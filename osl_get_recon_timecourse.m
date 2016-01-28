@@ -120,7 +120,12 @@ if ~use_current_block
     if ~use_current_block, error('Something has gone wrong'); end;
 
     % construct new D_block from S.D 
-    D=montage(S.D,'switch',S.montage_index); 
+    if ~isfield(S.D,'parcellation')
+        D=montage(S.D,'switch',S.montage_index); 
+    else
+        D=S.D;
+    end
+    
     to=min(S.D_block.from+S.D_block.size-1,size(D,1));
     
     if isempty(classchanind),  
@@ -134,7 +139,11 @@ if ~use_current_block
         S.D_block.data=nan(to-S.D_block.from+1,ntpts,ntrials,nfreqs);
         for kk=1:nclasses,
             % switch to recon montage for this class    
-            D=montage(S.D,'switch',start-1+kk);
+            if ~isfield(S.D,'parcellation')
+                D=montage(S.D,'switch',start-1+kk);
+            else
+                D=S.D;
+            end
             
             for ff=1:nfreqs,
                 for tri=1:ntrials, 
@@ -144,6 +153,7 @@ if ~use_current_block
                 end;
             end;
         end;
+        
     end;
     
 end;

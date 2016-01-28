@@ -28,9 +28,9 @@ osl_startup(osldir);
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 
 % directory where the data is:
-%workingdir=[practical_dir '/homedir/vols_data/osl_testdata/osl2_testdata_dir/faces_subject1_data_osl2']; % directory where the data is
+workingdir=[practical_dir '/homedir/vols_data/osl_testdata/osl2_testdata_dir/faces_subject1_data_osl2']; % directory where the data is
 
-workingdir = '/Users/andrew/Software/Matlab/osl_test_data/face_data_sub1_osl2_new';
+%workingdir = '/Users/andrew/Software/Matlab/osl_test_data/face_data_sub1_osl2_new';
 
 cmd = ['mkdir ' workingdir]; if ~exist(workingdir, 'dir'), unix(cmd); end % make dir to put the results in
 
@@ -38,7 +38,7 @@ clear spm_files_continuous spm_files_epoched;
 
 % set up a list of SPM MEEG object file names (we only have one here)
 spm_files_continuous{1}=[workingdir '/fdspm_meg19.mat'];
-spm_files_epoched{1}=[workingdir '/efdspm_meg19.mat'];
+spm_files_epoched{1}=[workingdir '/Sedspm_meg1.mat'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % In this section we will do a wholebrain beamformer, followed by a trial-wise
@@ -57,7 +57,7 @@ oat.source_recon.method='beamform'; % mne_eye, mne_datacov mne_diag_datacov, mne
 %oat.source_recon.method='beamform_bilateral'; % mne_eye, mne_datacov mne_diag_datacov
 oat.source_recon.normalise_method='mean_eig';
 
-oat.source_recon.gridstep=6; % in mm, using a lower resolution here than you would normally, for computational speed
+oat.source_recon.gridstep=8; % in mm, using a lower resolution here than you would normally, for computational speed
 oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband_' oat.source_recon.method]; % directory the oat and results will be stored in
 
 %oat.source_recon.forward_meg='MEG Local Spheres';
@@ -87,6 +87,21 @@ oat.first_level.report.first_level_cons_to_do=[2 1 3];
 oat.first_level.time_range=[-0.1 0.3];
 oat.first_level.post_tf_downsample_factor=1;
 oat.first_level.name=['wholebrain_first_level'];
+
+oat.first_level.parcellation.do=1;
+if oat.first_level.parcellation.do
+    tilde='/Users/woolrich/';
+    addpath([tilde 'Dropbox/vols_scripts/MEG-ROI-nets']);
+
+    parc_file=[tilde '/homedir/vols_data/hmm_investigations/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm'];
+    parcellationfile = [parc_file '_ss5mm_ds8mm'];
+
+    oat.first_level.parcellation.parcellation=parcellationfile;
+    oat.first_level.parcellation.orthogonalisation = 'symmetric';
+    oat.first_level.parcellation.method            = 'spatialBasis';
+    oat.first_level.parcellation.normalise_voxeldata = 0;
+end
+oat.source_recon.dirname=[oat.source_recon.dirname '_parc' num2str(oat.first_level.parcellation.do)];
 
 oat = osl_check_oat(oat);
 

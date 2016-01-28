@@ -336,6 +336,18 @@ end;
 try oat.first_level.save_trialwise_data = oatin.first_level.save_trialwise_data; oatin.first_level = rmfield(oatin.first_level,'save_trialwise_data'); catch; oat.first_level.save_trialwise_data = 0; end
 try oat.first_level.trialwise_directory = oatin.first_level.trialwise_directory; oatin.first_level = rmfield(oatin.first_level,'trialwise_directory'); catch; oat.first_level.trialwise_directory = []; end
 
+% parcellation settings:
+if ~isfield(oatin.first_level,'parcellation')
+    oatin.first_level.parcellation=struct;
+end;
+oat.first_level.parcellation=struct; % args to pass to osl_apply_parcellation
+
+try oat.first_level.parcellation.do = oatin.first_level.parcellation.do; oatin.first_level.parcellation = rmfield(oatin.first_level.parcellation,'do'); catch; oat.first_level.parcellation.do = 0; end
+try oat.first_level.parcellation.parcellation = oatin.first_level.parcellation.parcellation; oatin.first_level.parcellation = rmfield(oatin.first_level.parcellation,'parcellation'); catch; oat.first_level.parcellation.do = 0; end
+try oat.first_level.parcellation.orthogonalisation = oatin.first_level.parcellation.orthogonalisation; oatin.first_level.parcellation = rmfield(oatin.first_level.parcellation,'orthogonalisation'); catch; oat.first_level.parcellation.orthogonalisation = 'symmetric'; end
+try oat.first_level.parcellation.method = oatin.first_level.parcellation.method; oatin.first_level.parcellation = rmfield(oatin.first_level.parcellation,'method'); catch; oat.first_level.parcellation.method = 'spatialBasis'; end
+try oat.first_level.parcellation.normalise_voxeldata = oatin.first_level.parcellation.normalise_voxeldata; oatin.first_level.parcellation = rmfield(oatin.first_level.parcellation,'normalise_voxeldata'); catch; oat.first_level.parcellation.normalise_voxeldata = 0; end
+
 %% establish if we are dealing with epoched or continuous data (this will be
 % used to call the correct osl_run_first_level* fn
 oat.first_level.is_epoched=(~isempty(oat.source_recon.D_epoched) | ~isempty(oat.source_recon.epochinfo));
@@ -490,7 +502,6 @@ if ~isempty(weirdfields)
     error('Invalid oat.source_recon.report settings');
 end % if ~isempty(weirdfields)
 
-
 weirdfields = fieldnames(oatin.first_level.report);
 if ~isempty(weirdfields)
     disp('The following oat.first_level.report settings were not recognized by osl_check_oat');
@@ -514,6 +525,17 @@ end % if ~isempty(weirdfields)
 oatin.source_recon = rmfield(oatin.source_recon,'report');
 oatin.first_level = rmfield(oatin.first_level,'report');
 oatin.group_level = rmfield(oatin.group_level,'report');
+
+weirdfields = fieldnames(oatin.first_level.parcellation);
+if ~isempty(weirdfields)
+    disp('The following oat.first_level.parcellation settings were not recognized by osl_check_oat');
+    
+    for iprint = 1:numel(weirdfields)
+        disp([' ' weirdfields{iprint} ' '])
+    end
+    error('Invalid oat.first_level.parcellation settings');
+end % if ~isempty(weirdfields)
+oatin.first_level = rmfield(oatin.first_level,'parcellation');
 
 weirdfields = fieldnames(oatin.source_recon);
 if ~isempty(weirdfields)
