@@ -62,7 +62,7 @@ else
                 parc=read_avw(S.parcellation);
                 parcellation = vols2matrix(parc,stdbrain); %nVoxels x nSamples
             catch
-                error('Make sure the parcellation file and the data are compatible, including having the same spatial resolution.');
+                error('Make sure the parcellation file and the data are valid and compatible, including having the same spatial resolution.');
             end
             
             % compute mni_coords as centres of gravity of parcels

@@ -42,8 +42,9 @@ global OSLDIR;
 % running the cell.
 
 % directory where the data is:
-datadir=['/Users/abaker/Data/']; % directory where the data is
-workingdir=[datadir '/ctf_fingertap_subject1_data_osl2']; % this is the directory where the SPM files will be stored in
+%datadir=['/Users/abaker/Data/']; % directory where the data is
+%workingdir=[datadir '/ctf_fingertap_subject1_data_osl2']; % this is the directory where the SPM files will be stored in
+workingdir=[practical_dir '/homedir/vols_data/osl_testdata/osl2_testdata_dir/ctf_fingertap_subject1_data_osl2']; % directory where the data is
 
 cmd = ['mkdir ' workingdir]; if ~exist(workingdir, 'dir'), unix(cmd); end % make dir to put the results in
 
@@ -188,7 +189,7 @@ oat.source_recon.time_range=[300,32*30];
 
 % beamformer parameters.
 oat.source_recon.method='beamform';
-oat.source_recon.gridstep=7; % in mm, using a lower resolution here than you would normally, for computational speed
+oat.source_recon.gridstep=8; % in mm, using a lower resolution here than you would normally, for computational speed
 do_hmm=0;
 if(do_hmm)
     oat.source_recon.hmm_num_states=13;    
@@ -313,6 +314,23 @@ oat.first_level.tf_hilbert_do_bandpass_for_single_freq=0;
 oat.first_level.do_weights_normalisation=1;
 oat.first_level.hmm_do_glm_statewise=0; 
 oat.first_level.do_glm_demean=0;
+
+oat.first_level.parcellation.do=0;
+if oat.first_level.parcellation.do
+    tilde='/Users/woolrich/';
+    addpath([tilde 'Dropbox/vols_scripts/MEG-ROI-nets']);
+
+    parc_file=[tilde '/homedir/vols_data/hmm_investigations/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm'];
+    parcellationfile = [parc_file '_ss5mm_ds8mm'];
+    
+    parcellationfile = [tilde '/homedir/vols_data/hmm_investigations/parcellations/aal2mni_cortical_4d_8mm'];
+
+    oat.first_level.parcellation.parcellation=parcellationfile;
+    oat.first_level.parcellation.orthogonalisation = 'symmetric';
+    oat.first_level.parcellation.method            = 'spatialBasis';
+    oat.first_level.parcellation.normalise_voxeldata = 0;
+    oat.first_level.name=[oat.first_level.name '_parc' num2str(oat.first_level.parcellation.do)];
+end
 
 %% RUN FIRST-LEVEL CONTINUOUS TIME OAT ANALYSIS
 %
