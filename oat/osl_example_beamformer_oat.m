@@ -63,8 +63,7 @@ oat.source_recon.dirname=[spm_files_continuous{1} '_erf_wideband_' oat.source_re
 %oat.source_recon.forward_meg='MEG Local Spheres';
 oat.source_recon.forward_meg='Single Shell';
 oat.source_recon.modalities{1}={'MEGPLANAR', 'MEGMAG'};
-
-oat.source_recon.report.do_source_variance_maps=1;
+oat.source_recon.report.do_source_variance_maps=0;
 
 % design_matrix_summary is a parsimonious description of the design matrix.
 % It contains values design_matrix_summary{reg,cond}, where reg is a regressor no. and cond
@@ -95,20 +94,22 @@ if oat.first_level.parcellation.do
 
     parc_file=[tilde '/homedir/vols_data/hmm_investigations/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm'];
     parcellationfile = [parc_file '_ss5mm_ds8mm'];
+    
+    %parcellationfile = [tilde '/homedir/vols_data/hmm_investigations/parcellations/aal2mni_cortical_4d_8mm'];
 
     oat.first_level.parcellation.parcellation=parcellationfile;
     oat.first_level.parcellation.orthogonalisation = 'symmetric';
     oat.first_level.parcellation.method            = 'spatialBasis';
     oat.first_level.parcellation.normalise_voxeldata = 0;
+    oat.first_level.name=[oat.first_level.name '_parc' num2str(oat.first_level.parcellation.do)];
 end
-oat.source_recon.dirname=[oat.source_recon.dirname '_parc' num2str(oat.first_level.parcellation.do)];
 
 oat = osl_check_oat(oat);
 
 %%%%%%%%%%%%%%%%%%%
 %% RUN THE OAT:
 
-oat.to_do=[1 1 0 0];
+oat.to_do=[0 1 0 0];
 oat = osl_run_oat(oat);
 
 % report = oat_source_recon_report(oat);

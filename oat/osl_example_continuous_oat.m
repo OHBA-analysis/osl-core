@@ -315,7 +315,7 @@ oat.first_level.do_weights_normalisation=1;
 oat.first_level.hmm_do_glm_statewise=0; 
 oat.first_level.do_glm_demean=0;
 
-oat.first_level.parcellation.do=0;
+oat.first_level.parcellation.do=1;
 if oat.first_level.parcellation.do
     tilde='/Users/woolrich/';
     addpath([tilde 'Dropbox/vols_scripts/MEG-ROI-nets']);
@@ -324,19 +324,20 @@ if oat.first_level.parcellation.do
     parcellationfile = [parc_file '_ss5mm_ds8mm'];
     
     parcellationfile = [tilde '/homedir/vols_data/hmm_investigations/parcellations/aal2mni_cortical_4d_8mm'];
-
+    parcellationfile = [tilde '/homedir/vols_data/hmm_investigations/parcellations/AAL_4d_8mm'];
+    
     oat.first_level.parcellation.parcellation=parcellationfile;
     oat.first_level.parcellation.orthogonalisation = 'symmetric';
     oat.first_level.parcellation.method            = 'spatialBasis';
     oat.first_level.parcellation.normalise_voxeldata = 0;
-    oat.first_level.name=[oat.first_level.name '_parc' num2str(oat.first_level.parcellation.do)];
 end
+oat.first_level.name=[oat.first_level.name '_parc' num2str(oat.first_level.parcellation.do)];
 
 %% RUN FIRST-LEVEL CONTINUOUS TIME OAT ANALYSIS
 %
 % Run OAT analysis.
 
-oat.to_do=[0 1 0 0];
+oat.to_do=[1 1 0 0];
 
 oat = osl_check_oat(oat);
 oat = osl_run_oat(oat);
@@ -352,7 +353,8 @@ S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
 S2.first_level_contrasts=[3]; % list of first level contrasts to output
-S2.stats_dir=[oat.source_recon.dirname '/' oat.first_level.name '_stats_dir'];
+S2.resamp_gridstep=oat.source_recon.gridstep;
+
 clear statsdir;
 for ff=1:size(oat.first_level.tf_hilbert_freq_ranges,1),
     S2.freq_bin=ff;
