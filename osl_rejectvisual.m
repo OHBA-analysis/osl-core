@@ -25,7 +25,7 @@ else
 end
 
 if length(D.badtrials)>0
-    disp([num2str(length(find(D.reject))) ' trials of ' num2str(D.ntrials) ' have already been marked as bad.']);
+    disp([num2str(length(find(D.badtrials))) ' trials of ' num2str(D.ntrials) ' have already been marked as bad.']);
 else
     disp('No bad trials currently identified.');
 end
