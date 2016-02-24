@@ -1,4 +1,4 @@
-function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,assignment)
+function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,assignment,de_mean,diff_contrast)
 % Computes spatial maps of state specific activity by reprojecting
 % observation model variance or by fitting the HMM statepath as a regressor
 % on the voxelwise data.
@@ -30,6 +30,14 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,assignment)
 %             [Nvoxels x Nvoxels x Nstates] matrices (mode = "cov")
 %
 % AB 2013
+
+if ~exist('diff_contrast','var')
+    diff_contrast=1
+end
+
+if ~exist('de_mean','var')
+    de_mean = 1; 
+end;
 
 if ~exist('assignment','var')
     assignment = 'hard'; 
@@ -142,8 +150,20 @@ end
 
 % Regress Viterbi path onto wholebrain results
 con = cell(1,hmm.K);
-for k=1:hmm.K
-    con{k}=(1:hmm.K==k)';
+
+if strcmp(mode,'cope') | strcmp(mode,'tstat')
+    for k=1:hmm.K
+        if diff_contrast
+            con{k}=-1*ones(hmm.K,1)*(1/(hmm.K-1));
+            con{k}(k)=1;
+        else
+            con{k}=(1:hmm.K==k)';
+        end
+    end
+else
+    for k=1:hmm.K
+        con{k}=(1:hmm.K==k)';
+    end
 end
 
 cope    = zeros(Nvoxels,hmm.K);
@@ -165,7 +185,9 @@ if strcmp(mode,'pcorr')
   x = devar(x,1);
   x(isnan(x))=0;
 else
-  x = demean(x,1);
+  if de_mean
+    x = demean(x,1);
+  end
 end
 
 
@@ -186,13 +208,21 @@ for v = 1:Nvoxels
     if strcmp(mode,'pcorr')
       y = normalise(abs(hilbert(vdata))');
     else
-      y = demean(abs(hilbert(vdata))');
+      if de_mean
+        y = demean(abs(hilbert(vdata))');
+      else
+        y= abs(hilbert(vdata))';
+      end
     end
   else
     if strcmp(mode,'pcorr')
       y = normalise(vdata)';
     else
-      y = demean(vdata)';
+      if de_mean
+        y = demean(vdata)';
+      else
+        y=vdata';
+      end
     end
   end
     
