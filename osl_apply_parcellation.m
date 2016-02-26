@@ -1,8 +1,8 @@
-function [D,parcellation,assignments] = osl_apply_parcellation(S)
+function [D,parcellation,assignments,mni_coords] = osl_apply_parcellation(S)
 % Computes node time series from a source space MEEG object using a
 % parcellation
 %
-% [D,assignments] = osl_apply_parcellation(S)
+% [D,parcellation,assignments,mni_coords] = osl_apply_parcellation(S)
 %
 % INPUTS:
 %
@@ -24,6 +24,7 @@ function [D,parcellation,assignments] = osl_apply_parcellation(S)
 % parcellation  - the parcellation weights for each voxel
 % assignments   - parcel assignments for each voxel from a winner takes all
 %                 voting
+% mni_coords    - mni_coords of centres of parcels
 
 global OSLDIR 
 
@@ -48,6 +49,8 @@ S.prefix            = ft_getopt(S,'prefix','p');
 S.orthogonalisation = ft_getopt(S,'orthogonalisation','none');
 S.method            = ft_getopt(S,'method','PCA');
 
+mni_coords=[];
+
 if isfield(S,'hcp_sourcemodel3d') && ~isempty(S.hcp_sourcemodel3d)
     % HCP data
     parcellation = hcp_mni2hcp_giles(S.hcp_sourcemodel3d,S.parcellation,S.hcp_mask_fname_out);
@@ -56,10 +59,15 @@ else
         case {'char','cell'}
             try
                 stdbrain = read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz']);
-                parcellation = vols2matrix(read_avw(S.parcellation),stdbrain); %nVoxels x nSamples
+                parc=read_avw(S.parcellation);
+                parcellation = vols2matrix(parc,stdbrain); %nVoxels x nSamples
             catch
-                error('Make sure the parcellation file and the data are compatible, including having the same spatial resolution.');
+                error('Make sure the parcellation file and the data are valid and compatible, including having the same spatial resolution.');
             end
+            
+            % compute mni_coords as centres of gravity of parcels
+            mni_coords=osl_mniparcellation2mnicoords(S.parcellation);  
+            
         case {'single','double','logical'}
             parcellation = S.parcellation;
         otherwise
@@ -124,6 +132,7 @@ D = Dnode; % For output
 D.parcellation.weights=parcellation;
 D.parcellation.assignments=assignments;
 D.parcellation.S=S;        
+D.parcellation.mni_coords=mni_coords;
   
 D.save;
 end

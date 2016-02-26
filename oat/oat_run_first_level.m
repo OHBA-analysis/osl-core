@@ -11,7 +11,7 @@ function [results_fnames results] = osl_run_first_level( oat )
 
 global OSLDIR;
 
-if(~oat.first_level.is_epoched),    
+if ~oat.first_level.is_epoched    
 
     switch lower(oat.source_recon.type)
         case 'scalar'
@@ -21,10 +21,10 @@ if(~oat.first_level.is_epoched),
         otherwise   
                 
             error('Not supported');
-    end;
+    end
 
 else
     
     [results_fnames results] = oat_run_first_level_epoched(oat); % Do time-wise analysis state-wise       
     
-end;
+end

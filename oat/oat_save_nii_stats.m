@@ -154,6 +154,16 @@ options.mask_fname=stdbrainmask_fname;
 options.output_spat_res=resamp_gridstep;
 options.tres=tres;
 
+nii_parcel_settings            = [];
+nii_parcel_settings.interp     = 'nearestneighbour';
+%nii_parcel_settings.mask_fname = Sin.stats.D_sensor_data.parcellation.S.parcellation;
+use_parcels=0;
+
+try
+    use_parcels=isfield(Sin.stats.D_sensor_data,'parcellation');
+catch
+end
+      
 if(size(Sin.stats.cope,4)>1)
     Sin.stats.cope=Sin.stats.cope(:,:,:,Sin.freq_bin,:);
     Sin.stats.stdcope=Sin.stats.stdcope(:,:,:,Sin.freq_bin,:);
@@ -164,25 +174,34 @@ if(Sin.stats.level==1),
     if(isfield(Sin.stats,'pseudo_zstat_var')),
         fname=[Sin.stats_dir '/pseudo_zstat_var'];
         dat=Sin.stats.pseudo_zstat_var;
-        fname_out = nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+        
+        if use_parcels                
+            fname_out = ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
+        else
+            fname_out = nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+        end
     end;
     
     if(isfield(Sin.stats,'sqrt_wnorm_nai')),
         fname=[Sin.stats_dir '/sqrt_wnorm_nai'];    
         dat=Sin.stats.sqrt_wnorm_nai;
-        fname_out = nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+        if use_parcels                
+            fname_out = ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
+        else
+            fname_out = nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+        end
     end;
     
     gcon=1;
     fname_postfix='';    
-    output_files(Sin,options,time_indices,gcon,fname_postfix);
+    fnamet=output_files(Sin,options,time_indices,gcon,fname_postfix,use_parcels,nii_parcel_settings);
     
 elseif(Sin.stats.level==2)     
     
     for gconi=1:length(group_level_contrasts),        
         gcon=group_level_contrasts(gconi);
         fname_postfix=['_gc' num2str(gcon)];        
-        output_files(Sin,options,time_indices,gcon,fname_postfix);        
+        fnamet=output_files(Sin,options,time_indices,gcon,fname_postfix,use_parcels,nii_parcel_settings);        
     end;  
     
 else
@@ -197,7 +216,7 @@ statsdir=Sin.stats_dir;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function output_files(Sin,options,time_indices,gcon,fname_postfix)
+function fnamet=output_files(Sin,options,time_indices,gcon,fname_postfix,use_parcels,nii_parcel_settings)
 
 statsdir=Sin.stats_dir;
 for coni=1:length(Sin.first_level_contrasts),
@@ -210,19 +229,35 @@ for coni=1:length(Sin.first_level_contrasts),
     % (COPEs) for each contrast
     fname=[statsdir '/cope' num2str(con) fname_postfix];
     dat=permute(Sin.stats.cope(:,time_indices,con,:,gcon),[1 2 4 3]);
-    nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
-
+    
+    if use_parcels                
+        ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
+    else
+        nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
+    end
+    
+    fnamet=fname;
+    
     if(Sin.have_stdcope)      
 
         fname=[statsdir '/tstat' num2str(con) fname_postfix];
         ts=Sin.stats.cope(:,time_indices,con,:,gcon)./Sin.stats.stdcope(:,time_indices,con,:,gcon);
         dat=permute(ts,[1 2 4 3]);
-        fnamet=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
-
+        
+        if use_parcels                
+            fnamet=ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
+        else
+            fnamet=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
+        end
+        
         if Sin.output_varcopes,
             fname=[statsdir '/varcope' num2str(con) fname_postfix]; 
             dat=permute(Sin.stats.stdcope(:,time_indices,con,:,gcon).^2,[1 2 4 3]);
-            nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+            if use_parcels                
+                fnamet=ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
+            else
+                fnamet=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+            end
         end;
 
         if size(ts,2)>1,
@@ -237,7 +272,12 @@ for coni=1:length(Sin.first_level_contrasts),
             ts=max(ts,[],2);
 
             dat=permute(ts,[1 2 4 3]);
-            nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
+            
+            if use_parcels                
+                fnamet=ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
+            else
+                fnamet=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+            end
 
         end;
     end;
@@ -280,5 +320,5 @@ for coni=1:length(Sin.first_level_contrasts),
     
 end;
 
-disp(['E.g. to view t-statistics: ']);
+disp(['E.g. to view nii file: ']);
 disp(['fslview(''' fnamet ''')']);

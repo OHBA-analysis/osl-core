@@ -181,7 +181,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
                 end;
                 disp(str);
 
-            else
+            elseif ~first_level.parcellation.do
                 % setup std space brain
                 first_level_results.gridstep=source_recon_results.gridstep;
 
@@ -196,6 +196,35 @@ for subi_todo=1:length(first_level.sessions_to_do),
                 lower_level_mni_coord=source_recon_results.mni_coords;
 
                 clear S;
+            else
+                if first_level.parcellation.do 
+    
+                    Dold=D;
+                    S=first_level.parcellation;
+                    S.prefix='p';
+                    S.D=D;
+                    D = osl_apply_parcellation(S);
+                    
+                    %%%%%%%%%%%%%%%%%%%
+                    % add back in class channel                    
+                    classchanind=find(strcmp(Dold.chanlabels,'Class'));
+                    
+                    Sc=[];
+                    Sc.D=D;
+                    Sc.newchandata=[Dold(classchanind,:,:)];
+                    Sc.newchanlabels{1}='Class';
+                    Sc.newchantype{1}='CLASS';
+
+                    [ Dnew ] = osl_concat_spm_eeg_chans( Sc );
+
+                    D.delete;
+                    D=Dnew;
+                    %%%%%%%%%%%%%%%%%%%
+
+                    first_level_results.mask_indices_in_source_recon=1:size(D,1)-1;
+                    first_level_results.mni_coords=D.parcellation.mni_coords;
+                end
+
             end;
 
         end;

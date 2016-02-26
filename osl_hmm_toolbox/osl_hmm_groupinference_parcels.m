@@ -222,11 +222,11 @@ hmm=[];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % check first subject to see if already parcellated
-D=spm_eeg_load(data_files{1});
-is_parcellated=isfield(D,'parcellation');
-if is_parcellated
+%D=spm_eeg_load(data_files{1});
+%is_parcellated=isfield(D,'parcellation');
+%if is_parcellated
     use_parcels=true;
-end;
+%end;
     
 if todo.prepare
             

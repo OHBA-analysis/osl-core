@@ -1,0 +1,70 @@
+######
+# settings
+
+WORKINGDIR=/Users/woolrich/Desktop
+
+VERSIONNUM=1.1
+
+GITRELEASETAG=v$VERSIONNUM
+GITDOWNLOADSITE=https://github.com/OHBA-analysis/osl2/archive
+SUPPDIRSDOWNLOADSITE=http://users.fmrib.ox.ac.uk/~woolrich/osl2
+OSLUPLOADDIR=woolrich@jalapeno.fmrib.ox.ac.uk:/home/fs0/woolrich/www/osl2
+SUPPDIRSNAME=osl2.0
+
+######
+# make dir to work in
+
+mkdir $WORKINGDIR
+cd $WORKINGDIR
+
+######
+# download current tar ball of supplementary dirs for osl2
+rm -rf supporting_dirs.tar.gz
+curl -L $SUPPDIRSDOWNLOADSITE/$SUPPDIRSNAME.tar.gz --output supporting_dirs.tar.gz
+
+# untar it
+rm -rf supporting_dirs
+tar xvf supporting_dirs.tar.gz
+rm -rf supporting_dirs.tar.gz
+
+# rename the top osl dir to reflect latest version number
+mv $SUPPDIRSNAME osl2.$VERSIONNUM
+
+######
+# download current github osl release
+rm -rf osl2.$VERSIONNUM/osl2.tar.gz
+echo Downloading $GITDOWNLOADSITE/$GITRELEASETAG.tar.gz
+
+curl -L $GITDOWNLOADSITE/$GITRELEASETAG.tar.gz --output osl2.$VERSIONNUM/osl2.tar.gz
+
+cd osl2.$VERSIONNUM
+
+# untar it
+rm -rf osl2-$VERSIONNUM
+tar xvf osl2.tar.gz
+rm -rf osl2.tar.gz
+
+# rename the internal osl dir osl2
+mv osl2-$VERSIONNUM osl2
+
+cd $WORKINGDIR
+
+######
+# update osl_version.m
+
+rm -f osl2.$VERSIONNUM/osl2/osl_version.m
+echo "function ret=osl_version, ret='osl2.$VERSIONNUM';" > osl2.$VERSIONNUM/osl2/osl_version.m
+
+######
+# create tar ball of osl
+
+tar cvf osl2.$VERSIONNUM.tar osl2.$VERSIONNUM
+gzip -f osl2.$VERSIONNUM.tar
+
+######
+# upload - this bit obviously requires write permission $OSLUPLOADDIR
+
+scp -r osl2.$VERSIONNUM.tar.gz $OSLUPLOADDIR/
+
+echo Point osl wiki to $OSLUPLOADDIR/osl2.$VERSIONNUM.tar.gz
+

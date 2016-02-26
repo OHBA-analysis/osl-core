@@ -50,7 +50,7 @@ cr = reshape(c,nS,nF*nT);
 
 % setup gauss for temporal smoothing  
 if(varcope_time_smooth_std>0)
-    fft_gauss=fftshift(mwgauss(varcope_time_smooth_std/tres,1,nT)');
+    fft_gauss=fftshift(gauss(varcope_time_smooth_std/tres,1,nT)');
 end;
 
 %build up a null distribution of the maximum cluster size for each
@@ -68,7 +68,7 @@ for i = 1:nP
         vg=reshape(vg,nF,nT);
 
         for f=1:size(vg,1),
-            dat=permute(vg(f,:),[2, 1, 2, 4]);
+            dat=permute(vg(f,:),[2, 1, 3, 4]);
             dat2 = fftconv(dat,fft_gauss);  
             vg(f,:)=dat2;
         end;
@@ -104,7 +104,7 @@ if(varcope_time_smooth_std>0)
     vg=reshape(vg,nF,nT);
 
     for f=1:size(vg,1),
-        dat=permute(vg(f,:),[2, 1, 2, 4]);
+        dat=permute(vg(f,:),[2, 1, 3, 4]);
         dat2 = fftconv(dat,fft_gauss);  
         vg(f,:)=dat2;
     end;

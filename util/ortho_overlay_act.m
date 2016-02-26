@@ -85,18 +85,24 @@ if(low==high)
 end;
     
 % plot colorbar
-if(S.add_colorbar)   
+if(S.add_colorbar)  
+    
+    use_freezeColors=verLessThan('matlab', '8.4.0');
+    
     ind_start=2;
     num_subplots=5;
     snugplot(1,num_subplots,5);
     try make_colorbar([low high],act_cmapname); catch, warning('colour bar generation failed'); end;
     set(gca,'YColor','w');
-    %freezeColors; % needed as colormaps are a property of the whole figure;
-
+    if use_freezeColors
+        freezeColors; % needed as colormaps are a property of the whole figure;
+    end
     snugplot(1,num_subplots,1);
     try make_colorbar([-low -high],deact_cmapname,2); catch, warning('colour bar generation failed'); end;    
     set(gca,'YColor','w');
-    %freezeColors; % needed as colormaps are a property of the whole figure;
+    if use_freezeColors
+        freezeColors; % needed as colormaps are a property of the whole figure;
+    end
 else
     ind_start=1;
     num_subplots=3;    

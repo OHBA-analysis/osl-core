@@ -58,8 +58,10 @@ set(metricWindow,'uicontextmenu',metricContext.menu);
 drawnow
 redraw
 
+warning off MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
 jFig = get(handle(MainFig),'JavaFrame');
 jFig.setMaximized(true);
+warning on MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
 
 set(MainFig,'Visible','on')
 uiwait(MainFig)
