@@ -26,6 +26,7 @@ try, group_contrast=S.group_level_contrast; catch, group_contrast=1; end; % spec
 try, view_cope=S.view_cope; catch, view_cope=0; end; 
 try, cfg=S.cfg; catch, cfg=[]; end;
 try, do_plots=S.do_plots; catch, do_plots=1; end;
+try chans=S.chans; catch, chans = [];end
 
 try, D_tstat=S.D; catch
     
@@ -60,8 +61,14 @@ if(stats.level==2),
     stdcope = stdcope(:,:,:,:,group_contrast);
 end;
 
+if isfield(S,'time_range');
+    time_inds = find(stats.times > S.time_range(1) & stats.times < S.time_range(2));
+else
+    time_inds = 1:size(cope,2);
+end
+
 data = [];
-data.time =  stats.times;
+data.time =  stats.times(time_inds);
 data.freq= stats.frequencies;
 data.dimord='chan_freq_time';
 
@@ -72,9 +79,9 @@ if(strcmp(modality,'MEGMAG')),
     data.label=D_tstat.chanlabels(chanind);
     for ind=1:length(chanind),
         if(~view_cope)
-            data.powspctrm(ind,:,:)=permute(cope(chanind(ind),:,contrast,:)./stdcope(chanind(ind),:,contrast,:),[1 4 2 3]);
+            data.powspctrm(ind,:,:)=permute(cope(chanind(ind),time_inds,contrast,:)./stdcope(chanind(ind),time_inds,contrast,:),[1 4 2 3]);
         else
-            data.powspctrm(ind,:,:)=permute(cope(chanind(ind),:,contrast,:),[1 4 2 3]);
+            data.powspctrm(ind,:,:)=permute(cope(chanind(ind),time_inds,contrast,:),[1 4 2 3]);
         end;
     end;
     
@@ -86,9 +93,9 @@ elseif (strcmp(modality,'MEGPLANAR')),
     data.label=D_tstat.chanlabels(chanind);
     for ind=1:length(chanind),
         if(~view_cope)
-            data.powspctrm(ind,:,:)=permute(cope(chanind(ind),:,contrast,:)./stdcope(chanind(ind),:,contrast,:),[1 4 2 3]);
+            data.powspctrm(ind,:,:)=permute(cope(chanind(ind),time_inds,contrast,:)./stdcope(chanind(ind),time_inds,contrast,:),[1 4 2 3]);
         else
-            data.powspctrm(ind,:,:)=permute(cope(chanind(ind),:,contrast,:),[1 4 2 3]);
+            data.powspctrm(ind,:,:)=permute(cope(chanind(ind),time_inds,contrast,:),[1 4 2 3]);
         end;
     end;
     
@@ -102,9 +109,9 @@ elseif (strcmp(modality,'MEG')) || (strcmp(modality,'MEGGRAD')),
     for ind=1:length(chanind),
         indp=ind;
         if(~view_cope)
-            data.powspctrm(ind,:,:)=permute(cope(indp,:,contrast,:)./stdcope(indp,:,contrast,:),[1 4 2 3]);
+            data.powspctrm(ind,:,:)=permute(cope(indp,time_inds,contrast,:)./stdcope(indp,time_inds,contrast,:),[1 4 2 3]);
         else
-            data.powspctrm(ind,:,:)=permute(cope(indp,:,contrast,:),[1 4 2 3]);
+            data.powspctrm(ind,:,:)=permute(cope(indp,time_inds,contrast,:),[1 4 2 3]);
         end;
     end;
     
@@ -125,9 +132,9 @@ elseif(strcmp(modality,'EEG')),  % added by DM
     for ind=1:length(chanind),
         indp=ind;
         if(view_cope)
-            data.powspctrm(ind,:,:)=permute(cope(indp,:,contrast,:),[1 4 2 3]);
+            data.powspctrm(ind,:,:)=permute(cope(indp,time_inds,contrast,:),[1 4 2 3]);
         else
-            data.powspctrm(ind,:,:)=permute(cope(indp,:,contrast,:)./stdcope(indp,:,contrast,:),[1 4 2 3]);
+            data.powspctrm(ind,:,:)=permute(cope(indp,time_inds,contrast,:)./stdcope(indp,time_inds,contrast,:),[1 4 2 3]);
         end;
     end;
 else
@@ -150,9 +157,15 @@ cfg.comment  = '';
 
 cfg.colorbar = 'yes';
 
+
 fig_handle=[];
 if do_plots
-    fig_handle = sfigure; ft_multiplotTFR(cfg,data);
+    if ~isempty(chans)
+        cfg.channel = chans;
+        fig_handle = sfigure; ft_singleplotTFR(cfg,data);
+    else
+        fig_handle = sfigure; ft_multiplotTFR(cfg,data);
+    end
 end;
 
 
