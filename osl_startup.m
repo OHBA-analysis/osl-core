@@ -114,12 +114,14 @@ targetdir{end+1}='spm12/@meeg';
 filelist{end+1}='osl2/spm-changes/private/spm_eeg_montage.m';
 targetdir{end+1}='spm12';
 
-filelist{end+1} = 'osl2/spm-changes/private/spm_eeg_inv_mesh_ui.m';
+filelist{end+1} ='osl2/spm-changes/private/spm_eeg_inv_mesh_ui.m';
 targetdir{end+1}='spm12';
 
 filelist{end+1} ='osl2/spm-changes/private/subsref.m';
 targetdir{end+1}='spm12/@meeg';
 
+filelist{end+1} ='osl2/spm-changes/private/ft_getopt.c';
+targetdir{end+1}='spm12/external/fieldtrip/src/';
 
 for kk=1:length(filelist),
     runcmd(['cp -f ' osldir '/' filelist{kk} ' ' osldir '/' targetdir{kk}]);
