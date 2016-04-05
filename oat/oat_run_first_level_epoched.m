@@ -197,18 +197,20 @@ for subi_todo=1:length(first_level.sessions_to_do),
 
                 clear S;
             else
-                if first_level.parcellation.do 
-    
+                if first_level.parcellation.do
+
+                    first_level_results.gridstep=source_recon_results.gridstep;
+
                     Dold=D;
                     S=first_level.parcellation;
                     S.prefix='p';
                     S.D=D;
                     D = osl_apply_parcellation(S);
-                    
+
                     %%%%%%%%%%%%%%%%%%%
-                    % add back in class channel                    
+                    % add back in class channel
                     classchanind=find(strcmp(Dold.chanlabels,'Class'));
-                    
+
                     Sc=[];
                     Sc.D=D;
                     Sc.newchandata=[Dold(classchanind,:,:)];
@@ -623,6 +625,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
         Sc.time = tf_out_times;
         Sc.frequencies = first_level_results.frequencies(f);
         Sc.remove_montages=0;
+        Sc.cond_list = D.conditions(triallist);
         D_tf = osl_change_spm_eeg_data( Sc );
 
         % add back in Class channel:

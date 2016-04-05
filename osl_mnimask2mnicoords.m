@@ -1,4 +1,4 @@
-function [ mni_coords xform ] = osl_mnimask2mnicoords(mask_fname)
+function [ mni_coords xform mni_coord_vol] = osl_mnimask2mnicoords(mask_fname)
 
 % [ mni_coords xform ] = osl_mnimask2mnicoords(mask)
 %

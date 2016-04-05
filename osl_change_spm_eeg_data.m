@@ -17,7 +17,7 @@ function [ D2 ] = osl_change_spm_eeg_data( Sc )
 % 
 % MWW
 
-try, tmp=Sc.cond_list; catch, Sc.cond_list=Sc.D.condlist; end;
+try, tmp=Sc.cond_list; catch, Sc.cond_list=Sc.D.conditions; end;
 try, modalities=Sc.modalities; catch, modalities=[];  end;
 try, Sc.time=Sc.time; catch, Sc.time=Sc.D.time; end;
 try, Sc.remove_montages=Sc.remove_montages; catch, Sc.remove_montages=1; end;
