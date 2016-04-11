@@ -99,16 +99,11 @@ for voxel = 1:size(parcellation,1)
     end
 end
 
-
-if D.ntrials == 1 % can just pass in the MEEG object
-    voxeldata = D;
-    good_samples = ~all(badsamples(D,':',':',':'));
-else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG data)
-    voxeldata = reshape(D(:,:,:),[D.nchannels,D.nsamples*D.ntrials]);
-    good_samples = ~all(badsamples(D,':',':',':'));
-    good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-    voxeldata = voxeldata(:,good_samples);
-end
+% Note that we reshape trialwise data (for future: get ROInets.get_node_tcs to work with trialwise MEEG data)
+voxeldata = reshape(D(:,:,:),[D.nchannels,D.nsamples*D.ntrials]);
+good_samples = ~all(badsamples(D,':',':',':'));
+good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+voxeldata = voxeldata(:,good_samples);
 
 nodedata = ROInets.get_node_tcs(voxeldata, parcellation, S.method);
 nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
