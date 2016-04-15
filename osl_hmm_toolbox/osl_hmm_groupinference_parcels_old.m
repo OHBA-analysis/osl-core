@@ -221,15 +221,17 @@ hmm=[];
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% check first subject to see if already parcellated
-%D=spm_eeg_load(data_files{1});
-%is_parcellated=isfield(D,'parcellation');
-%if is_parcellated
-    use_parcels=true;
-%end;
+
     
 if todo.prepare
-            
+
+    % check first subject to see if already parcellated
+    D=spm_eeg_load(data_files{1});
+    is_parcellated=isfield(D,'parcellation');
+    if is_parcellated
+        use_parcels=true;
+    end;
+
     if is_parcellated
         parcelWeights=D.parcellation.weights;
         parcelAssignments=D.parcellation.assignments;
