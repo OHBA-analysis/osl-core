@@ -32,7 +32,7 @@ function statemaps = osl_hmm_statemaps(hmm,voxeldata,use_abs,mode,assignment,de_
 % AB 2013
 
 if ~exist('diff_contrast','var')
-    diff_contrast=1
+    diff_contrast=1;
 end
 
 if ~exist('de_mean','var')
