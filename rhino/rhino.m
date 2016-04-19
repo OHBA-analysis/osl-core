@@ -240,8 +240,11 @@ end
 try
     fslreorientCommand = ['fslreorient2std ' sMRI ' ' sMRI];
     call_fsl(fslreorientCommand); % creates .nii.gz
-    gunzip([sMRI '.gz']);
-    dos(['rm ' sMRI '.gz'])
+	nii_gz = [sMRI '.gz'];
+	if exist(nii_gz, 'file'),
+		gunzip(nii_gz);
+		dos(['rm ' nii_gz]);
+	end%
 catch ME
     rethrow(ME)
 end
