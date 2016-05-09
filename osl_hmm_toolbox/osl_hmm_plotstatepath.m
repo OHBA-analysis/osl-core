@@ -34,7 +34,7 @@ col = colormap(gca,'lines');
 
 k = max(hmm.statepath);
 
-if isempty(epoched_statepath_sub)
+if isempty(epoched_statepath_sub) || ~hmm.is_epoched
     num_conds=1;
 else
     num_conds=size(epoched_statepath_sub,2);
@@ -52,13 +52,14 @@ for condnum = 1:num_conds,
     leg=[];
     for s = 1:k
 
-      if isempty(epoched_statepath_sub)
+      if isempty(epoched_statepath_sub) || ~hmm.is_epoched
         tmp=double(logical(hmm.statepath==s));
       else
         count=0;
 
         tmp=zeros(1,size(epoched_statepath_sub{1,condnum},2));
-        for sub = 1:length(epoched_statepath_sub)                           
+        for sub = 1:length(epoched_statepath_sub)    
+            sub
             stateinds=double(logical(epoched_statepath_sub{sub,condnum}==s));
             tmp=tmp+sum(stateinds,3);
             count=count+size(stateinds,3);

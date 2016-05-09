@@ -158,11 +158,12 @@ try state_assignment    = options.output.assignment;            catch, state_ass
 try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights   = 0;       end
 
 hmm=[];
-    
-%%%%%%%%%%%%%%%%%%%%%
-%% check parcellation
+hmm.options=options;
 
-% check first subject to see if already parcellated
+%%%%%%%%%%%%%%%%%%%%%
+%% check parcellation and extract parcellation info
+
+% check first subject to see if it is parcellated
 D=spm_eeg_load(data_files{1});
 is_parcellated=isfield(D,'parcellation');
 if ~is_parcellated
@@ -171,11 +172,7 @@ end;
 
 parcelWeights=D.parcellation.weights;
 parcelAssignments=D.parcellation.assignments;
-try mask_fname=D.parcellation.mask_fname; catch mask_fname=[]; end;
-
-% Save parcellation results:
-fname = fullfile(hmmdir,'parcellation');
-save(fname,'parcelAssignments','parcelWeights');
+try mask_fname=D.parcellation.mask_fname; catch mask_fname=[]; end
 
 %%%%%%%%%%%%%%%%%%%%%
 %% create filenames for prepared data for each subj
@@ -262,38 +259,55 @@ if todo.prepare
 
         embed.tres=1/D.fsample;
 
-        data = osl_teh_prepare_data(D,normalisation,logtrans,f,embed);
+        [data, lags] = osl_teh_prepare_data(D,normalisation,logtrans,f,embed);
     
         X{subnum}=(M * data)';          
     end
     
-    % Save PCA maps
-    if ~embed.do && savePCmaps
-        [pathstr,filestr] = fileparts(filenames.prepare);
+    if 0
         
-        savefile_pc_maps        = [pathstr '/' filestr '_pc_maps'          ];
-        savefile_mean_pc_maps   = [pathstr '/' filestr '_mean_pc_maps'     ];
-        savefile_std_maps       = [pathstr '/' filestr '_hmmdata_std_maps' ];
+        %% 
+        %remove middle block:
+        C2=triu(C,length(lags))+tril(C,-length(lags));
+        MC2M=pinv(M)*M*C*(pinv(M)*M)';
+        MC2M2=triu(MC2M,length(lags))+tril(MC2M,-length(lags));
+        figure;subplot(121);imagesc(C2, [-.1 .1]);colorbar;subplot(122);imagesc(MC2M2, [-.1 .1]);colorbar;
+        figure;subplot(121);hist(squash(C2(C2~=0)),20);subplot(122);hist(squash(MC2M2(MC2M2~=0)),20);
+        % middle block:
+        C3=C-C2;
+        MC2M3=MC2M-MC2M2;
+        figure;subplot(121);hist(squash(C3(C3~=0)));subplot(122);hist(squash(MC2M3(MC2M3~=0)),20);
+    end
+    
+    % Save PCA maps
+    if savePCmaps        
+        if ~embed.do
+            [pathstr,filestr] = fileparts(filenames.prepare);
 
-        nii_settings            = [];
-        nii_settings.interp     = 'nearestneighbour';
-        nii_settings.mask_fname = mask_fname;
-        ROInets.nii_parcel_quicksave(M', parcelAssignments, savefile_pc_maps,      nii_settings);
-        ROInets.nii_parcel_quicksave(mean(abs(M),1)', parcelAssignments, savefile_mean_pc_maps, nii_settings);
-        ROInets.nii_parcel_quicksave(std(pinv(M)*M*dat_concat,[],2), parcelAssignments, savefile_std_maps,     nii_settings);
+            savefile_pc_maps        = [pathstr '/' filestr '_pc_maps'          ];
+            savefile_mean_pc_maps   = [pathstr '/' filestr '_mean_pc_maps'     ];
+            savefile_std_maps       = [pathstr '/' filestr '_hmmdata_std_maps' ];
 
-        disp(['PCA maps saved to '          savefile_pc_maps]);
-        disp(['mean of PCA maps saved to '  savefile_mean_pc_maps]);
-        disp(['HMM data sd maps saved to '  savefile_std_maps]);
+            nii_settings            = [];
+            nii_settings.interp     = 'nearestneighbour';
+            nii_settings.mask_fname = mask_fname;
+            ROInets.nii_parcel_quicksave(M', parcelAssignments, savefile_pc_maps,      nii_settings);
+            ROInets.nii_parcel_quicksave(mean(abs(M),1)', parcelAssignments, savefile_mean_pc_maps, nii_settings);
+            ROInets.nii_parcel_quicksave(std(pinv(M)*M*dat_concat,[],2), parcelAssignments, savefile_std_maps,     nii_settings);
+
+            disp(['PCA maps saved to '          savefile_pc_maps]);
+            disp(['mean of PCA maps saved to '  savefile_mean_pc_maps]);
+            disp(['HMM data sd maps saved to '  savefile_std_maps]);
+        end
     end
    
     fsample = D.fsample;
    
     disp(['Saving prepared data to ' filenames.prepare])
     %save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds','-v7.3');   
-    save(filenames.prepare,'hmmT','hmmdata','fsample','subj_inds','-v7.3');   
-    save(filenames.prepared_data,'X');
-    
+    save(filenames.prepare,'lags','M','C','hmmT','hmmdata','fsample','subj_inds','-v7.3');   
+    save(filenames.prepared_data,'X','-v7.3');
+        
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -320,7 +334,7 @@ if todo.hmm
     options.K=8;
     
     if hmmoptions.big
-        options.BIGNbatch = 8;
+        options.BIGNbatch = 5;
         options.BIGtol = 1e-7;
         options.BIGcyc = 500;
         options.BIGinitcyc = 1;
@@ -338,16 +352,26 @@ if todo.hmm
     end
     
     % call hmmmar
-    [hmm, gamma, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options);
+    [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options);
+    hmm.options = hmmoptions;
+    hmm.data_files = data_files;
     hmm.fsample = fsample;
     hmm.fehist = fehist;
+    %hmm.gamma = gamma;
+    %hmm.statepath = vpath;
     
     disp(['Saving inferred HMM to ' filenames.hmm])    
     save(filenames.hmm,'hmm');
 
     % compute state time courses    
     hmm.gamma = hmmdecode(X,hmmT,hmm,0);  % last argument: 0, state time courses; 1, viterbi path
-    hmm.statepath = hmmdecode(X,hmmT,hmm,1);  % last argument: 0, state time courses; 1, viterbi path
+    hmm.statepath_hot = hmmdecode(X,hmmT,hmm,1);  % last argument: 0, state time courses; 1, viterbi path
+    
+    hmm.statepath=zeros(size(hmm.statepath_hot,1),1);
+    for ii=1:size(hmm.statepath_hot,1)
+        ind = find(hmm.statepath_hot(ii,:));
+        hmm.statepath(ii)=ind;
+    end;
     
     % Save results
     disp(['Saving inferred HMM to ' filenames.hmm])    
@@ -397,14 +421,20 @@ if todo.output
                                            
                 Dp = spm_eeg_load(data_files{subnum});
                 datap = osl_teh_prepare_data(Dp,normalisation,logtrans,f,embed);
+                
                 statp  = statp + osl_hmm_statemaps(hmm_sub,datap,true,output_method,state_assignment);            
 
-                good_samples = ~all(badsamples(D,':',':',':'));
+                good_samples = ~all(badsamples(Dp,':',':',':'));
 
-                sp_full = zeros(1,D.nsamples*D.ntrials);
+                sp_full = zeros(1,Dp.nsamples*Dp.ntrials);
                 sp_full(good_samples) = hmm_sub.statepath;
-                epoched_statepath_sub{subnum} = reshape(sp_full,[1,D.nsamples,D.ntrials]);
+                epoched_statepath_sub{subnum} = reshape(sp_full,[1,Dp.nsamples,Dp.ntrials]);
                 
+                if Dp.ntrials>1
+                    hmm.is_epoched=1;
+                else
+                    hmm.is_epoched=0;
+                end
             end
 
             statp = statp ./ length(data_files);
@@ -413,9 +443,9 @@ if todo.output
             S2.interp='nearestneighbour';
 
             if isfield(D.parcellation,'S') && isfield(D.parcellation.S,'hcp_sourcemodel3d') 
-                hcp_nii_parcel_quicksave(statp, parcelAssignments, [statemaps{f},'_parcels'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)
+                hcp_nii_parcel_quicksave(statp, parcelAssignments, [statemaps,'_parcels'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)
             else
-                ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps{f},'_parcels'],S2);
+                ROInets.nii_parcel_quicksave(statp,parcelAssignments,[statemaps,'_parcels'],S2);
             end
 
             % also store statemaps as vectors
@@ -435,6 +465,8 @@ end
 
 % save updated hmm
 hmm.filenames=filenames;
+hmm.data_files=data_files;
+
 disp(['Saving updated hmm to ' filenames.hmm]);
 save(filenames.hmm,'hmm');
            

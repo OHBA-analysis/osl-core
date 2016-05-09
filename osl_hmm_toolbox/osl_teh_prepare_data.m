@@ -1,4 +1,10 @@
-function data = osl_teh_prepare_data(D,normalisation,logtrans,freq_ind,embed)
+function [data, lags] = osl_teh_prepare_data(D,normalisation,logtrans,freq_ind,embed)
+
+% [data, lags] = osl_teh_prepare_data(D,normalisation,logtrans,freq_ind,embed)
+%
+% prepares data (including time embedding) for calling HMM-MAR
+
+lags=[];
 
 % reshape trialwise data
 if strcmp(D.transformtype,'TF')
