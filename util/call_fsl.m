@@ -24,7 +24,7 @@ else
 end
 
 command = sprintf('/bin/sh -c ''. ${FSLDIR}/etc/fslconf/fsl.sh; %s''', cmd);
-[status,output] = system(command);
+[status,output] = runcmd(command);
 
 if ismac
   setenv('DYLD_LIBRARY_PATH', dylibpath);

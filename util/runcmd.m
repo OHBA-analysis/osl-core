@@ -1,6 +1,6 @@
 function [ret, w]=runcmd(cmd)
 
-[ret, w]=dos(cmd);
+[ret, w]=system(cmd);
 
 if(ret ~= 0),
     
