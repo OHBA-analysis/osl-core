@@ -19,14 +19,14 @@ if ~isdeployed
     oldpath=path;
     indcolon=findstr(oldpath,':');
     st=1;
-    restoredefaultpath;
-   
-    restoredpath=path;
-    addpath(genpath(osldir));
-
     
+    restoredefaultpath;
+    restoredpath=path;
+    %addpath(genpath(osldir));
+   
  	% remove spm-changes dir:
-	rmpath([osldir '/osl2/spm-changes']);
+	%try rmpath([osldir '/osl2/spm-changes']); catch; end
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % check fsl has been setup
     if isempty(getenv('FSLDIR')),
@@ -105,8 +105,8 @@ targetdir{end+1}='spm12/external/fieldtrip/utilities/private/';
 filelist{end+1} = 'osl2/spm-changes/private/undobalancing.m';
 targetdir{end+1}='spm12/external/fieldtrip/private/';
 
-filelist{end+1} = 'osl2/spm-changes/private/ft_headmodel_localspheres.m';
-targetdir{end+1}='spm12/external/fieldtrip/forward/';
+%filelist{end+1} = 'osl2/spm-changes/private/ft_headmodel_localspheres.m';
+%targetdir{end+1}='spm12/external/fieldtrip/forward/';
 
 filelist{end+1}='osl2/spm-changes/private/path.m';
 targetdir{end+1}='spm12/@meeg';
@@ -124,7 +124,7 @@ filelist{end+1} ='osl2/spm-changes/private/ft_getopt.c';
 targetdir{end+1}='spm12/external/fieldtrip/src/';
 
 for kk=1:length(filelist),
-    runcmd(['cp -f ' osldir '/' filelist{kk} ' ' osldir '/' targetdir{kk}]);
+    system(['cp -rf ' osldir '/' filelist{kk} ' ' osldir '/' targetdir{kk}]);
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,8 +133,7 @@ OSLDIR=osldir;
 % Ensure osl2 dir gets priority in path
 addpath(genpath([osldir '/osl2/']))
 
-% Remove SPM12 from path and re-add only top level folder
-spm_rmpath
+% Add only top level folder
 addpath([osldir '/spm12/'])
 
 spm_get_defaults('cmdline',true);
@@ -149,9 +148,6 @@ if ~isdeployed
     end;
 end % if ~ isdeployed
 
-
-% remove fieldtrip replication
-rmpath(genpath(fullfile(osldir, 'spm12/external/fieldtrip/external/')));
-% but need this one:
+% need this one:
 addpath(fullfile(osldir, 'spm12/external/fieldtrip/src'));
 
