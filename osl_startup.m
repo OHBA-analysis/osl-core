@@ -132,8 +132,9 @@ OSLDIR=osldir;
 
 % Ensure osl2 dir gets priority in path
 addpath(genpath([osldir '/osl2/']))
+addpath(genpath([osldir '/ICA_TOOLS']))
 
-% Add only top level folder
+% Add only top level spm folder
 addpath([osldir '/spm12/'])
 
 spm_get_defaults('cmdline',true);
