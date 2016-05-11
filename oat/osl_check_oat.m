@@ -597,4 +597,4 @@ end % if ~isempty(weirdfields)
 
 %% add osl version
 
-oat.osl_version=osl_version;
+oat.osl2_version=osl2_version;

@@ -395,4 +395,4 @@ end % if ~isempty(wierdfields)
 
 %% add osl version
 
-opt.osl_version=osl_version;
+opt.osl2_version=osl2_version;
