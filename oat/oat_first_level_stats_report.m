@@ -215,6 +215,7 @@ else
         fig_name={};
         fig_title={}; 
         S2=[];                
+        
         S2.percrange=[96 99.9];
         S2.mni_coord=first_level_results.mni_coords(vox_ind_max,:);
         S2.title='';
@@ -224,7 +225,7 @@ else
 
             fig_handle(coni)=sfigure; 
             fig_name{coni}=['cope_at_maxt_smap_c' num2str(con)];  
-            fig_title{coni}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} '] at t=' num2str(first_level_results.times(time_ind_max)) 'secs' ', f=' mat2str(first_level_results.frequency_ranges(freq_ind_max,:)) 'Hz'];                 
+            fig_title{coni}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} '] at t=' num2str(first_level_results.times(time_ind_max)) 'secs' ', f=' mat2str(first_level_results.frequency_ranges(freq_ind_max,:),3) 'Hz'];                 
             fig_title{coni}=[fig_title{coni} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
             set(fig_handle(coni),'Position',[1 1 1300 450]);
             S2.fname=[statsdir '/cope' num2str(con) '_' num2str(resamp_gridstep) 'mm'];                              

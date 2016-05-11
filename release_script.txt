@@ -9,7 +9,7 @@ MEGROInetsGITRELEASETAG=1.5.0
 
 # location of repository for supplementary directories
 SUPPDIRSDOWNLOADSITE=http://users.fmrib.ox.ac.uk/~woolrich/osl2
-SUPPDIRSNAME=osl2_supporting_dirs.tar.gz
+SUPPDIRSNAME=osl2_supporting_dirs # do not want file ext here
 
 # where we will upload osl release to
 OSLUPLOADDIR=woolrich@jalapeno.fmrib.ox.ac.uk:/home/fs0/woolrich/www/osl2
@@ -31,6 +31,7 @@ curl -L $SUPPDIRSDOWNLOADSITE/$SUPPDIRSNAME.tar.gz --output supporting_dirs.tar.
 
 # untar it
 rm -rf supporting_dirs
+
 tar xvf supporting_dirs.tar.gz
 rm -rf supporting_dirs.tar.gz
 
