@@ -3,7 +3,7 @@
 
 WORKINGDIR=/Users/woolrich/Desktop
 
-OSL2GITRELEASETAG=0.2
+OSL2GITRELEASETAG=0.2  # e.g create new release on github website: e.g. OSL2.0.2 for tag v0.2
 GLEANGITRELEASETAG=0.1 # note that GLEAN contains HMMMAR as a subproject
 MEGROInetsGITRELEASETAG=1.5.0
 
@@ -64,8 +64,12 @@ mv $REPONAME-$GITRELEASETAG $REPONAME
 
 # update $REPONAME_version.m
 cd $WORKINGDIR
-rm -f osl2/$REPONAME/$REPONAME_version.m
-echo "function ret=$REPONAME_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/$REPONAME_version.m
+rm -f osl2/$REPONAME/${REPONAME}_version.m
+echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/${REPONAME}_version.m
+
+# also put a $REPONAME_version.m in the root osl2 dir
+rm -f osl2/${REPONAME}_version.m
+echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/${REPONAME}_version.m
 
 ######
 # download current GLEAN osl release
@@ -97,8 +101,8 @@ mv $REPONAME-$GITRELEASETAG $REPONAME
 
 # update $REPONAME_version.m
 cd $WORKINGDIR
-rm -f osl2/$REPONAME/$REPONAME_version.m
-echo "function ret=$REPONAME_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/$REPONAME_version.m
+rm -f osl2/$REPONAME/${REPONAME}_version.m
+echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/${REPONAME}_version.m
 
 ######
 # download current MEG-ROI-nets osl release
@@ -129,8 +133,8 @@ mv $REPONAME-$GITRELEASETAG $REPONAME
 
 # update $REPONAME_version.m
 cd $WORKINGDIR
-rm -f osl2/$REPONAME/$REPONAME_version.m
-echo "function ret=$REPONAME_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/$REPONAME_version.m
+rm -f osl2/$REPONAME/${REPONAME}_version.m
+echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/${REPONAME}_version.m
 
 ######
 # create tar ball of osl
