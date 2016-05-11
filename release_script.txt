@@ -3,7 +3,7 @@
 
 WORKINGDIR=/Users/woolrich/Desktop
 
-OSL2GITRELEASETAG=0.1
+OSL2GITRELEASETAG=0.2
 GLEANGITRELEASETAG=0.1 # note that GLEAN contains HMMMAR as a subproject
 MEGROInetsGITRELEASETAG=1.5.0
 
@@ -34,10 +34,6 @@ rm -rf supporting_dirs
 
 tar xvf supporting_dirs.tar.gz
 rm -rf supporting_dirs.tar.gz
-
-# rename the top osl dir to reflect latest version number
-rm -rf osl2
-mv $SUPPDIRSNAME osl2
 
 ######
 # download current github osl release

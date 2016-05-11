@@ -105,8 +105,8 @@ targetdir{end+1}='spm12/external/fieldtrip/utilities/private/';
 filelist{end+1} = 'osl2/spm-changes/private/undobalancing.m';
 targetdir{end+1}='spm12/external/fieldtrip/private/';
 
-%filelist{end+1} = 'osl2/spm-changes/private/ft_headmodel_localspheres.m';
-%targetdir{end+1}='spm12/external/fieldtrip/forward/';
+filelist{end+1} = 'osl2/spm-changes/private/ft_headmodel_localspheres.m';
+targetdir{end+1}='spm12/external/fieldtrip/forward/';
 
 filelist{end+1}='osl2/spm-changes/private/path.m';
 targetdir{end+1}='spm12/@meeg';
