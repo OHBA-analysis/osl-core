@@ -32,9 +32,20 @@ if ~isempty(S.bad_event_type)
     
     Badtrials = false(1,D_epoched.ntrials);
     for trl = 1:D_epoched.ntrials
-        tpts = D_epoched.trialonset(trl) + D_epoched.time;
+        tpts = D_epoched.trialonset(trl) + [0:length(D_epoched.time)-1]/D.fsample;
         bs = badsamples(D,':',round(tpts*D.fsample),1);
         Badtrials(trl) = any(all(bs));
+    end
+    
+    if 0
+        %%debug stuff:
+        trl=1
+        tpts = D_epoched.trialonset(trl) + [0:length(D_epoched.time)-1]/D.fsample;
+        inds=round(tpts*D.fsample);
+
+        figure;
+        plot(D.time(inds),D(1,inds,1));ho;
+        plot(D.time(inds),D_epoched(1,:,trl),'r--');
     end
     
     D_epoched = badtrials(D_epoched,find(Badtrials),1);
