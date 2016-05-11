@@ -388,31 +388,11 @@ for subi=1:length(opt.sessions_to_do),
             close all
         else
 
-            % use passed in SPM MEEG objects
-            cd(opt.dirname);
-
-            [p fname e] = fileparts(opt.spm_files{subnum});
+            % use passed in SPM MEEG objects           
+            D = spm_eeg_load(opt.spm_files{subnum});
+            spm_files_basenames{subnum} = D.fname;
             
-            spm_files_basenames{subnum}=[fname '.mat'];
-           
-            S2=[];
-            S2.D=[p '/' fname '.mat'];
-    
-            tempstring = tempname;
-            tempstring = tempstring(end-12:end);
-            S2.outfile=[spm_files_basenames{subnum} tempstring];
-            [p fname e] = fileparts(S2.outfile);
-            S2.outfile=[fname '.mat'];
-
-            S2.updatehistory=0;
-            D = spm_eeg_copy(S2);
-            
-            if ~strcmp([D.path '/' D.fname], [opt.dirname '/' D.fname])
-                runcmd(['mv ' D.path '/' D.fname ' ' opt.dirname]);
-                runcmd(['mv ' D.fnamedat ' ' opt.dirname]);
-            end
-            
-            %spm_filename=[opt.dirname '/' D.fname];
+            Dnew = copy(D,[opt.dirname '/' D.fname]);
 
         end;
 
@@ -703,8 +683,31 @@ for subi=1:length(opt.sessions_to_do),
             report=osl_report_set_figs(report,[S.outlier_measure_fns{ss} '_chans_with_bad_epochs_tc'],fig_handles,['DATA: ' S.outlier_measure_fns{ss} ' over chans']);
             report=osl_report_print_figs(report);
         end;
-    end;
+    end
+    
+    %% plot spectograms
+    disp(['%%%%%%%%%%%%%%%%%%%%%%%  PLOT SPECTOGRAMS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
+    D_continuous=spm_eeg_load(spm_file);
+    for mm=1:length(S.modalities),
+        fig_handles=sfigure;
+        set(fig_handles,'Position',[1 1 1300 450]);
+            
+        S=[]; 
+        S.D=D_continuous; 
+        S.chantype=opt.modalities{mm};
+        S.do_plot=false;
+        [spect,F,T]=osl_plotspectrogram(S);
+        
+        %do plot
+        imagesc(T,F,spect); colorbar
+        set(gca,'ydir','normal');
+        plot4paper('time (s)','freq (hz)');
+    
+        report=osl_report_set_figs(report,['spectogram_' opt.modalities{mm}],fig_handles,['DATA: spectogram for ' opt.modalities{mm}]);
+        report=osl_report_print_figs(report);
+    end
+    
     %%%%%%%%%%%%%%%%%%%
     %% DO EPOCHING (if epoch-based task data)
 
@@ -740,10 +743,6 @@ for subi=1:length(opt.sessions_to_do),
         S2.trialdef=opt.epoch.trialdef;
         S2.reviewtrials = 0;
         S2.save = 0;
-        S2.epochinfo.padding = 0;
-        S2.event = D_continuous.events;
-        S2.fsample = D_continuous.fsample;
-        S2.timeonset = D_continuous.timeonset;
 
         [epochinfo.trl, epochinfo.conditionlabels, S3] = spm_eeg_definetrial(S2);
 

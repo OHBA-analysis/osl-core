@@ -29,7 +29,7 @@ S(:)=0;
 for i = 1:length(ch)
   S=S+plotspectrogram(D(ch(i),:,:),512,512*0.75,1024,D.fsample);
   %P{i} = mean(S{i},2);
-  disp([num2str(i) '/' num2str(length(ch))])
+  %disp([num2str(i) '/' num2str(length(ch))])
 end
 S=S/length(ch);
 
