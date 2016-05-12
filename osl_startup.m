@@ -133,6 +133,8 @@ OSLDIR=osldir;
 % Ensure osl2 dir gets priority in path
 addpath(genpath([osldir '/osl2/']))
 addpath(genpath([osldir '/ICA_TOOLS']))
+addpath(genpath([osldir '/MEG-ROI-nets']))
+addpath(genpath([osldir '/netlab3.3']))
 
 % Add only top level spm folder
 addpath([osldir '/spm12/'])
