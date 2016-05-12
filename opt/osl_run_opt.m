@@ -461,9 +461,7 @@ for subi=1:length(opt.sessions_to_do),
         S.D = [spm_file];
         S.mri=opt.coreg.mri{subnum};
         S.useheadshape=opt.coreg.useheadshape;
-        S.forward_meg = 'MEG Local Spheres';
-        S.forward_meg = 'Single Shell';
-
+        S.forward_meg=opt.coreg.forward_meg;
         S.use_rhino=opt.coreg.use_rhino;
 
         if(isfield(opt.coreg,'fid_mnicoords')),

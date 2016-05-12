@@ -232,7 +232,7 @@ try, opt.coreg.do=optin.coreg.do; optin.coreg = rmfield(optin.coreg,'do'); catch
 try, opt.coreg.useheadshape = optin.coreg.useheadshape; optin.coreg = rmfield(optin.coreg,'useheadshape'); catch, opt.coreg.useheadshape=1; end
 try, opt.coreg.mri = optin.coreg.mri; optin.coreg = rmfield(optin.coreg,'mri'); catch, for i=1:num_sessions, opt.coreg.mri{i}=''; end; end
 try, opt.coreg.use_rhino = optin.coreg.use_rhino; optin.coreg = rmfield(optin.coreg,'use_rhino'); catch, opt.coreg.use_rhino = 1; end % Use RHINO coregistration
-
+try, opt.coreg.forward_meg = optin.coreg.forward_meg; optin.coreg = rmfield(optin.coreg,'forward_meg'); catch, opt.coreg.forward_meg = 'Single Shell'; end % MEG forward model, typically either 'MEG Local Spheres' or 'Single Shell'
 try, opt.coreg.fid_label = optin.coreg.fid_label; optin.coreg = rmfield(optin.coreg,'fid_label');
 catch,
     switch opt.datatype
