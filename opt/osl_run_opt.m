@@ -856,7 +856,7 @@ opt.results.report=osl_report_write(opt_report);
 
 %%%%%%%%%%%%%%%%%%%
 %% output res
-opt.osl_version=osl_version;
+opt.osl2_version=osl2_version;
 
 opt.results.spm_files_basenames=spm_files_basenames;
 opt.results.spm_files_epoched_basenames=spm_files_epoched_basenames;
