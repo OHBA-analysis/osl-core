@@ -37,7 +37,7 @@ for i=1:length(is),
     spm_epoched_files{i}=opt.results.spm_files_epoched{is(i)};
 end;
 
-workingdir=['/home/mwoolrich/homedir/matlab/osl_testdata_dir/faces_group_data_' osl_version];
+workingdir=['/home/mwoolrich/homedir/matlab/osl_testdata_dir/faces_group_data_' osl2_version];
 mkdir(workingdir);
 
 %%

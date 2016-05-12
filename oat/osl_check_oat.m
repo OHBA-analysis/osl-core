@@ -577,7 +577,7 @@ if ~isempty(weirdfields)
     error('Invalid oat.group_level settings');
 end % if ~isempty(weirdfields)
 
-try oatin = rmfield(oatin,'osl_version');catch, end;
+try oatin = rmfield(oatin,'osl2_version');catch, end;
 try, oatin = rmfield(oatin,'date');catch, end;
 oatin = rmfield(oatin,'source_recon');
 oatin = rmfield(oatin,'first_level');

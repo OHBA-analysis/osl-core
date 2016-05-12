@@ -117,7 +117,7 @@ uber.do_tf=1;
 
 opt=[];
 
-tname=[osl_version '_sss' num2str(uber.do_sss_maxfilter) '.opt'];
+tname=[osl2_version '_sss' num2str(uber.do_sss_maxfilter) '.opt'];
 
 opt.dirname=[testoutputdir '/' tname];
 
