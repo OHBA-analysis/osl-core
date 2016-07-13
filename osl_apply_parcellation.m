@@ -59,7 +59,7 @@ else
         case {'char','cell'}
             try
                 stdbrain = read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz']);
-                parc=read_avw(S.parcellation);
+                parc = read_avw(S.parcellation);
                 parcellation = vols2matrix(parc,stdbrain); %nVoxels x nSamples
             catch
                 error('Make sure the parcellation file and the data are valid and compatible, including having the same spatial resolution.');

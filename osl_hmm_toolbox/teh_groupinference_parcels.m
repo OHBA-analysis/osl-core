@@ -328,16 +328,16 @@ if todo.hmm
     options = [];
     options.inittype = 'hmmmar';
     options.initcyc = 30;
-    options.initrep = 4;
+    options.initrep = 1;
     options.order = 0;
     options.zeromean = 1;
     options.K=8;
-    
+
     if hmmoptions.big
+        % defaults for stochastic hmm
         options.BIGNbatch = 5;
         options.BIGtol = 1e-7;
         options.BIGcyc = 500;
-        options.BIGinitcyc = 1;
         options.BIGundertol_tostop = 5;
         options.BIGdelay = 5; 
         options.BIGforgetrate = 0.7;
@@ -350,9 +350,18 @@ if todo.hmm
     for fi=1:numel(fn)
         options.(fn{fi}) = hmmoptions.(fn{fi});
     end
+    % remove options not used by hmmmar call
+    options=rmfield(options,'big');
+    if ~hmmoptions.big && isfield(options,'BIGNbatch')
+        options=rmfield(options,'BIGNbatch');        
+    end    
     
     % call hmmmar
     [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options);
+    
+    % save('/Users/woolrich/for_diego','X','hmmT','options'); !scp /Users/woolrich/for_diego.mat $WS12HD
+    % Error running [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options); You can get the data from: hbaws12.ohba.ox.ac.uk:/home/mwoolrich/homedir/for_diego.mat
+    
     hmm.options = hmmoptions;
     hmm.data_files = data_files;
     hmm.fsample = fsample;
@@ -365,13 +374,13 @@ if todo.hmm
 
     % compute state time courses    
     hmm.gamma = hmmdecode(X,hmmT,hmm,0);  % last argument: 0, state time courses; 1, viterbi path
-    hmm.statepath_hot = hmmdecode(X,hmmT,hmm,1);  % last argument: 0, state time courses; 1, viterbi path
+    hmm.statepath = hmmdecode(X,hmmT,hmm,1);  % last argument: 0, state time courses; 1, viterbi path
     
-    hmm.statepath=zeros(size(hmm.statepath_hot,1),1);
-    for ii=1:size(hmm.statepath_hot,1)
-        ind = find(hmm.statepath_hot(ii,:));
-        hmm.statepath(ii)=ind;
-    end;
+    %hmm.statepath=zeros(size(hmm.statepath_hot,1),1);
+    %for ii=1:size(hmm.statepath_hot,1)
+    %    ind = find(hmm.statepath_hot(ii,:));
+    %    hmm.statepath(ii)=ind;
+    %end;
     
     % Save results
     disp(['Saving inferred HMM to ' filenames.hmm])    
