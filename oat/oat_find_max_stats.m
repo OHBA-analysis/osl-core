@@ -63,6 +63,8 @@ if is_sensor_space,
         try, modality=S.modality; catch error('Must set S.modality'); end;
 
         if strcmp(modality,'MEGPLANAR'), modality='MEGCMB'; end;
+        if strcmp(modality,'MEG'), modality='MEGGRAD'; end;
+        
         vox_inds=find(strcmp(stats.chantype,modality));
     end;
 else
