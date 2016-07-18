@@ -214,6 +214,9 @@ times=Sin.stats.times(time_indices);
 save([Sin.stats_dir '/times'],'times','-ascii');
 statsdir=Sin.stats_dir;
 
+disp(['E.g. to view nii file: ']);
+disp(['fslview(''' fnamet ''')']);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function fnamet=output_files(Sin,options,time_indices,gcon,fname_postfix,use_parcels,nii_parcel_settings)
@@ -274,9 +277,9 @@ for coni=1:length(Sin.first_level_contrasts),
             dat=permute(ts,[1 2 4 3]);
             
             if use_parcels                
-                fnamet=ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
+                fnamet_mip=ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
             else
-                fnamet=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+                fnamet_mip=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
             end
 
         end;
@@ -316,9 +319,6 @@ for coni=1:length(Sin.first_level_contrasts),
         osl_resample_nii([tstats_clust_fname '_' num2str(gridstep) 'mm'],[tstats_clust_fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);
         runcmd(['fslmaths ' clustimg_fname '_' num2str(resamp_gridstep) 'mm -thr ' num2str(1-corrp_thresh) ' ' clustimg_fname '_thresh_' num2str(resamp_gridstep) 'mm']);
         % runcmd(['fslmaths ' fnamet '_' num2str(resamp_gridstep) 'mm -mas ' clustimg_fname '_thresh_' num2str(resamp_gridstep) 'mm -thr ' num2str(Sin.stats.S.cluster_stats_thresh) ' ' tstat_thresh_img_fname '_' num2str(resamp_gridstep) 'mm ']);
-    end;
-    
-end;
-
-disp(['E.g. to view nii file: ']);
-disp(['fslview(''' fnamet ''')']);
+    end
+   
+end
