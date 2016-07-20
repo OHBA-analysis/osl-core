@@ -107,7 +107,7 @@ spec = abs_ft(1:num_ics,1:floor(length(abs_ft)/2));
 spec(:,1:minhz_ind) = 0;
 
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%                           Mains frequency                          %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -120,7 +120,7 @@ elseif isfield(S.ident,'do_mains') && ~S.ident.do_mains && isfield(metrics,'main
 end
 
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%                               Kurtosis                              %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -209,7 +209,6 @@ if ~isempty(S.ident.artefact_chans) && ~isempty(S.ident.artefact_chans)
 
 end
 
-
 % Precompute topographies
 try
     topos = S.ica_res.topos;
@@ -221,7 +220,6 @@ catch
         topos = [topos component_topoplot(D,sm,modalities(m))];
     end
 end
-
 
 % Save topos & metrics
 if isfield(S,'ica_file')
@@ -251,63 +249,4 @@ else
     bad_components = [];
 end
 
-end
-
-
-
-
-
-% function to produce component topoplot
-function topos = component_topoplot(D,comp,modality)
-cfg  = [];
-data = [];
-
-global OSLDIR
-
-comp(D.badchannels,:) = 0;
-comp2view = comp(indchantype(D,modality),:);
-
-if (strcmp(modality,'MEGPLANAR')) % Average gradiometers
-    comp2view = sqrt(comp2view(1:2:end,:).^2 + comp2view(2:2:end,:).^2);
-end
-
-if (strcmp(modality,'MEGMAG'))
-    cfg.channel     = {'MEGMAG'};
-    cfg.layout      = [OSLDIR '/layouts/neuromag306mag.lay'];
-elseif (strcmp(modality,'MEGPLANAR'))
-    cfg.channel     = {'MEGMAG'};
-    cfg.layout      = [OSLDIR '/layouts/neuromag306mag.lay'];
-elseif (strcmp(modality,'MEGGRAD'))
-    cfg.channel     = {'MEG'};
-    cfg.layout      = [OSLDIR '/layouts/CTF275.lay'];
-elseif strcmp(modality, 'MEG')
-    cfg.channel = {'MEG'};
-    cfg.layout  = fullfile(OSLDIR, 'layouts', '4D248.lay');
-elseif (strcmp(modality,'EEG')),
-    warning('EEG not currently supported, using development EEG layout');
-    cfg.channel = {'EEG'};
-    cfg.layout  = [OSLDIR '/layouts/EEG60.lay'];
-else
-    error('Unsupported modality');
-end
-
-data.dimord    = 'chan_comp';
-data.topo      = comp2view;
-data.topolabel = D.chanlabels(indchantype(D,cfg.channel));
-data.time      = {1};
-
-cfg = rmfield(cfg,'channel');
-cfg.component   = 1:size(comp,2);
-cfg.interactive = 'no';
-cfg.comment     = 'no';
-cfg.title       = modality{:};
-
-%cfg.layout = ft_prepare_layout(cfg);
-
-tmp_fig = figure('visible','off');
-[~] = evalc('ft_topoplotIC(cfg,data);');
-topos = handle2struct(get(gcf,'children'));
-topos = topos(end:-1:1); % handles are LIFO
-close(tmp_fig)
-end
-
+end 

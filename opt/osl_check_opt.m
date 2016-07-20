@@ -155,11 +155,22 @@ try, opt.downsample.do=optin.downsample.do; optin.downsample = rmfield(optin.dow
 try, opt.downsample.freq=optin.downsample.freq; optin.downsample = rmfield(optin.downsample,'freq'); catch, opt.downsample.freq=250; end; % downsample freq in Hz
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% highpass settings
+
+try, opt.highpass.do=optin.highpass.do; optin.highpass = rmfield(optin.highpass,'do'); catch, opt.highpass.do=0; end; % flag to indicate if high pass filtering should be done 
+try, opt.highpass.cutoff=optin.highpass.cutoff; optin.highpass = rmfield(optin.highpass,'cutoff'); catch, opt.highpass.cutoff=0.1; end; % highpass cutoff in Hz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% mains settings
+
+try, opt.mains.do=optin.mains.do; optin.mains = rmfield(optin.mains,'do'); catch, opt.mains.do=0; end; % flag to indicate if mains filtering should be done 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% trial and chan outlier detection settings
 
 try, opt.bad_segments.do=optin.bad_segments.do; optin.bad_segments = rmfield(optin.bad_segments,'do'); catch, opt.bad_segments.do=1; end; % flag to indicate if bad_segment marking should be done
 try, opt.bad_segments.dummy_epoch_tsize=optin.bad_segments.dummy_epoch_tsize; optin.bad_segments = rmfield(optin.bad_segments,'dummy_epoch_tsize'); catch, opt.bad_segments.dummy_epoch_tsize=2; end; % size of dummy epochs (in secs) to do outlier bad segment marking
-try, opt.bad_segments.outlier_measure_fns=optin.bad_segments.outlier_measure_fns; optin.bad_segments = rmfield(optin.bad_segments,'outlier_measure_fns'); catch, opt.bad_segments.outlier_measure_fns={'min','std'}; end; % list of outlier metric func names to use for bad segment marking
+try, opt.bad_segments.outlier_measure_fns=optin.bad_segments.outlier_measure_fns; optin.bad_segments = rmfield(optin.bad_segments,'outlier_measure_fns'); catch, opt.bad_segments.outlier_measure_fns={'std'}; end; % list of outlier metric func names to use for bad segment marking
 try, opt.bad_segments.wthresh_ev=optin.bad_segments.wthresh_ev; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_ev'); catch, opt.bad_segments.wthresh_ev=0.4*ones(length(opt.bad_segments.outlier_measure_fns),1); end; % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
 try, opt.bad_segments.wthresh_chan=optin.bad_segments.wthresh_chan; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_chan'); catch, opt.bad_segments.wthresh_chan=0.01*ones(length(opt.bad_segments.outlier_measure_fns),1); end;% list of robust GLM weights thresholds to use on chans for bad segment marking, the LOWER the theshold the less aggressive the rejection
 
@@ -170,6 +181,7 @@ try, do_africa=optin.africa.do; optin.africa = rmfield(optin.africa,'do'); catch
 try, opt.africa.todo.ica=optin.africa.todo.ica; optin.africa.todo = rmfield(optin.africa.todo,'ica'); catch, opt.africa.todo.ica=do_africa; end; % flag to do or not do ica decomposition
 try, opt.africa.todo.ident=optin.africa.todo.ident; optin.africa.todo = rmfield(optin.africa.todo,'ident'); catch, opt.africa.todo.ident=do_africa; end; % flag to do or not do artefact rejection
 try, opt.africa.todo.remove=optin.africa.todo.remove; optin.africa.todo = rmfield(optin.africa.todo,'remove'); catch, opt.africa.todo.remove=do_africa; end; % flag to do or not do artefactual component removal
+try, opt.africa.precompute_topos=optin.africa.precompute_topos; optin.africa = rmfield(optin.africa,'precompute_topos'); catch, opt.africa.precompute_topos=0; end; % flag to do or not do precomputation of topos of IC spatial maps after ica has been computed for future use in ident
 
 try, opt.africa.used_maxfilter=optin.africa.used_maxfilter; optin.africa = rmfield(optin.africa,'used_maxfilter');
 catch,
@@ -191,19 +203,13 @@ opt.africa.ident=[];
 try, opt.africa.ident.artefact_chans=optin.africa.ident.artefact_chans; optin.africa.ident = rmfield(optin.africa.ident,'artefact_chans'); catch, opt.africa.ident.artefact_chans={'ECG','EOG'}; end; % list of names of artefact channels
 try, opt.africa.ident.artefact_chans_corr_thresh=optin.africa.ident.artefact_chans_corr_thresh; optin.africa.ident = rmfield(optin.africa.ident,'artefact_chans_corr_thresh'); catch, opt.africa.ident.artefact_chans_corr_thresh=ones(length(opt.africa.ident.artefact_chans),1)*0.15; end; % vector setting the correlation threshold to use for each of the artefact chans
 try, opt.africa.ident.do_kurt=optin.africa.ident.do_kurt; optin.africa.ident = rmfield(optin.africa.ident,'do_kurt'); catch, opt.africa.ident.do_kurt=1; end; % flag to do detection of bad ICA components based on high kurtosis
-try, opt.africa.ident.kurtosis_wthresh=optin.africa.ident.kurtosis_wthresh; optin.africa.ident = rmfield(optin.africa.ident,'kurtosis_wthresh'); catch, opt.africa.ident.kurtosis_wthresh=0; end; % threshold to use on robust GLM weights. Set to zero to not use robust glm approach
-try, opt.africa.ident.kurtosis_thresh=optin.africa.ident.kurtosis_thresh; optin.africa.ident = rmfield(optin.africa.ident,'kurtosis_thresh'); catch, opt.africa.ident.kurtosis_thresh=20; end; % threshold to use on kurtosis. Set to zero to not use robust glm approach
+try, opt.africa.ident.kurtosis_wthresh=optin.africa.ident.kurtosis_wthresh; optin.africa.ident = rmfield(optin.africa.ident,'kurtosis_wthresh'); catch, opt.africa.ident.kurtosis_wthresh=0.4; end; % threshold to use on robust GLM weights. Set to zero to not use. Set between 0 and 1, where a value closer to 1 gives more aggressive rejection
+try, opt.africa.ident.kurtosis_thresh=optin.africa.ident.kurtosis_thresh; optin.africa.ident = rmfield(optin.africa.ident,'kurtosis_thresh'); catch, opt.africa.ident.kurtosis_thresh=0; end; % threshold to use on kurtosis. Set to zero to not use. Both the thresh and wthresh conditions must be met to reject 
 try, opt.africa.ident.do_mains=optin.africa.ident.do_mains; optin.africa.ident = rmfield(optin.africa.ident,'do_mains'); catch, opt.africa.ident.do_mains=1; end; % flag to indicate whether or not mains component should be looked for
 try, opt.africa.ident.mains_frequency=optin.africa.ident.mains_frequency; optin.africa.ident = rmfield(optin.africa.ident,'mains_frequency'); catch, opt.africa.ident.mains_frequency=50; end; % mains freq in Hz
-try, opt.africa.ident.mains_kurt_thresh=optin.africa.ident.mains_kurt_thresh; optin.africa.ident = rmfield(optin.africa.ident,'mains_kurt_thresh'); catch, opt.africa.ident.mains_kurt_thresh=0.4; end; % mains kurtosis threshold (below which Mains IC must be)
+try, opt.africa.ident.mains_kurt_thresh=optin.africa.ident.mains_kurt_thresh; optin.africa.ident = rmfield(optin.africa.ident,'mains_kurt_thresh'); catch, opt.africa.ident.mains_kurt_thresh=0.2; end; % mains kurtosis threshold (below which Mains IC must be)
 try, opt.africa.ident.func=optin.africa.ident.func; optin.africa.ident = rmfield(optin.africa.ident,'func'); catch, opt.africa.ident.func=@identify_artefactual_components_auto; end; % function pointer to artefact detection algorithm
 try, opt.africa.ident.max_num_artefact_comps=optin.africa.ident.max_num_artefact_comps; optin.africa.ident = rmfield(optin.africa.ident,'max_num_artefact_comps'); catch, opt.africa.ident.max_num_artefact_comps=10; end; % max number of components that will be allowed to be labelled as bad in each category
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% highpass settings
-
-try, opt.highpass.do=optin.highpass.do; optin.highpass = rmfield(optin.highpass,'do'); catch, opt.highpass.do=0; end; % flag to indicate if high pass filtering should be done (post-AFRICA)
-try, opt.highpass.cutoff=optin.highpass.cutoff; optin.highpass = rmfield(optin.highpass,'cutoff'); catch, opt.highpass.cutoff=0.1; end; % highpass cutoff in Hz
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% epoch settings
@@ -306,6 +312,19 @@ if ~isempty(wierdfields)
 end % if ~isempty(wierdfields)
 end;
 
+if isfield(optin,'mains'),
+wierdfields = fieldnames(optin.mains);
+if ~isempty(wierdfields)
+    disp('The following opt.mains settings were not recognized by osl_check_opt');
+
+    for iprint = 1:numel(wierdfields)
+        disp([' ' wierdfields{iprint} ' '])
+    end
+    error('Invalid osl_check_opt settings');
+
+end % if ~isempty(wierdfields)
+end;
+
 if isfield(optin,'downsample'),
 wierdfields = fieldnames(optin.downsample);
 if ~isempty(wierdfields)
@@ -376,6 +395,7 @@ try, optin = rmfield(optin,'epoch');catch, end;
 try, optin = rmfield(optin,'outliers');catch, end;
 try, optin = rmfield(optin,'bad_segments');catch, end;
 try, optin = rmfield(optin,'highpass');catch, end;
+try, optin = rmfield(optin,'mains');catch, end;
 try, optin = rmfield(optin,'downsample');catch, end;
 try, optin = rmfield(optin,'coreg');catch, end;
 try, optin = rmfield(optin,'maxfilter');catch, end;

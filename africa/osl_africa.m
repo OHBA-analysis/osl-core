@@ -32,6 +32,8 @@ function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
 %
 % S.used_maxfilter - [0/1] if Maxfilter has been used, default = 0
 %
+% S.precompute_topos   - pre-compute and save IC spatial map topos after ica is computed for use in ident
+%
 % Written by Henry Luckhoo and Adam Baker
 
 
@@ -79,6 +81,10 @@ if not(isfield(S,'do_plots'))
     S.do_plots = 0;
 end
 
+if ~isfield(S,'precompute_topos');
+    S.precompute_topos = 0; 
+end
+
 if ~isfield(S,'todo');
     S.todo = struct; 
 end
@@ -116,13 +122,32 @@ fig_titles  = [];
 if S.todo.ica
     S.ica_res = perform_sensorspace_ica(S);
     if isfield(S,'ica_file')
+                
+        % Precompute topographies
+        if S.precompute_topos
+            try
+                topos = S.ica_res.topos;
+            catch
+                topos = [];
+                sm = S.ica_res.sm;
+                modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
+                for m = 1:numel(modalities)
+                    disp(['Precomputing sensor topographies for modality ' modalities{m}]);
+                    topos = [topos component_topoplot(D,sm,modalities(m))];
+                end
+            end
+            S.ica_res.topos   = topos;
+        end
+        
         save(S.ica_file,'S');
         msg = sprintf('\n%s%s\n%','Saving ICA results to ', S.ica_file);
         fprintf(msg);
+
     else
         msg = sprintf('\n%s\n%','Results not being saved.');
         fprintf(msg);
     end
+
 elseif any(structfun(@istrue,S.todo))
     % Load from file
     if isfield(S,'ica_file') && exist(S.ica_file,'file')==2

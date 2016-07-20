@@ -40,11 +40,10 @@ if ~opt.maxfilter.do && strcmp(opt.input_file_type,'raw_fif_files'),
 end;
 
 for subi=1:length(opt.sessions_to_do),
+    subnum=opt.sessions_to_do(subi);
 
     % single session results container:
     opt_results=[];
-
-    subnum=opt.sessions_to_do(subi);
 
     % have individual log file for this subject
     opt_results.logfile=[opt.results.plotsdir '/log-' date '-session' num2str(subnum) '.txt'];
@@ -449,103 +448,7 @@ for subi=1:length(opt.sessions_to_do),
         close all
     end;
 
-
-    %%%%%%%%%%%%%%%%%%%
-    %% DO REGISTRATION AND RUN FORWARD MODEL BASED ON STRUCTURAL SCANS
-    % needs to be done before any montaging (e.g.in AFRICA) to ensure that
-    % Neuromag gradiometer baseline correction is done correctly.
-    if(opt.coreg.do),
-        disp(['%%%%%%%%%%%%%%%%%%%%%%%  COREG, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
-        S=[];
-        spm_file=[opt.dirname '/' spm_files_basenames{subnum} '.mat'];
-        S.D = [spm_file];
-        S.mri=opt.coreg.mri{subnum};
-        S.useheadshape=opt.coreg.useheadshape;
-        S.forward_meg=opt.coreg.forward_meg;
-        S.use_rhino=opt.coreg.use_rhino;
-
-        if(isfield(opt.coreg,'fid_mnicoords')),
-            S.fid.coords = opt.coreg.fid_mnicoords;
-            S.fid.coordsys = 'MNI';
-            % flirt -in /Users/woolrich/Desktop/GN170_anatomy_test.nii -ref /usr/local/fsl/data/standard/MNI152_T1_2mm -out /Users/woolrich/Desktop/anat_mne2;
-        end;
-        S.fid.label = opt.coreg.fid_label;
-
-        D=osl_headmodel(S);
-        clc
-        close all;
-
-        % CHECK REGISTRATION
-
-        % mnifid = ft_transform_headshape(D.inv{1}.datareg.toMNI,D.inv{1}.datareg.fid_mri );mnifid.fid.pnt
-        % opt.fid_mnicoords.nasion =[  1.3968   81.9389  -44.9899];opt.fid_mnicoords.lpa =[-83.3246  -20.2372  -68.1528];opt.fid_mnicoords.rpa = [83.9906  -19.5985  -65.6612];
-
-        %%
-        spm_file=[opt.dirname '/' spm_files_basenames{subnum} '.mat'];
-        Dcheck=spm_eeg_load(spm_file);
-        %spm_eeg_inv_checkdatareg(D);
-
-        coregfig1 = sfigure;
-        set(coregfig1,'Position',[300 300 1200 800]);
-        set(coregfig1,'Color', [1,1,1]);
-        subplot(1,3,1)
-        spm_eeg_inv_checkdatareg_3Donly(Dcheck);
-        view(-180,0)
-        %title(['concatMefsession' num2str(counter) '_spm_meeg'])
-        subplot(1,3,2)
-        spm_eeg_inv_checkdatareg_3Donly(Dcheck);
-        view(-270,0)
-        subplot(1,3,3)
-        spm_eeg_inv_checkdatareg_3Donly(Dcheck);
-        view(130,18)
-        title(['Session ' num2str(subnum)]);
-        %%
-
-        report=osl_report_set_figs(report,'Coregistration',coregfig1);
-        report=osl_report_print_figs(report);
-    end;
-
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% Perform AfRICA - ICA denoising
-
-    if(opt.africa.todo.ica) || (opt.africa.todo.ident) || (opt.africa.todo.remove)
-
-        disp(['%%%%%%%%%%%%%%%%%%%%%%%  AFRICA, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
-        S=opt.africa;
-
-        spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
-        S.D=spm_file;
-        S.logfile = 0;
-        S.ica_file = [S.D '_africa_results'];
-        S.do_plots=1;
-        S.just_ica=0;       % set to 1 if want to run ICA only and not other two stages as well
-
-        S.todo = opt.africa.todo;
-
-        [spm_files_new{subnum}, fig_handles, fig_names, fig_titles, S]=osl_africa(S);
-        opt_results.africa=S.ica_res;
-        opt_results.africa_fname=S.ica_file;
-        report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
-        report=osl_report_print_figs(report);
-
-        % delete obsolete spm file
-        spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];
-        Dold=spm_eeg_load(spm_file_old);
-        if (opt.cleanup_files == 2)
-            if opt.africa.todo.remove ~= 0;
-                % Don't delete the old file if we haven't made a new one yet
-                Dold.delete;
-            end
-        end;
-
-        if opt.africa.todo.remove
-            spm_files_basenames{subnum}=['A' spm_files_basenames{subnum}];
-        else
-            spm_files_basenames{subnum}=[spm_files_basenames{subnum}];
-        end;
-    end
-
-    %%%%%%%%%%%%%%%%%%%
     %% High Pass Filter
     % To get rid of low frequency fluctuations in the data
 
@@ -567,7 +470,85 @@ for subi=1:length(opt.sessions_to_do),
         end;
 
         spm_files_basenames{subnum}=['f' spm_files_basenames{subnum}];
-    end;
+    end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% Mains Filter
+    if(opt.mains.do)
+        disp(['%%%%%%%%%%%%%%%%%%%%%%%  MAINS FILT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+ 
+        spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+        S3              = [];
+        S3.D            = spm_file;
+        S3.type          = 'butterworth';
+        S3.freq         = [48 52];
+        S3.band         = 'stop';
+        S3.dir          = 'twopass';
+        S3.order        = 5;
+        D = spm_eeg_filter(S3);
+        
+        % delete obsolete spm file
+        spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];
+        Dold=spm_eeg_load(spm_file_old);
+        if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
+            Dold.delete;
+        end;
+
+        spm_files_basenames{subnum}=['f' spm_files_basenames{subnum}];
+    end
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% Perform AfRICA - ICA denoising
+
+    if(opt.africa.todo.ica) || (opt.africa.todo.ident) || (opt.africa.todo.remove)
+
+        disp(['%%%%%%%%%%%%%%%%%%%%%%%  AFRICA, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+        
+        % store for africa results:
+        africa_dir=fullfile(opt.dirname,'africa');
+        mkdir(africa_dir);
+        
+        S=opt.africa;
+
+        spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+        S.D=spm_file;
+        S.logfile = 0;
+                
+        S.ica_file = fullfile(africa_dir, strtok(spm_files_basenames{subnum},'.'));
+        
+        S.do_plots=1;
+        S.todo = opt.africa.todo;
+        S.precompute_topos=opt.africa.precompute_topos;
+        
+        [spm_files_new{subnum}, fig_handles, fig_names, fig_titles, S]=osl_africa(S);
+        
+        opt_results.ica_file=S.ica_file;
+        
+        report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
+        report=osl_report_print_figs(report);
+
+        % delete obsolete spm file
+        spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];
+        Dold=spm_eeg_load(spm_file_old);
+        
+        % don't delete pre-africa file as it may be needed for rerunning
+        % africa
+        
+        %if (opt.cleanup_files == 2)
+        %    if opt.africa.todo.remove ~= 0;
+        %        % Don't delete the old file if we haven't made a new one yet
+        %        Dold.delete;
+        %    end
+        %end;
+
+        if opt.africa.todo.remove
+            spm_files_basenames{subnum}=['A' spm_files_basenames{subnum}];
+        else
+            spm_files_basenames{subnum}=[spm_files_basenames{subnum}];
+            warning('AFRICA has been run, but bad components have not been removed');
+        end
+    end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Mark bad segments
@@ -683,6 +664,7 @@ for subi=1:length(opt.sessions_to_do),
         end;
     end
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     %% plot spectograms
     disp(['%%%%%%%%%%%%%%%%%%%%%%%  PLOT SPECTOGRAMS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
@@ -707,6 +689,79 @@ for subi=1:length(opt.sessions_to_do),
     end
     
     %%%%%%%%%%%%%%%%%%%
+    %% DO REGISTRATION AND RUN FORWARD MODEL BASED ON STRUCTURAL SCANS
+    % needs to be done before any montaging (e.g.in AFRICA) to ensure that
+    % Neuromag gradiometer baseline correction is done correctly.
+    if(opt.coreg.do),
+        disp(['%%%%%%%%%%%%%%%%%%%%%%%  COREG, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+        S=[];
+        spm_file=[opt.dirname '/' spm_files_basenames{subnum} '.mat'];
+        S.D = [spm_file];
+        S.mri=opt.coreg.mri{subnum};
+        S.useheadshape=opt.coreg.useheadshape;
+        S.forward_meg=opt.coreg.forward_meg;
+        S.use_rhino=opt.coreg.use_rhino;
+
+        if(isfield(opt.coreg,'fid_mnicoords')),
+            S.fid.coords = opt.coreg.fid_mnicoords;
+            S.fid.coordsys = 'MNI';
+            % flirt -in /Users/woolrich/Desktop/GN170_anatomy_test.nii -ref /usr/local/fsl/data/standard/MNI152_T1_2mm -out /Users/woolrich/Desktop/anat_mne2;
+        end;
+        S.fid.label = opt.coreg.fid_label;
+
+        D=osl_headmodel(S);
+        clc
+        close all;
+
+        % CHECK REGISTRATION
+
+        % mnifid = ft_transform_headshape(D.inv{1}.datareg.toMNI,D.inv{1}.datareg.fid_mri );mnifid.fid.pnt
+        % opt.fid_mnicoords.nasion =[  1.3968   81.9389  -44.9899];opt.fid_mnicoords.lpa =[-83.3246  -20.2372  -68.1528];opt.fid_mnicoords.rpa = [83.9906  -19.5985  -65.6612];
+
+        %%
+        spm_file=[opt.dirname '/' spm_files_basenames{subnum} '.mat'];
+        Dcheck=spm_eeg_load(spm_file);
+        %spm_eeg_inv_checkdatareg(D);
+
+        %% spm displays
+        coregfig1 = sfigure;
+        set(coregfig1,'Position',[300 300 1200 800]);
+        set(coregfig1,'Color', [1,1,1]);
+        subplot(1,3,1)
+        spm_eeg_inv_checkdatareg_3Donly(Dcheck);
+        view(-180,0)
+        %title(['concatMefsession' num2str(counter) '_spm_meeg'])
+        subplot(1,3,2)
+        spm_eeg_inv_checkdatareg_3Donly(Dcheck);
+        view(-270,0)
+        subplot(1,3,3)
+        spm_eeg_inv_checkdatareg_3Donly(Dcheck);
+        view(130,18)
+        title(['Session ' num2str(subnum)]);
+        %%
+        report=osl_report_set_figs(report,'Coregistration_spm_view',coregfig1);
+        report=osl_report_print_figs(report);
+
+        %% now do rhino displays
+        coregfig2 = sfigure;
+        rhino_display(Dcheck,coregfig2);
+        view(45,5)
+        title(['Session ' num2str(subnum)]);
+        report=osl_report_set_figs(report,'Coregistration_rhino_view1',coregfig2);
+        report=osl_report_print_figs(report);
+        
+        coregfig3 = sfigure;
+        rhino_display(Dcheck,coregfig3);
+        view(90,-10)
+        title(['Session ' num2str(subnum)]);
+        report=osl_report_set_figs(report,'Coregistration_rhino_view2',coregfig3);
+        report=osl_report_print_figs(report);
+        
+        %%
+        
+    end;
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% DO EPOCHING (if epoch-based task data)
 
     if(opt.epoch.do),
@@ -763,16 +818,29 @@ for subi=1:length(opt.sessions_to_do),
         spm_files_epoched_basenames{subnum}=['e' spm_files_basenames{subnum}];
         
         opt_results.spm_files_epoched_basename=spm_files_epoched_basenames{subnum};
-
-    end;
+        epoched=true;
+    else
+        % check if epoching already been done on spm_file
+        
+        spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+        
+        D2=spm_eeg_load(spm_file);
+        
+        epoched= (D2.ntrials>1) ;
+        
+        if epoched
+            spm_files_epoched_basenames{subnum}=spm_files_basenames{subnum};
+            opt_results.spm_files_epoched_basename=spm_files_epoched_basenames{subnum};
+        end
+    end
     
-    if(opt.outliers.do),
+    if(opt.outliers.do && epoched),
         %%%%%%%%%%%%%%%%%%%%
         %% Detect bad events and chans
 
         disp(['%%%%%%%%%%%%%%%%%%%%%%%  BAD CHAN/EVENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
-        if ~opt.epoch.do
+        if ~opt.epoch.do           
             spm_files_epoched_basenames{subnum}=spm_files_basenames{subnum};
         end;
         spm_file=[opt.dirname '/' spm_files_epoched_basenames{subnum}];
@@ -809,7 +877,7 @@ for subi=1:length(opt.sessions_to_do),
 
         opt_results.spm_files_epoched_basename=spm_files_epoched_basenames{subnum};
 
-    end;
+    end
 
     opt_results.spm_files_basename=spm_files_basenames{subnum};
 
@@ -842,7 +910,11 @@ for subi=1:length(opt.sessions_to_do),
         ME.getReport
 
     end
-end;
+end
+
+%%%%%%%%%%%%%%%%%%%%
+%% gather results over all sessions
+opt=opt_gather_results(opt);
 
 %%%%%%%%%%%%%%%%%%%%
 %% diagnostic plots over all sessions
@@ -855,25 +927,6 @@ opt.results.report=osl_report_write(opt_report);
 %%%%%%%%%%%%%%%%%%%
 %% output res
 opt.osl2_version=osl2_version;
-
-opt.results.spm_files_basenames=spm_files_basenames;
-opt.results.spm_files_epoched_basenames=spm_files_epoched_basenames;
-
-opt.results.spm_files=[];
-opt.results.spm_files_epoched=[];
-
-% construct full paths
-if ~isempty(opt.results.spm_files_basenames),
-    for subi=1:length(opt.sessions_to_do), subnum=opt.sessions_to_do(subi);
-        if ~isempty(opt.results.spm_files_basenames{subnum}),
-            opt.results.spm_files{subnum}=[opt.dirname '/' opt.results.spm_files_basenames{subnum}];
-
-            if(opt.epoch.do),
-                opt.results.spm_files_epoched{subnum}=[opt.dirname '/' opt.results.spm_files_epoched_basenames{subnum}];
-            end;
-        end;
-    end;
-end;
 
 opt.fname=[opt.dirname '/opt'];
 

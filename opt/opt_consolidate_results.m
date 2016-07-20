@@ -32,35 +32,26 @@ num_sessions=length(opt.convert.spm_files_basenames);
 
 %%%%%%%%%%%%%%%%%%%%
 %% find SPM MEEG file results
-opt.results.spm_files=cell(num_sessions,1);
-opt.results.spm_files_basenames=cell(num_sessions,1);
-opt.results.spm_files_epoched=cell(num_sessions,1);
-opt.results.spm_files_epoched_basenames=cell(num_sessions,1);
 
-for subi=1:length(opt.sessions_to_do), ii=opt.sessions_to_do(subi);
+for subi=1:length(opt.sessions_to_do), 
+    subnum=opt.sessions_to_do(subi);
          
     % try and load in results
-    opt.results.fnames{ii}=['session' num2str(ii)];
+    opt.results.fnames{subnum}=['session' num2str(subnum)];
     
-    try,
-        opt_results=opt_load_results(opt, opt.results.fnames{ii});
-    catch,
-        opt.results.fnames{ii}=[];
-    end;
+    try
+        opt_results=opt_load_results(opt, opt.results.fnames{subnum});
+    catch
+        opt.results.fnames{subnum}=[];
+    end
     
     % build logfile
     runcmd(['cat ' opt_results.logfile '>' opt.results.logfile]);
-    
-    opt.results.spm_files_basenames{ii}=opt_results.spm_files_basename;
-    opt.results.spm_files{ii}=[opt.dirname '/'  opt.results.spm_files_basenames{ii}];
- 
-    if opt.epoch.do,
-    
-        opt.results.spm_files_epoched_basenames{ii}=opt_results.spm_files_epoched_basename;
-        opt.results.spm_files_epoched{ii}=[opt.dirname '/'  opt.results.spm_files_epoched_basenames{ii}];
-
-    end;
+        
 end
+
+% gather the results together
+opt = opt_gather_results(opt);
 
 %%%%%%%%%%%%%%%%%%%%
 %% do web report
