@@ -13,6 +13,7 @@ opt.results.spm_files_basenames=cell(num_sessions,1);
 opt.results.spm_files_epoched=cell(num_sessions,1);
 opt.results.spm_files_epoched_basenames=cell(num_sessions,1);
 opt.results.badchans=nan(length(opt.sessions_to_do),1);    
+opt.results.bad_segments=nan(length(opt.sessions_to_do),1);
 opt.results.rejected=nan(length(opt.sessions_to_do),1);
 opt.results.autobadoff=nan(length(opt.sessions_to_do),1);
 opt.results.icsremoved=nan(length(opt.sessions_to_do),1);
@@ -42,12 +43,23 @@ for subi=1:length(opt.sessions_to_do),
         % ica results
         if opt.africa.todo.ica || opt.africa.todo.ident || opt.africa.todo.remove
             try
-                ica_S=load(opt_results.ica_file);
+                ica_S=load(opt_results.ica_file);                
+            catch
+                try
+                    % try this:
+                    opt_results.ica_file=[opt.dirname '/africa/' opt.results.spm_files_basenames{subnum} '.mat']; opt_save_results(opt, opt_results);
+                    ica_S=load(opt_results.ica_file);
+                catch
+                    warning(['Could not load ica_file for ' opt.results.fnames{subnum}]);
+                end
+            end
+            
+            try 
                 opt.results.ica_files{subnum}=ica_S.S.ica_file;
                 opt.results.spm_files_ica_input{subnum}=ica_S.S.D;
             catch
-                warning(['Could not load ica files for ' opt.results.fnames{subnum}]);
-            end
+                warning(['Invalid ica_file for ' opt.results.fnames{subnum}]);
+            end    
         end
         
         S2=[];
@@ -62,21 +74,25 @@ for subi=1:length(opt.sessions_to_do),
 
         opt.results.badchans(subnum)=length(D.badchannels);
         opt.results.rejected(subnum)=length(D.badtrials);
-
+        
+        if isfield(opt_results,'bad_segments') && isfield(opt_results.bad_segments, 'bad_segments')
+            opt.results.bad_segments(subnum)=length(opt_results.bad_segments.bad_segments);
+        end
+        
         if isfield(opt_results,'maxfilter') && isfield(opt_results.maxfilter,'badchans_pre_sss')                    
             opt.results.badchans_pre_sss(subnum)=length(opt_results.maxfilter.badchans_pre_sss);
-        end;
+        end
 
         if isfield(opt_results,'maxfilter') && isfield(opt_results.maxfilter,'sss_autobad_off')        
             opt.results.autobadoff(subnum)=opt_results.maxfilter.sss_autobad_off(subnum);
-        end;
+        end
 
         if isfield(opt_results,'africa') && isfield(opt_results.africa, 'bad_components')
             opt.results.icsremoved(subnum)=length(opt_results.africa.bad_components);
-        end;
+        end
 
     catch ME,
-        disp(['Could not get results for ' opt.results.fnames{subnum}]);
+        disp(['Could not get results for subject number ' num2str(subnum)]);
         ME.getReport
     end;        
 

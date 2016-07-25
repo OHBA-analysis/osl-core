@@ -93,6 +93,9 @@ end
 try, opt.sessions_to_do=optin.sessions_to_do; optin = rmfield(optin,'sessions_to_do'); catch, opt.sessions_to_do=1:num_sessions; end;
 
 try, opt.dirname=optin.dirname; optin = rmfield(optin,'dirname'); catch, opt.dirname=[sess{1} '.opt']; end; % directory name which will be created and within which all results associated with this source recon will be stored
+if(isempty(findstr(opt.dirname, '.opt')))
+    opt.dirname=[opt.dirname, '.opt'];
+end
 
 try, opt.modalities=optin.modalities; optin = rmfield(optin,'modalities');
 catch,
@@ -171,7 +174,7 @@ try, opt.mains.do=optin.mains.do; optin.mains = rmfield(optin.mains,'do'); catch
 try, opt.bad_segments.do=optin.bad_segments.do; optin.bad_segments = rmfield(optin.bad_segments,'do'); catch, opt.bad_segments.do=1; end; % flag to indicate if bad_segment marking should be done
 try, opt.bad_segments.dummy_epoch_tsize=optin.bad_segments.dummy_epoch_tsize; optin.bad_segments = rmfield(optin.bad_segments,'dummy_epoch_tsize'); catch, opt.bad_segments.dummy_epoch_tsize=2; end; % size of dummy epochs (in secs) to do outlier bad segment marking
 try, opt.bad_segments.outlier_measure_fns=optin.bad_segments.outlier_measure_fns; optin.bad_segments = rmfield(optin.bad_segments,'outlier_measure_fns'); catch, opt.bad_segments.outlier_measure_fns={'std'}; end; % list of outlier metric func names to use for bad segment marking
-try, opt.bad_segments.wthresh_ev=optin.bad_segments.wthresh_ev; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_ev'); catch, opt.bad_segments.wthresh_ev=0.4*ones(length(opt.bad_segments.outlier_measure_fns),1); end; % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
+try, opt.bad_segments.wthresh_ev=optin.bad_segments.wthresh_ev; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_ev'); catch, opt.bad_segments.wthresh_ev=0.3*ones(length(opt.bad_segments.outlier_measure_fns),1); end; % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
 try, opt.bad_segments.wthresh_chan=optin.bad_segments.wthresh_chan; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_chan'); catch, opt.bad_segments.wthresh_chan=0.01*ones(length(opt.bad_segments.outlier_measure_fns),1); end;% list of robust GLM weights thresholds to use on chans for bad segment marking, the LOWER the theshold the less aggressive the rejection
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -181,7 +184,7 @@ try, do_africa=optin.africa.do; optin.africa = rmfield(optin.africa,'do'); catch
 try, opt.africa.todo.ica=optin.africa.todo.ica; optin.africa.todo = rmfield(optin.africa.todo,'ica'); catch, opt.africa.todo.ica=do_africa; end; % flag to do or not do ica decomposition
 try, opt.africa.todo.ident=optin.africa.todo.ident; optin.africa.todo = rmfield(optin.africa.todo,'ident'); catch, opt.africa.todo.ident=do_africa; end; % flag to do or not do artefact rejection
 try, opt.africa.todo.remove=optin.africa.todo.remove; optin.africa.todo = rmfield(optin.africa.todo,'remove'); catch, opt.africa.todo.remove=do_africa; end; % flag to do or not do artefactual component removal
-try, opt.africa.precompute_topos=optin.africa.precompute_topos; optin.africa = rmfield(optin.africa,'precompute_topos'); catch, opt.africa.precompute_topos=0; end; % flag to do or not do precomputation of topos of IC spatial maps after ica has been computed for future use in ident
+try, opt.africa.precompute_topos=optin.africa.precompute_topos; optin.africa = rmfield(optin.africa,'precompute_topos'); catch, opt.africa.precompute_topos=1; end; % flag to do or not do precomputation of topos of IC spatial maps after ica has been computed for future use in ident
 
 try, opt.africa.used_maxfilter=optin.africa.used_maxfilter; optin.africa = rmfield(optin.africa,'used_maxfilter');
 catch,

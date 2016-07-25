@@ -4,6 +4,10 @@ function res=opt_load_results(opt, fname)
 %
 % load a matlab struct named results from file named fname
 
+    if(isempty(findstr(opt.dirname, '.opt')))
+        opt.dirname=[opt.dirname, '.opt'];
+    end
+
     tmp=load([opt.dirname '/' fname]);
     
     res=tmp.opt_results;
