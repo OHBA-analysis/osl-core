@@ -9,6 +9,7 @@ res=[];
 [status,res]=dos(['fslval ' mask_fname ' pixdim1']);
 try
     mni_res(1)=str2double(res);
+    assert(isfinite(mni_res(1)));
 catch
     if(strcmp(getenv('FSLDIR'),'')),
         error('FSLDIR environmental variable is not set, please make sure that FSL is fully installed.');
