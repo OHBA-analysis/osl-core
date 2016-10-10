@@ -124,7 +124,8 @@ try oat.source_recon.regpc=oatin.source_recon.regpc; oatin.source_recon = rmfiel
 try oat.source_recon.gridstep=oatin.source_recon.gridstep; oatin.source_recon = rmfield(oatin.source_recon,'gridstep'); catch, oat.source_recon.gridstep=7; end; % space between dipoles in beamformer grid in mm
 try oat.source_recon.mask_fname=oatin.source_recon.mask_fname; oatin.source_recon = rmfield(oatin.source_recon,'mask_fname'); catch, end;
 try oat.source_recon.forward_meg = oatin.source_recon.forward_meg; oatin.source_recon = rmfield(oatin.source_recon,'forward_meg'); catch, oat.source_recon.forward_meg='Single Shell'; end % MEG head forward model set to 'Single Shell' or 'MEG Local Spheres'
-  
+try oat.source_recon.mri=oatin.source_recon.mri; oatin.source_recon = rmfield(oatin.source_recon,'mri'); catch, oat.source_recon.mri=[]; end;
+
 % pca_dim is a num_sessions vector with the rank for each session to be use for the pca
 % dimensionality reduction. If pca_dim=-1 then spm_pca_order is used to estimate pca_dim. 
 % If oat.source_recon.do_reduce_pca=1 then this is used prior to any source recon, 
