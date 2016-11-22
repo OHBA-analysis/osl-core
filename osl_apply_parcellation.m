@@ -15,7 +15,7 @@ function [D,parcellation,assignments,mni_coords] = osl_apply_parcellation(S)
 % S.method              - method for reconstructing parcel time course:
 %                           ['PCA','mean','peakVoxel']
 % S.prefix              - filename prefix for new MEEG object (default 'p')
-% S.hcp_sourcemodel3d   - if it is HCP data, then need to pass in the 
+% S.hcp_sourcemodel3d   - if it is HCP data, then need to pass in the
 %                           sourcemodel3d
 %
 % OUTPUTS:
@@ -26,7 +26,7 @@ function [D,parcellation,assignments,mni_coords] = osl_apply_parcellation(S)
 %                 voting
 % mni_coords    - mni_coords of centres of parcels
 
-global OSLDIR 
+global OSLDIR
 
 % Check SPM File Specification:
 try
@@ -64,10 +64,10 @@ else
             catch
                 error('Make sure the parcellation file and the data are valid and compatible, including having the same spatial resolution.');
             end
-            
+
             % compute mni_coords as centres of gravity of parcels
-            mni_coords=osl_mniparcellation2mnicoords(S.parcellation);  
-            
+            mni_coords=osl_mniparcellation2mnicoords(S.parcellation);
+
         case {'single','double','logical'}
             parcellation = S.parcellation;
         otherwise
@@ -99,21 +99,38 @@ for voxel = 1:size(parcellation,1)
     end
 end
 
-% Note that we reshape trialwise data (for future: get ROInets.get_node_tcs to work with trialwise MEEG data)
-voxeldata = reshape(D(:,:,:),[D.nchannels,D.nsamples*D.ntrials]);
-good_samples = ~all(badsamples(D,':',':',':'));
-good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-voxeldata = voxeldata(:,good_samples);
+if D.ntrials == 1 % can just pass in the MEEG object
+    voxeldata = D;
+    good_samples = ~all(badsamples(D,':',':',':'));
+    % Get time-coursess
+    nodedata = ROInets.get_node_tcs(voxeldata, parcellation, S.method);
+    nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
 
-nodedata = ROInets.get_node_tcs(voxeldata, parcellation, S.method);
-nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
+    data = zeros(size(nodedata,1),length(good_samples));
+    data(:,good_samples) = nodedata;
 
-data = zeros(size(nodedata,1),length(good_samples));
-data(:,good_samples) = nodedata;
+    data = reshape(data,[size(data,1),D.nsamples,D.ntrials]);
 
-data = reshape(data,[size(data,1),D.nsamples,D.ntrials]);
+else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG data)
+    good_samples = ~all(badsamples(D,':',':',':'));
+    nodedata = zeros(size(parcellation,2),D.nsamples,D.ntrials);
 
-clear voxeldata_concat nodedata_concat;
+    for idx = 1:D.ntrials
+        % We're ignoring trials with bad samples as they might be rank
+        % deficient, just leave them empty.
+        if good_samples(1,1,idx) == 1
+            voxeldata = D(:,:,idx);
+            nodedata(:,:,idx) = +ROInets.get_node_tcs(voxeldata, parcellation, S.method);
+            nodedata(:,:,idx) = +ROInets.remove_source_leakage(nodedata(:,:,idx), S.orthogonalisation);
+        end
+
+    end
+
+    data = nodedata;
+
+end
+
+clear voxeldata_concat nodedata_concat nodedata;
 
 % Save data to new MEEG object
 outfile = prefix(fullfile(D.path,D.fname),S.prefix);
@@ -126,8 +143,8 @@ D = Dnode; % For output
 
 D.parcellation.weights=parcellation;
 D.parcellation.assignments=assignments;
-D.parcellation.S=S;        
+D.parcellation.S=S;
 D.parcellation.mni_coords=mni_coords;
-  
+
 D.save;
 end
