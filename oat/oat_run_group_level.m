@@ -102,6 +102,12 @@ for subi=1:length(current_level.subjects_to_do),
                 end;
                 disp(str);
                                
+
+            elseif oat.first_level.parcellation.do
+
+                current_level_results.mask_indices_in_lower_level = 1:(size(lower_level_results.D_sensor_data,1) - 1);
+                current_level_results.mni_coords = lower_level_results.D_sensor_data.parcellation.mni_coords;
+
             else
                 
                 current_level_results.gridstep=lower_level_results.gridstep;
