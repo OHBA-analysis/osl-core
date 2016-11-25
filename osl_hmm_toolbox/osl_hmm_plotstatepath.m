@@ -10,7 +10,7 @@ if nargin < 2
 end
 
 try 
-    options = ft_checkopt(options,'mode','char',{'separate','overlay'});
+    options = ft_checkopt(options,'mode','char',{'separate','overlay'},'time_range');
 catch
     options.mode='separate';
     disp(['options.mode not set correctly. Defaulting to options.mode=''' options.mode '''']);
@@ -110,6 +110,9 @@ else
   xlabel('Time (s)');
 end
 
+if isfield(options,'time_range')
+    a=axis;
+    axis([options.time_range(1),options.time_range(2),a(3),a(4)]);
 end
 
 % Plots the HMM statepath
