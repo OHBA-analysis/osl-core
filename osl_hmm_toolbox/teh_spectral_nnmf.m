@@ -3,6 +3,8 @@ function [ res ] = teh_spectral_nnmf( S )
 % [ res ] = teh_spectral_nnmf( S )
 %
 
+try tmp=S.do_plots; catch, S.do_plots=1; end
+
 res=[];
 
 num_nodes=size(S.psds,4);
@@ -52,15 +54,22 @@ if isfield(S,'nnmf_psd_specs') && isfield(S,'nnmf_psd_maps')
     
 else    
     maxP=S.maxP;
-    clear eigvals maps specs psdtmp;
+    
+    % concat over states    
     psdtmp=[];
     for kk=1:NK
         psdtmp=cat(2,psdtmp, squeeze(mean(abs(auto_spectra_comps(:,kk,:,:)),1)));    
     end
 
-    [a b]=nnmf(psdtmp,maxP,'replicates',500,'algorithm','als');
-
-    clear maps;
+    if ~isfield(S,'fixed_psd_specs')
+        [a b]=nnmf_mww(psdtmp,maxP,'replicates',500,'algorithm','als');
+    else
+        opt = statset('maxiter',1);    
+        [a b]=nnmf_mww(psdtmp,size(S.fixed_psd_specs,1),'algorithm','als','w0',S.fixed_psd_specs','options',opt);
+    end
+    
+    maps=[];
+    specs=[];
     for pp=1:maxP
         ind=1;
         for kk=1:NK
@@ -79,7 +88,7 @@ else
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%
-%% apply psd nnmf to coh
+%% Now do coh
 
 clear a statset
 for pp=1:S.maxP
@@ -104,8 +113,6 @@ for kk=1:NK
         
 end
 
-%%%%%%%%%%%%%
-%% get nnmf spatial info for coh
 
 maxPcoh=S.maxPcoh;
 
@@ -114,11 +121,13 @@ if isfield(S,'nnmf_coh_specs') && isfield(S,'nnmf_coh_maps')
     res.nnmf_coh_maps=S.nnmf_coh_maps;
     
 else   
-    %opt = statset('maxiter',1);
-    %[anew bnew]=nnmf_mww(psdtmp,maxPcoh,'algorithm','als','w0',a,'options',opt);    
-    
-    [anew bnew]=nnmf(psdtmp,maxPcoh,'replicates',500,'algorithm','als');
-    
+    if ~isfield(S,'fixed_coh_specs')
+        [anew bnew]=nnmf_mww(psdtmp,maxPcoh,'replicates',500,'algorithm','als');
+    else
+        opt = statset('maxiter',1);    
+        [anew bnew]=nnmf_mww(psdtmp,size(S.fixed_coh_specs,1),'algorithm','als','w0',S.fixed_coh_specs','options',opt);
+    end
+         
     for pp=1:S.maxPcoh   
         coh_specs(pp,:)=anew(:,pp)';   
     end
@@ -153,15 +162,16 @@ end
 
 %%%%%%%%%%%%%%%%%%
 %% plot specs
-figure;
-for pp=1:S.maxP   
-    subplot(121);plot(res.nnmf_psd_specs(pp,:),get_cols(pp),'Linewidth',2);ho;
+if S.do_plots
+    figure;
+    for pp=1:S.maxP   
+        subplot(121);plot(res.nnmf_psd_specs(pp,:),get_cols(pp),'Linewidth',2);ho;
+    end
+    for pp=1:S.maxPcoh   
+        subplot(122);plot(res.nnmf_coh_specs(pp,:),get_cols(pp),'Linewidth',2);ho;
+    end
+    legend(get_cols)
 end
-for pp=1:S.maxPcoh   
-    subplot(122);plot(res.nnmf_coh_specs(pp,:),get_cols(pp),'Linewidth',2);ho;
-end
-legend(get_cols)
-
 
 end
 

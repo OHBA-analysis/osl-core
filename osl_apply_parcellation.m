@@ -103,15 +103,15 @@ end
 
 if D.ntrials == 1 % can just pass in the MEEG object
     voxeldata = D(:,:,:);
-    good_samples = ~all(badsamples(D,':',':',':'));
+    good_samples = ~all(badsamples(D,':',':',':')); % all checks if any channels are bad then ignore those samples
     % Get time-coursess
-    nodedata = ROInets.get_node_tcs(voxeldata, parcellation, S.method);
+    nodedata = ROInets.get_node_tcs(voxeldata(:,good_samples), parcellation, S.method);
     nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
 
     data = zeros(size(nodedata,1),length(good_samples));
     data(:,good_samples) = nodedata;
 
-    data = reshape(data,[size(data,1),D.nsamples,D.ntrials]);
+    data = reshape(data,[size(data,1),length(good_samples),D.ntrials]);
 
 elseif isa(D,'meeg') % work with D object in get_node_tcs
     good_samples = reshape(~all(badsamples(D,':',':',':')),1,[]);
@@ -159,7 +159,6 @@ outfile = prefix(fullfile(D.path,D.fname),S.prefix);
 Dnode = clone(montage(D,'switch',0),outfile,[size(data,1),D.nsamples,D.ntrials]);
 Dnode = chantype(Dnode,1:Dnode.nchannels,'VE');
 Dnode(:,:,:) = data;
-Dnode = Dnode.badtrials(1:D.ntrials,~squeeze(good_samples(1,1,:)));
 Dnode.save;
 
 D = Dnode; % For output
