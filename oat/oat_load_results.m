@@ -4,8 +4,8 @@ function res=oat_load_results(oat, fname)
 %
 % load a matlab struct named results from file named fname
 
-    if(isempty(findstr(oat.dirname, '.oat')))
-        oat.dirname=[oat.dirname, '.oat'];
+    if(isempty(findstr(oat.source_recon.dirname, '.oat')))
+        oat.dirname=[oat.source_recon.dirname, '.oat'];
     end
     
     tmp=load([oat.source_recon.dirname '/' fname]);
