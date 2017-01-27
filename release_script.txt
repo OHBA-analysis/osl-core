@@ -3,13 +3,15 @@
 
 WORKINGDIR=/Users/woolrich/Desktop
 
-OSL2GITRELEASETAG=0.2  # e.g create new release on github website: e.g. OSL2.0.2 for tag v0.2
-GLEANGITRELEASETAG=0.1 # note that GLEAN contains HMMMAR as a subproject
-MEGROInetsGITRELEASETAG=1.5.0
+# specify these 5 things to build a release:
+OSL2GITRELEASETAG=0.3  # e.g corresponds to release/tag (e.g. v0.3) created on github website
+GLEANGITRELEASETAG=0.2 # e.g. corresponds to release/tag (e.g. v0.2) created on github website, note that GLEAN contains HMMMAR as a subproject
+MEGROInetsGITRELEASETAG=1.6.0 # e.g. corresponds to release/tag (e.g. v1.6.0) created on github website 
+SUPPDIRSNAME=osl2_supporting_dirs_v2 # name of supplementary directories to use, do not want .tar.gz file ext here
+RELEASENAME=osl2.${OSL2GITRELEASETAG}.1 # overall name of built package
 
 # location of repository for supplementary directories
 SUPPDIRSDOWNLOADSITE=http://users.fmrib.ox.ac.uk/~woolrich/osl2
-SUPPDIRSNAME=osl2_supporting_dirs # do not want file ext here
 
 # where we will upload osl release to
 OSLUPLOADDIR=woolrich@jalapeno.fmrib.ox.ac.uk:/home/fs0/woolrich/www/osl2
@@ -34,6 +36,8 @@ rm -rf supporting_dirs
 
 tar xvf supporting_dirs.tar.gz
 rm -rf supporting_dirs.tar.gz
+
+echo "function ret=osl2_supporting_dirs_version, ret=‘$SUPPDIRSDOWNLOADSITE/$SUPPDIRSNAME';" > osl2/osl2_supporting_dirs_version.m
 
 ######
 # download current github osl release
@@ -69,7 +73,7 @@ echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/
 
 # also put a $REPONAME_version.m in the root osl2 dir
 rm -f osl2/${REPONAME}_version.m
-echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/${REPONAME}_version.m
+echo "function ret=${REPONAME}_version, ret='$tmp';" > osl2/$REPONAME/${REPONAME}_version.m
 
 ######
 # download current GLEAN osl release
@@ -102,7 +106,7 @@ mv $REPONAME-$GITRELEASETAG $REPONAME
 # update $REPONAME_version.m
 cd $WORKINGDIR
 rm -f osl2/$REPONAME/${REPONAME}_version.m
-echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/${REPONAME}_version.m
+echo "function ret=${REPONAME}_version, ret='$tmp';" > osl2/$REPONAME/${REPONAME}_version.m
 
 ######
 # download current MEG-ROI-nets osl release
@@ -134,19 +138,20 @@ mv $REPONAME-$GITRELEASETAG $REPONAME
 # update $REPONAME_version.m
 cd $WORKINGDIR
 rm -f osl2/$REPONAME/${REPONAME}_version.m
-echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/${REPONAME}_version.m
+echo "function ret=${REPONAME}_version, ret='$tmp';" > osl2/$REPONAME/${REPONAME}_version.m
 
 ######
 # create tar ball of osl
 
+echo "function ret=osl2_release_version, ret='$RELEASENAME';" > osl2/osl2_release_version.m
 cd $WORKINGDIR
-tar cvf osl2.tar osl2
-gzip -f osl2.tar
+tar cvf $RELEASENAME.tar osl2
+gzip -f $RELEASENAME.tar
 
 ######
-# upload - this bit obviously requires write permission $OSLUPLOADDIR
+# upload - this bit obviously requires write permission for $OSLUPLOADDIR
 
-scp -r osl2.tar.gz $OSLUPLOADDIR/
+scp -r $RELEASENAME.tar.gz $OSLUPLOADDIR/
 
-echo Point osl wiki to $OSLUPLOADDIR/osl2.tar.gz
+echo Built release can be downloaded from $OSLUPLOADDIR/$RELEASENAME.tar.gz
 
