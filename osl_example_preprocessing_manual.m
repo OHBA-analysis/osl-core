@@ -19,7 +19,8 @@
 
 global OSLDIR;
     
-osldir = '/Users/andrew/Software/Matlab/osl2.0';
+osldir = '/Users/woolrich/Desktop/osl2';
+osldir = '/Users/woolrich/Dropbox/osl2';
 
 addpath(osldir);
 osl_startup(osldir);
@@ -28,7 +29,7 @@ osl_startup(osldir);
 %% SPECIFY DIRS FOR THIS ANALYSIS
 
 % directory where the data is:
-datadir = '/Users/andrew/Software/Matlab/osl_test_data/face_data_sub1_osl2_new';
+datadir = '/Users/woolrich/Desktop/faces_subject1_data';
 
 % this is the directory the analysis files will be stored in:
 workingdir=[datadir]; 
@@ -44,8 +45,8 @@ clear fif_files spm_files_basenames;
 % fif_files{1}=[testdir '/fifs/sub1_face_sss.fif']; 
 % fif_files{2}=[testdir '/fifs/sub2_face_sss.fif']; 
 % etc...
-%fif_files{1}=[testdir '/fifs/sub1_face_sss.fif']; 
-fif_files{1}=[datadir '/fifs/sss_fif_spm_meg19.fif']; 
+fif_files{1}=[datadir '/fifs/sub1_face_sss.fif']; 
+%fif_files{1}=[datadir '/fifs/sss_fif_spm_meg19.fif']; 
 
 % Setup a list of SPM MEEG object file names to be created, in the same order as spm_files and fif_files:
 % Note that here we only have 1 subject, but more generally there would be
@@ -53,7 +54,7 @@ fif_files{1}=[datadir '/fifs/sss_fif_spm_meg19.fif'];
 % spm_files{1}=[workingdir '/spm8_meg1.mat'];
 % spm_files{2}=[workingdir '/spm8_meg1.mat'];
 % etc...
-spm_files_basenames{1}=['spm_meg19.mat'];
+spm_files_basenames{1}=['spm_meg1.mat'];
 
 %%%%%%%%%%%%%%%%%%%%
 %% CONVERT FROM FIF TO AN SPM MEEG OBJECT:
@@ -175,7 +176,7 @@ D=spm_eeg_filter(S2);
 % experiment from about 650 secs to the end. This will mean that we are not
 % using about half of the data. But with such bad artefacts this is the
 % best we can do. We can still obtain good results with what remains.
-D=oslview(D);
+%D=oslview(D);
 
 %%%%%%%%%%%%%%%%%%%%
 % [NOTE: at this point you would normally do AFRICA denoising: but we do
@@ -184,9 +185,9 @@ D=oslview(D);
 %% Run Coregistration
 S = [];
 S.D                 = D.fullfile;
-S.mri               = [datadir '/struct/structural.nii'];
+S.mri               = [datadir '/structurals/struct1.nii'];
 S.useheadshape      = 1;
-S.use_rhino         = 1;
+S.use_rhino         = 0;
 S.forward_meg       = 'Single Shell';
 S.fid.label.nasion  = 'Nasion';
 S.fid.label.lpa     = 'LPA';
@@ -197,7 +198,7 @@ D = osl_headmodel(S);
 
 % Check Coregistration
 
-rhino_display(D);
+%rhino_display(D);
 
 %%%%%%%%%%%%%%%%%%%
 %% DO EPOCHING
