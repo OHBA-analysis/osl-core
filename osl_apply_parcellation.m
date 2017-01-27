@@ -114,12 +114,12 @@ if D.ntrials == 1 % can just pass in the MEEG object
     data = reshape(data,[size(data,1),length(good_samples),D.ntrials]);
 
 elseif isa(D,'meeg') % work with D object in get_node_tcs
-    good_samples = reshape(~all(badsamples(D,':',':',':')),1,[]);
+    %good_samples = find(~all(badsamples(D,':',':',':')));
     nodedata = ROInets.get_node_tcs(D,parcellation,S.method);
     nodedata = reshape(nodedata(:,:,:),size(nodedata,1),[]);
     nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
-    data = zeros(size(nodedata,1),length(good_samples));
-    data(:,good_samples) = nodedata;
+    data = zeros(size(nodedata,1),size(nodedata,2));
+    data = nodedata;
     data = reshape(data,size(data,1),size(D,2),size(D,3));
 
 else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG data)
