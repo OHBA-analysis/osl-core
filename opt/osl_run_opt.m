@@ -11,11 +11,14 @@ opt.results=[];
 if(isempty(findstr(opt.dirname, '.opt')))
     opt.dirname=[opt.dirname, '.opt'];
 end
+
 mkdir(opt.dirname);
 
 % set logfile up
 opt.results.plotsdir=[opt.dirname '/plots'];
 opt.results.logfile=[opt.results.plotsdir '/log-' date '.txt'];
+mkdir(opt.results.plotsdir);
+
 % delete any existing diary file with the same name
 runcmd(['rm -f ' opt.results.logfile]);
 runcmd(['touch ' opt.results.logfile]);

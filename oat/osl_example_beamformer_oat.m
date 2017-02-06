@@ -16,10 +16,10 @@ global OSLDIR;
 
 % set this to where you have downloaded OSL and the practical data:
 practical_dir='/home/mwoolrich/Desktop';
-osldir=[practical_dir '/osl2.0'];
+osldir=[practical_dir '/osl2'];
 
 practical_dir='/Users/woolrich';
-osldir=[practical_dir '/Dropbox/osl2.0'];
+osldir=[practical_dir '/Dropbox/osl2'];
 
 addpath(osldir);
 osl_startup(osldir);
@@ -92,7 +92,7 @@ if oat.first_level.parcellation.do
     tilde='/Users/woolrich/';
     addpath([tilde 'Dropbox/vols_scripts/MEG-ROI-nets']);
 
-    parc_file=[tilde '/homedir/vols_data/hmm_investigations/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm'];
+    parc_file=[tilde '/Dropbox/vols_scripts/parcellations/fmri_d100_parcellation_with_PCC_reduced_2mm'];
     parcellationfile = [parc_file '_ss5mm_ds8mm'];
     
     %parcellationfile = [tilde '/homedir/vols_data/hmm_investigations/parcellations/aal2mni_cortical_4d_8mm'];

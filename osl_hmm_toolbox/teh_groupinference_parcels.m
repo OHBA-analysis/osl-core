@@ -419,6 +419,7 @@ if todo.output
             % maps:
             embed.do=0;
 
+            hmm.statemap_parcel_vectors_persubj=zeros(length(data_files),Dp.nchannels,hmm.K);
             for subnum = 1:length(data_files)
 
                 disp(['Computing ' output_method ' maps for ' data_files{subnum}]);
@@ -431,8 +432,11 @@ if todo.output
                 Dp = spm_eeg_load(data_files{subnum});
                 datap = osl_teh_prepare_data(Dp,normalisation,logtrans,f,embed);
                 
-                statp  = statp + osl_hmm_statemaps(hmm_sub,datap,true,output_method,state_assignment);            
+                tmp=osl_hmm_statemaps(hmm_sub,datap,true,output_method,state_assignment);            
 
+                statp  = statp + tmp;
+                hmm.statemap_parcel_vectors_persubj(subnum,:,:)=tmp;
+                
                 good_samples = ~all(badsamples(Dp,':',':',':'));
 
                 sp_full = zeros(1,Dp.nsamples*Dp.ntrials);

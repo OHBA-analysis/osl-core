@@ -57,7 +57,7 @@ for subnum=1:length(hmm.data_files)
     Dnew_epoched = spm_eeg_epochs(S2);   
     
     %% get bad channels and trials from passed in D_epoched    
-    if(~isempty(D_epoched)),
+    if(~isempty(D_epoched) && ~isfield(Dnew_epoched, 'parcellation')),
         rejtmp=badtrials(D_epoched);
         rej=zeros(1,D_epoched.ntrials);
         rej(rejtmp)=1;

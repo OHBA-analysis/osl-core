@@ -71,18 +71,24 @@ for sessi=1:length(oat.source_recon.sessions_to_do), sessnum=oat.source_recon.se
     catch ME,
         disp(['Could not get summary diagnostics for ' oat.source_recon.results_fnames{sessnum}]);
         ME.getReport
-    end;
-end;
+    end
+end
 
-report=osl_report_set_figs(report,'pca_order');
-plot(oat.source_recon.sessions_to_do,source_recon_results.pca_order,'*');xlabel('sess no.');ylabel('PCA dim used'); 
-report=osl_report_print_figs(report);
-
-for ff=1:length(res.normalisation),
-    report=osl_report_set_figs(report,[oat.source_recon.modalities{ff} ' normalisation']);
-    plot(oat.source_recon.sessions_to_do,source_recon_results.normalisation(ff,:),'*');xlabel('sess no.');ylabel([oat.source_recon.modalities{ff} ' normalisation']); 
+try
+    report=osl_report_set_figs(report,'pca_order');
+    plot(oat.source_recon.sessions_to_do,source_recon_results.pca_order,'*');xlabel('sess no.');ylabel('PCA dim used'); 
     report=osl_report_print_figs(report);
-end;
+catch
+end
+
+try
+    for ff=1:length(res.normalisation),
+        report=osl_report_set_figs(report,[oat.source_recon.modalities{ff} ' normalisation']);
+        plot(oat.source_recon.sessions_to_do,source_recon_results.normalisation(ff,:),'*');xlabel('sess no.');ylabel([oat.source_recon.modalities{ff} ' normalisation']); 
+        report=osl_report_print_figs(report);
+    end
+catch
+end
 
 %%%%%%%%%%%%%%%%%%%
 %% generate source recon web report

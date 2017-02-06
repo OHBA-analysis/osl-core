@@ -15,8 +15,10 @@ function [D,parcellation,assignments,mni_coords] = osl_apply_parcellation(S)
 % S.method              - method for reconstructing parcel time course:
 %                           ['PCA','mean','peakVoxel']
 % S.prefix              - filename prefix for new MEEG object (default 'p')
-% S.hcp_sourcemodel3d   - if it is HCP data, then need to pass in the 
+% S.hcp_sourcemodel3d   - if it is HCP data, then need to pass in the
 %                           sourcemodel3d
+% S.trialwise           - set to 1 to compute orth separately for each
+%                         trial, default is 0
 %
 % OUTPUTS:
 %
@@ -26,7 +28,7 @@ function [D,parcellation,assignments,mni_coords] = osl_apply_parcellation(S)
 %                 voting
 % mni_coords    - mni_coords of centres of parcels
 
-global OSLDIR 
+global OSLDIR
 
 % Check SPM File Specification:
 try
@@ -59,15 +61,15 @@ else
         case {'char','cell'}
             try
                 stdbrain = read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz']);
-                parc = read_avw(S.parcellation);
+                parc=read_avw(S.parcellation);
                 parcellation = vols2matrix(parc,stdbrain); %nVoxels x nSamples
             catch
                 error('Make sure the parcellation file and the data are valid and compatible, including having the same spatial resolution.');
             end
-            
+
             % compute mni_coords as centres of gravity of parcels
-            mni_coords=osl_mniparcellation2mnicoords(S.parcellation);  
-            
+            mni_coords=osl_mniparcellation2mnicoords(S.parcellation);
+
         case {'single','double','logical'}
             parcellation = S.parcellation;
         otherwise
@@ -99,19 +101,56 @@ for voxel = 1:size(parcellation,1)
     end
 end
 
-% Note that we reshape trialwise data (for future: get ROInets.get_node_tcs to work with trialwise MEEG data)
-voxeldata = reshape(D(:,:,:),[D.nchannels,D.nsamples*D.ntrials]);
-good_samples = ~all(badsamples(D,':',':',':'));
-good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-voxeldata = voxeldata(:,good_samples);
+if D.ntrials == 1 % can just pass in the MEEG object
+    voxeldata = D(:,:,:);
+    good_samples = ~all(badsamples(D,':',':',':')); % all checks if any channels are bad then ignore those samples
+    % Get time-coursess
+    nodedata = ROInets.get_node_tcs(voxeldata(:,good_samples), parcellation, S.method);
+    nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
 
-nodedata = ROInets.get_node_tcs(voxeldata, parcellation, S.method);
-nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
+    data = zeros(size(nodedata,1),length(good_samples));
+    data(:,good_samples) = nodedata;
 
-data = zeros(size(nodedata,1),length(good_samples));
-data(:,good_samples) = nodedata;
+    data = reshape(data,[size(data,1),length(good_samples),D.ntrials]);
 
-data = reshape(data,[size(data,1),D.nsamples,D.ntrials]);
+elseif isa(D,'meeg') % work with D object in get_node_tcs
+    %good_samples = find(~all(badsamples(D,':',':',':')));
+    nodedata = ROInets.get_node_tcs(D,parcellation,S.method);
+    nodedata = reshape(nodedata(:,:,:),size(nodedata,1),[]);
+    nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
+    data = zeros(size(nodedata,1),size(nodedata,2));
+    data = nodedata;
+    data = reshape(data,size(data,1),size(D,2),size(D,3));
+
+else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG data)
+    good_samples = ~all(badsamples(D,':',':',':'));
+    nodedata = zeros(size(parcellation,2),D.nsamples,D.ntrials);
+    msg = '';
+
+    for idx = 1:D.ntrials
+        % We're ignoring trials with bad samples as they might be rank
+        % deficient, just leave them empty.
+        fprintf(repmat(char(8),1,length(msg)));
+        msg = sprintf('Orthoganalising trial: %d of %d',idx,D.ntrials);
+        fprintf(msg);
+        if good_samples(1,1,idx) == 1
+            try
+                voxeldata = D(:,:,idx);
+                nodedata(:,:,idx) = ROInets.get_node_tcs(voxeldata, parcellation, S.method,0);
+                nodedata(:,:,idx) = ROInets.remove_source_leakage(nodedata(:,:,idx), S.orthogonalisation,0);
+            catch,
+                % This trial is probably low rank, ignore it
+                good_samples(:,:,idx) = 0;
+                disp('Skipping low rank trial');
+            end
+
+        end
+
+        data = nodedata;
+        fprintf('\n');
+
+    end
+end
 
 clear voxeldata_concat nodedata_concat;
 
@@ -126,8 +165,8 @@ D = Dnode; % For output
 
 D.parcellation.weights=parcellation;
 D.parcellation.assignments=assignments;
-D.parcellation.S=S;        
+D.parcellation.S=S;
 D.parcellation.mni_coords=mni_coords;
-  
+
 D.save;
 end

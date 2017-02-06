@@ -92,8 +92,9 @@ for subi=1:length(opt.sessions_to_do),
         end
 
     catch ME,
-        disp(['Could not get results for subject number ' num2str(subnum)]);
         ME.getReport
+        disp(['Could not get results for subject number ' num2str(subnum)]);
+
     end;        
 
 end
