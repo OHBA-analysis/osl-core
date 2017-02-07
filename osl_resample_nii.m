@@ -10,7 +10,7 @@ function output_fname = osl_resample_nii(input_fname, output_fname, out_gridstep
 % the ouput can be optionally masked using niftii file output_mask_fname
 %
 % MWW 2012
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 if(nargin<6)
     dilate=1;

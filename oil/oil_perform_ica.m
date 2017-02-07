@@ -33,7 +33,7 @@ function res=oil_perform_ica(S)
 
 % Set up variables
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 % Input data
 if isfield(S.results,'ica_concat_path'), ica_concat_path = S.results.ica_concat_path; else, error('No path for ICA input data specified'); end
 % ICA settings

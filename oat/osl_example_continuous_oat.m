@@ -29,7 +29,7 @@
 % within OSL).%% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
     
 % This cell sets the Matlab paths to include OSL. Change the osldir path so
 % that it corresponds to the setup on your computer before running the cell. 

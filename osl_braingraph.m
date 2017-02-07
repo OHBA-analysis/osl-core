@@ -15,7 +15,7 @@ function osl_braingraph(G, Glims, NodeValues, NodeLims, mnipos, labels, thresh, 
 % --------------------------------------------------------------
 % Adam Baker 2012
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 
 cla, hold on
 

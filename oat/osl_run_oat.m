@@ -7,7 +7,7 @@ function oat = osl_run_oat(oat)
 %
 % MWW 2011
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 % check settings
 oat = osl_check_oat(oat);

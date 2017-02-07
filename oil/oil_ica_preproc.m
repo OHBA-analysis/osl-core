@@ -179,7 +179,7 @@ function newName = smooth_and_downsample(fname, gs, ss, ds)
 %   with spatial resolution GS using a kernel of width SS and downsamples
 %   to DS.
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 % Weights Normalised Data
 fname2      = [fname '_ss' num2str(ss) 'mm'];
 maskImage   = fullfile(OSLDIR, 'std_masks',      ...

@@ -63,7 +63,7 @@ function [statsdir,times,cluster_times]=oat_save_nii_stats( Sin )
 %
 % MWW 2011
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 try, resamp_gridstep=Sin.resamp_gridstep; catch, resamp_gridstep=2; end; % mm
 

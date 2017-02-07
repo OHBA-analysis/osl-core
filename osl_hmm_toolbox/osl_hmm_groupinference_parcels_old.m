@@ -92,7 +92,7 @@ function [HMMresults,statemaps] = osl_hmm_groupinference_parcels(data_files,hmmd
 %
 % Mostly AB & a little bit from MWW (2014/15)
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 
 statemaps=[];
 

@@ -32,7 +32,7 @@
 %%
 function map_name = oil_save_nii_ica_maps(oil,type,order)
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 
 % parse inputs
 if nargin<2,  type   =  'correlation'; try order=1:oil.ica.num_ics; catch, order=1:oil.num_ics;  end; end

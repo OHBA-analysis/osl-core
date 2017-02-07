@@ -12,7 +12,7 @@
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 % set this to where you have downloaded OSL and the practical data:
 practical_dir='/home/mwoolrich/Desktop';

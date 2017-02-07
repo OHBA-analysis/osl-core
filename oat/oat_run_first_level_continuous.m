@@ -9,7 +9,7 @@ function [ results_fnames first_level_results ] = osl_run_first_level_continuous
 %
 % MWW 2012
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 use_classes_in_glm=oat.first_level.hmm_do_glm_statewise;
 

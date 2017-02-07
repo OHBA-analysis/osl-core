@@ -30,7 +30,7 @@ function [stats_out,times,mni_coords_used]=oat_output_roi_stats( Sin )
 %
 % MWW 2011
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 try, tmp=Sin.oat; catch, error('Sin.oat not specfied'); end; 
 try, tmp=Sin.stats_fname; catch, error('Sin.stats_fname not specfied'); end; 

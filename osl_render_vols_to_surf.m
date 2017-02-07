@@ -13,7 +13,7 @@ function res = osl_render_vols_to_surf(S)
 %
 % Mark Woolrich 2013
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 try, time_indices=S.time_indices; catch S.time_indices=1; end;
 

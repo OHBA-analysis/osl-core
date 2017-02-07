@@ -12,7 +12,7 @@ function  ortho_overlay_act( S )
 % or S.range (sets range directly)
 % S.add_colorbar
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 set(gcf,'Color','k');
 

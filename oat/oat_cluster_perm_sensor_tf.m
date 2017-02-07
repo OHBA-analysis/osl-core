@@ -19,7 +19,7 @@ function [corrp group_tstats dmps] = oat_cluster_perm_sensor_tf(S)
 
 % do 2d or 3d cluster statistics on time-frequency sensor data
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 try, masksdir=[OSLDIR '/std_masks' ]; catch, error('OSLDIR not set. Run osl_startup.'); end;
 

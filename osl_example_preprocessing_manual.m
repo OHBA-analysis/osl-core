@@ -17,7 +17,7 @@
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
     
 osldir = '/Users/woolrich/Desktop/osl2';
 osldir = '/Users/woolrich/Dropbox/osl2';

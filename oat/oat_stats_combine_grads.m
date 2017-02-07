@@ -1,6 +1,6 @@
 function first_level_results = oat_stats_combine_grads( oat, first_level_results )
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 first_level=oat.first_level;
 % contrasts

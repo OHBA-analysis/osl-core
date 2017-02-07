@@ -11,7 +11,7 @@ function mat = nii_quickread(fileName, spatialRes)
 
 % (c) OHBA 2014
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 % check for existence of input file
 if ~exist(fileName,             'file') && ...

@@ -9,7 +9,7 @@ function [ results_fnames ] = osl_run_subject_level( oat )
 %
 % MWW 2011
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 subject_level_results=[];
 

@@ -16,10 +16,7 @@
 
 function fslview(fnames,thresholds,colour_maps,anatomical)
 
-global OSLDIR
-if isempty(OSLDIR)
-  OSLDIR = getenv('OSLDIR');
-end
+OSLDIR = getenv('OSLDIR');
 
 available_maps = {'Red-Yellow';
                   'Blue-Lightblue'; 

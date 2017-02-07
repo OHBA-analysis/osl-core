@@ -18,7 +18,7 @@ function osl_render4D(nii,savedir,workbenchdir,interptype,visualise,cleanEnviron
 % -----------------------------------------------------------------
 % Adam Baker 2013
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 if ~isempty(strfind(nii,'.nii.gz'))
   ext = '.nii.gz';

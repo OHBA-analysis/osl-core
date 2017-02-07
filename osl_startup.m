@@ -1,7 +1,5 @@
 function osl_startup( osldir )
 
-global OSLDIR;
-
 % osl_startup( osldir )
 %
 % SETS UP THE BASIC PATH SETTINGS
@@ -9,6 +7,8 @@ global OSLDIR;
 % MWW 2012
 %
 % does no path-changing if running in deployed mode (gw '13).
+
+setenv('OSLDIR',osldir)
 
 if ~isdeployed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

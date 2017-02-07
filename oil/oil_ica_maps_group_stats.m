@@ -12,7 +12,7 @@
 
 function oil = oil_ica_maps_group_stats(oil)
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 fprintf('Oil group-level analysis. \n');
 
 %% Set-Up Variables
@@ -149,7 +149,7 @@ end
 
 function vol_as_matrix=smooth_vol(vol_as_matrix, lower_level_stdbrain, fwhm, gridstep, tmp_fname)
 
-    global OSLDIR;
+    OSLDIR = getenv('OSLDIR');
     % smooth spatially
     ds=gridstep;
 
