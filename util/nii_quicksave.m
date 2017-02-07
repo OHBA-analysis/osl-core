@@ -18,7 +18,7 @@ function fname_out = nii_quicksave(mat,fname,options_or_input_spat_res,output_sp
 % 
 % MWW 2015
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 if nargin<3
     options_or_input_spat_res=struct();
@@ -82,7 +82,7 @@ if isempty(mask_fname)
     end;
     
     % load in std brain mask
-    mask_fname=[OSLDIR '/std_masks/MNI152_T1_' num2str(input_spat_res) 'mm_brain_mask.nii.gz'];
+    mask_fname=[OSLDIR '/std_masks/MNI152_T1_' num2str(input_spat_res) 'mm_brain.nii.gz'];
     
     % for a sanity check:
     mask_spat_res = get_nii_spatial_res( mask_fname );
@@ -101,6 +101,7 @@ end;
     
 % load in mask
 stdbrain=read_avw(mask_fname); 
+stdbrain = stdbrain~=0;
 
 %%%%%%%%%%%%%%%
 % set output spat res
@@ -122,11 +123,12 @@ fname = strrep(fname,'.gz','');
 fname = strrep(fname,'.nii','');
 fname_rs=[fname '_ds' num2str(output_spat_res) 'mm'];
 stdbrain = [OSLDIR '/std_masks/MNI152_T1_' num2str(output_spat_res) 'mm_brain_mask.nii.gz'];
-osl_resample_nii(fname, fname_rs, output_spat_res,interp,stdbrain);
-
-% tidy up files
-dos(['rm ' fname '.nii.gz']);
-dos(['mv ' fname_rs '.nii.gz ' fname '.nii.gz']);
+if input_spat_res ~= output_spat_res
+    osl_resample_nii(fname, fname_rs, output_spat_res,interp,stdbrain);
+    % tidy up files
+    % dos(['rm ' fname '.nii.gz']);
+    dos(['mv ' fname_rs '.nii.gz ' fname '.nii.gz']);
+end
 
 fname_out=[fname '.nii.gz'];
 

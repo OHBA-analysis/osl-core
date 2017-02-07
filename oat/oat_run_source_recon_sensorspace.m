@@ -7,7 +7,7 @@ function [results_fnames source_recon_results]=osl_run_source_recon_sensorspace(
 %
 % Mark Woolrich 2012
 
-global OSLDIR;
+getenv('OSLDIR');
 
 dirname=oat.source_recon.dirname;
 modalities=oat.source_recon.modalities;  % added by DM
