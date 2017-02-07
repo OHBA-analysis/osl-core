@@ -29,7 +29,7 @@ function [] = check_filename_is_clear(filename)
 %	$LastChangedDate: 2014-07-24 12:39:09 +0100 (Thu, 24 Jul 2014) $
 %	Contact: giles.colclough 'at' magd.ox.ac.uk
 %	Originally written on: GLNXA64 by Giles Colclough, 25-Oct-2013 12:43:45
-        
+
 if exist(filename, 'file') || exist([filename '.mat'], 'file'),
     try
         % delete existing object, so we can replace cleanly later
@@ -40,12 +40,12 @@ if exist(filename, 'file') || exist([filename '.mat'], 'file'),
                 filename);
             
         successfulDeletion = delete(Dtest);
-        if ~successfulDeletion,
-            error([mfilename ':FailedToDeleteExistingObject'], ...
-                  'Failed to delete existing object %s. \n', ...
-                  filename);
-        end%if
-        clear Dtest
+%         if ~successfulDeletion,
+%             error([mfilename ':FailedToDeleteExistingObject'], ...
+%                   'Failed to delete existing object %s. \n', ...
+%                   filename);
+%         end%if
+%         clear Dtest
     catch ME 
         % check that filename wasn't an spm object
         if strcmp(ME.message, ...
