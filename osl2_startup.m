@@ -42,8 +42,6 @@ function osl2_startup( osldir )
                 % Add it to the shell path from within MATLAB 
                 curpath = getenv('PATH');
                 setenv('PATH',sprintf('%s:%s',fullfile(fsldir,'bin'),curpath));
-
-                error('check this is OK');
             else
                 error('FSL is not installed properly. Perhaps check that the $FSLDIR/bin directory is in your PATH before starting Matlab. See the Prerequisites section at https://sites.google.com/site/ohbaosl/download');
             end
@@ -138,7 +136,6 @@ function osl2_startup( osldir )
     addpath(osldir)
 
     rmpath(fullfile(osldir,'osl2','spm-changes')); % These are already copied into spm
-    rmpath(fullfile(osldir,'spm12/external/fieldtrip/external')) % This folder only contains other folders
 
     % Remote fieldtrip substitutes for Matlab toolboxes if the toolbox is installed
     if license('test', 'Statistics_Toolbox')
