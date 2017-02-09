@@ -125,6 +125,11 @@ function osl2_startup( osldir )
     addpath(fullfile(osldir, 'spm12','external','fieldtrip','src'));
 
     % Add OHBA shared libraries
+    if ~exist(fullfile(osldir,'osl-external2'))
+        fprintf(2,'Could not find ''%s''\n',fullfile(osldir,'osl-external'));
+        error('osl-external is missing. Clone https://github.com/OHBA-analysis/osl-external into the same directory as osl2');
+    end
+
     addpath(fullfile(osldir,'osl-external'));
     osl_external_startup
 
