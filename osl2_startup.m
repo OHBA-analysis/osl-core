@@ -17,6 +17,9 @@ function osl2_startup( osldir )
         oldpaths = strsplit(path,':');
         restoredefaultpath;
 
+        % If anything goes wrong, osl2_startup.m should still be left on the path
+        addpath(fullfile(osldir,'osl2'))
+
         for j = 1:length(oldpaths)
             if strfind(oldpaths{j},matlabroot)
                 continue
