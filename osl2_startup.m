@@ -1,4 +1,4 @@
-function osl_startup( osldir )
+function osl2_startup( osldir )
     % Initialize OSL
     % osldir is the folder containing 'osl2'
     
@@ -143,5 +143,3 @@ function osl_startup( osldir )
     if license('test','Signal_Toolbox')
         rmpath(fullfile(osldir,'spm12/external/fieldtrip/external/signal'))
     end
-
-
