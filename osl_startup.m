@@ -136,11 +136,11 @@ function osl_startup( osldir )
     rmpath(fullfile(osldir,'spm12/external/fieldtrip/external')) % This folder only contains other folders
 
     % Remote fieldtrip substitutes for Matlab toolboxes if the toolbox is installed
-    if license('test', 'stats')
+    if license('test', 'Statistics_Toolbox')
         rmpath(fullfile(osldir,'spm12/external/fieldtrip/external/stats'))
     end
 
-    if license('test','signal')
+    if license('test','Signal_Toolbox')
         rmpath(fullfile(osldir,'spm12/external/fieldtrip/external/signal'))
     end
 
