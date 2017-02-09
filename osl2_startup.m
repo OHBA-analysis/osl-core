@@ -134,8 +134,8 @@ function osl2_startup( osldir )
     addpath(fullfile(osldir,'osl-external'));
     osl_external_startup
 
-    % Ensure osl2 dir gets priority in path by adding it last
-    addpath(genpath(fullfile(osldir,'osl2')))
+    % Ensure osl2 directories gets priority in path by adding it last
+    addpath(genpath_exclude(fullfile(osldir,'osl2'),{'.git','.svn','std_masks'}))
     addpath(osldir)
 
     rmpath(fullfile(osldir,'osl2','spm-changes')); % These are already copied into spm
@@ -148,3 +148,25 @@ function osl2_startup( osldir )
     if license('test','Signal_Toolbox')
         rmpath(fullfile(osldir,'spm12/external/fieldtrip/external/signal'))
     end
+end
+
+function pathstr = genpath_exclude(pathstr,excludes)
+    % Take in list of strings to exclude from path
+
+    if ischar(excludes)
+        excludes = {excludes};
+    end
+
+    paths = genpath(pathstr);
+    paths = strsplit(paths,':');
+
+    retain = ones(size(paths));
+
+    for j = 1:length(excludes)
+        retain = retain & cellfun(@(x) isempty(regexp(x,excludes{j})),paths);
+    end
+
+    pathstr = strjoin(paths(retain),':');
+end
+
+
