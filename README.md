@@ -28,5 +28,5 @@ Add the `osl2` folder to your path e.g.
 
 Run
 
-	osl_startup
+	osl2_startup
 	
