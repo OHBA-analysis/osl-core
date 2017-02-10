@@ -16,7 +16,7 @@ UNDER CONSTRUCTION
 
 Learn to use OSL
 
-[Tutorial](tutorial)
+[Tutorial](Tutorial)
 
 #### Examples
 
