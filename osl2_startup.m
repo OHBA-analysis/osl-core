@@ -38,6 +38,9 @@ function osl2_startup( osldir )
         if isempty(getenv('FSLDIR'))
             % Try and detect default location
             if exist('/usr/local/fsl') 
+                % WARNING - below commands are only a subset of those in the proper setup via
+                % source ${FSLDIR}/etc/fslconf/fsl.sh
+                % Could still have unexpected behaviour
                 fsldir = '/usr/local/fsl/';
                 setenv('FSLDIR',fsldir)
                 setenv('FSLOUTPUTTYPE','NIFTI_GZ')
@@ -54,7 +57,7 @@ function osl2_startup( osldir )
         [status,res] = system('fslval');
         if status~=1
             error('FSL is not installed properly. Perhaps check that the $FSLDIR/bin directory is in your PATH before starting Matlab. See the Prerequisites section at https://sites.google.com/site/ohbaosl/download');
-        end;
+        end
        
         addpath(sprintf('%s/etc/matlab',getenv('FSLDIR')));
        

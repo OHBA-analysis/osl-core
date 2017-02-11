@@ -6,7 +6,10 @@ function osl_publish(filename)
 	% 
 	% To complete publishing, add files via Git and push to GitHub
 
-
+	% TODO - see if it ends up being just stuff in a couple of folders that gets published - if so, automatically build all of them
+	% TODO - use 'git hash-object' to see if a file needs to be republished
+	% TODO - maybe do it automatically?
+	
 	if nargin < 1 || isempty(filename) 
 		filename = fullfile(getenv('OSLDIR'),'osl2','examples','publish_example.m');
 	end
