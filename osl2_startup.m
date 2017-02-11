@@ -51,7 +51,7 @@ function osl2_startup( osldir )
         end
 
         % Try a dummy call to an fsl tool to make sure FSL is properly installed
-        [status,res]=dos(['fslval']);
+        [status,res] = system('fslval');
         if status~=1
             error('FSL is not installed properly. Perhaps check that the $FSLDIR/bin directory is in your PATH before starting Matlab. See the Prerequisites section at https://sites.google.com/site/ohbaosl/download');
         end;
