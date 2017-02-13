@@ -14,7 +14,7 @@ function osl2_startup( osldir )
 
         % Check and remove toolboxes that are supplied internally as part of OSL
         checklist={'fieldtrip', 'spm', 'osl', 'mne', 'netlab', 'fsl', 'fmt'};
-        oldpaths = strsplit(path,':');
+        oldpaths = regexp(path,':','split');
         restoredefaultpath;
 
         % If anything goes wrong, osl2_startup.m should still be left on the path
@@ -165,7 +165,7 @@ function pathstr = genpath_exclude(pathstr,excludes)
     end
 
     paths = genpath(pathstr);
-    paths = strsplit(paths,':');
+    paths = regexp(paths,':','split');
 
     retain = ones(size(paths));
 
