@@ -137,6 +137,10 @@ function osl2_startup( osldir )
     addpath(fullfile(osldir,'ohba-external'));
     ohba_external_startup
 
+    addpath(fullfile(osldir,'GLEAN'));
+    addpath(fullfile(osldir,'HMM-MAR'));
+    addpath(fullfile(osldir,'MEG-ROI-nets'));
+
     % Ensure osl2 directories gets priority in path by adding it last
     addpath(genpath_exclude(fullfile(osldir,'osl2'),{'.git','.svn','std_masks'}))
     addpath(osldir)
