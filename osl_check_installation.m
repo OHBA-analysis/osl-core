@@ -70,12 +70,12 @@ function osl_check_installation(do_log)
 	log(sprintf('FSL return status = %d',status));
 	log(sprintf('FSL result = %s',res));
 
-	try
-		log('FSLERRORREPORT OUTPUT')
-		system('fslerrorreport');
-	catch ME
-		log_error('Could not run fslerrorreport()',ME)
-	end
+	% try
+	% 	log('FSLERRORREPORT OUTPUT')
+	% 	system('fslerrorreport');
+	% catch ME
+	% 	log_error('Could not run fslerrorreport()',ME)
+	% end
 
 	% Check SPM 
 	section('SPM')
