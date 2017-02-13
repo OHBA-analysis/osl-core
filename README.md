@@ -2,6 +2,11 @@
 
 OHBA software library
 
+### Dependencies
+
+- Matlab R2014b and newer fully supported
+- Matlab R2012b-R2014a have basic testing for processing, known graphics incompatibilities
+
 ### Setup
 
 For turnkey operation, download a `.zip` distribution release of OSL.
