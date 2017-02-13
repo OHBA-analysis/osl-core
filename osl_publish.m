@@ -1,4 +1,4 @@
-function osl_publish(filename)
+function osl_publish(filename,evalCode)
 	% Make an HTML page on the OSL website
 	%
 	% INPUT - path of the file being published
@@ -10,9 +10,13 @@ function osl_publish(filename)
 	% TODO - use 'git hash-object' to see if a file needs to be republished
 	% TODO - maybe do it automatically?
 	
+	if nargin < 2 || isempty(evalCode) 
+		evalCode = true;
+	end
+	
 	if nargin < 1 || isempty(filename) 
 		filename = fullfile(getenv('OSLDIR'),'osl2','examples','publish_example.m');
 	end
 	
-	publish(filename,'stylesheet',fullfile(getenv('OSLDIR'),'osl2','docs','mxdom2simplehtml_jekyll.xsl'),'format','html','outputDir',fullfile(getenv('OSLDIR'),'osl2','docs','matlab'))
+	publish(filename,'evalCode',evalCode,'stylesheet',fullfile(getenv('OSLDIR'),'osl2','docs','mxdom2simplehtml_jekyll.xsl'),'format','html','outputDir',fullfile(getenv('OSLDIR'),'osl2','docs','matlab'))
 

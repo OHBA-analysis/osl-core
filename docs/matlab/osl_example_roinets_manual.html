@@ -1,0 +1,95 @@
+---
+layout: matlab_wrapper
+title: Example script for ROInets-based analysis
+resource: true
+categories: examples
+---
+
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <title>Example script for ROInets-based analysis</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-02-13"><meta name="DC.source" content="osl_example_roinets_manual.m"></head><body><div class="content"><h1>Example script for ROInets-based analysis</h1><p>This script shows how to run ROInets manually</p><pre class="codeinput">osldir = getenv(<span class="string">'OSLDIR'</span>);
+data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'roinets_example'</span>);
+subjects = 1:10;
+</pre><p>Copy the demo files</p><pre class="codeinput">D_files = {};
+mkdir(fullfile(osldir,<span class="string">'practical'</span>,<span class="string">'roinets_demo'</span>));
+<span class="keyword">for</span> j = 1:length(subjects)
+	fname = sprintf(<span class="string">'subject_%d'</span>,j);
+	D = spm_eeg_load(fullfile(data_dir,fname));
+	D_files{j} = D.copy(fullfile(<span class="string">'roinets_demo'</span>,fname));
+<span class="keyword">end</span>
+</pre><p>Load a parcellation</p><pre class="codeinput">p = nii_quickread(fullfile(osldir,<span class="string">'parcellations'</span>,<span class="string">'fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'</span>),8);
+</pre><p>Each voxel can belong to at most one parcel Assign each voxel to a single parcel</p><pre class="codeinput">[~,assignments] = max(p,[],2);
+assignments(all(p==0,2)) = 0;
+</pre><pre class="language-matlab">PARCELFLAG <span class="string">is</span> <span class="string">a</span> <span class="string">logical</span> <span class="string">array</span> <span class="string">(nVoxels x nParcels)</span> <span class="string">which</span> <span class="string">identifies</span>
+the <span class="string">voxels</span> <span class="string">in</span> <span class="string">each</span> <span class="string">parcel.</span> <span class="string">Each</span> <span class="string">column</span> <span class="string">identifies</span> <span class="string">the</span> <span class="string">voxels</span>
+making <span class="string">up</span> <span class="string">each</span> <span class="string">parcel.</span> <span class="string">True</span> <span class="string">entries</span> <span class="string">indicate</span> <span class="string">membership.</span>
+</pre><pre class="codeinput">parcelflag = zeros(size(p));
+<span class="keyword">for</span> j = 1:size(p,2)
+	parcelflag(:,j) = assignments == j;
+<span class="keyword">end</span>
+</pre><p>Need to make sure montages are correct</p><pre class="codeinput">D_files{1}
+D_files{j}.montage(<span class="string">'switch'</span>,2)
+</pre><p>Make PCA timecourse montages</p><pre class="codeinput"><span class="keyword">for</span> j = 1:length(subjects)
+	D_files{j} = D_files{j}.montage(<span class="string">'switch'</span>,2); <span class="comment">% Make sure montage is correct!</span>
+	D_files{j} = ROInets.get_node_tcs(D_files{j},parcelflag,<span class="string">'PCA'</span>,[],true);
+<span class="keyword">end</span>
+</pre><p>New timecourses are in a montage</p><pre class="codeinput">D_files{1}
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Example script for ROInets-based analysis
+% This script shows how to run ROInets manually
+%
+osldir = getenv('OSLDIR');
+data_dir = fullfile(osldir,'example_data','roinets_example');
+subjects = 1:10;
+
+%%
+% Copy the demo files
+
+D_files = {};
+mkdir(fullfile(osldir,'practical','roinets_demo'));
+for j = 1:length(subjects)
+	fname = sprintf('subject_%d',j);
+	D = spm_eeg_load(fullfile(data_dir,fname));
+	D_files{j} = D.copy(fullfile('roinets_demo',fname));
+end
+
+%%
+% Load a parcellation
+p = nii_quickread(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'),8);
+
+%%
+% Each voxel can belong to at most one parcel
+% Assign each voxel to a single parcel
+[~,assignments] = max(p,[],2);
+assignments(all(p==0,2)) = 0;
+
+%%
+%   PARCELFLAG is a logical array (nVoxels x nParcels) which identifies
+%   the voxels in each parcel. Each column identifies the voxels 
+%   making up each parcel. True entries indicate membership. 
+parcelflag = zeros(size(p));
+for j = 1:size(p,2)
+	parcelflag(:,j) = assignments == j;
+end
+
+%%
+% Need to make sure montages are correct
+D_files{1}
+D_files{j}.montage('switch',2)
+
+%%
+% Make PCA timecourse montages
+for j = 1:length(subjects)
+	D_files{j} = D_files{j}.montage('switch',2); % Make sure montage is correct!
+	D_files{j} = ROInets.get_node_tcs(D_files{j},parcelflag,'PCA',[],true);
+end
+
+%%
+% New timecourses are in a montage
+D_files{1}
+
+
+
+##### SOURCE END #####
+--></body></html>
