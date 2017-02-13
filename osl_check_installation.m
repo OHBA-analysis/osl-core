@@ -18,7 +18,7 @@ function osl_check_installation(do_log)
 	end
 
 	log('OSL DEBUG LOG');
-	log(datetime('now'));
+	log(sprintf('Date: %04d-%02d-%02d %02d:%02d:%02d',fix(clock())))
 
 	% Check OS
 	section('System Information');
