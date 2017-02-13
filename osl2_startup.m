@@ -173,7 +173,9 @@ function pathstr = genpath_exclude(pathstr,excludes)
         retain = retain & cellfun(@(x) isempty(regexp(x,excludes{j})),paths);
     end
 
-    pathstr = strjoin(paths(retain),':');
+    paths = paths(retain);
+    pathstr = sprintf('%s:',paths{:});
+    pathstr = pathstr(1:end-1); % Remove trailing delimiter
 end
 
 
