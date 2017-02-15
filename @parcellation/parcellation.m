@@ -271,18 +271,21 @@ classdef parcellation < handle
 			self.show_parcellation();
 		end
 
-		function fslview(self,binary_mask)
-
-			if nargin < 2 || isempty(binary_mask) 
-				binary_mask = true;
+		function fslview(self,single_volume)
+			% Display this parcellation using fslview
+			% If single_volume == true, then there will be one binarized
+			% volume where the value indicates the parcel
+			if nargin < 2 || isempty(single_volume) 
+				single_volume = false;
 			end
-
-			if ~self.is_weighted
+			
+			% Display the parcellation using fslview
+			if single_volume
 				p = self.to_vol(self.value_vector);
 				clim = [0 self.n_parcels];
 			else
 				p = self.weight_mask;
-				clim = [];
+				clim = [0 max(self.weight_mask(:))];
 			end
 
 			fname = self.savenii(p);

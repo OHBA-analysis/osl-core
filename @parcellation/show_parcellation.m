@@ -40,24 +40,6 @@ function show_parcellation(p)
 	a.Callback(a); % Show the first ROI immediately
 
 
-	x_handle = scatter3(10,ax.YLim(1),ax.ZLim(1),40,'go','filled')
-	y_handle = scatter3(ax.XLim(1),10,ax.ZLim(1),40,'go','filled')
-	z_handle = scatter3(ax.XLim(1),ax.YLim(2),10,40,'go','filled')
-
-	marker_line = plot3(nan,nan,nan,'r--','Visible','on')
-
-	drag_handle
-	
-
-	function drag_handle
-		x = x_handle.XData;
-		y = y_handle.YData;
-		z = z_handle.ZData;
-
-		set(marker_line,'Visible','on','XData',[x x NaN ax.XLim NaN x x NaN x x],'YData',[ax.YLim NaN y y NaN y y NaN y y],'ZData',[z z NaN z z NaN ax.ZLim NaN ax.ZLim])
-	end
-
-
 	function draw_roi(rois,idx,h_roi)
 	    roi = rois.masks(:,:,:,idx); % 0 and 1 for grid values
 	    roi = logical(vols2matrix(roi,p.template_mask));
