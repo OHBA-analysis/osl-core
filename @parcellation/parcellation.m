@@ -113,8 +113,13 @@ classdef parcellation < handle
 					end
 				end
 
+				% If no label file is provided, try and get the labels from the .mat file
 				if isempty(labels)
-					labels = d.long_names;
+					if isfield(d,'labels')
+						labels = d.labels;
+					elseif isfield(d,'long_names')
+						labels = d.long_names;
+					end
 				end
 			elseif length(input_mask) == 1 % Can enter a spatial resolution to retrieve the whole brain mask i.e. 1 parcel
 				[~,self.template_fname,self.template_mask] = self.guess_template(input_mask);
@@ -222,6 +227,12 @@ classdef parcellation < handle
 
 		function dat2 = to_matrix(self,dat4)
 			% Convert XYZ x Frames to Vox x Frames
+			% If no matrix is provided, it will return the matrix
+			% representation of the parcellation
+			if nargin < 2 || isempty(dat4) 
+				dat4 = self.weight_matrix;
+			end
+			
 			dat2 = vols2matrix(dat4,self.template_mask);
 		end
 
