@@ -38,7 +38,7 @@ end
 %%
 % Need to make sure montages are correct
 D_files{1}
-D_files{j}.montage('switch',2)
+D_files{1}.montage('switch',2)
 
 %%
 % Make PCA timecourse montages
