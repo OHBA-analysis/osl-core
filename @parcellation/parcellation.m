@@ -150,7 +150,7 @@ classdef parcellation < handle
 			else
 				assert(iscell(labels),'Manually specified labels must be a cell array of ROI names or a file name');
 				assert(isvector(labels),'Labels must be a cell vector of strings, not a matrix');
-				assert(length(labels)==self.n_parcels,sprintf('Must have one manually specified label for each parcel (%d provided, %d required',length(labels),self.n_parcels));
+				assert(length(labels)==self.n_parcels,sprintf('Must have one manually specified label for each parcel (%d provided, %d required)',length(labels),self.n_parcels));
 			end
 
 			self.labels = labels(:);
@@ -192,9 +192,18 @@ classdef parcellation < handle
 			self.weight_mask = mask;
 		end
 
-	    function parcelflag = parcelflag(self)
+	    function parcelflag = parcelflag(self,binarize)
 			% Return the parcelflags for ROInets.get_node_tcs
-			parcelflag = logical(self.to_matrix(self.weight_mask));
+			if nargin < 2 || isempty(binarize) 
+				binarize = false;
+			end
+			if binarize
+				p = self.binarize;
+			else
+				p = self.weight_mask;
+			end
+
+			parcelflag = self.to_matrix(p);
 		end
 
 		function dat4 = to_vol(self,dat2);

@@ -59,3 +59,18 @@ For the reverse
 
 In the latter case, the matrix could be `voxels x frame` or `parcels x frame` (or `frame x parcels` - if the second dimension matches the number of parcels, the matrix will be transposed). 
 
+##### Binarizing
+
+To remove weights, use
+
+	weight_mask = p.remove_weights()
+
+To remove overlap, use
+
+	weight_mask = p.remove_overlap()
+
+To do both, use
+
+	weight_mask = p.binarize()
+
+Note that because `remove_overlap` assigns voxels to parcels based on their weights, this needs to be done prior to removing the weights. Thus `binarize()` is equivalent to `remove_overlap()` followed by `remove_weights()`, in that order. 
