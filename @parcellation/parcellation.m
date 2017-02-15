@@ -318,11 +318,7 @@ classdef parcellation < handle
 			if nargin < 3 || isempty(fname) 
 				fname = tempname('.');
 			end
-			
-			if ndims(data) < 3
-				warning('Less than 3 dimensions - did you provide a volume matrix?');
-			end
-			
+					
 		    [~,~,scales] = read_avw(self.template_fname);
 		    save_avw(data,fname,'f',scales);
 		    system(['fslcpgeom ' self.template_fname ' ' fname ' -d']);
