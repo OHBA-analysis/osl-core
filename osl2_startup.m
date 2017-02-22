@@ -13,6 +13,7 @@ function osl2_startup( osldir )
     if ~isdeployed 
 
         % Check and remove toolboxes that are supplied internally as part of OSL
+        % TODO - add ROInets etc. to this list
         checklist={'fieldtrip', 'spm', 'osl', 'mne', 'netlab', 'fsl', 'fmt'};
         oldpaths = regexp(path,':','split');
         restoredefaultpath;
@@ -37,6 +38,7 @@ function osl2_startup( osldir )
         % Check fsl has been set up
         if isempty(getenv('FSLDIR'))
             % Try and detect default location
+            % TODO - other locations: /usr/share/fsl/5.0
             if exist('/usr/local/fsl') 
                 % WARNING - below commands are only a subset of those in the proper setup via
                 % source ${FSLDIR}/etc/fslconf/fsl.sh
@@ -138,7 +140,7 @@ function osl2_startup( osldir )
     ohba_external_startup
 
     addpath(fullfile(osldir,'GLEAN'));
-    addpath(fullfile(osldir,'HMM-MAR'));
+    addpath(genpath(fullfile(osldir,'HMM-MAR')));
     addpath(fullfile(osldir,'MEG-ROI-nets'));
 
     % Ensure osl2 directories gets priority in path by adding it last
