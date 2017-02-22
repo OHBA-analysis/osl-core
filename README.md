@@ -38,4 +38,14 @@ Add the `osl2` folder to your path e.g.
 Run
 
 	osl2_startup
-	
+
+### Troubleshooting
+
+##### FieldTrip mex errors
+
+To recompile Fieldtrip, start up OSL, and then run
+
+	cd(fullfile(getenv('OSLDIR'),'spm12','external','fieldtrip'))
+	ft_compile_mex(true)
+
+The Fieldtrip `src` folder appears first on the path, so the newly compiled files will be used ahead of any existing files.
