@@ -45,7 +45,5 @@ Run
 
 To recompile Fieldtrip, start up OSL, and then run
 
-	cd(fullfile(getenv('OSLDIR'),'spm12','external','fieldtrip'))
-	ft_compile_mex(true)
+	osl_recompile_fieldtrip
 
-The Fieldtrip `src` folder appears first on the path, so the newly compiled files will be used ahead of any existing files.
