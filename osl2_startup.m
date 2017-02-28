@@ -38,18 +38,34 @@ function osl2_startup( osldir )
         % Check fsl has been set up
         if isempty(getenv('FSLDIR'))
             % Try and detect default location
-            % TODO - other locations: /usr/share/fsl/5.0
+
             if exist('/usr/local/fsl') 
                 % WARNING - below commands are only a subset of those in the proper setup via
                 % source ${FSLDIR}/etc/fslconf/fsl.sh
                 % Could still have unexpected behaviour
                 fsldir = '/usr/local/fsl/';
+                fsl_libs = '/usr/local/fsl/lib/';
+
                 setenv('FSLDIR',fsldir)
                 setenv('FSLOUTPUTTYPE','NIFTI_GZ')
 
-                % Add it to the shell path from within MATLAB 
                 curpath = getenv('PATH');
                 setenv('PATH',sprintf('%s:%s',fullfile(fsldir,'bin'),curpath));
+                curpath = getenv('LD_LIBRARY_PATH');
+                setenv('LD_LIBRARY_PATH',sprintf('%s:%s',fsl_libs,curpath));
+                
+            elseif exist('/usr/share/fsl/5.0')
+                fsldir = '/usr/share/fsl/5.0/';
+                fsl_libs = '/usr/lib/fsl/5.0/';
+
+                setenv('FSLDIR',fsldir)
+                setenv('FSLOUTPUTTYPE','NIFTI_GZ')
+
+                curpath = getenv('PATH');
+                setenv('PATH',sprintf('%s:%s',fullfile(fsldir,'bin'),curpath));
+                curpath = getenv('LD_LIBRARY_PATH');
+                setenv('LD_LIBRARY_PATH',sprintf('%s:%s',fsl_libs,curpath));
+            
             else
                 error('FSL is not installed properly. Perhaps check that the $FSLDIR/bin directory is in your PATH before starting Matlab. See the Prerequisites section at https://sites.google.com/site/ohbaosl/download');
             end
