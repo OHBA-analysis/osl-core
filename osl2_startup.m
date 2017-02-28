@@ -38,34 +38,16 @@ function osl2_startup( osldir )
         % Check fsl has been set up
         if isempty(getenv('FSLDIR'))
             % Try and detect default location
-
             if exist('/usr/local/fsl') 
-                % WARNING - below commands are only a subset of those in the proper setup via
-                % source ${FSLDIR}/etc/fslconf/fsl.sh
-                % Could still have unexpected behaviour
-                fsldir = '/usr/local/fsl/';
-                fsl_libs = '/usr/local/fsl/lib/';
-
-                setenv('FSLDIR',fsldir)
+                setenv('FSLDIR','/usr/local/fsl')
                 setenv('FSLOUTPUTTYPE','NIFTI_GZ')
-
-                curpath = getenv('PATH');
-                setenv('PATH',sprintf('%s:%s',fullfile(fsldir,'bin'),curpath));
-                curpath = getenv('LD_LIBRARY_PATH');
-                setenv('LD_LIBRARY_PATH',sprintf('%s:%s',fsl_libs,curpath));
-                
+                setenv('PATH',sprintf('%s:%s',fullfile('/usr/local/fsl/bin'),getenv('PATH')));
+                setenv('LD_LIBRARY_PATH',sprintf('%s:%s','/usr/local/fsl/lib',getenv('LD_LIBRARY_PATH')));
             elseif exist('/usr/share/fsl/5.0')
-                fsldir = '/usr/share/fsl/5.0/';
-                fsl_libs = '/usr/lib/fsl/5.0/';
-
-                setenv('FSLDIR',fsldir)
+                setenv('FSLDIR','/usr/share/fsl/5.0')
                 setenv('FSLOUTPUTTYPE','NIFTI_GZ')
-
-                curpath = getenv('PATH');
-                setenv('PATH',sprintf('%s:%s',fullfile(fsldir,'bin'),curpath));
-                curpath = getenv('LD_LIBRARY_PATH');
-                setenv('LD_LIBRARY_PATH',sprintf('%s:%s',fsl_libs,curpath));
-            
+                setenv('PATH',sprintf('%s:%s',fullfile('/usr/share/fsl/5.0/bin'),getenv('PATH')));
+                setenv('LD_LIBRARY_PATH',sprintf('%s:%s','/usr/lib/fsl/5.0',getenv('LD_LIBRARY_PATH')));
             else
                 error('FSL is not installed properly. Perhaps check that the $FSLDIR/bin directory is in your PATH before starting Matlab. See the Prerequisites section at https://sites.google.com/site/ohbaosl/download');
             end
@@ -156,11 +138,11 @@ function osl2_startup( osldir )
     ohba_external_startup
 
     addpath(fullfile(osldir,'GLEAN'));
-    addpath(genpath(fullfile(osldir,'HMM-MAR')));
+    addpath(genpath_exclude(fullfile(osldir,'HMM-MAR'),{'.git','.svn'}));
     addpath(fullfile(osldir,'MEG-ROI-nets'));
 
     % Ensure osl2 directories gets priority in path by adding it last
-    addpath(genpath_exclude(fullfile(osldir,'osl2'),{'.git','.svn','std_masks'}))
+    addpath(genpath_exclude(fullfile(osldir,'osl2'),{'.git','.svn','std_masks','docs'}))
     addpath(osldir)
 
     rmpath(fullfile(osldir,'osl2','spm-changes')); % These are already copied into spm
