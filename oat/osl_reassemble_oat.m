@@ -17,7 +17,7 @@ masterDir = oat.source_recon.dirname;
 % make a folder to keep the logfiles from the source recon and first level,
 % for debugging analyses
 logdir = [masterDir '/logfiles'];
-dos(['mkdir ' logdir]);
+runcmd(['mkdir ' logdir]);
 
 sprintf('Oat is in %s. \n\n Re-assembling the oat...',masterDir);
 
@@ -35,34 +35,34 @@ for iSess = 1:nSess
     if iSess == 1
         if (exist([subdir '/source_recon_mask.nii.gz'],'file')) == 2
             % copy the source recon mask
-            cmmd = ['cp ' subdir '/source_recon_mask.nii.gz ' masterDir];
-            [s,~] = dos(cmmd); if s~=0; error(['Error with command: ' cmmd]); end
+            runcmd(['cp ' subdir '/source_recon_mask.nii.gz ' masterDir]);
+            
         end
         
         if (exist([subdir '/first_level_mask.nii.gz'],'file')) == 2
             % copy the source recon mask
-            cmmd = ['cp ' subdir '/first_level_mask.nii.gz ' masterDir];
-            [s,~] = dos(cmmd); if s~=0; error(['Error with command: ' cmmd]); end
+            runcmd(['cp ' subdir '/first_level_mask.nii.gz ' masterDir]);
+            
         end
     end
     
     % copy the files into the master oat directory
-    cmmd = ['cp ' subdir '/session' num2str(iSess) '_recon.mat ' masterDir];
-    [s,~] = dos(cmmd); if s~=0; error(['Error with command: ' cmmd]); end
-    cmmd = ['cp ' subdir '/session' num2str(iSess) '_first_level.mat ' masterDir];
-    [s,~] = dos(cmmd); if s~=0; error(['Error with command: ' cmmd]); end
-    cmmd = ['cp ' subdir '/concatMefsession' num2str(iSess) '_spm_meeg.mat ' masterDir];
-    [s,~] = dos(cmmd); if s~=0; error(['Error with command: ' cmmd]); end
-    cmmd = ['cp ' subdir '/concatMefsession' num2str(iSess) '_spm_meeg.mat ' masterDir];
-    [s,~] = dos(cmmd); if s~=0; error(['Error with command: ' cmmd]); end
+    runcmd(['cp ' subdir '/session' num2str(iSess) '_recon.mat ' masterDir]);
+    
+    runcmd(['cp ' subdir '/session' num2str(iSess) '_first_level.mat ' masterDir]);
+    
+    runcmd(['cp ' subdir '/concatMefsession' num2str(iSess) '_spm_meeg.mat ' masterDir]);
+    
+    runcmd(['cp ' subdir '/concatMefsession' num2str(iSess) '_spm_meeg.mat ' masterDir]);
+    
     
     % copy the log file
-    cmmd = ['cp ' subdir '/log_sess_' num2str(iSess) '.txt ' logdir];
-    [s,~] = dos(cmmd); if s~=0; error(['Error with command: ' cmmd]); end
+    runcmd(['cp ' subdir '/log_sess_' num2str(iSess) '.txt ' logdir]);
+    
     
     % delete the subdirectory
-    cmmd = ['rm -r ' subdir];
-    [s,~] = dos(cmmd); if s~=0; error(['Error with command: ' cmmd]); end
+    runcmd(['rm -r ' subdir]);
+    
     
     disp(['Adding fields to oat, session ' num2str(iSess) ' of ' num2str(nSess)]);
     %% add fields to the oat

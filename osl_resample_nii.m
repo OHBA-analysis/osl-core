@@ -25,15 +25,15 @@ if(nargin<4)
     output_mask_fname='';
 end;
 
-[status,res]=dos(['fslval ' input_fname ' pixdim1']);
+res = runcmd(['fslval ' input_fname ' pixdim1']);
 try
     pixdim(1)=str2num(res);
 catch 
     error(['Invalid file: ' input_fname]);
 end;
 
-[status,res]=dos(['fslval ' input_fname ' pixdim2']);pixdim(2)=str2num(res);
-[status,res]=dos(['fslval ' input_fname ' pixdim3']);pixdim(3)=str2num(res);
+res = runcmd(['fslval ' input_fname ' pixdim2']);pixdim(2)=str2num(res);
+res = runcmd(['fslval ' input_fname ' pixdim3']);pixdim(3)=str2num(res);
 
 if(pixdim(1)~=pixdim(2) | pixdim(2)~=pixdim(3))
     error('all pixel dimensions should be the same for the input nii');

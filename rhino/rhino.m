@@ -243,7 +243,7 @@ try
 	nii_gz = [sMRI '.gz'];
 	if exist(nii_gz, 'file'),
 		gunzip(nii_gz);
-		dos(['rm ' nii_gz]);
+		runcmd(['rm ' nii_gz]);
 	end%
 catch ME
     rethrow(ME)
@@ -281,11 +281,12 @@ if exist(scalp_file,'file')~=2
     end
     
     % CLEAN UP
+    % Use system instead of dos because an error might occur here
     warning off                                                            %#ok<WNOFF>
-    dos(['rm ' fullfile(struct_path,struct_name) '*.off']);
-    dos(['rm ' fullfile(struct_path,struct_name) '_outskull*.*']);
-    dos(['rm ' fullfile(struct_path,struct_name) '_inskull*.*']);
-    dos(['rm ' mesh_file]);
+    system(['rm ' fullfile(struct_path,struct_name) '*.off']);
+    system(['rm ' fullfile(struct_path,struct_name) '_outskull*.*']);
+    system(['rm ' fullfile(struct_path,struct_name) '_inskull*.*']);
+    system(['rm ' mesh_file]);
     warning on                                                             %#ok<WNON>
     
     
@@ -395,7 +396,7 @@ disp('Running scalp extraction')
     runcmd(['fslcpgeom  ' bet_file ' ' scalp_file], 1);
 
     % CLEAN UP
-%    dos(['rm ' bet_file]);
+%    system(['rm ' bet_file]);
     
     % PLOT VOLUME AND NEW OUTLINE:
     if S.do_plots
@@ -458,20 +459,20 @@ qformcode = str2double(runcmd(['fslorient -getqformcode ' scalp_file], 1));
 sformcode = str2double(runcmd(['fslorient -getsformcode ' scalp_file], 1));
 % qform and/or sform need to be valid to keep orientation consistent:
 if qformcode == 1 % code == 1 usually means voxels to anatomical units
-    [~,qform_native] = dos(['fslorient -getqform ' sMRI]);
+    qform_native = runcmd(['fslorient -getqform ' sMRI]);
 elseif sformcode == 1
     warning('qform code is not valid, using sform \n');
-    [~,qform_native] = dos(['fslorient -getsform ' sMRI]);
+    qform_native = runcmd(['fslorient -getsform ' sMRI]);
 elseif sformcode == 2
     warning('Neither qform or sform codes == 1, using sform: please check output carefully');
-    [~,qform_native] = dos(['fslorient -getsform ' sMRI]);
+    qform_native = runcmd(['fslorient -getsform ' sMRI]);
 elseif qformcode == 2
     warning('Neither qform or sform codes == 1, using qform: please check output carefully');
-    [~,qform_native] = dos(['fslorient -getqform ' sMRI]);
+    qform_native = runcmd(['fslorient -getqform ' sMRI]);
 else
     warning(['Neither sform or qform codes are valid... Trying anyway: ', ...
              'Please check the registration carefully for errors.\n']);
-    [~,qform_native] = dos(['fslorient -getqform ' sMRI]);
+    qform_native = runcmd(['fslorient -getqform ' sMRI]);
 end
 qform_native = str2num(qform_native);                                      
 qform_native = reshape(qform_native,4,4)';
@@ -483,7 +484,7 @@ mesh_rhino.vertices = spm_eeg_inv_transform_points(qform_native,mesh_rhino.verti
 
 
 % GET TRANSFORM FROM MNI TO NATIVE
-[~,qform_mni] = dos(['fslorient -getqform ' std_brain]);
+qform_mni = runcmd(['fslorient -getqform ' std_brain]);
 qform_mni = str2num(qform_mni);                                            
 qform_mni = reshape(qform_mni,4,4)';
 toMNI = load(trans_file);

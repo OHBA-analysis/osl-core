@@ -126,8 +126,8 @@ stdbrain = [OSLDIR '/std_masks/MNI152_T1_' num2str(output_spat_res) 'mm_brain_ma
 if input_spat_res ~= output_spat_res
     osl_resample_nii(fname, fname_rs, output_spat_res,interp,stdbrain);
     % tidy up files
-    % dos(['rm ' fname '.nii.gz']);
-    dos(['mv ' fname_rs '.nii.gz ' fname '.nii.gz']);
+    % runcmd(['rm ' fname '.nii.gz']);
+    runcmd(['mv ' fname_rs '.nii.gz ' fname '.nii.gz']);
 end
 
 fname_out=[fname '.nii.gz'];

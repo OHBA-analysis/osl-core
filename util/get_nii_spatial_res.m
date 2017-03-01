@@ -6,7 +6,8 @@ function [ mni_res ] = get_nii_spatial_res( mask_fname )
 
 res=[];
 
-[status,res]=dos(['fslval ' mask_fname ' pixdim1']);
+res = runcmd(['fslval ' mask_fname ' pixdim1']);
+
 try
     mni_res(1)=str2double(res);
     assert(isfinite(mni_res(1)));
@@ -20,8 +21,8 @@ catch
     error(['Invalid file: ' mask_fname]);
 end;
 
-[status,res]=dos(['fslval ' mask_fname ' pixdim2']);mni_res(2)=str2num(res);
-[status,res]=dos(['fslval ' mask_fname ' pixdim3']);mni_res(3)=str2num(res);
+res=runcmd(['fslval ' mask_fname ' pixdim2']);mni_res(2)=str2num(res);
+res=runcmd(['fslval ' mask_fname ' pixdim3']);mni_res(3)=str2num(res);
 
 if(status>1)
     disp(res);

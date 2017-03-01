@@ -51,12 +51,12 @@ xform = [xstep  0       0       round(10*min(sourcemodel3d.cfg.grid.template.xgr
          0      0       0       1];
      
     
-dos(['fslorient -setsformcode 0 ' fname_out])
-dos(['fslorient -setqformcode 2 ' fname_out])
-dos(['fslorient -setsform ' num2str(xform) ' ' fname_out])
-dos(['fslorient -setqform ' num2str(xform) ' ' fname_out])
+runcmd(['fslorient -setsformcode 0 ' fname_out])
+runcmd(['fslorient -setqformcode 2 ' fname_out])
+runcmd(['fslorient -setsform ' num2str(xform) ' ' fname_out])
+runcmd(['fslorient -setqform ' num2str(xform) ' ' fname_out])
 
 
-%dos(['fslview ' fname_out ' &'])
-%dos(['fslview ' fname_in ' &'])
+%runcmd(['fslview ' fname_out ' &'])
+%runcmd(['fslview ' fname_in ' &'])
 end
