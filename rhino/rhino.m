@@ -230,16 +230,16 @@ std_brain  = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz'];
 
 % SWITCH ORIENTATION OF SCALP FILE IF IT'S NOT THE SAME AS STD_BRAIN
 % (RADIOLOGICAL)
-std_orient  = call_fsl_wrapper(['fslorient -getorient ' std_brain ],1);
-smri_orient = call_fsl_wrapper(['fslorient -getorient ' sMRI      ],1);
+std_orient  = runcmd(['fslorient -getorient ' std_brain ],1);
+smri_orient = runcmd(['fslorient -getorient ' sMRI      ],1);
 if ~strcmp(deblank(smri_orient),deblank(std_orient))
-    call_fsl_wrapper(['fslorient -swaporient ' sMRI],1);
+    runcmd(['fslorient -swaporient ' sMRI],1);
 end
 
 % RUN FSLREORIENT2STD
 try
     fslreorientCommand = ['fslreorient2std ' sMRI ' ' sMRI];
-    call_fsl(fslreorientCommand); % creates .nii.gz
+    runcmd(fslreorientCommand); % creates .nii.gz
 	nii_gz = [sMRI '.gz'];
 	if exist(nii_gz, 'file'),
 		gunzip(nii_gz);
@@ -260,7 +260,7 @@ if exist(scalp_file,'file')~=2
                         ' -ref ' std_brain   ...
                         ' -omat ' trans_file ...
                         ' -o ' fullfile(struct_path,[struct_name,'_MNI'])];
-        call_fsl_wrapper(flirtCommand, 1);
+        runcmd(flirtCommand, 1);
     end
     
     % RUN BET
@@ -268,7 +268,7 @@ if exist(scalp_file,'file')~=2
         disp('Running BET...')
         betCommand = ['bet2 ' sMRI ' ' fullfile(struct_path,struct_name) ...
                       ' -n -e'];
-        call_fsl_wrapper(betCommand, 1);
+        runcmd(betCommand, 1);
     end
     
     % RUN BETSURF
@@ -277,7 +277,7 @@ if exist(scalp_file,'file')~=2
         betsurfCommand = ['betsurf --t1only -o ' sMRI ' ' mesh_file ...
                           ' ' trans_file                            ...
                           ' ' fullfile(struct_path,struct_name)];
-        call_fsl_wrapper(betsurfCommand, 1);
+        runcmd(betsurfCommand, 1);
     end
     
     % CLEAN UP
@@ -392,7 +392,7 @@ disp('Running scalp extraction')
     
     % SAVE AS NIFTI
     save_avw(outline,scalp_file,'d',scales);
-    call_fsl_wrapper(['fslcpgeom  ' bet_file ' ' scalp_file], 1);
+    runcmd(['fslcpgeom  ' bet_file ' ' scalp_file], 1);
 
     % CLEAN UP
 %    dos(['rm ' bet_file]);
@@ -454,8 +454,8 @@ disp('Coregistering')
 % then the qform/sform or qformcode/sformcode are likely causes. If in
 % doubt then check that the headshape points in all coordinate systems
 % correspond to those in FSLVIEW.
-qformcode = str2double(call_fsl_wrapper(['fslorient -getqformcode ' scalp_file], 1));
-sformcode = str2double(call_fsl_wrapper(['fslorient -getsformcode ' scalp_file], 1));
+qformcode = str2double(runcmd(['fslorient -getqformcode ' scalp_file], 1));
+sformcode = str2double(runcmd(['fslorient -getsformcode ' scalp_file], 1));
 % qform and/or sform need to be valid to keep orientation consistent:
 if qformcode == 1 % code == 1 usually means voxels to anatomical units
     [~,qform_native] = dos(['fslorient -getqform ' sMRI]);

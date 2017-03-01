@@ -193,21 +193,21 @@ dsBrainMask = fullfile(OSLDIR, 'std_masks',    ...
                       'mm_brain_mask']);
 
 % spatial convolution
-call_fsl_wrapper(['fslmaths ' fname     ' -s ' num2str(ss) ...
+runcmd(['fslmaths ' fname     ' -s ' num2str(ss) ...
                   ' -mas ' maskImage ' tmp1']);
-call_fsl_wrapper(['fslmaths ' maskImage ' -s ' num2str(ss) ...
+runcmd(['fslmaths ' maskImage ' -s ' num2str(ss) ...
                   ' -mas ' maskImage ' tmp2']);
-call_fsl_wrapper(['fslmaths tmp1  -div tmp2 '  fname2]);
-call_fsl_wrapper('rm tmp1.nii.gz tmp2.nii.gz');
+runcmd(['fslmaths tmp1  -div tmp2 '  fname2]);
+runcmd('rm tmp1.nii.gz tmp2.nii.gz');
 
 fname3 = [fname2 '_ds' num2str(ds) 'mm'];
 
 % Spatial Downsampling
-call_fsl_wrapper(['flirt -in ' fname2 ' -applyxfm -init ' ...
+runcmd(['flirt -in ' fname2 ' -applyxfm -init ' ...
                   getenv('FSLDIR') '/etc/flirtsch/ident.mat -out ' fname3 ...
                   ' -paddingsize 0.0 -interp trilinear -ref ' dsBrain]);      
 % mask to reduce edge blurring
-call_fsl_wrapper(['fslmaths ' fname3 ' -mas ' dsBrainMask ' ' fname3]);             
+runcmd(['fslmaths ' fname3 ' -mas ' dsBrainMask ' ' fname3]);             
 
 [~, nam, ext] = fileparts(fname3);
 newName       = [nam ext];

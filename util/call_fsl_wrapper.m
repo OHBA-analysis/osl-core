@@ -7,4 +7,4 @@ function result = call_fsl_wrapper(fslCommand, quiet)
 	    fprintf('\n');
 	end
 
-	[status, result] = runcmd(fslCommand);
+	[status, result] = call_fsl(fslCommand);
