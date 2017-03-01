@@ -38,6 +38,11 @@ function osl2_startup( osldir )
         % Check fsl has been set up
         if isempty(getenv('FSLDIR'))
             % Try and detect default location
+            % Known variables that are NOT set here - in the event of errors, may need to add them back
+            % FSLMULTIFILEQUIT=TRUE
+            % FSLTCLSH=$FSLDIR/bin/fsltclsh
+            % FSLWISH=$FSLDIR/bin/fslwish
+
             if exist('/usr/local/fsl') 
                 setenv('FSLDIR','/usr/local/fsl')
                 setenv('FSLOUTPUTTYPE','NIFTI_GZ')
