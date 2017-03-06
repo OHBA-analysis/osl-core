@@ -13,6 +13,9 @@ function osl_check_installation(do_log)
 	section = @(x) log(sprintf('\n------------------ %s ------------------',upper(x)));
 
 	if do_log
+		try
+			delete('osl_debug_log.txt');
+		end
 		diary('osl_debug_log.txt')
 		fprintf(1,'Writing diagnostic record to %s\n',fullfile(pwd,'osl_debug_log.txt'));
 	end
