@@ -70,6 +70,20 @@ function osl_check_installation(do_log)
 	log(sprintf('FSL return status = %d',status));
 	log(sprintf('FSL result = %s',res));
 
+	input_mask = fullfile(osldir,'std_masks','MNI152_T1_99mm_brain.nii.gz');
+
+	try
+		runcmd('fslmaths %s -thr 100 osl_fslmaths_test.nii.gz',input_mask);
+	catch ME
+		log(sprintf('FAIL - fslmaths\n%s',ME.message));
+	end
+
+	try
+		m = read_avw(input_mask);
+	catch ME
+		log(sprintf('FAIL - read_avw: %s',ME.message));
+	end
+
 	% try
 	% 	log('FSLERRORREPORT OUTPUT')
 	% 	system('fslerrorreport');
