@@ -61,8 +61,8 @@ end;
 % find index for mni coord
 ind = osl_mnicoords2ind(S.mni_coord, mni_res);
 ind=ind+1;
-map=ra(fname);
-bgmap=ra([OSLDIR '/std_masks/MNI152_T1_' num2str(mni_res) 'mm_brain']);
+map=read_avw(fname);
+bgmap=read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(mni_res) 'mm_brain']);
 map=mean(map,4); 
 x1=squash(abs(map),abs(map));
 
