@@ -18,12 +18,12 @@ function [replaced,notfound] = osl_recompile_fieldtrip( fieldtrip_dir )
 
     current_dir = pwd;
     if nargin < 1
-        fieldtrip_dir = fullfile( OSLDIR, 'spm12/external/fieldtrip' );
+        fieldtrip_dir = fullfile( OSLDIR, 'spm12','external','fieldtrip' );
     end
     
     % delete all source Mex-files
     src_clean    = find_and_delete_mex(fullfile( fieldtrip_dir, 'src' ));
-    fileio_clean = find_and_delete_mex(fullfile( fieldtrip_dir, 'fileio/@uint64' ));
+    fileio_clean = find_and_delete_mex(fullfile( fieldtrip_dir, 'fileio','@uint64' ));
     
     % extract function names to check for conflicts
     src_names    = cellfun( @basename, src_clean, 'UniformOutput', false );
@@ -42,6 +42,10 @@ function [replaced,notfound] = osl_recompile_fieldtrip( fieldtrip_dir )
     % copy newly compiled version instead
     replaced = {};
     notfound = {};
+
+    % Refresh the list of available src names
+    src_names = union(src_names,cellfun( @basename, find_mex_files(fullfile(fieldtrip_dir,'src')), 'UniformOutput', false )); 
+
     for i = 1:numel(mex_clean) 
         
         file = mex_clean{i};
@@ -54,13 +58,16 @@ function [replaced,notfound] = osl_recompile_fieldtrip( fieldtrip_dir )
                 replaced{end+1} = file;
             case fileio_names
                 delete([file '.mex*']);
-                copyfile( fullfile(fieldtrip_dir,'fileio/@uint64',[name '.' mexext]), fileparts(file) );
+                copyfile( fullfile(fieldtrip_dir,'fileio','@uint64',[name '.' mexext]), fileparts(file) );
                 replaced{end+1} = file;
             otherwise
                 warning('Could not find a replacement for Mex-file: "%s"',mex_clean{i});
                 notfound{end+1} = file;
         end
     end
+
+    % Clean up src
+    delete(fullfile(fieldtrip_dir,'src',['*.',mexext]))
     
 end
 
