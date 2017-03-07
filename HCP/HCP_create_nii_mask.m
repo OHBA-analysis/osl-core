@@ -41,9 +41,9 @@ xform = [xstep  0       0       round(10*min(sourcemodel3d.cfg.grid.template.xgr
          0      0       zstep   round(10*min(sourcemodel3d.cfg.grid.template.zgrid)),...
          0      0       0       1];
 
-dos(['fslorient -setsformcode 0 ' mask_out])
-dos(['fslorient -setqformcode 2 ' mask_out])
-dos(['fslorient -setsform ' num2str(xform) ' ' mask_out])
-dos(['fslorient -setqform ' num2str(xform) ' ' mask_out])
+runcmd(['fslorient -setsformcode 0 ' mask_out])
+runcmd(['fslorient -setqformcode 2 ' mask_out])
+runcmd(['fslorient -setsform ' num2str(xform) ' ' mask_out])
+runcmd(['fslorient -setqform ' num2str(xform) ' ' mask_out])
 
 end

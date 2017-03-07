@@ -16,6 +16,6 @@ end
 fslview(fname_tmp);
 
 pause(5)
-dos(['rm ' fname_tmp '.nii.gz']);
+runcmd(['rm ' fname_tmp '.nii.gz']);
 
 end

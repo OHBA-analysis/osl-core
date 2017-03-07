@@ -24,7 +24,7 @@ imachine = 0;
 machines = {'hal','sal','arcus'};
 while isempty(res)
     imachine = imachine + 1;
-    [~,res] = dos(['hostname -f | grep '  machines{imachine}]);
+    res = runcmd(['hostname -f | grep '  machines{imachine}]);
 end % while isempty(res)
 
 if isempty(res)

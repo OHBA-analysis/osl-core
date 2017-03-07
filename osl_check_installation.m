@@ -13,6 +13,9 @@ function osl_check_installation(do_log)
 	section = @(x) log(sprintf('\n------------------ %s ------------------',upper(x)));
 
 	if do_log
+		try
+			delete('osl_debug_log.txt');
+		end
 		diary('osl_debug_log.txt')
 		fprintf(1,'Writing diagnostic record to %s\n',fullfile(pwd,'osl_debug_log.txt'));
 	end
@@ -70,6 +73,29 @@ function osl_check_installation(do_log)
 	log(sprintf('FSL return status = %d',status));
 	log(sprintf('FSL result = %s',res));
 
+	input_mask = fullfile(osldir,'std_masks','MNI152_T1_8mm_brain.nii.gz');
+
+	try
+		runcmd('fslmaths %s -thr 100 osl_fslmaths_test.nii.gz',input_mask);
+		log('PASS - fslmaths')
+	catch ME
+		log(sprintf('FAIL - fslmaths\n%s',ME.message));
+	end
+
+	try
+		m = read_avw(input_mask);
+	catch ME
+		log('PASS - read_avw')
+		log(sprintf('FAIL - read_avw\n%s',ME.message));
+	end
+
+	try
+		fslview(input_mask)
+		log('fslview successful - window should have appeared');
+	catch ME
+		log(sprintf('FAIL - fslview\n%s',ME.message));
+	end
+	
 	% try
 	% 	log('FSLERRORREPORT OUTPUT')
 	% 	system('fslerrorreport');
