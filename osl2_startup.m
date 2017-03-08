@@ -105,6 +105,8 @@ function osl2_startup( osldir )
     addpath(fullfile(osldir,'spm12'))
     spm_get_defaults('cmdline',true);
     spm('Defaults','EEG')
+    addpath(fullfile(spm('dir'),'matlabbatch')); % Required for cfg_getfile
+
     addpath(fullfile(osldir, 'spm12','external','fieldtrip','src'));
 
     % Add OHBA shared libraries
