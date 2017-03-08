@@ -20,6 +20,7 @@ function osl2_startup( osldir )
 
         % If anything goes wrong, osl2_startup.m should still be left on the path
         addpath(fullfile(osldir,'osl2'))
+        addpath(fullfile(osldir,'osl2','util'))
 
         for j = 1:length(oldpaths)
             if strfind(oldpaths{j},matlabroot)
@@ -34,37 +35,10 @@ function osl2_startup( osldir )
                 end
             end
         end
+
+        % Check/add FSL binaries to the underlying system path, and Matlab functions to Matlab
+        fsl_initialise() 
         
-        % Check fsl has been set up
-        if isempty(getenv('FSLDIR'))
-            % Try and detect default location
-            % Known variables that are NOT set here - in the event of errors, may need to add them back
-            % FSLMULTIFILEQUIT=TRUE
-            % FSLTCLSH=$FSLDIR/bin/fsltclsh
-            % FSLWISH=$FSLDIR/bin/fslwish
-
-            if exist('/usr/local/fsl') 
-                setenv('FSLDIR','/usr/local/fsl')
-                setenv('FSLOUTPUTTYPE','NIFTI_GZ')
-                setenv('PATH',sprintf('%s:%s',fullfile('/usr/local/fsl/bin'),getenv('PATH')));
-                setenv('LD_LIBRARY_PATH',sprintf('%s:%s','/usr/local/fsl/lib',getenv('LD_LIBRARY_PATH')));
-            elseif exist('/usr/share/fsl/5.0')
-                setenv('FSLDIR','/usr/share/fsl/5.0')
-                setenv('FSLOUTPUTTYPE','NIFTI_GZ')
-                setenv('PATH',sprintf('%s:%s',fullfile('/usr/share/fsl/5.0/bin'),getenv('PATH')));
-                setenv('LD_LIBRARY_PATH',sprintf('%s:%s','/usr/lib/fsl/5.0',getenv('LD_LIBRARY_PATH')));
-            else
-                error('FSL is not installed properly. Perhaps check that the $FSLDIR/bin directory is in your PATH before starting Matlab. See the Prerequisites section at https://sites.google.com/site/ohbaosl/download');
-            end
-        end
-
-        % Try a dummy call to an fsl tool to make sure FSL is properly installed
-        [status,res] = system('fslval');
-        if status~=1
-            error('FSL is not installed properly. Perhaps check that the $FSLDIR/bin directory is in your PATH before starting Matlab. See the Prerequisites section at https://sites.google.com/site/ohbaosl/download');
-        end
-       
-        addpath(sprintf('%s/etc/matlab',getenv('FSLDIR')));
        
     end
 

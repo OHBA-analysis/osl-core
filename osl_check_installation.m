@@ -56,22 +56,28 @@ function osl_check_installation(do_log)
 	fsldir = getenv('FSLDIR');
 	if isempty(fsldir)
 		log('FSL environment variable not set')
-		if exist('/usr/local/fsl/')
-			log('Found /usr/local/fsl/, attemping automatic configuration');
-			fsldir = '/usr/local/fsl/';
-			setenv('FSLDIR',fsldir)
-			setenv('FSLOUTPUTTYPE','NIFTI_GZ')
-			curpath = getenv('PATH');
-			setenv('PATH',sprintf('%s:%s',fullfile(fsldir,'bin'),curpath));
+		log('Attempting automatic configuration')
+		try
+			addpath(fullfile(osldir,'util'));
+			fsl_initialise;
+		catch ME
+			log_error('Error initialising FSL',ME)
 		end
 	else
 		log(sprintf('FSLDIR: %s',fsldir));
 	end
 
-	[status,res] = system('fslval');
-
-	log(sprintf('FSL return status = %d',status));
-	log(sprintf('FSL result = %s',res));
+	try
+		[status,res] = system('fslval');
+		if status == 1
+			log('PASS - fslval')
+		else
+			log(sprintf('FAIL - fslval. Return status = %d',status));
+			log(sprintf('FAIL - fslval. Result = %s',res));
+		end
+	catch ME
+		log(sprintf('FAIL - fslval\n%s',ME.message));
+	end
 
 	input_mask = fullfile(osldir,'std_masks','MNI152_T1_8mm_brain.nii.gz');
 
@@ -84,14 +90,14 @@ function osl_check_installation(do_log)
 
 	try
 		m = read_avw(input_mask);
-	catch ME
 		log('PASS - read_avw')
+	catch ME
 		log(sprintf('FAIL - read_avw\n%s',ME.message));
 	end
 
 	try
 		fslview(input_mask)
-		log('fslview successful - window should have appeared');
+		log('PASS - fslview. Check that fslview window has appeared');
 	catch ME
 		log(sprintf('FAIL - fslview\n%s',ME.message));
 	end
