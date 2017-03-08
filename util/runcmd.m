@@ -1,9 +1,11 @@
 function [output,return_value] = runcmd(cmd,varargin)
-	% Wrapper for system calls
-	% Added functionality - cmd is passed through sprintf so string substitutions can be
-	% applied in runcmd() directly
-	% EXAMPLE USAGE
-	% runcmd('rm %s','testdir')
+	% Wrapper to capture output of system calls. Supports sprintf token replacement
+	% 
+	% USAGE
+	% - runcmd('ls')
+	% - output = runcmd('ls')
+	% - output = runcmd('ls %s',getenv('OSLDIR'))
+
 
 	if nargin > 1
 		cmd = sprintf(cmd,varargin{:});
