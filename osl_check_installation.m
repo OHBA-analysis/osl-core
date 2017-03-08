@@ -38,6 +38,16 @@ function osl_check_installation(do_log)
 
 	arrayfun(@(x) log(sprintf('%s - %s',x.Name,x.Version)),ver);
 
+	if verLessThan('matlab','8.4')
+		log('FAIL - Matlab versions earlier than R2014b may have graphics errors and have limited support for OSL');
+	else
+		log('PASS - Matlab version is supported')
+	end
+
+	if verLessThan('matlab','7.14')
+		log('FAIL - Matlab versions earlier than R2012a are not officially supported by OSL');
+	end
+
 	% Check that expected directory structure is present
 	section('Directory structure');
     osldir = fileparts(fileparts(mfilename('fullpath')));
