@@ -39,7 +39,7 @@ function fsl_initialise(conf_file)
 		fprintf(f,'FSLDIR=%s\n',fsldir);
 		fprintf(f,'BIN=%s\n',bindir);
 		fprintf(f,'LIB=%s\n',libdir);
-		fclose(f)
+		fclose(f);
 	else % Read conf file
 		f = fopen(conf_file,'r');
 		fgetl(f); % Skip header
