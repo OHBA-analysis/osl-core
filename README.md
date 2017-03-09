@@ -26,6 +26,9 @@ Your directory structure should then look like
 	- some_directory
 		- osl2
 		- ohba-external
+		- HMM-MAR
+		- GLEAN
+		- MEG-ROI-nets
 		- spm12
 		- layouts
 		- std_masks
