@@ -18,5 +18,6 @@ function osl_publish(filename,evalCode)
 		filename = fullfile(getenv('OSLDIR'),'osl2','examples','publish_example.m');
 	end
 	
-	publish(filename,'evalCode',evalCode,'stylesheet',fullfile(getenv('OSLDIR'),'osl2','docs','mxdom2simplehtml_jekyll.xsl'),'format','html','outputDir',fullfile(getenv('OSLDIR'),'osl2','docs','matlab'))
+	output_html = publish(filename,'evalCode',evalCode,'stylesheet',fullfile(getenv('OSLDIR'),'osl2','docs','mxdom2simplehtml_jekyll.xsl'),'format','html','outputDir',fullfile(getenv('OSLDIR'),'osl2','docs','matlab'));
 
+	runcmd('open %s',output_html)
