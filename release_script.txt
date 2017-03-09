@@ -7,8 +7,8 @@ WORKINGDIR=/Users/woolrich/Desktop
 OSL2GITRELEASETAG=0.3  # e.g corresponds to release/tag (e.g. v0.3) created on github website
 GLEANGITRELEASETAG=0.2 # e.g. corresponds to release/tag (e.g. v0.2) created on github website, note that GLEAN contains HMMMAR as a subproject
 MEGROInetsGITRELEASETAG=1.6.0 # e.g. corresponds to release/tag (e.g. v1.6.0) created on github website 
-SUPPDIRSNAME=osl2_supporting_dirs_v2 # name of supplementary directories to use, do not want .tar.gz file ext here
-RELEASENAME=osl2.${OSL2GITRELEASETAG}.1 # overall name of built package
+SUPPDIRSNAME=osl2_supporting_dirs_v3 # name of supplementary directories to use, do not want .tar.gz file ext here
+RELEASENAME=osl2.${OSL2GITRELEASETAG}.2 # overall name of built package
 
 # location of repository for supplementary directories
 SUPPDIRSDOWNLOADSITE=http://users.fmrib.ox.ac.uk/~woolrich/osl2
@@ -25,6 +25,9 @@ mkdir $WORKINGDIR
 
 ######
 # download current tar ball of supplementary dirs for osl2
+
+# Do not uncomment this next line. Instead, this next commented line can be separately used to upload a new set of supporting dirs if needed
+# tar cvf osl2_supporting_dirs.tar osl2; gzip osl2_supporting_dirs.tar; scp -r osl2_supporting_dirs.tar.gz $OSLUPLOADDIR/$SUPPDIRSNAME.tar.gz
 
 cd $WORKINGDIR
 
@@ -63,16 +66,12 @@ rm -rf $REPONAME-$GITRELEASETAG
 tar xvf $REPONAME.tar.gz
 rm -rf $REPONAME.tar.gz
 
-# rename the internal osl dir osl2
+# rename the dir
 mv $REPONAME-$GITRELEASETAG $REPONAME
 
 # update $REPONAME_version.m
 cd $WORKINGDIR
 rm -f osl2/$REPONAME/${REPONAME}_version.m
-echo "function ret=${REPONAME}_version, ret='$REPONAME.$GITRELEASETAG';" > osl2/$REPONAME/${REPONAME}_version.m
-
-# also put a $REPONAME_version.m in the root osl2 dir
-rm -f osl2/${REPONAME}_version.m
 echo "function ret=${REPONAME}_version, ret='$tmp';" > osl2/$REPONAME/${REPONAME}_version.m
 
 ######
@@ -100,7 +99,7 @@ rm -rf $REPONAME-$GITRELEASETAG
 tar xvf $REPONAME.tar.gz
 rm -rf $REPONAME.tar.gz
 
-# rename the internal osl dir osl2
+# rename the dir
 mv $REPONAME-$GITRELEASETAG $REPONAME
 
 # update $REPONAME_version.m
@@ -132,7 +131,7 @@ rm -rf $REPONAME-$GITRELEASETAG
 tar xvf $REPONAME.tar.gz
 rm -rf $REPONAME.tar.gz
 
-# rename the internal osl dir osl2
+# rename the dir
 mv $REPONAME-$GITRELEASETAG $REPONAME
 
 # update $REPONAME_version.m
@@ -154,4 +153,5 @@ gzip -f $RELEASENAME.tar
 scp -r $RELEASENAME.tar.gz $OSLUPLOADDIR/
 
 echo Built release can be downloaded from $OSLUPLOADDIR/$RELEASENAME.tar.gz
+
 
