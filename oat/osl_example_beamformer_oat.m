@@ -109,7 +109,7 @@ oat = osl_check_oat(oat);
 %%%%%%%%%%%%%%%%%%%
 %% RUN THE OAT:
 
-oat.to_do=[0 1 0 0];
+oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 
 % report = oat_source_recon_report(oat);
@@ -140,7 +140,8 @@ mni_brain=[osldir '/std_masks/MNI152_T1_' num2str(S2.resamp_gridstep) 'mm_brain'
 
 % INSPECT THE RESULTS OF A CONTRAST IN FSLVIEW
 contrast=3;
-runcmd(['fslview ' mni_brain ' ' [statsdir '/cope' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm'] ' ' [statsdir '/tstat' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm']  ' ' [statsdir '/tstat' num2str(contrast) '_mip_' num2str(S2.resamp_gridstep) 'mm'] ' &']);
+%runcmd(['fslview ' mni_brain ' ' [statsdir '/cope' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm'] ' ' [statsdir '/tstat' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm']  ' ' [statsdir '/tstat' num2str(contrast) '_mip_' num2str(S2.resamp_gridstep) 'mm'] ' &']);
+runcmd(['fsleyes ' mni_brain ' ' [statsdir '/cope' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm'] ' ' [statsdir '/tstat' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm']  ' ' [statsdir '/tstat' num2str(contrast) '_mip_' num2str(S2.resamp_gridstep) 'mm'] ' &']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Investigating location of interest using an MNI coordinate
