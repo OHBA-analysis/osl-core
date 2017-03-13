@@ -103,7 +103,7 @@ switch anatomical
         anatomical_fname=anatomical;    
 end;
 
-runcmd(['fslview ' fnames_formatted ' ' anatomical_fname  '&']);
+runcmd(['fslview ' anatomical_fname ' '  fnames_formatted '&']);
  
 warning on
 end
