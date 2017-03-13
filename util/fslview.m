@@ -39,7 +39,7 @@ if nargin<3
 end
 
 if nargin<2
-   thresholds = [2.3 5];
+   thresholds = [];
 end
 
 if nargin==0 || isempty(fnames)
