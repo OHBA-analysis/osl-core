@@ -47,8 +47,6 @@ if nargin==0 || isempty(fnames)
     fnames=fullfile(pathname,filename);
 end
 
-warning off
-
 if ischar(fnames)
   fnames = {fnames};
 end
@@ -105,7 +103,6 @@ end;
 
 runcmd(['fslview ' anatomical_fname ' '  fnames_formatted '&']);
  
-warning on
 end
 
 % HELP TEXT FROM FSLVIEW
