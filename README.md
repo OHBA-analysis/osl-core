@@ -13,7 +13,7 @@ For turnkey operation, download a `.zip` distribution release of OSL.
 
 To set up from GitHub, perform the following
 
-- Clone this repository
+- Clone this repository, using the branch workshop
 - Clone `https://github.com/OHBA-analysis/ohba-external`
 - Clone `https://github.com/OHBA-analysis/HMM-MAR`
 - Clone `https://github.com/OHBA-analysis/GLEAN`
