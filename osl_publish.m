@@ -15,9 +15,9 @@ function osl_publish(filename,evalCode)
 	end
 	
 	if nargin < 1 || isempty(filename) 
-		filename = fullfile(getenv('OSLDIR'),'osl2','examples','publish_example.m');
+		filename = fullfile(osldir,'osl2','examples','publish_example.m');
 	end
 	
-	output_html = publish(filename,'evalCode',evalCode,'stylesheet',fullfile(getenv('OSLDIR'),'osl2','docs','mxdom2simplehtml_jekyll.xsl'),'format','html','outputDir',fullfile(getenv('OSLDIR'),'osl2','docs','matlab'));
+	output_html = publish(filename,'evalCode',evalCode,'stylesheet',fullfile(osldir,'osl2','docs','mxdom2simplehtml_jekyll.xsl'),'format','html','outputDir',fullfile(osldir,'osl2','docs','matlab'));
 
 	runcmd('open %s',output_html)

@@ -5,7 +5,6 @@
 % SPM objects
 %
 % First, set up the input file locations
-osldir = getenv('OSLDIR');
 spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
 data_dir = fullfile(osldir,'example_data','roinets_example');
 output_directory = fullfile(osldir,'practical','roinets_demo');

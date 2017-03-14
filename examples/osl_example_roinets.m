@@ -14,7 +14,6 @@ run_analysis = false;
 
 %%
 % Either way, the spatial basis will be useful for analysis, so select it it now
-osldir = getenv('OSLDIR');
 spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
 
 %%
