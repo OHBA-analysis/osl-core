@@ -11,13 +11,13 @@
 % (23*27*23) or in a vector of length equal to the number of voxels. Thus a parcellation 
 % with N parcels could be represented as 
 %
-% - 23*27*23*N matrix (which we'll refer to as 'XYZ x parcels')
-% - 3559*N matrix (which we'll refer to as 'Voxels x parcels')
+% * 23*27*23*N matrix (which we'll refer to as 'XYZ x parcels')
+% * 3559*N matrix (which we'll refer to as 'Voxels x parcels')
 % 
 % This is a complete representation of all possible parcellations. Note that parcels may be
 %
-% - Weighted - A voxel may be assigned to a parcel with a weighting factor
-% - Overlapping- A voxel may belong to multiple parcels
+% * Weighted - A voxel may be assigned to a parcel with a weighting factor
+% * Overlapping- A voxel may belong to multiple parcels
 %
 % In the case of a parcellation that is neither weighted nor overlapping, it is also possible
 % to represent the parcellation using either a 'XYZ x 1' or 'Voxels x 1' matrix, where the
@@ -44,8 +44,8 @@ p = parcellation(m);
 %%
 % When the parcellation is loaded, two things happen
 % 
-% - The parcellation is converted to 'XYZ x parcels' representation
-% - The template mask is guessed based on the size of the matrix
+% * The parcellation is converted to 'XYZ x parcels' representation
+% * The template mask is guessed based on the size of the matrix
 %
 % If you know the appropriate template mask, you can specify it manually (although this has
 % not been extensively tested - many parcellations, and all of those supplied with OSL, work using
@@ -55,16 +55,16 @@ p = parcellation(m);
 p
 
 %%
-% - weight_mask: The XYZ x parcels representation of the parcellation
-% - template_mask: The background structural image/mask
-% - template_coordinates: The MNI coordinates for each voxel 
-% - template_fname: The filename of the standard mask 
-% - labels: If provided, the names of each ROI
-% - is_weighted: true if the voxels are weighted
-% - is_overlapping: true if any voxel belongs to more than one parcel
-% - resolution: spatial resolution of the standard mask
-% - n_parcels: number of parcels in the parcellation
-% - n_voxels: number of voxels in the mask
+% * weight_mask: The XYZ x parcels representation of the parcellation
+% * template_mask: The background structural image/mask
+% * template_coordinates: The MNI coordinates for each voxel 
+% * template_fname: The filename of the standard mask 
+% * labels: If provided, the names of each ROI
+% * is_weighted: true if the voxels are weighted
+% * is_overlapping: true if any voxel belongs to more than one parcel
+% * resolution: spatial resolution of the standard mask
+% * n_parcels: number of parcels in the parcellation
+% * n_voxels: number of voxels in the mask
 %
 %% Reshaping matrices
 %
@@ -97,6 +97,40 @@ v(end-10:end)
 
 %%
 % Note that voxels that are not assigned to a parcel are given a value of 0.
+
+%% MNI coordinates
+% The MNI coordinates for the template are stored in the |template_coordinates| property.
+size(p.template_coordinates)
+
+%%
+% See for example
+figure
+scatter3(p.template_coordinates(:,1),p.template_coordinates(:,2),p.template_coordinates(:,3))
+axis equal
+set(gca,'View', [-117.5000   26.8000])
+xlabel('X');
+ylabel('Y');
+zlabel('Z');
+
+%%
+% The coordinates for each parcel can be obtained using the |roi_coords| method
+r = p.roi_coords;
+
+%%
+% which returns a cell array of matrices, where each matrix contains the MNI coordinates for the voxels
+% belonging to the parcel. 
+class(r)
+size(r)
+size(r{1})
+
+%%
+% Finally, you can return the centre-of-mass of each parcel (the average of the ROI coordinates for 
+% voxels belonging to the parcel) using the |roi_centres| method
+c = p.roi_centers;
+c(1:3,:)
+hold on
+scatter3(c(:,1),c(:,2),c(:,3),50,'ro','filled')
+
 
 %% Binarizing
 % We saw above that some operations required the parcellation to be binary. You can obtain the weight
@@ -142,16 +176,8 @@ binary_parcellation = parcellation(p.binarize)
 p.plot
 
 %%
-% This displays a 3D plot of the parcellation. Each ROI can be selected from the dropdown list. The MNI
-% coordinates for each parcel (plotted here using the |scatter3()| function) can be obtained using
-r = p.roi_coords;
-class(r)
-size(r)
-size(r{1})
-
-%%
-% which returns a cell array of matrices, where each matrix contains the MNI coordinates for the voxels
-% belonging to the parcel. It is also possible to show spatial maps of volume-wise activation - for example,
+% This displays a 3D plot of the parcellation. Each ROI can be selected from the dropdown list. 
+% It is also possible to show spatial maps of volume-wise activation - for example,
 % a power map, or the activation map for an HMM state. 
 p.plot_activation(rand(size(p.template_mask)));
 
@@ -198,7 +224,7 @@ p.savenii(p.weight_mask,'filename')
 % this will create a file 'filename.nii.gz'. The weight mask is written directly into the .nii file,
 % so it may only make sense if you pass in a volume. For example, to make a .nii file with the
 % XYZ x 1 representation of the parcellation (value indices parcel membership) you could use
-p.savenii(p.to_vol(1:38),'filename')
+p.savenii(p.to_vol(1:38),'filename');
 
 %%
 % which will first expand the parcel assignments to each voxel.
