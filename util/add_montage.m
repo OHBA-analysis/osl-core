@@ -17,12 +17,23 @@ function D = add_montage(D,W,name,ROIlabels)
 	nMontages       = D.montage('getnumber');
 	currentMontage  = D.montage('getmontage');
 
-	assert(size(W,2)==size(currentMontage.tra,1),sprintf('Transformation matrix is wrong size (is %dx%d, needs to be Nx%d)',size(W,1),size(W,2),size(currentMontage.tra(1))))
+	if size(W,2) ~= size(currentMontage.tra,1) && size(W,1) == size(currentMontage.tra,1)
+		W = W.';
+		fprintf(2,'Warning - input transformation matrix is being transposed. It was %d x %d, and the MEEG montage has %d channels. To avoid this message, transpose the input to add_montage()\n',size(W,1),size(W,2),size(currentMontage.tra,1));
+    end
+    
+    if nargin < 4 || isempty(ROIlabels) 
+        ROIlabels = arrayfun(@(x) sprintf('ROI%d',x),1:size(W,1),'UniformOutput',false);
+	end
+
+	assert(size(W,2)==size(currentMontage.tra,1),sprintf('Transformation matrix is wrong size (is %dx%d, needs to be Nx%d)',size(W,1),size(W,2),size(currentMontage.tra,1)))
+	assert(iscell(ROIlabels) && length(ROIlabels)==size(W,2),sprintf('ROI labels must be a cell array with %d elements',size(W,1)));
 
 	newMontage      = currentMontage;
+    newMontage      = rmfield(newMontage, 'channels');
 	unit            = unique(D.units());
 	newMontage.name = name;
-
+    
 	if isempty(newMontage) 
 		% If no online montage is currently applied, use weights directly
 		newMontage.tra  = W;
@@ -32,7 +43,7 @@ function D = add_montage(D,W,name,ROIlabels)
 
 	if ~isempty(ROIlabels)
 		newMontage.labelnew = ROIlabels;
-	end
+    end
 
 	D = D.montage('add', newMontage);
 	D = D.montage('switch', nMontages + 1);
