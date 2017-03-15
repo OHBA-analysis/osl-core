@@ -233,3 +233,62 @@ p.savenii(p.to_vol(1:38),'filename');
 % template mask into the newly saved file. This is important, partly because it specifies whether 
 % not the .nii file is saved in radiological orientation or not. Note that if the .nii file is 
 % missing  this information, it may not be usable for some purposes. 
+
+%% Modifying parcellations
+% You can modify the parcellation simply by changing the weight matrix. For example
+p.weight_mask(:,:,:,end+1) = p.weight_mask(:,:,:,end);
+
+%%
+% will duplicate the last parcel. Notice how the number of parcels has been updated
+p.n_parcels
+
+%%
+% Whether the parcellation is weighted or overlapping is automatically recomputed when you change
+% the weight matrix. 
+%
+% Don't forget to add a new label as well! Some methods (such as removing or merging parcels below)
+% require that the number of labels matches the number of parcels. This is enforced when you create
+% the parcellation object, but is not checked if you manually edit the parcellation
+p.labels{end+1} = 'New parcel';
+
+%%
+% You can easily remove parcels from the parcellation based on their index. For example, to 
+% remove the first 5 parcels, use
+p2 = p.remove_parcels(1:5);
+p2.n_parcels
+
+%%
+% Note that this method returns a new parcellation with the specified parcels removed. This behaviour
+% is the same as SPM MEEG objects. 
+%
+% You can also merge parcels. Merging is performed by adding the weight masks together for the specified
+% parcels. If your parcellation is non-overlapping, the behaviour is obvious. If the parcellation does 
+% overlap, you should be aware that the weights are being combined additively. If this is not what you
+% would like to do, you should just set the weight mask manually.
+%
+% To merge parcels, specify a cell array with lists of parcels to merge. A new parcellation will be
+% produced for each list in the cell array. All of the parcels that appear in the merge list will
+% be removed from the parcellation. For example
+p2 = p.merge_parcels({[1 2],[3 4]});
+
+%%
+% will create two new parcels, that are the composite of parcels 1 and 2, and parcels 3 and 4, AND the
+% original parcels 1, 2, 3, and 4 will be removed. New labels are automatically created to reflect this.
+p2.labels{1} % The first parcel is now ROI 5
+p2.labels{end} % The last parcel is a composite of ROIs 3 and 4
+
+%% Applying a parcellation to an SPM object
+% Since the parcellation object can easily output the parcel flag that goes into |ROInets.get_node_tcs|, 
+% it is easy to apply a parcellation to an MEEG object. Note that by default, |get_node_tcs| will make
+% a new online montage for the parcellation AND write the updated MEEG object to disk. If you want to
+% do this in memory, you can use the |apply_parcellation| method.
+%
+% Note that the active montage must be the source-space montage, and the parcellation will be 
+% automatically binarized if required
+D = spm_eeg_load(fullfile(osldir,'example_data','roinets_example','subject_1.mat'));
+D = D.montage('switch',2); % Switch to the source-space montage
+D2 = p.apply_parcellation(D)
+
+%%
+% The outputted MEEG object has not been saved to disk - use |D2.save()| if you want to save the 
+% new montage. You can pass |D2| directly into |remove_source_leakage| to perform orthogonalization.

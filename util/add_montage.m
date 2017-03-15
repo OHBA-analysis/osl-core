@@ -5,6 +5,8 @@ function D = add_montage(D,W,name,ROIlabels)
 	% - D (MEEG object)
 	% - W (transformation matrix being applied to current montage (n_new_channels x n_old_channels)
 	% 	  This matrix premultiplies the active montage and must therefore have the same number 
+	% - name (optional string giving name of new montage)
+	% - ROIlabels (optional cell array of names for each channel)
 	
 	if nargin < 4 || isempty(ROIlabels) 
 		ROIlabels = [];
@@ -27,7 +29,7 @@ function D = add_montage(D,W,name,ROIlabels)
 	end
 
 	assert(size(W,2)==size(currentMontage.tra,1),sprintf('Transformation matrix is wrong size (is %dx%d, needs to be Nx%d)',size(W,1),size(W,2),size(currentMontage.tra,1)))
-	assert(iscell(ROIlabels) && length(ROIlabels)==size(W,2),sprintf('ROI labels must be a cell array with %d elements',size(W,1)));
+	assert(iscell(ROIlabels) && length(ROIlabels)==size(W,1),sprintf('ROI labels must be a cell array with %d elements',size(W,1)));
 
 	newMontage      = currentMontage;
     newMontage      = rmfield(newMontage, 'channels');
