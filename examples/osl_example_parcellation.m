@@ -170,6 +170,14 @@ binary_parcellation = parcellation(p.binarize)
 % D = spm_eeg_load('meeg_file.mat');
 % D = ROInets.get_node_tcs(D,p.parcelflag,'PCA')
 
+%%
+% You might need to binarize and remove overlap in your parcellation to compute the parcel timecourses. 
+% You can do this by using |p.parcelflag(true)| where the first argument to |parcelflag()| specifies
+% whether you would like to run |binarize()| internally or not. So if you had an overlapping, weighted
+% parcellation, you might instead use
+
+% D = ROInets.get_node_tcs(D,p.parcelflag(true),'PCA')
+
 %% Plotting and visualization in Matlab
 % The Parcellation object provides a number of options for plotting. To start with, the parcellation can be
 % plotting using
@@ -277,18 +285,3 @@ p2 = p.merge_parcels({[1 2],[3 4]});
 p2.labels{1} % The first parcel is now ROI 5
 p2.labels{end} % The last parcel is a composite of ROIs 3 and 4
 
-%% Applying a parcellation to an SPM object
-% Since the parcellation object can easily output the parcel flag that goes into |ROInets.get_node_tcs|, 
-% it is easy to apply a parcellation to an MEEG object. Note that by default, |get_node_tcs| will make
-% a new online montage for the parcellation AND write the updated MEEG object to disk. If you want to
-% do this in memory, you can use the |apply_parcellation| method.
-%
-% Note that the active montage must be the source-space montage, and the parcellation will be 
-% automatically binarized if required
-D = spm_eeg_load(fullfile(osldir,'example_data','roinets_example','subject_1.mat'));
-D = D.montage('switch',2); % Switch to the source-space montage
-D2 = p.apply_parcellation(D)
-
-%%
-% The outputted MEEG object has not been saved to disk - use |D2.save()| if you want to save the 
-% new montage. You can pass |D2| directly into |remove_source_leakage| to perform orthogonalization.
