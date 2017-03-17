@@ -172,9 +172,8 @@ binary_parcellation = parcellation(p.binarize)
 % reduce dimensionality. This functionality is provided through |ROInets.get_node_tcs()|. The parcellation
 % needs to be passed in as a binary Voxels x parcels representation. As a shortcut, this can be obtained
 % using the |parcelflag()| method. For example, to compute parcel timecourses from an SPM object, use
-
-% p = parcellation('parcellation_file.nii.gz');
-% D = spm_eeg_load('meeg_file.mat');
+D = spm_eeg_load(fullfile(osldir,'example_data','roinets_example','subject_1.mat'));
+D = D.montage('switch',2)
 % D = ROInets.get_node_tcs(D,p.parcelflag,'PCA')
 
 %%
@@ -182,8 +181,11 @@ binary_parcellation = parcellation(p.binarize)
 % You can do this by using |p.parcelflag(true)| where the first argument to |parcelflag()| specifies
 % whether you would like to run |binarize()| internally or not. So if you had an overlapping, weighted
 % parcellation, you might instead use
+D2 = ROInets.get_node_tcs(D,p.parcelflag(true),'PCA')
 
-% D = ROInets.get_node_tcs(D,p.parcelflag(true),'PCA')
+%%
+% Notice that the parcel timecourses are saved in the MEEG object as an online montage. This has
+% been performed in memory, so you would need to run |D2.save()| to write the changes to disk.
 
 %% Plotting and visualization in Matlab
 % The Parcellation object provides a number of options for plotting. To start with, the parcellation can be
@@ -206,7 +208,7 @@ p.plot_activation(rand(p.n_parcels,1));
 % using the |plot_network| method. For example, to plot the top 5% of connections, you can use
 connection_matrix = randn(p.n_parcels);
 size(connection_matrix)
-[h_patch,h_scatter] = p.plot_network(0.1*connection_matrix,0.95)
+[h_patch,h_scatter] = p.plot_network(connection_matrix,0.95);
 
 %%
 % By default, the scatter plot is hidden with marker size |NaN|. To show the ROI centers, you can set
