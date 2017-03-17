@@ -223,7 +223,7 @@ set(gca,'CLim',[-1 1])
 % percentile. You can adjust the alpha limits to change which connections are visible
 set(gca,'ALim',[0 1]) % Show all connections
 set(gca,'ALim',[0.9 1]) % Start fading in connections above 90th percentile
-set(gca,'ALim',[0.95 0.95+eps]) % Hard cutoff at 95th percentile
+set(gca,'ALim',[0.95 0.95+1e-5]) % Hard cutoff at 95th percentile
 
 %% Plotting using fslview
 % There are a number of plotting options using fslview. These can be accessed through the |fslview|
