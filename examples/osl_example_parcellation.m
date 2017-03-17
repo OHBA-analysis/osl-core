@@ -66,6 +66,13 @@ p
 % * n_parcels: number of parcels in the parcellation
 % * n_voxels: number of voxels in the mask
 %
+% If you want to specify the labels associated with the parcellation, you can do so by providing either
+% a cell array of names for each region, or the name of a text file containing the name of each
+% parcel on a separate line e.g.
+
+% p = parcellation('my_parcellation.nii.gz',{'ROI 1','ROI 2'})
+% p = parcellation('my_parcellation.nii.gz','my_parcellation_names.txt')
+
 %% Reshaping matrices
 %
 % One the most basic operations is converting between the XYZ x parcels and Voxels x parcels
@@ -113,8 +120,8 @@ ylabel('Y');
 zlabel('Z');
 
 %%
-% The coordinates for each parcel can be obtained using the |roi_coords| method
-r = p.roi_coords;
+% The coordinates for each parcel can be obtained using the |roi_coordinates| method
+r = p.roi_coordinates;
 
 %%
 % which returns a cell array of matrices, where each matrix contains the MNI coordinates for the voxels
@@ -199,11 +206,24 @@ p.plot_activation(rand(p.n_parcels,1));
 % using the |plot_network| method. For example, to plot the top 5% of connections, you can use
 connection_matrix = randn(p.n_parcels);
 size(connection_matrix)
-p.plot_network(0.1*connection_matrix,0.95)
+[h_patch,h_scatter] = p.plot_network(0.1*connection_matrix,0.95)
 
 %%
-% Note that the line thickness is proportionate to the connection strength, so the thickness can be 
-% scaled by multiplying by a constant (0.1 in the example above). 
+% By default, the scatter plot is hidden with marker size |NaN|. To show the ROI centers, you can set
+% the scatter plot marker size
+set(h_scatter,'SizeData',30)
+
+%%
+% The line colours are matched to the colourmap. To change the colour scheme, simply
+% adjust the colour range of the plot
+set(gca,'CLim',[-1 1])
+
+%%
+% Finally, transparency is used to show or hide connections. Each edge has transparency equal to its
+% percentile. You can adjust the alpha limits to change which connections are visible
+set(gca,'ALim',[0 1]) % Show all connections
+set(gca,'ALim',[0.9 1]) % Start fading in connections above 90th percentile
+set(gca,'ALim',[0.95 0.95+eps]) % Hard cutoff at 95th percentile
 
 %% Plotting using fslview
 % There are a number of plotting options using fslview. These can be accessed through the |fslview|

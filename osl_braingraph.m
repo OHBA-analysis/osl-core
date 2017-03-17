@@ -33,8 +33,8 @@ trisurf(mesh.faces,mesh.vertices(:,1),mesh.vertices(:,2),mesh.vertices(:,3),'fac
 
 if ~isempty(G)
   G(logical(eye(size(G)))) = 0;
-  
-  if exist('thresh','var')
+
+  if exist('thresh','var') && ~isempty(thresh)
     Gt = G(~tril(ones(size(G))));
     G(abs(G)<prctile(abs(Gt),thresh))=nan;
   end
@@ -93,6 +93,8 @@ if ~isempty(G)
     else
         edgeWeight = 3;
     end
+
+
     line(mnipos([i(p) j(p)],1),mnipos([i(p) j(p)],2),mnipos([i(p) j(p)],3),'color',edgecolour,'linewidth',edgeWeight)
   end
   
