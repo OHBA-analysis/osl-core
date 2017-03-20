@@ -9,7 +9,7 @@ function workbench_initialize(conf_file)
 	end
 
 	if ~exist(conf_file) % If conf file doesn't exist, write default locations AND use them immediately if they exist
-		[workbenchdir,caretdir] = guess_workbenchdir();
+		[workbenchdir] = guess_workbenchdir();
 		f = fopen(conf_file,'w');
 		fprintf(f,'# Specify location of WORKBENCH here\n');
 		fprintf(f,'WORKBENCH=%s\n',workbenchdir);
@@ -29,7 +29,7 @@ function workbench_initialize(conf_file)
 
 	setenv( 'PATH', strjoin([ {workbench_path}, strsplit(getenv('PATH'),pathsep) ],pathsep) );
 
-function [workbenchdir,caretdir] = guess_workbenchdir()
+function [workbenchdir] = guess_workbenchdir()
 	workbenchdir = '/Applications/workbench/';
 
 
