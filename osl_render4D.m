@@ -18,25 +18,27 @@ function osl_render4D(nii,varargin)
     % Romesh Abeysuriya 2017
     % Adam Baker 2013
 
-    arg = inputParser;
-    arg.addParameter('savedir',[]); % Only compare 8-12Hz with data
-    arg.addParameter('interptype','trilinear'); % Array of center frequencies (for +-2Hz windows) e.g. [10 12] would expand to {[8 12],[10 14]}. Only valid if quick is false
-    arg.addParameter('visualise',true); % If empty, load data from file
-    arg.parse(varargin{:});
-
     % Input nii may or may not have extension
     if ~exist(nii) || isempty(strfind(nii,'.nii'))
       error('input should be nii or nii.gz file');
     end
+    
+    [inpath,infile] = fileparts(nii);
 
-    [~,infile] = fileparts(nii);
-    infile = strrep(infile,'.gz','');
-    infile = strrep(infile,'.nii','');
-    outfile = fullfile(arg.Results.savedir,infile);
+    arg = inputParser;
+    arg.addParameter('savedir',inpath); % Only compare 8-12Hz with data
+    arg.addParameter('interptype','trilinear'); % Array of center frequencies (for +-2Hz windows) e.g. [10 12] would expand to {[8 12],[10 14]}. Only valid if quick is false
+    arg.addParameter('visualise',true); % If empty, load data from file
+    arg.parse(varargin{:});
 
     if ~isempty(arg.Results.savedir) && ~isdir(arg.Results.savedir)
         mkdir(arg.Results.savedir);
     end
+
+    infile = strrep(infile,'.gz','');
+    infile = strrep(infile,'.nii','');
+    outfile = fullfile(arg.Results.savedir,infile);
+
 
     % Load surfaces to map to
     surf_right = fullfile(osldir,'std_masks','ParcellationPilot.R.midthickness.32k_fs_LR.surf.gii');

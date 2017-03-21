@@ -24,19 +24,19 @@ end
 
 %%
 % Now compute the power in the alpha band for each parcel
-P_alpha = trapz(f(f>=8&f<=12),spec_power(f>=8&f<=12,:))
+P_alpha = trapz(f(f>=8&f<=12),spec_power(f>=8&f<=12,:));
 
 %%
 % This parcel-wise data can be expanded into a volume, and saved to a .nii file
-p.savenii(p.to_vol(P_alpha),'alpha_power');
+fname = p.savenii(p.to_vol(P_alpha),fullfile(osldir,'practical','alpha_power'));
 
 %%
 % Then we can display the .nii file using osl_render4D
-osl_render4D('alpha_power.nii.gz')
+osl_render4D(fname);
 
 %%
 % This command will write .gii and CIFTI files from the .nii file, and will open
-% them using Workbench. The .gii and CIFTI files are saved in the current directory
-% by default. You can optionally specify a directory to put them in
+% them using Workbench. The .gii and CIFTI files are saved in the same directory
+% as the input file. You can optionally specify a directory to put them in
 
 % osl_render4D('alpha_power.nii.gz','savedir','test_4d') 
