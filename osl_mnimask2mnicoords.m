@@ -1,29 +1,24 @@
-function [ mni_coords xform mni_coord_vol] = osl_mnimask2mnicoords(mask_fname)
+function [ mni_coords xform ] = osl_mnimask2mnicoords(mask_fname)
+	% [ mni_coords xform ] = osl_mnimask2mnicoords(mask)
+	%
+	% converts an MNI standard brain mask, mask, into a list of mni_coords.
+	% 
+	% INPUTS
+	% - mask_fname - Name of a nii file with volume data. Spatial resolution stored in header
+	% - xstart - Optionally specify the MNI coordinates of first entry in each dimension
+	%
+	% Romesh Abeysuriya 2017
+	% MW (pre-2014)
 
-% [ mni_coords xform ] = osl_mnimask2mnicoords(mask)
-%
-% converts an MNI standard brain mask, mask, into a list of mni_coords.
+	% Extract the xform matrix from the nii header
+	xform = runcmd('fslorient -getsform %s',mask_fname);
+	xform = reshape(str2num(xform),4,4)';
 
-[ mni_res ] = get_nii_spatial_res( mask_fname );
+	% Read in the mask
+	mask = read_avw(mask_fname);
 
-mask=read_avw(mask_fname);
+	% Convert nonzero entries in mask to array indices
+	[x,y,z] = ind2sub(size(mask),find(mask));
 
-xstart=[90 -126 -72];
-xform=eye(4)*1;xform(1,1)=-mni_res(1);xform(2,2)=mni_res(2);xform(3,3)=mni_res(3);
-xform(1:3,4)=xstart;
-mni_coord_vol=zeros([size(mask),3]);
-
-for x=1:size(mask,1),
-for y=1:size(mask,2),
-for z=1:size(mask,3),
-
-    if(mask(x,y,z)>0)
-        tmp=round(xform*[([x-1 y-1 z-1]) 1]');
-        mni_coord_vol(x,y,z,:)=[tmp(1:3)];
-    end;
-
-end
-end
-end
-
-mni_coords=vols2matrix(mni_coord_vol,mask);
+	% Use xform to convert indices to the MNI coordinates
+	mni_coords = [(x-1)*xform(1,1)+xform(1,4) (y-1)*xform(2,2)+xform(2,4) (z-1)*xform(3,3)+xform(3,4)];
