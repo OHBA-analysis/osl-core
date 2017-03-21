@@ -39,6 +39,8 @@ function osl2_startup( osldir )
         % Check/add FSL binaries to the underlying system path, and Matlab functions to Matlab
         fsl_initialise() 
         
+        % Add Workbench
+        workbench_initialize()
        
     end
 

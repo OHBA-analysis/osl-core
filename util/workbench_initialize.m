@@ -14,6 +14,10 @@ function workbench_initialize(conf_file)
 		fprintf(f,'# Specify location of WORKBENCH here\n');
 		fprintf(f,'WORKBENCH=%s\n',workbenchdir);
 		fclose(f);
+
+		if ~exist(workbenchdir)
+			fprintf(2,sprintf('Workbench is not present. Edit the contents of %s to specify the location of Workbench\n',conf_file))
+		end
 	else % Read conf file
 		f = fopen(conf_file,'r');
 		fgetl(f); % Skip header
@@ -21,13 +25,10 @@ function workbench_initialize(conf_file)
 		fclose(f);
 	end
 
-	if ~exist(workbenchdir)
-		fprintf(2,sprintf('Workbench is not present. Edit the contents of %s to specify the location of Workbench\n',conf_file))
+	if exist(workbenchdir)
+		workbench_path = fullfile(workbenchdir,'bin_macosx64');
+		setenv( 'PATH', strjoin([ {workbench_path}, strsplit(getenv('PATH'),pathsep) ],pathsep) );
 	end
-
-	workbench_path = fullfile(workbenchdir,'bin_macosx64');
-
-	setenv( 'PATH', strjoin([ {workbench_path}, strsplit(getenv('PATH'),pathsep) ],pathsep) );
 
 function [workbenchdir] = guess_workbenchdir()
 	workbenchdir = '/Applications/workbench/';
