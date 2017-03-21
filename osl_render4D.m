@@ -11,7 +11,6 @@ function osl_render4D(nii,varargin)
     % 'savedir' : location to save output files (default=current directory)
     % 'interptype' : 'trilinear' or for nearest-neighbour, 'enclosing' (default='trilinear')
     % 'visualise' : show using workbench (default=true)
-    % 'cleanEnvironmentFn' : Command to reset environment variables prior to calling workbench
     %
     % EXAMPLE USAGE
     %   osl_render_4d('power_map.nii.gz','interptype','enclosing','visualise',false)
@@ -23,15 +22,10 @@ function osl_render4D(nii,varargin)
     arg.addParameter('savedir',[]); % Only compare 8-12Hz with data
     arg.addParameter('interptype','trilinear'); % Array of center frequencies (for +-2Hz windows) e.g. [10 12] would expand to {[8 12],[10 14]}. Only valid if quick is false
     arg.addParameter('visualise',true); % If empty, load data from file
-    arg.addParameter('cleanEnvironmentFn',[]);
     arg.parse(varargin{:});
 
     % Input nii may or may not have extension
-    if ~isempty(strfind(nii,'.nii.gz'))
-      ext = '.nii.gz';
-    elseif ~isempty(strfind(nii,'.nii'))
-      ext = '.nii';
-    else
+    if ~exist(nii) || isempty(strfind(nii,'.nii'))
       error('input should be nii or nii.gz file');
     end
 
@@ -39,12 +33,6 @@ function osl_render4D(nii,varargin)
     infile = strrep(infile,'.gz','');
     infile = strrep(infile,'.nii','');
     outfile = fullfile(arg.Results.savedir,infile);
-
-    if ~isempty(arg.Results.cleanEnvironmentFn)
-        cleanEnvStr=feval(cleanEnvironmentFn);
-    else
-        cleanEnvStr=[];
-    end;
 
     if ~isempty(arg.Results.savedir) && ~isdir(arg.Results.savedir)
         mkdir(arg.Results.savedir);
@@ -74,6 +62,5 @@ function osl_render4D(nii,varargin)
 
     % View in workbench
     if arg.Results.visualise
-      cmd=['wb_view ' surf_left ' ' surf_right ' ' surf_left_inf ' ' surf_right_inf ' ' surf_left_vinf ' ' surf_right_vinf ' ' cifti_left ' ' cifti_right ' &'];
-      runcmd([cleanEnvStr cmd]);
+      runcmd('wb_view %s %s %s %s %s %s %s %s &',surf_left,surf_right,surf_left_inf,surf_right_inf,surf_left_vinf,surf_right_vinf,cifti_left,cifti_right);
     end
