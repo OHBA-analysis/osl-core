@@ -78,3 +78,8 @@ To recompile Fieldtrip, start up OSL, and then run
 
 	osl_recompile_fieldtrip
 
+If the problem is in `ft_getopt` it is also fine to just delete the MEX file i.e.
+
+	osl/spm12/external/fieldtrip/utilities/ft_getopt.mexmaci64
+
+On recent versions of Matlab, there is essentially no performance advantage from using the compiled version of this function.

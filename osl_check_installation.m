@@ -1,15 +1,19 @@
-function osl_check_installation(do_log)
+function osl_check_installation(do_log,test_fslview)
 	% Run diagnostic tests
 	% Some tests copied from spm_check_installation (this file uses \b control characters which makes it hard to log to txt)
 	% TODO - should this return an OK status?
 
+	if nargin < 2 || isempty(test_fslview) 
+		test_fslview = true;
+	end
+	
 	if nargin < 1 || isempty(do_log) 
 		do_log = true;
 	end
 	
 	% Set up printing functions
 	log = @(x) fprintf(1,'%s\n',x); % Format message
-	log_error = @(x,ME) fprintf(1,'%s\n%s\n%s',x,ME.identified,ME.message);
+	log_error = @(x,ME) fprintf(1,'%s\n%s\n%s\n',x,ME.identifier,ME.message);
 	section = @(x) log(sprintf('\n------------------ %s ------------------',upper(x)));
 
 	if do_log
@@ -106,20 +110,17 @@ function osl_check_installation(do_log)
 		log(sprintf('FAIL - read_avw\n%s',ME.message));
 	end
 
-	try
-		fslview(input_mask)
-		log('PASS - fslview. Check that fslview window has appeared');
-	catch ME
-		log(sprintf('FAIL - fslview\n%s',ME.message));
+	if test_fslview
+		try
+			fslview(input_mask)
+			log('PASS - fslview. Check that fslview window has appeared');
+		catch ME
+			log(sprintf('FAIL - fslview\n%s',ME.message));
+		end
+	else
+		log('Skipping fslview')
 	end
-	
-	% try
-	% 	log('FSLERRORREPORT OUTPUT')
-	% 	system('fslerrorreport');
-	% catch ME
-	% 	log_error('Could not run fslerrorreport()',ME)
-	% end
-
+		
 	% Check SPM 
 	section('SPM')
 
@@ -134,6 +135,16 @@ function osl_check_installation(do_log)
 		end
 	else
 		log('CANNOT TEST SPM12 BECAUSE DIRECTORY IS MISSING');
+	end
+
+	section('Fieldtrip')
+
+	try
+		a = ft_getopt(struct('a',1),'a');
+		log('PASS - ft_getopt()');
+
+	catch ME
+		log_error('Error testing ft_getopt',ME)
 	end
 
 	% Check if any mex things are required
