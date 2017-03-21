@@ -12,5 +12,9 @@ end
 figure
 loglog(f,spec_power)
 P_alpha = trapz(f(f>=8&f<=12),spec_power(f>=8&f<=12,:))
+
 p.savenii(p.to_vol(P_alpha),'alpha_power');
 osl_render4D('alpha_power.nii.gz','savedir','test_4d')
+
+% Or in a single step in the current directory
+osl_render4D(p.savenii(p.to_vol(P_alpha),'alpha_power'))
