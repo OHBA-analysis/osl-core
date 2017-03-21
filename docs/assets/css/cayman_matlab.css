@@ -189,7 +189,7 @@ p { padding:0px; margin:0px 0px 20px; font-size: 1rem;}
 img { padding:0px; margin:0px 0px 20px; border:none; }
 p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
 
-ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; font-size: 1rem;}
 ul li { padding:0px; margin:0px 0px 7px 0px; }
 ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
 ul li ol li { list-style:decimal; }
