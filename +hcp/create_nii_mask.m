@@ -32,8 +32,8 @@ function create_nii_mask(sourcemodel,mask_out)
 	         0      0       res(3)   offset(3),...
 	         0      0       0       1];
 
-	runcmd(['fslorient -setsformcode 0 ' mask_out])
-	runcmd(['fslorient -setqformcode 2 ' mask_out])
-	runcmd(['fslorient -setsform ' num2str(xform) ' ' mask_out])
+	runcmd(['fslorient -setqformcode 0 ' mask_out]) % Code 0 means quaternion format is not in use
+	runcmd(['fslorient -setsformcode 2 ' mask_out]) % Code 2 means use affine transform to convert to non-MNI space (Code 4 means MNI space)
 	runcmd(['fslorient -setqform ' num2str(xform) ' ' mask_out])
+	runcmd(['fslorient -setsform ' num2str(xform) ' ' mask_out])
 
