@@ -5,7 +5,9 @@ function osl_publish(filename,evalCode)
 	% OUTPUT - output html will be written in osl2/docs/matlab
 	% 
 	% To complete publishing, add files via Git and push to GitHub
-
+	%
+	% Romesh Abeysuriya 2017
+	
 	% TODO - see if it ends up being just stuff in a couple of folders that gets published - if so, automatically build all of them
 	% TODO - use 'git hash-object' to see if a file needs to be republished
 	% TODO - maybe do it automatically?

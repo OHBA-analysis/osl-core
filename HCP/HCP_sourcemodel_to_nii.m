@@ -1,5 +1,5 @@
-function create_nii_mask(sourcemodel,mask_out)
-	% Creates an nii mask of an HCP sourcemodel at the same resolution.
+function HCP_sourcemodel_to_nii(sourcemodel,mask_out)
+	% Creates an nii mask from an HCP sourcemodel at the same resolution.
 	%
 	% HCP_create_nii_mask(sourcemodel,mask_out)
 	%
@@ -10,7 +10,7 @@ function create_nii_mask(sourcemodel,mask_out)
 	% Adam Baker 2015
 
 	% Compute spatial resolution
-	res = 10*[diff(sourcemodel.xgrid(1:2)) diff(sourcemodel.ygrid(1:2)) diff(sourcemodel.zgrid(1:2))]
+	res = 10*[diff(sourcemodel.xgrid(1:2)) diff(sourcemodel.ygrid(1:2)) diff(sourcemodel.zgrid(1:2))];
 	offset = 10*min(sourcemodel.pos(sourcemodel.inside,:));
 
 	% Convert position to grid resolution offset, and then shift to integer values

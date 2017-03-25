@@ -30,19 +30,19 @@ available_maps = {'Red-Yellow';
                   'Copper'};
 
 
-if nargin<4
+if nargin < 4 || isempty(anatomical)
     anatomical='mni_brain';
 end;
 
-if nargin<3
+if nargin < 3 || isempty(colour_maps)
    colour_maps = {'Red-Yellow'};
 end
 
-if nargin<2
+if nargin < 2 ||isempty(thresholds)
    thresholds = [];
 end
 
-if nargin==0 || isempty(fnames)
+if nargin == 0 || isempty(fnames)
     [filename, pathname]=uigetfile({'*.nii; *.nii.gz', 'Nifti Files (.nii , .nii.gz)';'*.*', 'All Files'},'Select a nifti file');
     fnames=fullfile(pathname,filename);
 end

@@ -16,7 +16,7 @@ function [ mni_coords xform ] = osl_mnimask2mnicoords(mask_fname)
 
 	% Read in the mask
 	mask = read_avw(mask_fname);
-
+	
 	% Convert nonzero entries in mask to array indices
 	[x,y,z] = ind2sub(size(mask),find(mask));
 
