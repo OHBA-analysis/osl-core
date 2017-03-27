@@ -8,9 +8,9 @@ HMMMAR_dir = fullfile(osldir,'HMM-MAR');
 ohbaexternal_dir = fullfile(osldir,'ohba-external');
 
 % Directory of the data:
-data_dir = '/home/diegov/MATLAB/OSL_course/data/HMM-MAR/';
+data_dir = fullfile(osldir,'example_data','hmmmar_example');
 % Name for this HMM-MAR analysis:
-hmmmar_name = '/home/diegov/MATLAB/OSL_course/Tutorials/HMMMAR_demo/hmmmar_demo.mat';
+hmmmar_name = fullfile(osldir,'example_data','hmmmar_example','hmmmar_demo.mat');
 
 do_analysis = 0; 
 
@@ -27,7 +27,7 @@ subjects = [1 2 4 5 6 7 8 9]; % index of the subjects
 N = length(subjects);
 
 for j = subjects % iterate through subjects
-    file = [data_dir 'sub' num2str(j) '.mat'];
+    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file); % load the data
     sourcedata = sourcedata' ; % we need it (time by channels)
     T = [T size(sourcedata,1)]; % time length of this subject
@@ -81,7 +81,7 @@ subjects = [1 2 4 5 6 7 8 9]; % index of the subjects
 N = length(subjects);
 
 for j = subjects % iterate through subjects
-    file = [data_dir 'sub' num2str(j) '.mat'];
+    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file); % load the data
     sourcedata = sourcedata' ; % we need it (time by channels)
     T = [T size(sourcedata,1)]; % time length of this subject
@@ -130,7 +130,7 @@ end
 %% Because the number of cycles was set to such a low number, 
 % we reload a previously computed run, which would have taken a bit longer
 
-load('hmmmar_demo.mat')
+load(hmmmar_name)
 
 
 %% Now let's see the state evoked probability, locked to the stimulus
@@ -146,7 +146,7 @@ window = Hz*L+1;
 evokedGamma_env = zeros(window,hmm_env.K,length(subjects));
 t0 = 0;
 for j = subjects % iterate through subjects
-    file = [data_dir 'sub' num2str(j) '.mat'];
+    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file,'onset'); % load the data
     T = length(onset);
     index = t0 + (1:T);
@@ -160,7 +160,7 @@ evokedGamma_env = mean(evokedGamma_env,3); % average across subjects
 evokedGamma_raw = zeros(window,hmm_env.K,length(subjects));
 t0 = 0;
 for j = subjects % iterate through subjects
-    file = [data_dir 'sub' num2str(j) '.mat'];
+    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file,'onset'); % load the data
     T = length(onset);
     index = t0 + (1:T-hmm_raw.train.order);
