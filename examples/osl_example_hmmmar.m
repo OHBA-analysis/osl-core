@@ -4,8 +4,8 @@
 % Diego Vidaurre, Feb 2017
    
 % Software directories
-HMMMAR_dir = '/home/diegov/MATLAB/OSL_course/HMM-MAR';
-ohbaexternal_dir = '/home/diegov/MATLAB/OSL_course/ohba-external';
+HMMMAR_dir = fullfile(osldir,'HMM-MAR');
+ohbaexternal_dir = fullfile(osldir,'ohba-external');
 
 % Directory of the data:
 data_dir = '/home/diegov/MATLAB/OSL_course/data/HMM-MAR/';
