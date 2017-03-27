@@ -12,17 +12,16 @@ function output_fname = osl_resample_nii(input_fname, output_fname, out_gridstep
 % MWW 2012
 OSLDIR = getenv('OSLDIR');
 
-if(nargin<6)
+if(nargin<6) || isempty(dilate)
     dilate=1;
 end;
 
-if(nargin<5)
+if(nargin<5) || isempty(output_mask_fname)
     output_mask_fname='';
 end;
 
-if(nargin<4)
+if(nargin<4) || isempty(interp)
     interp='trilinear';
-    output_mask_fname='';
 end;
 
 res = runcmd(['fslval ' input_fname ' pixdim1']);
