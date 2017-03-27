@@ -1,5 +1,5 @@
-function osl_resample_nii_matlab(input_nii,output_mask,output_fname,varargin)
-    % Resample a nii file onto a different spatial grid
+function osl_resample_nii_matlab(input_nii,output_fname,output_mask,varargin)
+    % Resample a nii file onto a different spatial grid using Matlab interpolation
     %
     % INPUTS
     %   input_nii : file name with nii volume to interpolate. Can also be standard MNI spatial resolution (e.g. 8
@@ -8,7 +8,6 @@ function osl_resample_nii_matlab(input_nii,output_mask,output_fname,varargin)
     %                If the file doesn't exist, try appending the osl standard mask folder
     %   output_fname : save the result to this file
     %   key-value pairs
-    %       - dilate : dilate the volume to avoid edge effects (default = false)
     %       - interptype : passed to flirt e.g. trilinear
     %       - enforce_mask : threshold the interpolated input with the output mask
     %       - force_positive : Assign 0 to any negative values (in case they are introduced by the resampling process)

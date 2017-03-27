@@ -12,7 +12,7 @@ function HCP_create_ft_masks(res)
 		
 		d = load(input_sourcemodel);
 		HCP_sourcemodel_to_nii(d.sourcemodel,output_mask);
-		osl_resample_nii_matlab(std_brain,output_mask,output_brain,'interptype','nearest','enforce_mask',true,'force_positive',true);
+		osl_resample_nii_matlab(std_brain,output_brain,output_mask,'interptype','nearest','enforce_mask',true,'force_positive',true);
 		
 		[vol,niires,xform] = osl_load_nii(output_brain);
 		mask = osl_load_nii(output_mask);

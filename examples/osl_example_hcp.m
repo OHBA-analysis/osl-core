@@ -1,10 +1,10 @@
-%% Example of how to work with HCP data
+%% Example of working with HCP data
 % The HCP provides lead fields but not structure, which means that the HCP data can _only_ be 
 % beamformed onto standard masks from FieldTrip. Although these masks have the same grid resolution as some 
 % of the standard masks, they have different sizes and also different offsets. 
-
-%Starting with the raw HCP data, it is first beamformed onto one of the FieldTrip masks - these are in 
-%the `std_masks` folder with filenames `ft_*.nii.gz`. From this point, there are two options
+%
+% Starting with the raw HCP data, it is first beamformed onto one of the FieldTrip masks - these are in 
+% the `std_masks` folder with filenames `ft_*.nii.gz`. From this point, there are two options
 % 
 % # Apply standard parcellation pipelines, but using parcellations defined on the FieldTrip mask
 % # Convert the data onto one of the OSL standard masks, and then use existing parcellations
@@ -12,7 +12,7 @@
 % For the first option, you need a parcellation defined on a FieldTrip mask. If you only have a parcellation 
 % on an OSL standard mask, it can be resampled onto the FieldTrip grid:
 
-osl_resample_nii_matlab(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'),'ft_8mm_brain_mask.nii.gz',fullfile(osldir,'practical','example_parcellation.nii.gz'),'interptype','nearest')
+osl_resample_nii_matlab(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'),fullfile(osldir,'practical','example_parcellation.nii.gz'),'ft_8mm_brain_mask.nii.gz','interptype','nearest')
 
 %% 
 % Note that the input and output files can be specified either as full paths, or the name of files within the 'std_masks' folder
