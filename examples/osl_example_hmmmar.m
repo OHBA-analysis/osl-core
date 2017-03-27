@@ -12,14 +12,6 @@ data_dir = '/home/diegov/MATLAB/OSL_course/data/HMM-MAR/';
 % Name for this HMM-MAR analysis:
 hmmmar_name = '/home/diegov/MATLAB/OSL_course/Tutorials/HMMMAR_demo/hmmmar_demo.mat';
 
-% add the HMMMAR paths
-% HMM-MAR is standalone, so it does not hold any dependence with OSL or
-% other software packages
-addpath(genpath(HMMMAR_dir))
-
-% check that PCA is Matlab's own, otherwise remove the corresponding path
-which pca
-
 do_analysis = 0; 
 
 %% 1) HMM-MAR on hilbert envelopes 
