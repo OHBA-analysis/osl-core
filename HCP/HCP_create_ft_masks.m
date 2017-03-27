@@ -15,7 +15,7 @@ function HCP_create_ft_masks(res)
 		osl_resample_nii_matlab(std_brain,output_mask,output_brain,'interptype','nearest','enforce_mask',true,'force_positive',true);
 		
 		[vol,niires,xform] = osl_load_nii(output_brain);
-		mask = osl.load_nii(output_mask);
+		mask = osl_load_nii(output_mask);
 		osl_save_nii(vol + mask,niires,xform,output_brain); % Ensure all nonzero vals in mask have nonzero brain image values
 	end
 

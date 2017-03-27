@@ -2,7 +2,8 @@ function osl_resample_nii_matlab(input_nii,output_mask,output_fname,varargin)
     % Resample a nii file onto a different spatial grid
     %
     % INPUTS
-    %   input_nii : file name with nii volume to interpolate    
+    %   input_nii : file name with nii volume to interpolate. Can also be standard MNI spatial resolution (e.g. 8
+    %                If the file doesn't exist, try appending the osl standard mask folder
     %   output_mask: file name of template that the input should be interpolated onto. Can also be standard MNI spatial resolution (e.g. 8
     %                If the file doesn't exist, try appending the osl standard mask folder
     %   output_fname : save the result to this file
@@ -22,6 +23,14 @@ function osl_resample_nii_matlab(input_nii,output_mask,output_fname,varargin)
     arg.addParameter('enforce_mask',true); % assign 0 to any values where the output mask is zero
     arg.addParameter('force_positive',false); % assign 0 to any negative values. Helpful if resampling a positive matrix where extrapolation could potentially produce negative values
     arg.parse(varargin{:});
+
+    if isnumeric(input_nii)
+        input_nii = fullfile(osldir,'std_masks',sprintf('MNI152_T1_%dmm_brain.nii.gz',input_nii));
+    end
+
+    if ~exist(input_nii)
+        input_nii = fullfile(osldir,'std_masks',input_nii);
+    end
 
     if isnumeric(output_mask)
         output_mask = fullfile(osldir,'std_masks',sprintf('MNI152_T1_%dmm_brain.nii.gz',output_mask));
@@ -60,7 +69,7 @@ function [xg,yg,zg,vol,xform,step] = load_nii_vol(fname,flip)
     if nargin < 2 || isempty(flip) 
         flip = false;
     end
-    
+        
     [vol,input_res,xform] = osl_load_nii(fname);
     step = input_res.*diag(sign(xform(1:3,1:3)))';
 
