@@ -37,4 +37,4 @@ exclude:
   - Gemfile.lock
   - local_server.sh
   - README.md
-  - mxdom2jekyll.xsl
+  - mxdom2simplehtml_jekyll.xsl

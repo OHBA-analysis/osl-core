@@ -103,7 +103,7 @@ input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-o
 /** 1. Address `appearance` set to `searchfield` in Safari and Chrome. 2. Address `box-sizing` set to `border-box` in Safari and Chrome (include `-moz` to future-proof). */
 input[type="search"] { -webkit-appearance: textfield; /* 1 */ /* 2 */ box-sizing: content-box; }
 
-* Remove inner padding and search cancel button in Safari and Chrome on OS X. Safari (but not Chrome) clips the cancel button when the search input has padding (and `textfield` appearance). 
+/** Remove inner padding and search cancel button in Safari and Chrome on OS X. Safari (but not Chrome) clips the cancel button when the search input has padding (and `textfield` appearance). */
 input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; }
 
 /** Define consistent border, margin, and padding. */
@@ -193,7 +193,7 @@ ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; font-size: 1rem;}
 ul li { padding:0px; margin:0px 0px 7px 0px; }
 ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
 ul li ol li { list-style:decimal; }
-ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; font-size: 1rem;}
 ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
 ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
 ol li ol li { list-style-type:lower-alpha; }
