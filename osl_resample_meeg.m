@@ -47,4 +47,4 @@ function D = osl_resample_meeg(D,input_nii,output_nii,weighting)
 	end
 
 	w = bsxfun(@rdivide,w,sum(w));
-	D = add_montage(D,w,sprintf('Converted %s to %s',input_nii,output_nii))
+	D = add_montage(D,w,sprintf('Converted %s to %s',input_nii,output_nii));
