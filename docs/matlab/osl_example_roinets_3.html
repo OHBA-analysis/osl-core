@@ -1,15 +1,14 @@
 ---
 layout: matlab_wrapper
-title: Example of group network connectivity analysis using ROInets
+title: ROInets 3 - Group network connectivity analysis
 resource: true
 categories: examples
 ---
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Example of group network connectivity analysis using ROInets</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-03-09"><meta name="DC.source" content="osl_example_roinets.m"></head><body><div class="content"><h1>Example of group network connectivity analysis using ROInets</h1><p>This example shows how to perform a standard connectivity analysis using ROInets. Core functionality is provided by <tt>ROInets.run_network_analysis()</tt>. The key inputs are</p><div><ul><li>A set of beamformed SPM MEEG objects</li><li>A spatial basis matrix - a matrix mapping voxels to parcels</li></ul></div><p>The analysis can be time consuming, and pre-generated results are included with the OSL example data (not available through GitHub). To re-run the analysis (~15-30 minutes), set <tt>run_analysis</tt> to <tt>true</tt> below</p><pre class="codeinput">run_analysis = false;
-</pre><p>Either way, the spatial basis will be useful for analysis, so select it it now</p><pre class="codeinput">osldir = getenv(<span class="string">'OSLDIR'</span>);
-spatial_basis_file = fullfile(osldir,<span class="string">'parcellations'</span>,<span class="string">'fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'</span>);
+   <title>ROInets 3 - Group network connectivity analysis</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-03-28"><meta name="DC.source" content="osl_example_roinets_3.m"></head><body><div class="content"><h1>ROInets 3 - Group network connectivity analysis</h1><!--introduction--><p>This example uses shows how to analyze connectivity at the group level.</p><!--/introduction--><p>Here we will perform a standard connectivity analysis using ROInets. Core functionality is provided by <tt>ROInets.run_network_analysis()</tt>. The key inputs are</p><div><ul><li>A set of beamformed SPM MEEG objects</li><li>A spatial basis matrix - a matrix mapping voxels to parcels</li></ul></div><p>The analysis can be time consuming, and pre-generated results are included with the OSL example data (not available through GitHub). To re-run the analysis (~15-30 minutes), set <tt>run_analysis</tt> to <tt>true</tt> below</p><pre class="codeinput">run_analysis = false;
+</pre><p>Either way, the spatial basis will be useful for analysis, so select it it now</p><pre class="codeinput">spatial_basis_file = fullfile(osldir,<span class="string">'parcellations'</span>,<span class="string">'fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'</span>);
 </pre><p>If we are running the analysis, we need to get a list of MEEG objects. Below, we identify where the data are, and where the output should be saved to.</p><pre class="codeinput">data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'roinets_example'</span>);
 output_directory = fullfile(osldir,<span class="string">'practical'</span>,<span class="string">'roinets_demo'</span>);
 <span class="keyword">if</span> run_analysis
@@ -109,7 +108,7 @@ imagesc(mean(d.correlationMats{1}.envCorrelation,3)+diag(nan(38,1)))
 axis <span class="string">square</span>
 colorbar
 title(<span class="string">'Envelope correlation'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_01.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="osl_example_roinets_02.png" style="width:560px;height:420px;" alt=""> <p>Partial correlation matrices can also be obtained using regularization</p><pre class="codeinput">figure
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_3_01.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="osl_example_roinets_3_02.png" style="width:560px;height:420px;" alt=""> <p>Partial correlation matrices can also be obtained using regularization</p><pre class="codeinput">figure
 imagesc(mean(d.correlationMats{1}.envPartialCorrelation,3)+diag(nan(38,1)))
 axis <span class="string">square</span>
 colorbar
@@ -120,21 +119,38 @@ imagesc(mean(d.correlationMats{1}.envPartialCorrelationRegularized,3)+diag(nan(3
 axis <span class="string">square</span>
 colorbar
 title(<span class="string">'Envelope partial correlation (regularized)'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_03.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="osl_example_roinets_04.png" style="width:560px;height:420px;" alt=""> <p>The statistical significance of the connectivity profiles is obtained by converting them to z-scores by using a simulated empirical null distribution. This is generated using an autoregressive model.</p><pre class="codeinput">figure
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_3_03.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="osl_example_roinets_3_04.png" style="width:560px;height:420px;" alt=""> <p>The statistical significance of the connectivity profiles is obtained by converting them to z-scores by using a simulated empirical null distribution. This is generated using an autoregressive model.</p><pre class="codeinput">figure
 imagesc(d.correlationMats{1}.groupEnvCorrelation_z+diag(nan(38,1)))
 axis <span class="string">square</span>
 colorbar
 title(<span class="string">'Envelope correlation z-score'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_05.png" style="width:560px;height:420px;" alt=""> <p>Another way to display connectivity is to draw lines between brain regions. As there are a very large number of connections, it can be helpful to threshold the connectivity. The example below loads the parcellation into a Parcellation object (provided by OSL) and uses the <tt>plot_network()</tt> method to display the strongest 5% of connections</p><pre class="codeinput">p = parcellation(spatial_basis_file);
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_3_05.png" style="width:560px;height:420px;" alt=""> <p>Another way to display connectivity is to draw lines between brain regions. As there are a very large number of connections, it can be helpful to threshold the connectivity. The example below loads the parcellation into a Parcellation object (provided by OSL) and uses the <tt>plot_network()</tt> method to display the strongest 5% of connections</p><pre class="codeinput">p = parcellation(spatial_basis_file);
 p.plot_network(mean(d.correlationMats{1}.envCorrelation,3),0.95)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_06.png" style="width:560px;height:420px;" alt=""> <p>Another option for displaying connectivity is to display components of the connectivity as an activation map. For example, performing an eigenvalue decomposition of the connectivity matrix, and then rendering spatial maps of each of the states. This functionality is also provided by the Parcellation object.</p><pre class="codeinput">[a,b] = eig(mean(d.correlationMats{1}.envCorrelation,3));
+</pre><pre class="codeoutput">
+ans = 
+
+  Patch with properties:
+
+    FaceColor: 'none'
+    FaceAlpha: 1
+    EdgeColor: 'flat'
+    LineStyle: '-'
+        Faces: [703&times;2 double]
+     Vertices: [1406&times;3 double]
+
+  Use GET to show all properties
+
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_3_06.png" style="width:560px;height:420px;" alt=""> <p>Another option for displaying connectivity is to display components of the connectivity as an activation map. For example, performing an eigenvalue decomposition of the connectivity matrix, and then rendering spatial maps of each of the states. This functionality is also provided by the Parcellation object.</p><pre class="codeinput">[a,b] = eig(mean(d.correlationMats{1}.envCorrelation,3));
 p.plot_activation(a(:,1));
 </pre><pre class="codeoutput">Warning - parcellation is being binarized
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_07.png" style="width:683px;height:605px;" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_3_07.png" style="width:683px;height:605px;" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-%% Example of group network connectivity analysis using ROInets
+%% ROInets 3 - Group network connectivity analysis
 %
-% This example shows how to perform a standard connectivity analysis using ROInets.
+% This example uses shows how to analyze connectivity at the group level.
+%
+%%
+% Here we will perform a standard connectivity analysis using ROInets.
 % Core functionality is provided by |ROInets.run_network_analysis()|. The key inputs
 % are
 %
@@ -148,7 +164,6 @@ run_analysis = false;
 
 %%
 % Either way, the spatial basis will be useful for analysis, so select it it now
-osldir = getenv('OSLDIR');
 spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
 
 %%

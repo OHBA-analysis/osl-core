@@ -1,6 +1,8 @@
-%% Example of using Parcellation objects
+%% Utilities - Working with parcellations
 %
 % This example shows how to use the OSL Parcellation object to work with parcellations.
+%%
+%
 % Working with parcellations can be tedious, because there are several different ways
 % to represent parcellations. Suppose we have a parcellation in MNI space on an 8mm grid.
 % This space is codified in a standard mask - an anatomical brain image that defines the 

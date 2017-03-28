@@ -1,14 +1,13 @@
 ---
 layout: matlab_wrapper
-title: Example amplitude envelope connectivity analysis using ROInets
+title: ROInets 2 - Amplitude envelope connectivity analysis
 resource: true
 categories: examples
 ---
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Example amplitude envelope connectivity analysis using ROInets</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-03-09"><meta name="DC.source" content="osl_example_roinets_manual.m"></head><body><div class="content"><h1>Example amplitude envelope connectivity analysis using ROInets</h1><p>This example shows how to use low-level ROInets functionality to compute parcel timecourses and perform orthogonalization using SPM objects</p><p>First, set up the input file locations</p><pre class="codeinput">osldir = getenv(<span class="string">'OSLDIR'</span>);
-spatial_basis_file = fullfile(osldir,<span class="string">'parcellations'</span>,<span class="string">'fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'</span>);
+   <title>ROInets 2 - Amplitude envelope connectivity analysis</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-03-28"><meta name="DC.source" content="osl_example_roinets_2_manual.m"></head><body><div class="content"><h1>ROInets 2 - Amplitude envelope connectivity analysis</h1><p>This example shows how to examine functional connectivity using amplitude envelope correlations for a signal subject.</p><p>This example shows how to use low-level ROInets functionality to compute parcel timecourses and perform orthogonalization using SPM objects</p><p>First, set up the input file locations</p><pre class="codeinput">spatial_basis_file = fullfile(osldir,<span class="string">'parcellations'</span>,<span class="string">'fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'</span>);
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'roinets_example'</span>);
 output_directory = fullfile(osldir,<span class="string">'practical'</span>,<span class="string">'roinets_demo'</span>);
 <span class="keyword">if</span> ~exist(output_directory)
@@ -101,14 +100,14 @@ p.plot_activation(parcel_power);
 <span class="comment">% fname = p.savenii(p.to_vol(parcel_power),fullfile(output_directory,'parcel_power'));</span>
 <span class="comment">% fslview(fname)</span>
 </pre><pre class="codeoutput">Warning - parcellation is being binarized
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_manual_01.png" style="width:683px;height:605px;" alt=""> <p>This could be compared to the original voxel data</p><pre class="codeinput">D = D.montage(<span class="string">'switch'</span>,2);
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_2_manual_01.png" style="width:683px;height:605px;" alt=""> <p>This could be compared to the original voxel data</p><pre class="codeinput">D = D.montage(<span class="string">'switch'</span>,2);
 ts = D(:,:,:);
 ts = ft_preproc_bandpassfilter(ts, D.fsample, [8 12], 4, <span class="string">'but'</span>,<span class="string">'twopass'</span>,<span class="string">'no'</span>);
 voxel_power = sum(abs(ts),2)/size(ts,2)/(D.time(end)-D.time(1));
 p.plot_activation(voxel_power);
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_manual_02.png" style="width:683px;height:605px;" alt=""> <p>We could also plot seed-based power differences. For example, the first parcel is in the left occipital cortex. We can plot the power difference between this region and all others</p><pre class="codeinput">p.plot_activation(parcel_power-parcel_power(1),0.1);
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_2_manual_02.png" style="width:683px;height:605px;" alt=""> <p>We could also plot seed-based power differences. For example, the first parcel is in the left occipital cortex. We can plot the power difference between this region and all others</p><pre class="codeinput">p.plot_activation(parcel_power-parcel_power(1),0.1);
 </pre><pre class="codeoutput">Warning - parcellation is being binarized
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_manual_03.png" style="width:683px;height:605px;" alt=""> <p>Switching back to the parcel montage, we can compute the Hilbert envelope timecourses</p><pre class="codeinput">D = D.montage(<span class="string">'switch'</span>,3);
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_2_manual_03.png" style="width:683px;height:605px;" alt=""> <p>Switching back to the parcel montage, we can compute the Hilbert envelope timecourses</p><pre class="codeinput">D = D.montage(<span class="string">'switch'</span>,3);
 ts = D(:,:,:);
 Hen = hilbenv(ts);
 figure
@@ -119,20 +118,21 @@ figure
 plot(D.time,Hen');
 xlabel(<span class="string">'Time (s)'</span>)
 ylabel(<span class="string">'Amplitude envelope value'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_manual_04.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="osl_example_roinets_manual_05.png" style="width:560px;height:420px;" alt=""> <p>And then can plot the amplitude envelope correlation</p><pre class="codeinput">figure
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_2_manual_04.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="osl_example_roinets_2_manual_05.png" style="width:560px;height:420px;" alt=""> <p>And then can plot the amplitude envelope correlation</p><pre class="codeinput">figure
 imagesc(corr(Hen')+diag(nan(38,1)))
 axis <span class="string">square</span>
 colorbar
 title(<span class="string">'Envelope correlation before leakage correction'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_manual_06.png" style="width:560px;height:420px;" alt=""> <p>However, spatial leakage is still an issue</p><pre class="codeinput">figure
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_2_manual_06.png" style="width:560px;height:420px;" alt=""> <p>However, spatial leakage is still an issue</p><pre class="codeinput">figure
 imagesc(corr(ts')+diag(nan(38,1)))
 axis <span class="string">square</span>
 colorbar
 set(gca,<span class="string">'CLim'</span>,[-1 1])
 title(<span class="string">'Raw correlation before leakage correction'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_manual_07.png" style="width:560px;height:420px;" alt=""> <p>We can correct for spatial leakage using <tt>ROInets.remove_source_leakage</tt> operating on the D file directly. Now, the active montage needs to be the one with the parcel timecourses</p><pre class="codeinput">D = D.montage(<span class="string">'switch'</span>,3);
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_2_manual_07.png" style="width:560px;height:420px;" alt=""> <p>We can correct for spatial leakage using <tt>ROInets.remove_source_leakage</tt> operating on the D file directly. Now, the active montage needs to be the one with the parcel timecourses</p><pre class="codeinput">D = D.montage(<span class="string">'switch'</span>,3);
 D = ROInets.remove_source_leakage(D,<span class="string">'symmetric'</span>);
 ts_lc = D(:,:,:);
+</pre><pre class="codeoutput">No new channels information : setting channels info automatically.
 </pre><p>We could also operate on the vector of data directly - this can be useful if your data are not being stored in an MEEG object. The same syntax can be used for <tt>ROInets.get_node_tcs</tt> if your original data are not MEEG objects.</p><pre class="codeinput">ts_lc = ROInets.remove_source_leakage(ts,<span class="string">'symmetric'</span>);
 </pre><p>The orthogonalized signals are now uncorrelated</p><pre class="codeinput">figure
 imagesc(corr(ts_lc')+diag(nan(38,1)))
@@ -140,22 +140,24 @@ axis <span class="string">square</span>
 colorbar
 set(gca,<span class="string">'CLim'</span>,[-1 1])
 title(<span class="string">'Raw correlation after leakage correction'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_manual_08.png" style="width:560px;height:420px;" alt=""> <p>But amplitude envelope correlations are still present</p><pre class="codeinput">Hen_lc = hilbenv(ts_lc);
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_2_manual_08.png" style="width:560px;height:420px;" alt=""> <p>But amplitude envelope correlations are still present</p><pre class="codeinput">Hen_lc = hilbenv(ts_lc);
 figure
 imagesc(corr(Hen_lc')+diag(nan(38,1)))
 axis <span class="string">square</span>
 colorbar
 title(<span class="string">'Envelope correlation after leakage correction'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_roinets_manual_09.png" style="width:560px;height:420px;" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="osl_example_roinets_2_manual_09.png" style="width:560px;height:420px;" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-%% Example amplitude envelope connectivity analysis using ROInets
+%% ROInets 2 - Amplitude envelope connectivity analysis
+%
+% This example shows how to examine functional connectivity using amplitude 
+% envelope correlations for a signal subject.
 %
 % This example shows how to use low-level ROInets functionality to 
 % compute parcel timecourses and perform orthogonalization using
 % SPM objects
 %
 % First, set up the input file locations
-osldir = getenv('OSLDIR');
 spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
 data_dir = fullfile(osldir,'example_data','roinets_example');
 output_directory = fullfile(osldir,'practical','roinets_demo');

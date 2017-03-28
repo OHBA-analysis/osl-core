@@ -1,6 +1,9 @@
-%% Example of group network connectivity analysis using ROInets
+%% ROInets 3 - Group network connectivity analysis
 %
-% This example shows how to perform a standard connectivity analysis using ROInets.
+% This example uses shows how to analyze connectivity at the group level.
+%
+%%
+% Here we will perform a standard connectivity analysis using ROInets.
 % Core functionality is provided by |ROInets.run_network_analysis()|. The key inputs
 % are
 %
