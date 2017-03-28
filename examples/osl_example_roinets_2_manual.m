@@ -1,4 +1,7 @@
-%% Example amplitude envelope connectivity analysis using ROInets
+%% ROInets 2 - Amplitude envelope connectivity analysis
+%
+% This example shows how to examine functional connectivity using amplitude 
+% envelope correlations for a signal subject.
 %
 % This example shows how to use low-level ROInets functionality to 
 % compute parcel timecourses and perform orthogonalization using

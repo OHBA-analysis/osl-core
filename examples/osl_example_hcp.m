@@ -1,4 +1,7 @@
-%% Example of working with HCP data
+%% Utilities - Working with HCP data
+%
+% This example shows how to work with HCP data in source space using OSL.
+%%
 % The HCP provides lead fields but not structure, which means that the HCP data can _only_ be 
 % beamformed onto standard masks from FieldTrip. Although these masks have the same grid resolution as some 
 % of the standard masks, they have different sizes and also different offsets. 

@@ -19,7 +19,7 @@ function osl_publish(filename,evalCode,stylesheet)
 	%
 	% Romesh Abeysuriya 2017
 	
-	if nargin < 3 || isempty(stylesheet) 
+	if nargin < 3
 		stylesheet = fullfile(osldir,'osl2','docs','mxdom2simplehtml_jekyll.xsl');
 	end
 	
