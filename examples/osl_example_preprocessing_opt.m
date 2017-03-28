@@ -12,16 +12,18 @@
 
 OSLDIR = getenv('OSLDIR');
     
-osldir = '/Users/andrew/Software/Matlab/osl2.0';
+%osldir = '/Users/andrew/Software/Matlab/osl2.0';
 
-addpath(osldir);
-osl_startup(osldir);
+%addpath(osldir);
+osl_startup();
 
 %%%%%%%%%%%%%%%%%%
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
+tilde='/Users/robert/';
 
 % directory where the data is:
-datadir = '/Users/andrew/Projects/OSL_test/osl2_tutorials/button_press_data_osl2';
+datadir=[tilde '/Documents/workshop/example/button_press_data'];
+
  
 % Set up the list of subjects and their structural scans for the analysis 
 clear raw_fif_files input_files spm_files structural_files;
@@ -73,7 +75,8 @@ opt.dirname=[datadir '/practical_badseg_africa.opt']; % directory opt settings a
 opt.maxfilter.do=0; % here we are going to skip the double maxfilter call as this has been run already for us
  
 % africa settings
-opt.africa.do=0;
+% RATHER NOT!!!!
+opt.africa.do=1;
 opt.africa.ident.artefact_chans={'ECG','EOG'}; % artefact channels
 opt.africa.ident.mains_kurt_thresh=0.5;
 

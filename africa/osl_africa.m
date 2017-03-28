@@ -36,6 +36,17 @@ function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
 %
 % Written by Henry Luckhoo and Adam Baker
 
+% note: Behaviour of osl_africa has changed as from 03/29/17. The idea is to
+% ecnourage people to use online montage rather then unnecessarily creating
+% copies of files. Since ICA is a linear operator, these changes can be
+% nicely stored in an online montage.
+% if you wanna keep the old bevhaior, do
+% D.copy
+
+
+% S.montagename - name of the montage after ICA pruning of artifactual
+% components
+% defaults to 'AFRICA denoised data'
 
 
 % Check SPM File Specification:
@@ -75,6 +86,10 @@ end
 
 if not(isfield(S,'modality'))
     S.modality = 'MEG';
+end
+
+if not(isfield(S,'montagename'))
+    S.montagename='AFRICA denoised data';
 end
 
 if not(isfield(S,'do_plots'))
@@ -420,24 +435,27 @@ if use_montage
     montage.chantypenew =  D.sensors(modality).chantype(indx);
     montage.chantypeorg =  D.sensors(modality).chantype(indx);
 
-        
+    %D = add_montage(D, tra, 'Africa cleaned data',ROIlabels)
+    ROInets.add_montage(D,tra,S.montagename,D.labelorg)
+
     S_montage                =  [];
     S_montage.D              =  fullfile(D.path,D.fname);
     S_montage.montage        =  montage;
     S_montage.keepothers     =  true;
     S_montage.updatehistory  =  1;
     
-    Dmontaged = osl_montage(S_montage);
-    
-    % rename montaged file
-    S_copy         = [];
-    S_copy.D       = Dmontaged;
-    S_copy.outfile = fullfile(D.path, ['A' D.fname]);
-    Dclean = spm_eeg_copy(S_copy);
-    
-    Dmontaged.delete;
+%     Dmontaged = osl_montage(S_montage);
+%     
+%     % rename montaged file
+%     S_copy         = [];
+%     S_copy.D       = Dmontaged;
+%     S_copy.outfile = fullfile(D.path, ['A' D.fname]);
+%     Dclean = spm_eeg_copy(S_copy);
+%     
+%     Dmontaged.delete;
     
 else
+    error('Not supported');
     [dir,nam,~] = fileparts(fullfile(D.path,D.fname));
     fname_out = [dir '/A' nam '.dat'];
     meg_dat_clean = megdata-(sm(chan_inds,bad_components)*tc(bad_components,:));

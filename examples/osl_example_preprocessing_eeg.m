@@ -6,23 +6,25 @@
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
 
-OSLDIR = getenv('OSLDIR');
+%OSLDIR = getenv('OSLDIR');
     
 %tilde='/home/mwoolrich/Desktop';
-tilde='/Users/woolrich/homedir';
-osldir=[tilde '/matlab/osl2'];    
+tilde='/Users/robert/';
+
+osldir=[tilde '/Applications/osl/osl2'];    
 
 addpath(osldir);
-osl_startup(osldir);
+
+osl_startup();
 
 %%%%%%%%%%%%%%%%%%
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 
-testdir=['/Users/woolrich/vols_data/meeg_data/meeg_signals/case_1084/111202'];
+testdir=[tilde '/Documents/workshop/example/faces_subject1_data'];
 
 workingdir=[testdir '/preprocessing']; % this is the directory the SPM files will be stored in
 
-cmd = ['mkdir ' workingdir]; unix(cmd); % make dir to put the results in
+cmd = ['mkdir ' workingdir]; system(cmd); % make dir to put the results in
  
 % Set up the list of subjects and their structural scans for the analysi 
 % Currently there is only 1 subject.
@@ -30,7 +32,7 @@ clear fif_files spm_files structural_files
 
 % list of fif files (we only have one here - note that it has already been
 % Maxfiltered and downsampled to 250Hz)
-fif_files{1}=[testdir '/onerhy_pilot1_EEG_1.fif']; 
+fif_files{1}=[testdir '/fifs/sub1_face_sss.fif']; 
 
 % set up a list of SPM MEEG object file names (we only have one here)
 spm_files{1}=[workingdir '/spm8_eeg1.mat'];
