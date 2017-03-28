@@ -1,23 +1,21 @@
+%% Example usage of HMM-MAR
 % HMM-MAR DEMO SCRIPT FOR INFERRING A GROUP SPECTRALLY DEFINED 
 % HMM FROM SOURCE SPACE MEG DATA
+%
 % This follows the paper: Vidaurre et al, NeuroImage (2016)
+%
 % Diego Vidaurre, Feb 2017
-   
-% Software directories
-HMMMAR_dir = fullfile(osldir,'HMM-MAR');
-ohbaexternal_dir = fullfile(osldir,'ohba-external');
-
-% Directory of the data:
+%%
+% Initial setup - directory of the data and name of saved HMM-MAR analysis:
 data_dir = fullfile(osldir,'example_data','hmmmar_example');
-% Name for this HMM-MAR analysis:
 hmmmar_name = fullfile(osldir,'example_data','hmmmar_example','hmmmar_demo.mat');
 
+%%
+% Set |do_analysis=1| to re-run the analysis, otherwise use precomputed result
 do_analysis = 0; 
 
-%% 1) HMM-MAR on hilbert envelopes 
-% Such as in Baker et al, Elife (2014)
-%% Loading and preparing the data
-
+%% HMM-MAR on hilbert envelopes 
+% As in Baker et al, Elife (2014). Start by loading and preparing the data
 % We are going to concatenate data into a single matrix
 % (if data is too big, the file names can also be provided to the hmmmar function)
 X = []; % data, time by regions
@@ -38,7 +36,8 @@ for j = subjects % iterate through subjects
     X = [X; sourcedata]; % concat subject
 end
 
-%% Prepare the HMM options and run the HMMMAR
+%%
+% Prepare the HMM options and run the HMMMAR
     
 options = struct();
 options.K = 3; % number of states
@@ -53,7 +52,8 @@ if do_analysis
     [hmm_env,Gamma_env] = hmmmar(X,T,options);
 end
 
-%% Compute the spectral information of the states (power, coherence, etc) 
+%%
+% Compute the spectral information of the states (power, coherence, etc) 
 % using a weighted version of the multitaper
 % Note that we can't get an estimation of the spectra directly from the
 % parameters in this case, as the HMM has been run in wideband power time series
@@ -68,10 +68,9 @@ if do_analysis
     spectra_env = hmmspectramt(X,T,Gamma_env,options);
 end
 
-%% 1) HMM-MAR on raw signals 
-% Such as in Vidaurre et al, NeuroImage (2016)
-%% Loading and preparing the data
-
+%% HMM-MAR on raw signals 
+% As in Vidaurre et al, NeuroImage (2016)
+% Loading and preparing the data
 % We are going to concatenate data into a single matrix
 % (if data is too big, the file names can also be provided to the hmmmar function)
 X = []; % data, time by regions
@@ -89,17 +88,20 @@ for j = subjects % iterate through subjects
     X = [X; sourcedata]; % concat subject
 end
 
-%% Signs might be arbitrarily flipped, so we need to disambiguate this
+%%
+% Signs might be arbitrarily flipped, so we need to disambiguate this
 % this is because the intrinsic ambiguity in source-reconstructed signals
 
 options = struct();
 options.maxlag = 8;
 options.noruns = 100;
+options.verbose = 0;
 
 [flips,scorepath] = findflip(X,T,options);
 X = flipdata(X,T,flips);
 
-%% And run the HMM-MAR on this
+%%
+% And run the HMM-MAR on this
 
 options = struct();
 options.K = 3; % number of states
@@ -113,7 +115,8 @@ if do_analysis
     [hmm_raw,Gamma_raw] = hmmmar(X,T,options);
 end
 
-%% Compute the spectral information of the states (power, coherence, etc) 
+%%
+% Compute the spectral information of the states (power, coherence, etc) 
 % Because a MAR model implicitly contains all the spectral information, 
 % we can use the parameters to derive power, coherence, phase relations, etc.
 
@@ -127,13 +130,15 @@ if do_analysis
     spectra_raw = hmmspectramar(X,T,[],Gamma_raw,options);
 end
 
-%% Because the number of cycles was set to such a low number, 
+%% Analyzing HMM output
+% Because the number of cycles was set to such a low number, 
 % we reload a previously computed run, which would have taken a bit longer
 
 load(hmmmar_name)
 
 
-%% Now let's see the state evoked probability, locked to the stimulus
+%%
+% Now let's see the state evoked probability, locked to the stimulus
 % the stimulus is saved in the variable onset, which contains a (Tx1)
 % logical vector with 1 when the fingertapping is effected. 
 
@@ -142,6 +147,7 @@ Hz = 200; % sampling frequency
 L = 8; % length of the window around the stimulus (seconds)
 window = Hz*L+1;
 
+%%
 % "evoked state response" around the stimulus, for the envelope run
 evokedGamma_env = zeros(window,hmm_env.K,length(subjects));
 t0 = 0;
@@ -156,6 +162,7 @@ for j = subjects % iterate through subjects
 end
 evokedGamma_env = mean(evokedGamma_env,3); % average across subjects
 
+%%
 % "evoked state response" around the stimulus, for the envelope run
 evokedGamma_raw = zeros(window,hmm_env.K,length(subjects));
 t0 = 0;
@@ -170,6 +177,7 @@ for j = subjects % iterate through subjects
 end
 evokedGamma_raw = mean(evokedGamma_raw,3); % average across subjects
  
+%%
 % And plot both 
 figure(1);
 halfwindow = (window-1)/2;
@@ -186,7 +194,8 @@ ylabel('State probability','FontSize',15)
 title('HMM-MAR on raw signals','FontSize',17)
 ylim([0.05 0.7])
 
-%% Show the spectral info (power and coherence) for the MAR
+%%
+% Show the spectral info (power and coherence) for the MAR
 
 colors = {'b',[0.2 0.7 0.2],'r'};
 
@@ -242,8 +251,8 @@ title('Power Chan2, HMM-MAR','FontSize',16)
 subplot(2,2,3)
 title('Coherence, HMM-MAR','FontSize',16)
 
-
-%% HMM-based Time-frequency analysis
+%%
+% HMM-based Time-frequency analysis
 
 [psd_tf,coh_tf] = hmmtimefreq(spectra_raw,evokedGamma_raw,1);
 f = spectra_raw.state(1).f ;
@@ -270,7 +279,8 @@ xlabel('Time (s)','FontSize',14); ylabel('Frequency (Hz)','FontSize',14);
 title('Coherence','FontSize',16)
 
 
-%% Probability of transit between states
+%%
+% Probability of transit between states
 
 P = hmm_raw.P; 
 for k=1:3
