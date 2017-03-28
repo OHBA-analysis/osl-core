@@ -35,7 +35,7 @@ function [ gstats, statsdir ] = oat_cluster_permutation_testing( S )
 %
 % MWW 2012
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 try, masksdir=[OSLDIR '/std_masks' ]; catch, error('OSLDIR not set. Run osl_startup.'); end;
            

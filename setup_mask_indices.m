@@ -8,7 +8,7 @@ function [ mask_indices_in_lower_level, current_level_mni_coord, new_mask ] = se
 %
 % MWW 2011
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 if(isfield(Sin,'lower_level_results')),
     Sin.lower_level_gridstep=Sin.lower_level_results.gridstep;    

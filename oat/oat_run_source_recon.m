@@ -9,7 +9,7 @@ function [results_fnames, source_recon_results ]=oat_run_source_recon(oat)
 %
 % MW 2011
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 source_recon=oat.source_recon;
    

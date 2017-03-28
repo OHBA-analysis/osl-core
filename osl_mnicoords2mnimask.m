@@ -6,7 +6,7 @@ function [ fname_out ] = osl_mnicoords2mnimask( mni_coords_in, gridstep, fname, 
 % voxels on a grid with spacings of gridstep, and then downsamples this to
 % resamp_gridstep
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 if(nargin<4)
     resamp_gridstep=2;

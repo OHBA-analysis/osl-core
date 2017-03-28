@@ -26,7 +26,7 @@ function component_topoplot(D,comp,modality)
 cfg=[];
 data=[];
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 
 chan_inds=setdiff(find(any([strcmp(D.chantype,'EEG');strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)),D.badchannels);
 map_inds(find(any([strcmp(D.chantype,'EEG');strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1))) = 1:numel(find(any([strcmp(D.chantype,'EEG');strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)));

@@ -232,9 +232,9 @@ end%if
 
 %% Check object is ok
 if isfield(P, 'noCheckSens') && P.noCheckSens, % e.g. helpful if have used EEG box to record artefact channels. EEG channels with no EEG sens information will cause errors in checkmeeg. 
-    [res, Dout] = check(D);
+    [Dout,res] = check(D);
 else
-    [res, Dout] = check(D, 'sensfid');
+    [Dout,res] = check(D, 'sensfid');
 end
 
 if ~res, 
@@ -252,11 +252,11 @@ if ~strcmpi(type(Dout), 'continuous'),
 end%if
 
 res = save(Dout);
-if ~res, 
-    error([mfilename ':FailedMEEGSave'], ...
-          ['MEEG object has failed to save. ', ...
-           'Hopefully spm has given you some more helpful errors... \n']);
-end%if
+% if ~res, 
+%     error([mfilename ':FailedMEEGSave'], ...
+%           ['MEEG object has failed to save. ', ...
+%            'Hopefully spm has given you some more helpful errors... \n']);
+% end%if
 end%create_new_meeg_object
 
 
@@ -298,10 +298,12 @@ end%for
 ftData.label = chanlabels(Dtemplate, simChanInd);
 
 % check channel consistency
+
 assert((P.nChannels == length(ftData.label)), ...
        [mfilename ':FTChannelMismatch'], ...
        ['Mismatch between number of channels in input and ', ...
         'number of channels in template. \n']);
+    
 assert((P.nChannels == size(ftData.trial{1}, 1)), ...
        [mfilename ':FTChannelMismatch2'], ...
        ['Mismatch between number of channels in input and ', ...

@@ -17,7 +17,7 @@ function [cfg, dats, fig_handle]=osl_stats_multiplotER(S)
 %
 % MWW 2012
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 try, oat=S.oat; catch, error('No S.oat supplied'); end;
 try, stats_fname=S.stats_fname; catch, error('No S.stats_fname supplied'); end;

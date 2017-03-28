@@ -11,7 +11,7 @@ function mat = nii_quickread(fileName, spatialRes)
 
 % (c) OHBA 2014
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 % check for existence of input file
 if ~exist(fileName,             'file') && ...
@@ -30,7 +30,7 @@ if mod(spatialRes, 1),
 end%if
 
 stdBrainName = fullfile(OSLDIR, 'std_masks', ...
-                        sprintf('MNI152_T1_%0.0fmm_brain_mask.nii.gz', ...
+                        sprintf('MNI152_T1_%0.0fmm_brain.nii.gz', ...
                                 spatialRes));
 
 % if unusual spatial resolution, create a temporary mask
@@ -43,7 +43,8 @@ if ~exist(stdBrainName, 'file'),
     C = onCleanup(@() delete(stdBrainName));
 end%if
 
-
-mat = vols2matrix(read_avw(fileName), read_avw(stdBrainName));
+maskmat = read_avw(stdBrainName);
+maskmat = maskmat~=0;
+mat = vols2matrix(read_avw(fileName), maskmat);
 
 end%nii_quickread

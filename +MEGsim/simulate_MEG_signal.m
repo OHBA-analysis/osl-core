@@ -1,4 +1,4 @@
-function [simData, dipoleSignals] = simulate_MEG_signal(leadFields, ...
+function [simData, dipoleSignals,data] = simulate_MEG_signal(leadFields, ...
                                                         nSamples, ...
                                                         nChannels, ...
                                                         nTrials, ...
@@ -104,6 +104,7 @@ for iDipole = nDipoles:-1:1,
 end%loop over dipoles
 
 % Merge all N dipoles into one dataset
+tic;
 dipsum = data(1).trial;
 if nDipoles > 1,
     % sum signals from each trial
@@ -117,6 +118,7 @@ if nDipoles > 1,
         end%loop over trials
     end%loop over dipoles
 end%if
+toc;
 simData       = data(1);
 simData.trial = dipsum;
 

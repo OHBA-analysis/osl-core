@@ -9,7 +9,7 @@ function [ results_fnames first_level_results ] = oat_run_first_level_epoched( o
 %
 % MWW 2012
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 do_glm_statewise=oat.first_level.hmm_do_glm_statewise;
 

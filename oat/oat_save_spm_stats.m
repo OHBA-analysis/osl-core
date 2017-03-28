@@ -15,7 +15,7 @@ function [D_tstat, D_cope] = oat_save_spm_stats( Sin )
 %    
 % MWW 2013
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 if ~isfield(Sin,'suffix')
     Sin.suffix='';

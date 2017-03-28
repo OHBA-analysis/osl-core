@@ -16,7 +16,7 @@
 
 function fslview(fnames,thresholds,colour_maps,anatomical)
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 
 available_maps = {'Red-Yellow';
                   'Blue-Lightblue'; 
@@ -30,24 +30,22 @@ available_maps = {'Red-Yellow';
                   'Copper'};
 
 
-if nargin<4
+if nargin < 4 || isempty(anatomical)
     anatomical='mni_brain';
 end;
 
-if nargin<3
+if nargin < 3 || isempty(colour_maps)
    colour_maps = {'Red-Yellow'};
 end
 
-if nargin<2
-   thresholds = [2.3 5];
+if nargin < 2 ||isempty(thresholds)
+   thresholds = [];
 end
 
-if nargin==0 || isempty(fnames)
+if nargin == 0 || isempty(fnames)
     [filename, pathname]=uigetfile({'*.nii; *.nii.gz', 'Nifti Files (.nii , .nii.gz)';'*.*', 'All Files'},'Select a nifti file');
     fnames=fullfile(pathname,filename);
 end
-
-warning off
 
 if ischar(fnames)
   fnames = {fnames};
@@ -103,9 +101,8 @@ switch anatomical
         anatomical_fname=anatomical;    
 end;
 
-runcmd(['fslview ' fnames_formatted ' ' anatomical_fname  '&']);
+runcmd(['fslview ' anatomical_fname ' '  fnames_formatted '&']);
  
-warning on
 end
 
 % HELP TEXT FROM FSLVIEW

@@ -120,9 +120,8 @@ addParamValue(Inputs, 'matchTemplateExactly', allChanDef, @(x) islogical(x));
 rndSeedDef = sum(100*clock); % standard practice for initialisation
 addParamValue(Inputs, 'randomNumberSeed',   rndSeedDef, numericValidFcn);
 
-fileNameDef = fullfile(pwd, ...
-                       sprintf('simulated_MEG_data_%s_1', ...
-                               datestr(now, 29)));
+fileNameDef = [tempname(pwd) '_meg'];
+
 while 1,
     if exist(fileNameDef, 'file'), 
         fileNameDef = [fileNameDef(1:end-1), ...

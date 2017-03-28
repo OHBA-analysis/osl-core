@@ -27,7 +27,7 @@ function [Ds, flips, scorepath] = osl_resolve_sign_ambiguity(S)
 %
 % MWW 2016
 
-global OSLDIR 
+OSLDIR = getenv('OSLDIR'); 
 
 num_subj=length(S.Ds);
 

@@ -9,7 +9,7 @@ function [results_fnames results] = osl_run_first_level( oat )
 %
 % MWW 2011
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 if ~oat.first_level.is_epoched    
 

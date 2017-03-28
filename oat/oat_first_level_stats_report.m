@@ -14,7 +14,7 @@ function report=oat_first_level_stats_report(oat,first_level_results,report_dir_
 %
 % MWW 2013
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 if nargin<3,
     report_dir_in='';

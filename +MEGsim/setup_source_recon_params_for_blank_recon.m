@@ -1,5 +1,5 @@
-function oil = setup_source_recon_params_for_blank_recon(P)
-%SETUP_SOURCE_RECON_PARAMS sets oil structure for setting up simulation
+function oat = setup_source_recon_params_for_blank_recon(P)
+%SETUP_SOURCE_RECON_PARAMS sets oat structure for setting up simulation
 % The parameters here are optimised for running on a blank dataset
 % The purpose of such a run is to extract the co-ordinate systems and lead
 % fields. 
@@ -27,35 +27,35 @@ function oil = setup_source_recon_params_for_blank_recon(P)
 %	Originally written on: GLNXA64 by Giles Colclough, 25-Oct-2013 12:43:45
 
 
-oil = struct();
-oil.paradigm = 'rest';
+oat = struct();
+% oat.paradigm = 'rest';
 
-oil.source_recon.conditions = {'Undefined'};
-oil.source_recon.time_range = '';               % use all if set to ''
-oil.source_recon.freq_range = [4 30];           % frequency range in Hz
+oat.source_recon.conditions = {'Undefined'};
+oat.source_recon.time_range = [-Inf Inf];               % use all if set to ''
+oat.source_recon.freq_range = [4 30];           % frequency range in Hz
 [saveDir, saveFileName]     = fileparts(P.saveFileName);
 
-oil.source_recon.dirname = fullfile(saveDir, ...
-                                    [saveFileName '-oil-source-recon']); % saved location of oil structure
+oat.source_recon.dirname = fullfile(saveDir, ...
+                                    [saveFileName '-oat-source-recon']); % saved location of oat structure
 
-% oil.source_recon.sessions_to_do               % set automatically
-% oil.source_recon.epochinfo                    % set automatically
-oil.source_recon.method       = 'beamform';
-% oil.source_recon.modalities                   % set automatically from scanner type
-% oil.source_recon.normalise_method             % set automatically
-oil.source_recon.pca_dim      = 102;            % force pca as BF on blank data finds degenerate PCs
-% oil.source_recon.regpc                        % set automatically
-oil.source_recon.gridstep     = P.spatialRes;   % mm
-% oil.source_recon.mask_fname                   % set automatically
-oil.source_recon.useheadshape = 1;
-oil.source_recon.use_rhino    = 0;
-oil.source_recon.forward_meg  = 'MEG Local Spheres';
-% oil.source_recon.beamformer_fn                % set automatically        %%% Does including this create problems in osl1.5.0? I think so - 15 May 2014
-oil.source_recon.mri          = {P.structuralFile};
-oil.source_recon.work_in_pca_subspace = 0;      % don't beamform in reduced subspace using local spheres
-oil.source_recon.force_pca_dim = 1;             % force pca as BF on blank data finds degenerate PCs
-% oil.source_recon.mni_coords                   % set automatically
-% oil.source_recon.type                         % set automatically
-% oil.source_recon.bandstop_filter_mains        % set automatically
+% oat.source_recon.sessions_to_do = [];              % set automatically
+% oat.source_recon.epochinfo                    % set automatically
+oat.source_recon.method       = 'beamform';
+% oat.source_recon.modalities                   % set automatically from scanner type
+% oat.source_recon.normalise_method             % set automatically
+oat.source_recon.pca_dim      = 102;            % force pca as BF on blank data finds degenerate PCs
+% oat.source_recon.regpc                        % set automatically
+oat.source_recon.gridstep     = P.spatialRes;   % mm
+% oat.source_recon.mask_fname                   % set automatically
+% oat.source_recon.useheadshape = 1;
+% oat.source_recon.use_rhino    = 0;
+oat.source_recon.forward_meg  = 'MEG Local Spheres';
+% oat.source_recon.beamformer_fn                % set automatically        %%% Does including this create problems in osl1.5.0? I think so - 15 May 2014
+% oat.source_recon.mri          = {P.structuralFile};
+% oat.source_recon.work_in_pca_subspace = 0;      % don't beamform in reduced subspace using local spheres
+oat.source_recon.force_pca_dim = 1;             % force pca as BF on blank data finds degenerate PCs
+% oat.source_recon.mni_coords                   % set automatically
+% oat.source_recon.type                         % set automatically
+% oat.source_recon.bandstop_filter_mains        % set automatically
 end%setup_source_recon_params_for_blank_recon
 % [EOF]

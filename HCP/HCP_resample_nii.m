@@ -20,16 +20,16 @@ T(1,4) = 14;
 T(2,4) = 14;
 trans = [tempname '.mat'];
 dlmwrite(strrep(trans,'.mat','.txt'),T,' ');
-dos(['mv ' strrep(trans,'.mat','.txt') ' ' trans]);
+runcmd(['mv ' strrep(trans,'.mat','.txt') ' ' trans]);
 
 % Dilate to avoid edge effects:
-[~,kernelsize] = dos(['fslval ' input_fname ' pixdim1']);
+[~,kernelsize] = runcmd(['fslval ' input_fname ' pixdim1']);
 kernelsize = str2double(kernelsize);
 runcmd(['fslmaths ' input_fname ' -kernel gauss ' kernelsize ' -dilM ' output_fname]);
 
 % Flirt to MNI space:
 runcmd(['flirt -in ' input_fname ' -applyxfm -init ' trans ' -out ' output_fname ' -paddingsize 0.0 -interp ' 'trilinear' ' -ref ' std_brain]);
-dos(['rm ' trans]);
+runcmd(['rm ' trans]);
 
 % Mask to remove edges:
 runcmd(['fslmaths ' output_fname ' -mas ' std_mask ' ' output_fname]);

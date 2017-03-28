@@ -13,7 +13,7 @@ if numel(thresh)<2
     thresh=[thresh -thresh];
 end
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 %% Read in Standard Brain
 stdbrain=read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(spat_res) 'mm_brain.nii.gz']);

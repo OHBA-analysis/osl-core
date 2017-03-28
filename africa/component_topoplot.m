@@ -13,7 +13,7 @@ if nargin<4
     do_plot=0;
 end
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 
 comp(D.badchannels,:) = 0;
 comp2view = comp(indchantype(D,modality),:);

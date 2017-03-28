@@ -1,101 +1,68 @@
-function osl_render4D(nii,savedir,workbenchdir,interptype,visualise,cleanEnvironmentFn)
-% Creates a surface rendering of a 4D nifti file and saves as dense time series
-% (.dtseries.nii) CIFTI file using HCP workbench
-%
-% OSL_RENDER4D(nii,fnameout,workbenchdir,interptype,visualise)
-% -----------------------------------------------------------------
-% nii          - the (3D or 4D) nifti file to render (.nii or .nii.gz)
-% savedir      - a directory in which to save the surface renderings
-% workbenchdir - directory containing HCP workbench (e.g. /.../workbench/bin_linux64/)
-% interptype   - (optional) interpolation method [{'trilinear'},'nearestneighbour']
-% visualise    - (optional) open workbench after rendering [{1},0]
-% cleanEnvironmentFn - (optional) dos calls will call this function prior to
-%                   calling command line workbench executables [default is 
-%                   to not call a function]. (Note that this is needed for certain
-%                   OS where the dynamics link library paths are not setup
-%                   properly in Matlab - see cleanEnvironment.m for an
-%                   example (e.g. pass in @cleanEnvironment).
-% -----------------------------------------------------------------
-% Adam Baker 2013
+function osl_render4D(nii,varargin)
+    % Creates a surface rendering of a 4D nifti file and saves as dense time series
+    % (.dtseries.nii) CIFTI file using HCP workbench
+    %
+    % INPUTS
+    %   osl_render4d(nii,varargin)
+    %
+    % where nii is the name of the nii file with a 4D matrix to render (include the extension)
+    %
+    % where varargin corresponds to key-value pairs for
+    % 'savedir' : location to save output files (default=current directory)
+    % 'interptype' : 'trilinear' or for nearest-neighbour, 'enclosing' (default='trilinear')
+    % 'visualise' : show using workbench (default=true)
+    %
+    % EXAMPLE USAGE
+    %   osl_render_4d('power_map.nii.gz','interptype','enclosing','visualise',false)
+    % 
+    % Romesh Abeysuriya 2017
+    % Adam Baker 2013
 
-global OSLDIR;
+    % Input nii may or may not have extension
+    if ~exist(nii) || isempty(strfind(nii,'.nii'))
+      error('input should be nii or nii.gz file');
+    end
+    
+    [inpath,infile] = fileparts(nii);
 
-if ~isempty(strfind(nii,'.nii.gz'))
-  ext = '.nii.gz';
-elseif ~isempty(strfind(nii,'.nii'))
-  ext = '.nii';
-else
-  error('input should be nii or nii.gz file');
-end
+    arg = inputParser;
+    arg.addParameter('savedir',inpath); % Only compare 8-12Hz with data
+    arg.addParameter('interptype','trilinear'); % Array of center frequencies (for +-2Hz windows) e.g. [10 12] would expand to {[8 12],[10 14]}. Only valid if quick is false
+    arg.addParameter('visualise',true); % If empty, load data from file
+    arg.parse(varargin{:});
 
-[~,infile] = fileparts(nii);
+    if ~isempty(arg.Results.savedir) && ~isdir(arg.Results.savedir)
+        mkdir(arg.Results.savedir);
+    end
 
-outfile = fullfile(savedir,infile);
-outfile = strrep(outfile,'.gz','');
-outfile = strrep(outfile,'.nii','');
+    infile = strrep(infile,'.gz','');
+    infile = strrep(infile,'.nii','');
+    outfile = fullfile(arg.Results.savedir,infile);
 
 
-if ~exist('workbenchdir','var') || isempty(workbenchdir)
- % workbenchdir = '/home/abaker/Code/HCPworkbench/bin_linux64';
-  workbenchdir = '/Applications/workbench/bin_macosx64/';
-end
-if ~exist('interptype','var')
-  interptype = 'trilinear';
-end
-if ~exist('visualise','var')
-  visualise = 1;
-end
-if ~exist('cleanEnvironmentFn')
-    cleanEnvironmentFn=[];
-end;
+    % Load surfaces to map to
+    surf_right = fullfile(osldir,'std_masks','ParcellationPilot.R.midthickness.32k_fs_LR.surf.gii');
+    surf_left = fullfile(osldir,'std_masks','ParcellationPilot.L.midthickness.32k_fs_LR.surf.gii');
+    surf_right_inf = fullfile(osldir,'std_masks','ParcellationPilot.R.inflated.32k_fs_LR.surf.gii');
+    surf_left_inf = fullfile(osldir,'std_masks','ParcellationPilot.L.inflated.32k_fs_LR.surf.gii');
+    surf_right_vinf = fullfile(osldir,'std_masks','ParcellationPilot.R.very_inflated.32k_fs_LR.surf.gii');
+    surf_left_vinf = fullfile(osldir,'std_masks','ParcellationPilot.L.very_inflated.32k_fs_LR.surf.gii');
 
-if ~isempty(cleanEnvironmentFn)
-    cleanEnvStr=feval(cleanEnvironmentFn);
-else
-    cleanEnvStr=[];
-end;
+    output_right    = [outfile '_right.func.gii'];
+    output_left     = [outfile '_left.func.gii'];
 
-switch lower(interptype)
-    case {'trilinear'}
-        interptype_surf = 'trilinear'; 
-    case {'nearestneighbour','none'}
-        interptype_surf = 'enclosing'; 
-    otherwise
-end
+    % Map volume to surface
+    runcmd('wb_command -volume-to-surface-mapping %s %s %s -%s',nii,surf_right,output_right,arg.Results.interptype)
+    runcmd('wb_command -volume-to-surface-mapping %s %s %s -%s',nii,surf_left,output_left,arg.Results.interptype)
 
-if ~isdir(savedir); mkdir(savedir); end
+    % Save as dtseries 
+    cifti_right = strrep(output_right,'.func.gii','.dtseries.nii');
+    cifti_left  = strrep(output_left, '.func.gii','.dtseries.nii');
 
-% Load surfaces to map to
-surf_right       = [OSLDIR '/std_masks/ParcellationPilot.R.midthickness.32k_fs_LR.surf.gii'];
-surf_left        = [OSLDIR '/std_masks/ParcellationPilot.L.midthickness.32k_fs_LR.surf.gii'];
-surf_right_inf  = [OSLDIR '/std_masks/ParcellationPilot.R.inflated.32k_fs_LR.surf.gii'];
-surf_left_inf   = [OSLDIR '/std_masks/ParcellationPilot.L.inflated.32k_fs_LR.surf.gii'];
-surf_right_vinf = [OSLDIR '/std_masks/ParcellationPilot.R.very_inflated.32k_fs_LR.surf.gii'];
-surf_left_vinf  = [OSLDIR '/std_masks/ParcellationPilot.L.very_inflated.32k_fs_LR.surf.gii'];
+    runcmd('wb_command -cifti-create-dense-timeseries %s -right-metric %s',cifti_right,output_right)
+    runcmd('wb_command -cifti-create-dense-timeseries %s -left-metric %s',cifti_left,output_left)
 
-output_right    = [outfile '_right.nii'];
-output_left     = [outfile '_left.nii'];
-
-% Map volume to surface
-[st, res]=dos([cleanEnvStr workbenchdir '/wb_command -volume-to-surface-mapping ' nii ' ' surf_right       ' ' output_right    ' -' interptype_surf]);
-disp(res);
-[st, res]=dos([cleanEnvStr workbenchdir '/wb_command -volume-to-surface-mapping ' nii ' ' surf_left        ' ' output_left     ' -' interptype_surf]);
-disp(res);
-
-% Save as dtseries 
-cifti_right = strrep(output_right,'.nii','.dtseries.nii');
-cifti_left  = strrep(output_left, '.nii','.dtseries.nii');
-
-[st, res]=dos([cleanEnvStr workbenchdir '/wb_command -cifti-create-dense-timeseries ' cifti_right     ' -right-metric ' output_right]);
-disp(res);
-[st, res]=dos([cleanEnvStr workbenchdir '/wb_command -cifti-create-dense-timeseries ' cifti_left      ' -left-metric '  output_left ]);
-disp(res);
-
-% View in workbench
-if visualise
-  cmd=[workbenchdir '/wb_view ' surf_left ' ' surf_right ' ' surf_left_inf ' ' surf_right_inf ' ' surf_left_vinf ' ' surf_right_vinf ' ' cifti_left ' ' cifti_right ' &'];
-  disp(cmd);
-  runcmd([cleanEnvStr cmd]);
-end
-
-end
+    % View in workbench
+    if arg.Results.visualise
+      runcmd('wb_view %s %s %s %s %s %s %s %s &',surf_left,surf_right,surf_left_inf,surf_right_inf,surf_left_vinf,surf_right_vinf,cifti_left,cifti_right);
+    end

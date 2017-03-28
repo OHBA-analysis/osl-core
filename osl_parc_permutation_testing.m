@@ -11,7 +11,7 @@ function [ gstats, statsdir ] = osl_parc_permutation_testing( S )
 % S.parcel_assignments
 %
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 try, masksdir=[OSLDIR '/std_masks' ]; catch, error('OSLDIR not set. Run osl_startup.'); end;
 

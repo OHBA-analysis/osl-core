@@ -9,7 +9,7 @@ function [ results_fnames current_level_results ] = osl_run_group_level( oat )
 %
 % MWW 2011
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 lower_level=oat.subject_level;
 current_level=oat.group_level;
@@ -561,7 +561,7 @@ end
 %% sub funcs
 function vol_as_matrix=smooth_vol(vol_as_matrix, mask, fwhm, gridstep, tmp_fname)
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 
 % smooth spatially
 ds=gridstep;

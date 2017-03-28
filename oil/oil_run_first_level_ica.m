@@ -9,7 +9,7 @@ function  oil = oil_run_first_level_ica( oil )
 %
 % HL 05.02.13 version 1.1
 
-global OSLDIR;
+OSLDIR = getenv('OSLDIR');
 switch lower(oil.ica.temp_or_spat)
     case {'temporal'}
         if isfield(oil.ica.results,'tICs'); NumICs=size(oil.ica.results.tICs,1);end

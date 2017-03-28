@@ -2,7 +2,7 @@ function nii_quickview(mat,spat_res,rs)
 % View nii file without creating (permanently) a new file
 % AB 2012
 
-global OSLDIR
+OSLDIR = getenv('OSLDIR');
 
 fname_tmp = tempname;
 
@@ -16,6 +16,6 @@ end
 fslview(fname_tmp);
 
 pause(5)
-dos(['rm ' fname_tmp '.nii.gz']);
+runcmd(['rm ' fname_tmp '.nii.gz']);
 
 end
