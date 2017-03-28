@@ -1,157 +1,70 @@
-######
-# settings
+#!/bin/bash
+# Romesh Abeysuriya 2017
+# MW pre-2014
 
-WORKINGDIR=/Users/woolrich/Desktop
+# Assemble the final zip file in this directory - relative to current folder
+WORKINGDIR=$HOME/Desktop/osl-release
 
-# specify these 5 things to build a release:
-OSL2GITRELEASETAG=0.3  # e.g corresponds to release/tag (e.g. v0.3) created on github website
-GLEANGITRELEASETAG=0.2 # e.g. corresponds to release/tag (e.g. v0.2) created on github website, note that GLEAN contains HMMMAR as a subproject
-MEGROInetsGITRELEASETAG=1.6.0 # e.g. corresponds to release/tag (e.g. v1.6.0) created on github website 
-SUPPDIRSNAME=osl2_supporting_dirs_v3 # name of supplementary directories to use, do not want .tar.gz file ext here
-RELEASENAME=osl2.${OSL2GITRELEASETAG}.2 # overall name of built package
+# Specify OSL version which also names this release
+OSL2RELEASETAG=0.3 
+RELEASENAME=osl2.${OSL2RELEASETAG}.1 
 
-# location of repository for supplementary directories
-SUPPDIRSDOWNLOADSITE=http://users.fmrib.ox.ac.uk/~woolrich/osl2
+retrieve_repo () {
+	REPONAME=$1
+	GITRELEASETAG=$2
+	curl -L https://github.com/OHBA-analysis/$REPONAME/archive/v$GITRELEASETAG.tar.gz --output osl/$REPONAME.tar.gz
+	tar -xvf osl/$REPONAME.tar.gz
+	rm -rf osl/$REPONAME.tar.gz
+	mv $REPONAME-$GITRELEASETAG osl/$REPONAME
+	echo "$REPONAME - $GITRELEASETAG" >> osl/version.txt
+} 
 
-# where we will upload osl release to
-OSLUPLOADDIR=woolrich@jalapeno.fmrib.ox.ac.uk:/home/fs0/woolrich/www/osl2
-
-GITDOWNLOADSITE=https://github.com/OHBA-analysis/
-
-######
-# make dir to work in
-
-mkdir $WORKINGDIR
-
-######
-# download current tar ball of supplementary dirs for osl2
-
-# Do not uncomment this next line. Instead, this next commented line can be separately used to upload a new set of supporting dirs if needed
-# tar cvf osl2_supporting_dirs.tar osl2; gzip osl2_supporting_dirs.tar; scp -r osl2_supporting_dirs.tar.gz $OSLUPLOADDIR/$SUPPDIRSNAME.tar.gz
-
+# Set up
+mkdir -p $WORKINGDIR/osl
 cd $WORKINGDIR
 
-rm -rf supporting_dirs.tar.gz
-curl -L $SUPPDIRSDOWNLOADSITE/$SUPPDIRSNAME.tar.gz --output supporting_dirs.tar.gz
+# Copy supplementary directories - this will also clean any previous downloads
+rsync -azP --delete hbapc33:/data/analysis_data/osl/current_supplements/ osl/
 
-# untar it
-rm -rf supporting_dirs
+# Alternatively, may want to do it via a tar file and a version - something to consider
+# SUPPDIRVERSION=0.2
+# rsync -a hbapc33:/data/analysis_data/osl/supplements/supplement_v$SUPPDIRVERSION.tar.gz $WORKINDIR
+# tar xvf supplement_v$SUPPDIRVERSION.tar.gz
+# rm -rf supplement_v$SUPPDIRVERSION.tar.gz
 
-tar xvf supporting_dirs.tar.gz
-rm -rf supporting_dirs.tar.gz
+# Clean supplements
+rm osl/update.sh
+find $WORKINGDIR -name .git | xargs rm -fr
+find $WORKINGDIR -name .svn | xargs rm -fr
+find $WORKINGDIR -name *DS_Store* | xargs rm -fr
 
-echo "function ret=osl2_supporting_dirs_version, ret=‘$SUPPDIRSDOWNLOADSITE/$SUPPDIRSNAME';" > osl2/osl2_supporting_dirs_version.m
+# Create version file
+echo "OSL ZIP FILE DISTRIBUTION $RELEASENAME" > $WORKINGDIR/osl/version.txt
 
-######
-# download current github osl release
+# Download git repos with specified release names
+retrieve_repo osl2 $OSL2RELEASETAG
+retrieve_repo GLEAN 0.2
+retrieve_repo MEG-ROI-nets 1.6.0
+retrieve_repo HMM-MAR 0.9
 
-REPONAME=osl2
-GITRELEASETAG=$OSL2GITRELEASETAG
+if which pigz >/dev/null; then
+    tar cvf - ./* | pigz -9 -p 8 > $WORKINGDIR/$RELEASENAME.tar.gz
+else
+	tar cvf - ./* | gzip -9 > $WORKINGDIR/$RELEASENAME.tar.gz
+fi
 
-cd $WORKINGDIR
+echo "Build complete"
 
-rm -rf osl2/$REPONAME.tar.gz
-rm -rf osl2/$REPONAME
-
-tmp=$GITDOWNLOADSITE$REPONAME/archive/v$GITRELEASETAG.tar.gz
-
-echo Downloading $tmp
-
-curl -L $tmp --output osl2/$REPONAME.tar.gz
-
-cd osl2
-
-# untar it
-rm -rf $REPONAME-$GITRELEASETAG
-tar xvf $REPONAME.tar.gz
-rm -rf $REPONAME.tar.gz
-
-# rename the dir
-mv $REPONAME-$GITRELEASETAG $REPONAME
-
-# update $REPONAME_version.m
-cd $WORKINGDIR
-rm -f osl2/$REPONAME/${REPONAME}_version.m
-echo "function ret=${REPONAME}_version, ret='$tmp';" > osl2/$REPONAME/${REPONAME}_version.m
-
-######
-# download current GLEAN osl release
-# note that GLEAN contains HMMMAR as a subproject
-
-REPONAME=GLEAN
-GITRELEASETAG=$GLEANGITRELEASETAG
-
-cd $WORKINGDIR
-
-rm -rf osl2/$REPONAME.tar.gz
-rm -rf osl2/$REPONAME
-
-tmp=$GITDOWNLOADSITE$REPONAME/archive/v$GITRELEASETAG.tar.gz
-
-echo Downloading $tmp
-
-curl -L $tmp --output osl2/$REPONAME.tar.gz
-
-cd osl2
-
-# untar it
-rm -rf $REPONAME-$GITRELEASETAG
-tar xvf $REPONAME.tar.gz
-rm -rf $REPONAME.tar.gz
-
-# rename the dir
-mv $REPONAME-$GITRELEASETAG $REPONAME
-
-# update $REPONAME_version.m
-cd $WORKINGDIR
-rm -f osl2/$REPONAME/${REPONAME}_version.m
-echo "function ret=${REPONAME}_version, ret='$tmp';" > osl2/$REPONAME/${REPONAME}_version.m
-
-######
-# download current MEG-ROI-nets osl release
-
-REPONAME=MEG-ROI-nets
-GITRELEASETAG=$MEGROInetsGITRELEASETAG
-
-cd $WORKINGDIR
-
-rm -rf osl2/$REPONAME.tar.gz
-rm -rf osl2/$REPONAME
-
-tmp=$GITDOWNLOADSITE$REPONAME/archive/v$GITRELEASETAG.tar.gz
-
-echo Downloading $tmp
-
-curl -L $tmp --output osl2/$REPONAME.tar.gz
-
-cd osl2
-
-# untar it
-rm -rf $REPONAME-$GITRELEASETAG
-tar xvf $REPONAME.tar.gz
-rm -rf $REPONAME.tar.gz
-
-# rename the dir
-mv $REPONAME-$GITRELEASETAG $REPONAME
-
-# update $REPONAME_version.m
-cd $WORKINGDIR
-rm -f osl2/$REPONAME/${REPONAME}_version.m
-echo "function ret=${REPONAME}_version, ret='$tmp';" > osl2/$REPONAME/${REPONAME}_version.m
-
-######
-# create tar ball of osl
-
-echo "function ret=osl2_release_version, ret='$RELEASENAME';" > osl2/osl2_release_version.m
-cd $WORKINGDIR
-tar cvf $RELEASENAME.tar osl2
-gzip -f $RELEASENAME.tar
-
-######
-# upload - this bit obviously requires write permission for $OSLUPLOADDIR
-
-scp -r $RELEASENAME.tar.gz $OSLUPLOADDIR/
-
-echo Built release can be downloaded from $OSLUPLOADDIR/$RELEASENAME.tar.gz
+read -r -p "Upload to Woolrich Jalapeno [y/N] " response
+case "$response" in
+    [yY][eE][sS]|[yY]) 
+		OSLUPLOADDIR=woolrich@jalapeno.fmrib.ox.ac.uk:/home/fs0/woolrich/www/osl2
+		scp -r $WORKINGDIR/$RELEASENAME.tar.gz $OSLUPLOADDIR/
+        echo Built release can be downloaded from $OSLUPLOADDIR/$RELEASENAME.tar.gz
+        ;;
+    *)
+        echo "Cancelled"
+        ;;
+esac
 
 
