@@ -19,12 +19,11 @@ osl_startup();
 
 %%%%%%%%%%%%%%%%%%
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
-tilde='/Users/robert/';
 
 % directory where the data is:
-datadir=[tilde '/Documents/workshop/example/button_press_data'];
-
+datadir = fullfile(osldir,'example_data','preproc_example','automatic_opt');
  
+
 % Set up the list of subjects and their structural scans for the analysis 
 clear raw_fif_files input_files spm_files structural_files;
 

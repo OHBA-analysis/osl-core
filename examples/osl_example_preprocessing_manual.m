@@ -2,7 +2,6 @@
 % emotional faces task (data courtesy of Susie Murphy). This can be
 % downloaded from:  
 % 
-% www.fmrib.ox.ac.uk/~woolrich/faces_subject1_data.tar.gz
 % 
 % Note that this contains the fif file:
 % fifs/sub1_face_sss.fif 
@@ -26,27 +25,19 @@
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
 
-%tilde='/home/mwoolrich/Desktop';
-tilde='/Users/robert/';
 
-osldir=['/Applications/osl/osl2'];    
 
-%osldir = getenv('OSLDIR');
-%data_dir = fullfile(osldir,'example_data','roinets_example');
 %output_directory = fullfile(osldir,'practical','roinets_demo');
 
-
-addpath(osldir);
-
-osl_startup();
 
 %%%%%%%%%%%%%%%%%%
 %% SPECIFY DIRS FOR THIS ANALYSIS
 
 % directory where the data is:
-datadir=[tilde '/Documents/workshop/example/faces_subject1_data'];
+%datadir=[tilde '/Documents/workshop/example/faces_subject1_data'];
 
-fullfile(osldir,'example_data','roinets_data')
+datadir = fullfile(osldir,'example_data','preproc_example','manual');
+
 
 % this is the directory the analysis files will be stored in:
 workingdir=[datadir]; 
