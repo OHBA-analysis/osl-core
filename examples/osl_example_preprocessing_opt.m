@@ -3,7 +3,7 @@
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
 % CTF data as well) using OPT. It works through the following steps:
 %
-% You'll need to do alter (at the very least) the settings in:
+% You'll need to alter (at the very least) the settings in:
 % datadir, fif_files, spm_files, structurals_files
 
 %%%%%%%%%%%%%%%%%%

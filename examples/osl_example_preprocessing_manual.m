@@ -192,8 +192,8 @@ D=spm_eeg_filter(S2);
 % experiment from about 650 secs to the end. This will mean that we are not
 % using about half of the data. But with such bad artefacts this is the
 % best we can do. We can still obtain good results with what remains.
+% push disk button to save to disk (same name)
 D=oslview(D);
-
 
 % AFRICA WITH MANUAL COMPONENT REJECTION
 
@@ -281,7 +281,7 @@ D = osl_headmodel(S);
 
 %set filenames used in following step
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/Afd' spm_files_basenames{subnum}];
+    spm_files{subnum}=[workingdir '/fd' spm_files_basenames{subnum}];
 end
 
 for i=1:length(spm_files), % iterates over subjects
@@ -291,6 +291,8 @@ for i=1:length(spm_files), % iterates over subjects
     S2 = [];
     S2.D = spm_files{i};
     D_continuous=spm_eeg_load(S2.D);
+    
+    D_continuous=D_continuous.montage('switch',0);
     
     pretrig = -1000; % epoch start in ms
     posttrig = 2000; % epoch end in ms   
@@ -335,7 +337,7 @@ end;
 
 %set filenames used in following step
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/eAfd' spm_files_basenames{subnum}];
+    spm_files{subnum}=[workingdir '/efd' spm_files_basenames{subnum}];
 end
 
 subnum = 1;             
@@ -374,16 +376,16 @@ methods(D)
 % magnetometers (what you have available may depend on the actual MEG device)
 % (Note that you can use 'MEGMAG' to get the gradiometers, and D.chantype gives you a list of all channel types by index).
 % 
-planars = D.indchantype('MEGPLANAR');
-magnetos = D.indchantype('MEGMAG');
+planars = D.indchantype('MEGPLANAR')
+magnetos = D.indchantype('MEGMAG')
 
 
 % We can access the actual MEG data using the syntax: D(channels, samples, trials). E.g. plot a figure showing all the trials for the motorbike condition in the 135th MEGPLANAR channel. Note that the squeeze function is needed to remove single dimensions for passing to the plot function, and D.time is used to return the time labels of the within trial time points in seconds.
 
-figure; plot(D.time,squeeze(D(planars(135),:,good_motorbike_trls))); xlabel('time (seconds)');
+figure; plot(D.time,squeeze(D(planars(135),:,motorbike_trls))); xlabel('time (seconds)');
 % We can average over all the motorbike trials to get a rudimentary ERF (Event-Related Field):
 
-figure; plot(D.time,squeeze(mean(D(planars(135),:,good_motorbike_trls),3))); xlabel('time (seconds)');
+figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3))); xlabel('time (seconds)');
 
 % Although we should bear in mind that this data is averaging over all data
 % including noisy data segments, channels and trials. To do better than
@@ -420,7 +422,7 @@ figure; plot(D.time,squeeze(mean(D(planars(135),:,good_motorbike_trls),3))); xla
 
 %set filenames used in following step
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/eAfd' spm_files_basenames{subnum}];
+    spm_files{subnum}=[workingdir '/efd' spm_files_basenames{subnum}];
 end
 
 % RUN THE VISUAL ARTEFACT REJECTION:
@@ -439,12 +441,19 @@ end;
 
 % Set new SPM MEEG object filenames to be used in following steps
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/eAfd' spm_files_basenames{subnum}];
+    spm_files{subnum}=[workingdir '/efd' spm_files_basenames{subnum}];
 end
 
 % load in SPM MEEG object
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
+
+D=D.montage('switch',0)
+planars = D.indchantype('MEGPLANAR')
+magnetos = D.indchantype('MEGMAG')
+
+
+
 
 % List the marked bad channels
 D.badchannels
@@ -453,20 +462,43 @@ D.badchannels
 D.badtrials
 % Identify the motorbike trials. Note that indtrial includes good AND bad trials, so bad trials need to be excluded.
 
-motorbike_trls = setdiff(D.indtrial('Motorbike'),D.badtrials);
+good_motorbike_trls = setdiff(D.indtrial('Motorbike'),D.badtrials);
+
+
+
+D2=D.montage('switch',1)
+
 
 % Plot a cleaned rudimentary ERF
-figure; subplot(1,2,1);plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3))); xlabel('time (seconds)');ylim([-8 8])
-subplot(1,2,2);plot(D.time,squeeze(mean(D(magnetos(49),:,motorbike_trls),3))); xlabel('time (seconds)');ylim([-400 400])
+figure; 
+subplot(1,2,1);plot(D.time,squeeze(mean(D(planars(135),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-8 8])
+hold on;
+subplot(1,2,1);plot(D.time,squeeze(mean(D2(planars(135),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-8 8])
+
+subplot(1,2,2);plot(D.time,squeeze(mean(D(magnetos(49),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-400 400])
+hold on;
+subplot(1,2,2);plot(D2.time,squeeze(mean(D2(magnetos(49),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-400 400])
+
+
+
 
 % Plot a cleaned rudimentary ERF for all sensors
 figure; 
-subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D([planars(:)],:,motorbike_trls),3))); xlabel('time (seconds)');
-subplot(1,2,2);imagesc(D.time,[],squeeze(mean(D([magnetos(:)],:,motorbike_trls),3))); xlabel('time (seconds)');
+subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D2([planars(:)],:,good_motorbike_trls),3))); xlabel('time (seconds)');
+subplot(1,2,2);imagesc(D.time,[],squeeze(mean(D2([magnetos(:)],:,good_motorbike_trls),3))); xlabel('time (seconds)');
 
-% Plot a cleaned rudimentary ERF topography at N170
-topo=squeeze(mean(D(:,188,motorbike_trls),3));
+% Plot a cleaned rudimentary ERF topography a
+% at roughly N170 latency
+topo=squeeze(mean(D(:,188,good_motorbike_trls),3));
 
 figure;
 sensors_topoplot(D,topo,{'MEGPLANAR' 'MEGMAG'},1);
+
+
+% Plot a cleaned rudimentary ERF topography a
+% at roughly N170 latency
+topo2=squeeze(mean(D2(:,188,good_motorbike_trls),3));
+
+figure;
+sensors_topoplot(D2,topo2,{'MEGPLANAR' 'MEGMAG'},1);
 
