@@ -1,6 +1,6 @@
 function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
 % AfRICA - ArteFact Rejection using Independent Component Analysis
-% performs ICA denoising of MEG data using either semi-manual or automated 
+% performs ICA denoising of MEG data using either semi-manual or automated
 % identification artefact components.
 %
 % [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
@@ -12,7 +12,7 @@ function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
 % S.ica_file    - .mat file in which to save ica results
 %
 %
-% OPTIONAL INPUTS 
+% OPTIONAL INPUTS
 %
 % S.todo        - structure with fields:
 %                   .ica    - [0/1] to run ica decomposition
@@ -22,7 +22,7 @@ function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
 % S.ident       - structure with fields:
 %                   .func - function handle to identification function
 %                           e.g. @identify_artefactual_components_manual
-%                   .{extra fields depending on .func}                   
+%                   .{extra fields depending on .func}
 %
 % S.logfile     - write logfile [0/1], default = 1
 %
@@ -36,6 +36,16 @@ function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
 %
 % Written by Henry Luckhoo and Adam Baker
 
+% note: Behaviour of osl_africa has changed as from 03/29/17. The idea is to
+% ecnourage people to use online montage rather then unnecessarily creating
+% copies of files. Since ICA is a linear operator, these changes can be
+% nicely stored in an online montage.
+% if you wanna keep the old bevhaior, do
+% D.copy
+
+% S.montagename - name of the montage after ICA pruning of artifactual
+% components
+% defaults to 'AFRICA denoised data'
 
 
 % Check SPM File Specification:
@@ -44,6 +54,13 @@ try
     [pathstr,filestr] = fileparts(S.D);
     S.D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
     D = spm_eeg_load(S.D);
+    % force zero montage
+    if ~(D.montage('getindex')==0)
+        warning('Montage will be switched to zero for AFRICA and current montage index will be saved.')
+        D=D.montage('switch',0);
+        D.save;
+    end
+
 catch
     if isfield(S,'fname')
         warning('S.fname is deprecated, please use S.D instead')
@@ -67,14 +84,18 @@ end
 
 if isfield(S,'logfile') && S.logfile == 1
     logfile = fullfile(pathstr,[name '_log.txt']);
-  if exist(logfile,'file')
-    unix(['rm ' logfile]);
-  end
-  	diary(logfile);
+    if exist(logfile,'file')
+        unix(['rm ' logfile]);
+    end
+    diary(logfile);
 end
 
 if not(isfield(S,'modality'))
     S.modality = 'MEG';
+end
+
+if not(isfield(S,'montagename'))
+    S.montagename='AFRICA denoised data';
 end
 
 if not(isfield(S,'do_plots'))
@@ -82,23 +103,23 @@ if not(isfield(S,'do_plots'))
 end
 
 if ~isfield(S,'precompute_topos');
-    S.precompute_topos = 0; 
+    S.precompute_topos = 0;
 end
 
 if ~isfield(S,'todo');
-    S.todo = struct; 
+    S.todo = struct;
 end
 
 if ~isfield(S.todo,'ica');
-    S.todo.ica = 1; 
+    S.todo.ica = 1;
 end
 
 if ~isfield(S.todo,'ident');
-    S.todo.ident = 1; 
+    S.todo.ident = 1;
 end
 
 if ~isfield(S.todo,'remove');
-    S.todo.remove = 1; 
+    S.todo.remove = 1;
 end
 
 if ~isfield(S,'ident')
@@ -109,11 +130,11 @@ if ~isfield(S.ident,'func')
     S.ident.func = @identify_artefactual_components_manual;
 end
 
-if ~isfield(S,'used_maxfilter'); 
+if ~isfield(S,'used_maxfilter');
     S.used_maxfilter = 0;
 end
 
-fig_handles = []; 
+fig_handles = [];
 fig_names   = [];
 fig_titles  = [];
 
@@ -122,7 +143,7 @@ fig_titles  = [];
 if S.todo.ica
     S.ica_res = perform_sensorspace_ica(S);
     if isfield(S,'ica_file')
-                
+        
         % Precompute topographies
         if S.precompute_topos
             try
@@ -142,12 +163,12 @@ if S.todo.ica
         save(S.ica_file,'S');
         msg = sprintf('\n%s%s\n%','Saving ICA results to ', S.ica_file);
         fprintf(msg);
-
+        
     else
         msg = sprintf('\n%s\n%','Results not being saved.');
         fprintf(msg);
     end
-
+    
 elseif any(structfun(@istrue,S.todo))
     % Load from file
     if isfield(S,'ica_file') && exist(S.ica_file,'file')==2
@@ -158,13 +179,14 @@ elseif any(structfun(@istrue,S.todo))
         if isfield(S,'do_plots'); icafile.S.do_plots = S.do_plots; end
         if isfield(S,'todo');    icafile.S.todo    = S.todo;    end
         S = icafile.S; clear icafile
-    end 
+    end
 end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%% CLASSIFY BAD COMPONENTS %%%%%%%%%%%%%%%%%%%%%%%%
 if S.todo.ident
     if isfield(S,'ica_res')
+        
         if(S.do_plots)
             [bad_components, fig_handles, fig_names, fig_titles] = feval(S.ident.func,S);
         else
@@ -218,6 +240,12 @@ function ica_res = perform_sensorspace_ica(S)
 
 D = spm_eeg_load(S.D);
 
+if ~(D.montage('getindex')==0)
+warning('Montage will be switched to zero for AFRICA and current montage index will be saved.')
+D=D.montage('switch',0);
+D.save;
+end
+    
 if strcmp(S.modality,'EEG')
     chantype = 'EEG';
 else
@@ -277,13 +305,13 @@ if strcmp(S.modality,'EEG')  % added by DM
 else
     norm_vec = ones(numel(chan_inds),1);
     if any(strcmp(D.chantype,'MEGMAG')) && any(strcmp(D.chantype,'MEGPLANAR'))
-        mag_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGMAG'),:)')); 
+        mag_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGMAG'),:)'));
         mag_min_eig = mean(mag_min_eig(mag_cutoff-2:mag_cutoff));
         
-        plan_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGPLANAR'),:)')); 
+        plan_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGPLANAR'),:)'));
         plan_min_eig = mean(plan_min_eig(plan_cutoff-2:plan_cutoff));
         
-        norm_vec(strcmp(D.chantype(chan_inds),'MEGMAG'))    = mag_min_eig; 
+        norm_vec(strcmp(D.chantype(chan_inds),'MEGMAG'))    = mag_min_eig;
         norm_vec(strcmp(D.chantype(chan_inds),'MEGPLANAR')) = plan_min_eig;
     else
         norm_vec = norm_vec*min(svd(cov(icadata(:,:)')));
@@ -300,7 +328,7 @@ icadata = icadata ./ repmat(norm_vec,1,size(icadata,2));
 eigs_postNorm = svd(cov(icadata'));
 
 if S.do_plots
-    figure; 
+    figure;
     semilogy(eigs_preNorm);
     ho;
     semilogy(eigs_postNorm,'r--');
@@ -317,12 +345,12 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% ICA DECOMPOSITION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [tc,sm,~] = fastica(icadata,                           ...
-                    'g',                nonlinearity,  ...
-                    'lastEig',          last_eig,      ...
-                    'numOfIC',          num_ics,       ...
-                    'approach',         ica_approach,  ...
-                    'stabilization',    stabilization, ...
-                    'maxNumIterations', max_iter); % changed by DM
+    'g',                nonlinearity,  ...
+    'lastEig',          last_eig,      ...
+    'numOfIC',          num_ics,       ...
+    'approach',         ica_approach,  ...
+    'stabilization',    stabilization, ...
+    'maxNumIterations', max_iter); % changed by DM
 
 if num_ics ~= size(tc,1)
     msg = sprintf('\n%s%d%s%d%s\n%','Data dimensionality insufficient to support ', num_ics, ' components. Number of components has been reduced to ', size(tc,1), '.');
@@ -338,7 +366,7 @@ ica_res.D                       = S.D;
 ica_res.tc                      = tc;
 ica_res.sm                      = sm .* repmat(norm_vec,1,num_ics);
 
-%%%%%%%%%%%%%%%%%%% ESTIMATE MISSING CHANNELS AND EPOCHS %%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%% ESTIMATE MISSING CHANNELS AND EPOCHS %%%%%%%%%%%%%%%%%%
 
 sm_full              = zeros(D.nchannels, size(sm,2));
 sm_full(chan_inds,:) = ica_res.sm;
@@ -366,10 +394,10 @@ end
 
 
 function res = remove_bad_components(S)
-
 %%%%%%%%%%%%%%%%%%%%%%%% LOAD AND PREPARE MEG DATA %%%%%%%%%%%%%%%%%%%%%%%%
 
 D = spm_eeg_load(S.D);
+D=D.montage('switch',0);
 
 if strcmp(S.modality,'EEG')
     chantype = 'EEG';
@@ -414,30 +442,40 @@ if use_montage
     montage.labelnew(xchans) = [];
     
     [~,indx] = ismember(montage.labelnew,D.sensors(modality).label);
-            
-    montage.chanunitnew =  D.sensors(modality).chanunit(indx);
-    montage.chanunitorg =  D.sensors(modality).chanunit(indx);
-    montage.chantypenew =  D.sensors(modality).chantype(indx);
-    montage.chantypeorg =  D.sensors(modality).chantype(indx);
-
-        
+    
+    tmp = struct(D);
+    montage.channels = tmp.channels(indx);
+    
+    montage.name = S.montagename;
+    
+    % this is adding a montage for the raw data
+    
+    nMontages=D.montage('getnumber');
+   
+    Dclean = D.montage('add', montage);
+    
+    Dclean = Dclean.montage('switch', nMontages + 1);
+    Dclean.save;
+    
     S_montage                =  [];
-    S_montage.D              =  fullfile(D.path,D.fname);
+    S_montage.D              =  D; %fullfile(D.path,D.fname);
     S_montage.montage        =  montage;
     S_montage.keepothers     =  true;
     S_montage.updatehistory  =  1;
     
     Dmontaged = osl_montage(S_montage);
-    
-    % rename montaged file
+    %
+    %     % rename montaged file
     S_copy         = [];
     S_copy.D       = Dmontaged;
     S_copy.outfile = fullfile(D.path, ['A' D.fname]);
     Dclean = spm_eeg_copy(S_copy);
-    
+    %
     Dmontaged.delete;
+    %end
     
 else
+    error('Not supported');
     [dir,nam,~] = fileparts(fullfile(D.path,D.fname));
     fname_out = [dir '/A' nam '.dat'];
     meg_dat_clean = megdata-(sm(chan_inds,bad_components)*tc(bad_components,:));

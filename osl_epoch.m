@@ -14,6 +14,12 @@ function D_epoched = osl_epoch(S)
 
 D = spm_eeg_load(S.D);
 
+if ~(D.montage('getindex')==0)
+        warning('Montage will be switched to zero for epoching and current montage index will be saved.')
+        D=D.montage('switch',0);
+        D.save;
+end
+    
 if ~isfield(S,'bad_event_type')
     S.bad_event_type = 'artefact_OSL';
 end

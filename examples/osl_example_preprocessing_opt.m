@@ -3,7 +3,7 @@
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
 % CTF data as well) using OPT. It works through the following steps:
 %
-% You'll need to do alter (at the very least) the settings in:
+% You'll need to alter (at the very least) the settings in:
 % datadir, fif_files, spm_files, structurals_files
 
 %%%%%%%%%%%%%%%%%%
@@ -12,17 +12,18 @@
 
 OSLDIR = getenv('OSLDIR');
     
-osldir = '/Users/andrew/Software/Matlab/osl2.0';
+%osldir = '/Users/andrew/Software/Matlab/osl2.0';
 
-addpath(osldir);
-osl_startup(osldir);
+%addpath(osldir);
+osl_startup();
 
 %%%%%%%%%%%%%%%%%%
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 
 % directory where the data is:
-datadir = '/Users/andrew/Projects/OSL_test/osl2_tutorials/button_press_data_osl2';
+datadir = fullfile(osldir,'example_data','preproc_example','automatic_opt');
  
+
 % Set up the list of subjects and their structural scans for the analysis 
 clear raw_fif_files input_files spm_files structural_files;
 
@@ -73,7 +74,8 @@ opt.dirname=[datadir '/practical_badseg_africa.opt']; % directory opt settings a
 opt.maxfilter.do=0; % here we are going to skip the double maxfilter call as this has been run already for us
  
 % africa settings
-opt.africa.do=0;
+% RATHER NOT!!!!
+opt.africa.do=1;
 opt.africa.ident.artefact_chans={'ECG','EOG'}; % artefact channels
 opt.africa.ident.mains_kurt_thresh=0.5;
 
