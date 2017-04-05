@@ -58,9 +58,9 @@ retrieve_repo HMM-MAR #0.9
 
 rm -f $WORKINGDIR/osl_$OSLDISTVERSION.tar.gz
 if which pigz >/dev/null; then
-    tar --exclude=./*.tar.gz --exclude=osl/example_data -cvf  - ./* | pigz -9 -p 8 > ${WORKINGDIR}/osl_${OSLDISTVERSION}.tar.gz
+    tar --exclude=osl/example_data -cvf  - osl | pigz -9 -p 8 > ${WORKINGDIR}/osl_${OSLDISTVERSION}.tar.gz
 else
-	tar --exclude=./*.tar.gz --exclude=osl/example_data -cvf  - ./* | gzip -9 > ${WORKINGDIR}/osl_${OSLDISTVERSION}.tar.gz
+	tar --exclude=osl/example_data -cvf  - osl | gzip -9 > ${WORKINGDIR}/osl_${OSLDISTVERSION}.tar.gz
 fi
 
 echo "Main build complete"
