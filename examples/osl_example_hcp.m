@@ -15,6 +15,7 @@
 % For the first option, you need a parcellation defined on a FieldTrip mask. If you only have a parcellation 
 % on an OSL standard mask, it can be resampled onto the FieldTrip grid:
 
+mkdir('practical'); % Make directory if it doesn't already exist
 osl_resample_nii_matlab(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'),fullfile(osldir,'practical','example_parcellation.nii.gz'),'ft_8mm_brain_mask.nii.gz','interptype','nearest')
 
 %% 
