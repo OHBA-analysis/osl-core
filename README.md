@@ -1,4 +1,4 @@
-### OSL2
+### OSL-CORE
 
 OHBA software library
 
@@ -13,7 +13,7 @@ For turnkey operation, download a `.zip` distribution release of OSL.
 
 To set up from GitHub, perform the following
 
-- Clone this repository, using the branch workshop
+- Clone this repository
 - Clone `https://github.com/OHBA-analysis/ohba-external`
 - Clone `https://github.com/OHBA-analysis/HMM-MAR`
 - Clone `https://github.com/OHBA-analysis/GLEAN`
@@ -23,8 +23,8 @@ To set up from GitHub, perform the following
 
 Your directory structure should then look like
 
-	- some_directory
-		- osl2
+	- some_directory (OSLDIR)
+		- osl-core
 		- ohba-external
 		- HMM-MAR
 		- GLEAN
@@ -36,11 +36,11 @@ Your directory structure should then look like
 
 Add the `osl2` folder to your path e.g.
 
-	addpath('some_directory/osl2')
+	addpath('some_directory/osl-core')
 
 Run
 
-	osl2_startup
+	osl_startup
 
 ### Troubleshooting
 
