@@ -20,13 +20,13 @@ function osl_publish(filename,evalCode,stylesheet)
 	% Romesh Abeysuriya 2017
 	
 	if nargin < 3
-		stylesheet = fullfile(osldir,'osl2','docs','mxdom2simplehtml_jekyll.xsl');
+		stylesheet = fullfile(osldir,'osl-core','docs','mxdom2simplehtml_jekyll.xsl');
 	end
 	
 	if nargin < 2 || isempty(evalCode) 
 		evalCode = true;
 	end
 		
-	output_html = publish(filename,'evalCode',evalCode,'stylesheet',stylesheet,'format','html','outputDir',fullfile(osldir,'osl2','docs','matlab'));
+	output_html = publish(filename,'evalCode',evalCode,'stylesheet',stylesheet,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'));
 
 	runcmd('open %s',output_html)

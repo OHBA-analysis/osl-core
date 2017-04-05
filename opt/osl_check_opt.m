@@ -393,7 +393,7 @@ if ~isempty(wierdfields)
 end % if ~isempty(wierdfields)
 end;
 
-try, optin = rmfield(optin,'osl2_version');catch, end;
+try, optin = rmfield(optin,'osl_version');catch, end;
 try, optin = rmfield(optin,'epoch');catch, end;
 try, optin = rmfield(optin,'outliers');catch, end;
 try, optin = rmfield(optin,'bad_segments');catch, end;
@@ -418,4 +418,4 @@ end % if ~isempty(wierdfields)
 
 %% add osl version
 
-opt.osl2_version=osl2_version;
+opt.osl2_version=osl_version;
