@@ -56,7 +56,7 @@ function osl_check_installation(do_log,test_fslview)
 	% Check that expected directory structure is present
 	section('Directory structure');
     osldir = fileparts(fileparts(mfilename('fullpath')));
-    dirs = {'osl2','spm12','GLEAN','HMM-MAR','layouts','MEG-ROI-nets','ohba-external','example_data','parcellations'};
+    dirs = {'osl-core','spm12','GLEAN','HMM-MAR','layouts','MEG-ROI-nets','ohba-external','example_data','parcellations'};
     for j = 1:length(dirs)
     	d = fullfile(osldir,dirs{j});
     	if ~exist(d)
