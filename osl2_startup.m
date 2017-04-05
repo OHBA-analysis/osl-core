@@ -44,6 +44,10 @@ function osl2_startup( osldir )
        
     end
 
+    if ~exist(fullfile(osldir,'spm12'),'dir')
+        error(sprintf('SPM12 was not found at the required location: %s',fullfile(osldir,'spm12')))
+    end
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Copy changes to SPM code from osl
     filelist={};targetdir={};
