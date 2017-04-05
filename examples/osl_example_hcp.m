@@ -44,7 +44,7 @@ p_ft.n_voxels
 %%
 % Having converted the parcellation, you can now use ROInets as usual to get parcel timecourse
 % First, load in an MEEG file that was beamformed onto a FieldTrip mask
-D = spm_eeg_load(fullfile(osldir,'example_data','hcp_example','subject_1'));
+D = spm_eeg_load(fullfile(osldir,'example_data','hcp_example','test_D_objtest'));
 D = D.montage('switch',2)
 
 %%

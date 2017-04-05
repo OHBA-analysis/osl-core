@@ -52,6 +52,7 @@ echo "osl = "$OSLDISTVERSION > $WORKINGDIR/osl/version.txt
 
 # Download git repos with specified release names
 retrieve_repo osl-core #0.3
+retrieve_repo ohba-external #0.3
 retrieve_repo GLEAN #0.2
 retrieve_repo MEG-ROI-nets #1.6.0
 retrieve_repo HMM-MAR #0.9
