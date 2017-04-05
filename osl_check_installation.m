@@ -11,6 +11,8 @@ function osl_check_installation(do_log,test_fslview)
 		do_log = true;
 	end
 	
+	osldir = fileparts(fileparts(mfilename('fullpath')));
+
 	% Set up printing functions
 	log = @(x) fprintf(1,'%s\n',x); % Format message
 	log_error = @(x,ME) fprintf(1,'%s\n%s\n%s\n',x,ME.identifier,ME.message);
@@ -27,6 +29,15 @@ function osl_check_installation(do_log,test_fslview)
 
 	log('OSL DEBUG LOG');
 	log(sprintf('Date: %04d-%02d-%02d %02d:%02d:%02d',fix(clock())))
+
+	section('OSL version')
+	log(sprintf('osldir = %s',osldir))
+	version_file = fullfile(osldir,'version.txt');
+	if exist(version_file,'file')
+		type(version_file)
+	else
+		log('Version file missing')
+	end
 
 	% Check OS
 	section('System Information');
@@ -55,7 +66,6 @@ function osl_check_installation(do_log,test_fslview)
 
 	% Check that expected directory structure is present
 	section('Directory structure');
-    osldir = fileparts(fileparts(mfilename('fullpath')));
     dirs = {'osl-core','spm12','GLEAN','HMM-MAR','layouts','MEG-ROI-nets','ohba-external','example_data','parcellations'};
     for j = 1:length(dirs)
     	d = fullfile(osldir,dirs{j});
