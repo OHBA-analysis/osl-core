@@ -880,11 +880,20 @@ for subi=1:length(opt.sessions_to_do),
             % delete obsolete spm file
             spm_file_old=[opt.dirname '/' spm_files_epoched_basenames{subnum}];
             Dold=spm_eeg_load(spm_file_old);
-
+            
+            % in case we had loaded in an SPM file from the start, check it
+            % is not the exact same name as old SPM file?
+            
+            if strcmp(opt.input_file_type,'spm_files')
             [p fname] = fileparts(opt.spm_files{subnum});
             if ((opt.cleanup_files == 1) || (opt.cleanup_files == 2)) && ~strcmp(Dold.fname, [fname '.mat'])
                 Dold.delete;
             end;
+            else
+                % delete anyway?
+                Dold.delete;
+            end
+                
 
             spm_files_epoched_basenames{subnum}=['S' spm_files_epoched_basenames{subnum}];
 
@@ -940,7 +949,7 @@ opt.results.report=osl_report_write(opt_report);
 
 %%%%%%%%%%%%%%%%%%%
 %% output res
-opt.osl2_version=osl_version;
+opt.osl2_version=osl2_version;
 
 opt.fname=[opt.dirname '/opt'];
 

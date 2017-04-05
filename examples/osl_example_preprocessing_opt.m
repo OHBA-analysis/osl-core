@@ -75,7 +75,7 @@ opt.maxfilter.do=0; % here we are going to skip the double maxfilter call as thi
  
 % africa settings
 % RATHER NOT!!!!
-opt.africa.do=1;
+opt.africa.do=0;
 opt.africa.ident.artefact_chans={'ECG','EOG'}; % artefact channels
 opt.africa.ident.mains_kurt_thresh=0.5;
 

@@ -454,6 +454,8 @@ if use_montage
    
     Dclean = D.montage('add', montage);
     
+    % at the moment, we do still write out another, identical file with
+    % only the clean data. This might be changed in the future.
     Dclean = Dclean.montage('switch', nMontages + 1);
     Dclean.save;
     

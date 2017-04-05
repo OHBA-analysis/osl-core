@@ -1,6 +1,6 @@
 % In this practical/template script we will work with a single subject's data from an
-% emotional faces task (data courtesy of Susie Murphy). This can be
-% downloaded from:  
+% emotional faces task (data courtesy of Susie Murphy). This is contained in the 
+% downloadable zip.file available online.  
 % 
 % 
 % Note that this contains the fif file:
@@ -10,32 +10,17 @@
 % In this example we will take this fif file and run it through a
 % manual preprocessing pipeline
 %
-% MWW 2013
+% MWW 2013, adapted and updated by RB 2017
 
-
-% ROBERT:
-% COMMENT: at which point is there an overview of standard prefixes?
-% COMMENT: for the two preproc practicals - just ONE data set maybe?
-% artefact_OSL marker - only used within OSL?
-
-% AFRICA: not for automated.
-% visualize hierarchy of tools
 
 %%%%%%%%%%%%%%%%%%
 %% SETUP THE MATLAB PATHS
-% make sure that fieldtrip and spm are not in your matlab path
-
-
-
-%output_directory = fullfile(osldir,'practical','roinets_demo');
-
+osl_startup;
 
 %%%%%%%%%%%%%%%%%%
 %% SPECIFY DIRS FOR THIS ANALYSIS
 
 % directory where the data is:
-%datadir=[tilde '/Documents/workshop/example/faces_subject1_data'];
-
 datadir = fullfile(osldir,'example_data','preproc_example','manual');
 
 
@@ -138,7 +123,6 @@ for subnum=1:length(spm_files), % iterates over subjects
     S.fsample_new = 150; % in Hz
     D = spm_eeg_downsample (S);    
 end
-close all
 
 %%%%%%%%%%%%%%%%%%%%
 %% LOAD THE DOWNSAMPLED SPM MEEG OBJECT
@@ -174,7 +158,7 @@ S2.band='high';
 S2.freq=0.1;
 D=spm_eeg_filter(S2);
 
-% Now load oslview 
+% Now load oslview. 
 % This data has some bad artefacts in. Mark the epochs at around 325s,
 % 380s and 600s as bad. Marking is done by right-clicking in the proximity
 % of the event and click on 'Mark Event'. A first click (green dashed label)
@@ -200,9 +184,6 @@ for subnum = 1:length(spm_files), % iterates over subjects
 end
 
 % % AFRICA with manual artefact rejection: Scroll through components using the cursor keys. Identify the two components that correlate with the EOG and ECG measurements and mark them for rejection using the red cross. NB: Just close the window when finished to save your results.
-
-%%% BE GENEROUS WITH YOUR COMP REJECTION
-
 for subnum = 1:length(spm_files)
 
     [dirname,filename] = fileparts(spm_files{subnum});
@@ -219,18 +200,6 @@ for subnum = 1:length(spm_files)
     osl_africa(S);
 
 end
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 %%%%%%%%%%%%%%%%%%%%
@@ -334,8 +303,6 @@ end
 subnum = 1;             
 
 
-
-
 D = spm_eeg_load(spm_files{subnum});
 
 % look at the SPM object. Note that this is now EPOCHED data
@@ -348,9 +315,6 @@ D.condlist
 D.time
 
 % Identify trials of a certain type using the indtrial function. E.g.:
-
-% SPM8 notation, got obsolete
-% motorbike_trls = D.pickconditions('Motorbike')
 motorbike_trls = indtrial(D,'Motorbike');
 
 
@@ -456,7 +420,9 @@ D.badtrials
 good_motorbike_trls = setdiff(D.indtrial('Motorbike'),D.badtrials);
 
 
-
+% here we switch to another montage. Montages are linear combinations of
+% the sensor data (montage 0) that can be used to do basically any linear
+% operation and be able to switch between different linear mixings
 D2=D.montage('switch',1)
 
 
