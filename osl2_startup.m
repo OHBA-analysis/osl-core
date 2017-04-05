@@ -52,13 +52,13 @@ function osl2_startup( osldir )
     %% Copy changes to SPM code from osl
     filelist={};targetdir={};
 
-    filelist{end+1}='osl2/spm-beamforming-toolbox-osl-addons/bf_output_montage_osl.m';
+    filelist{end+1}='osl2/spm-changes/bf_output_montage_osl.m';
     targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
-    filelist{end+1}='osl2/spm-beamforming-toolbox-osl-addons/bf_write_spmeeg_osl.m';
+    filelist{end+1}='osl2/spm-changes/bf_write_spmeeg_osl.m';
     targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
-    filelist{end+1}='osl2/spm-beamforming-toolbox-osl-addons/bf_inverse_mne_adaptive.m';
+    filelist{end+1}='osl2/spm-changes/bf_inverse_mne_adaptive.m';
     targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
     filelist{end+1}='osl2/spm-changes/private/ft_read_event_4osl.m';
