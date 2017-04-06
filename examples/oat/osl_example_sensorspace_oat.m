@@ -123,10 +123,17 @@ oat.first_level
 oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 
-%%
+%% GENERATE REPORT
+%
+% The report creates a useful summary of the OAT results. You can click
+% through a log files from the analysis as well as range of diagnostic figures 
+% from the source recon and results from the first level.
 
 oat.first_level.report.modality_to_do='MEGPLANAR';
 report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});
+
+% open the report in matlabs html browser
+open(oat.results.report.html_fname);
 
 %% RESULTS
 %
