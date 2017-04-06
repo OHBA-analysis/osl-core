@@ -34,7 +34,7 @@ Your directory structure should then look like
 		- std_masks
 		- parcellations
 
-Add the `osl2` folder to your path e.g.
+Add the `osl-core` folder to your path e.g.
 
 	addpath('some_directory/osl-core')
 
