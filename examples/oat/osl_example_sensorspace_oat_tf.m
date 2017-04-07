@@ -20,11 +20,10 @@ osl_startup(osldir);
 % This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.
 
 % directory where the data is:
-workingdir='/Users/andrew/Projects/OSL2_testdir/meg_workshop/drugface/data/'; % directory where the data is
+datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
 
-cmd = ['mkdir ' workingdir]; if ~exist(workingdir, 'dir'), unix(cmd); end % make dir to put the results in
-
-clear spm_files_continuous spm_files_epoched;
+% directory to put the analysis in
+workingdir = fullfile(osldir,'example_data','faces_singlesubject');
 
 %% SET UP THE SUBJECTS FOR THE ANALYSIS
 %
@@ -37,8 +36,8 @@ clear spm_files_continuous spm_files_epoched;
 % spm_files{2} = [workingdir '/sub2_face_sss.mat'];
 % etc...
 
-spm_files_continuous{1}=[workingdir '/Asss_fif_spm12_meg25.mat'];
-spm_files_epoched{1}=[workingdir '/eAsss_fif_spm12_meg25.mat'];
+spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
+spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 
 %% SETUP SENSOR SPACE SOURCE RECON
 % This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis.
@@ -55,7 +54,7 @@ oat.source_recon.method='none';
 oat.source_recon.normalise_method='none';
 
 % Set this to something specific
-oat.source_recon.dirname = '/Users/andrew/Projects/OSL2_testdir/meg_workshop/drugface/sensorspace_tf';
+oat.source_recon.dirname = [workingdir '/sensorspace_tf'];
 
 %% SETUP THE TIME-FREQUENCY DECOMPOSITION
 % Next we set up a single subject trial-wise GLM on our prepared data. Firstly the time-frequency parameters are defined, these must be within the bounds of the time-frequency window set in the source recon stage.
@@ -87,7 +86,7 @@ oat.first_level.bc=[1 1 0]; % specifies whether or not baseline correction is do
 
 %% SETUP THE FIRST LEVEL GLM
 % This cell defines the GLM parameters for the first level analysis. Critically this includes the design matrix (in Xsummary) and contrast matrix
-% Xsummary is a parsimonious description of the design matrix. It contains values Xsummary{reg,cond}, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to croat_settingse the (num_regressors x num_trials) design matrix:
+% Xsummary is a parsimonious description of the design matrix. It contains values Xsummary{reg,cond}, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix:
 % Each contrast is a vector containing a weight per condition defining how the condition parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. Contrasts 1 and 2 describe positive correlations between each sensors activity and the presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each sensors activity is larger for faces than motorbikes.
 
 Xsummary={};
