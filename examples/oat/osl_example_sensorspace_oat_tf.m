@@ -137,7 +137,7 @@ oat = osl_run_oat(oat);
 % all three contrasts from the sensor with the maximum statistic for
 % contrast 2 (faces) from the planar gradiometers as seen below
 %
-% <</Users/andrew/Projects/OSL2_testdir/meg_workshop/drugface/sensorspace_tf.oat/plots/first_level/sess_session1_MEGPLANAR/stats_tc_small.png>> 
+% <<osl_example_sensorspace_oat_tf_stats_tc.png>> 
 
 
 %% GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS
