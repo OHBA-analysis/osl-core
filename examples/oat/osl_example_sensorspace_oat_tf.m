@@ -1,4 +1,4 @@
-%% Sensorspace ERF Analysis with OAT
+%% Sensorspace TF Analysis with OAT
 %
 % In this practical we will work with a single subject's data from an
 % emotional faces task (data courtesy of Susie Murphy) and perform an

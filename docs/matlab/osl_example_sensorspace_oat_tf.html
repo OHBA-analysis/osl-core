@@ -1,13 +1,13 @@
 ---
 layout: matlab_wrapper
-title: Sensorspace ERF Analysis with OAT
+title: Sensorspace TF Analysis with OAT
 resource: true
 categories: examples
 ---
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Sensorspace ERF Analysis with OAT</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-07"><meta name="DC.source" content="osl_example_sensorspace_oat_tf.m"></head><body><div class="content"><h1>Sensorspace ERF Analysis with OAT</h1><!--introduction--><p>In this practical we will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy) and perform an Time-Frequency analysis in sensor space.</p><p>You will need the following files from the example_data directory:</p><div><ul><li>Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.</li><li>eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.</li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</a></li><li><a href="#3">SET UP THE SUBJECTS FOR THE ANALYSIS</a></li><li><a href="#4">SETUP SENSOR SPACE SOURCE RECON</a></li><li><a href="#5">SETUP THE TIME-FREQUENCY DECOMPOSITION</a></li><li><a href="#6">SETUP THE FIRST LEVEL GLM</a></li><li><a href="#7">RUN OAT</a></li><li><a href="#8">READ REPORT</a></li><li><a href="#9">GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS</a></li><li><a href="#10">RESULTS</a></li><li><a href="#11">VISUALISE USING FIELDTRIP</a></li></ul></div><h2 id="1">SETUP THE MATLAB PATHS</h2><p>make sure that fieldtrip and spm are not in your matlab path</p><pre class="codeinput">setenv(<span class="string">'OSLDIR'</span>,<span class="string">'/Users/andrew/Software/Matlab/osl2.1/'</span>)
+   <title>Sensorspace TF Analysis with OAT</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-07"><meta name="DC.source" content="osl_example_sensorspace_oat_tf.m"></head><body><div class="content"><h1>Sensorspace TF Analysis with OAT</h1><!--introduction--><p>In this practical we will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy) and perform an Time-Frequency analysis in sensor space.</p><p>You will need the following files from the example_data directory:</p><div><ul><li>Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.</li><li>eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.</li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</a></li><li><a href="#3">SET UP THE SUBJECTS FOR THE ANALYSIS</a></li><li><a href="#4">SETUP SENSOR SPACE SOURCE RECON</a></li><li><a href="#5">SETUP THE TIME-FREQUENCY DECOMPOSITION</a></li><li><a href="#6">SETUP THE FIRST LEVEL GLM</a></li><li><a href="#7">RUN OAT</a></li><li><a href="#8">READ REPORT</a></li><li><a href="#9">GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS</a></li><li><a href="#10">RESULTS</a></li><li><a href="#11">VISUALISE USING FIELDTRIP</a></li></ul></div><h2 id="1">SETUP THE MATLAB PATHS</h2><p>make sure that fieldtrip and spm are not in your matlab path</p><pre class="codeinput">setenv(<span class="string">'OSLDIR'</span>,<span class="string">'/Users/andrew/Software/Matlab/osl2.1/'</span>)
 addpath(genpath(getenv(<span class="string">'OSLDIR'</span>)));
 osl_startup(osldir);
 </pre><h2 id="2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</h2><p>This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.</p><pre class="codeinput"><span class="comment">% directory where the data is:</span>
@@ -77,7 +77,7 @@ oat =
       first_level: [1x1 struct]
     subject_level: [1x1 struct]
       group_level: [1x1 struct]
-     osl2_version: 'f53433d'
+     osl2_version: 'f67d7d1'
           results: [1x1 struct]
 
 *************************************************************
@@ -90,19 +90,19 @@ Using epoched data as input
 Preparing source recon stage for /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/spm_files/Aface_meg1.mat
 Will be designated session1
 
-SPM12: spm_eeg_copy (v5079)                        17:41:08 - 07/04/2017
+SPM12: spm_eeg_copy (v5079)                        17:49:56 - 07/04/2017
 ========================================================================
 
-SPM12: spm_eeg_copy (v5079)                        17:41:14 - 07/04/2017
+SPM12: spm_eeg_copy (v5079)                        17:50:02 - 07/04/2017
 ========================================================================
 Temporal filtering...
 
-SPM12: spm_eeg_filter (v5876)                      17:41:20 - 07/04/2017
+SPM12: spm_eeg_filter (v5876)                      17:50:08 - 07/04/2017
 ========================================================================
 Epoching...
 Doing no within-trial baseline correction at the point of epoching
 
-SPM12: spm_eeg_epochs (v6183)                      17:41:33 - 07/04/2017
+SPM12: spm_eeg_epochs (v6183)                      17:50:27 - 07/04/2017
 ========================================================================
 Data type is missing or incorrect, assigning default.
 Changing the number of channels, so discarding online montages.
@@ -128,7 +128,7 @@ ans =
 /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_tf.oat/concatefsession1_spm_meeg.mat
 
 
-SPM12: spm_eeg_copy (v5079)                        17:42:03 - 07/04/2017
+SPM12: spm_eeg_copy (v5079)                        17:51:01 - 07/04/2017
 ========================================================================
 
 ans =
@@ -146,11 +146,11 @@ First level COPEs outputted will have dimension Nvoxels x Ntpts x Ncontrasts x N
 306   31    3   14
 Doing T-F transform in sensor space on [3.65384615384615 6.34615384615385] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------\]
+Doing Morlet transform... [-----------------------------------------------|]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [6.34615384615385 9.03846153846154] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------\]
+Doing Morlet transform... [------------------------------------------------]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [9.03846153846154 11.7307692307692] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
@@ -158,15 +158,15 @@ Doing Morlet transform... [-----------------------------------------------|]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [11.7307692307692 14.4230769230769] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------|]
+Doing Morlet transform... [-----------------------------------------------\]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [14.4230769230769 17.1153846153846] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------/]
+Doing Morlet transform... [-----------------------------------------------|]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [17.1153846153846 19.8076923076923] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [------------------------------------------------]
+Doing Morlet transform... [-----------------------------------------------\]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [19.8076923076923 22.5] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
@@ -190,15 +190,15 @@ Doing Morlet transform... [------------------------------------------------]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [33.2692307692308 35.9615384615385] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [------------------------------------------------]
+Doing Morlet transform... [-----------------------------------------------/]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [35.9615384615385 38.6538461538462] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------/]
+Doing Morlet transform... [-----------------------------------------------|]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [38.6538461538462 41.3461538461538] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------|]
+Doing Morlet transform... [-----------------------------------------------/]
  - estimated time to finish is 0 seconds
 reading layout from file /Users/andrew/Software/Matlab/osl2.1/layouts/neuromag306planar3.lay
 the call to "ft_prepare_layout" took 0 seconds and required the additional allocation of an estimated NaN MB
@@ -264,7 +264,7 @@ title([oat.first_level.contrast_name{S2.first_level_contrast}]);
 </pre><pre class="codeoutput">reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
 </pre><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_07.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-%% Sensorspace ERF Analysis with OAT
+%% Sensorspace TF Analysis with OAT
 %
 % In this practical we will work with a single subject's data from an
 % emotional faces task (data courtesy of Susie Murphy) and perform an
