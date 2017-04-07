@@ -150,8 +150,9 @@ a:hover { text-decoration: underline; }
 
 .main-content { word-wrap: break-word; }
 .main-content :first-child { margin-top: 0; }
-@media screen and (min-width: 64em) { .main-content { max-width: 64rem; padding: 2rem 6rem; margin: 0 auto; font-size: 1.1rem; } }
-@media screen and (min-width: 42em) and (max-width: 64em) { .main-content { padding: 2rem 4rem; font-size: 1.1rem; } }
+
+@media screen and (min-width: 80em) { .main-content { max-width: 80rem; padding: 2rem 6rem; margin: 0 auto; font-size: 1.1rem; } }
+@media screen and (min-width: 42em) and (max-width: 80em) { .main-content { padding: 2rem 4rem; font-size: 1.1rem; } }
 @media screen and (max-width: 42em) { .main-content { padding: 2rem 1rem; font-size: 1rem; } }
 
 .main-content p { margin-bottom: 1em; }
@@ -202,7 +203,7 @@ ol li ul li { list-style:square; }
 
 .content { font-size:1.2em; line-height:140%; padding: 20px; }
 
-pre, code { font-size:12px; }
+pre, code { word-wrap:normal; font-size:12px; }
 tt { font-size: 1.2em; }
 pre { margin:0px 0px 20px; }
 pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
