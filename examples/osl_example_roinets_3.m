@@ -135,7 +135,48 @@ title('Envelope correlation z-score')
 % The example below loads the parcellation into a Parcellation object (provided by OSL)
 % and uses the |plot_network()| method to display the strongest 5% of connections
 p = parcellation(spatial_basis_file); 
-p.plot_network(mean(d.correlationMats{1}.envCorrelation,3),0.95)
+[h_patch,h_scatter] = p.plot_network(mean(d.correlationMats{1}.envCorrelation,3),0.95);
+
+
+%%
+% A scatter plot is included to show the brain regions, but is hidden by default with marker
+% size |NaN|. To show the ROI centers, you can set the scatter plot marker size
+set(h_scatter,'SizeData',30)
+
+%%
+% You can also set the size of each marker independently
+set(h_scatter,'SizeData',50*rand(38,1))
+
+%%
+% The line colours are drawn from the figure colormap. To change the colour scheme, simply
+% adjust the colour range of the plot or change the colormap
+set(gca,'CLim',[0.1 0.3])
+colormap('jet')
+
+%%
+% The default colormap is 'bluewhitered' which is single-sided or two-sided depending on the 
+% colour limits
+colormap(bluewhitered)
+
+%%
+% Transparency is used to show or hide connections. Each edge has transparency equal to its
+% percentile. You can adjust the alpha limits to change which connections are visible
+set(gca,'ALim',[0 1]) % Show all connections
+set(gca,'ALim',[0.9 1]) % Start fading in connections above 90th percentile
+set(gca,'ALim',[0.95 0.95+1e-5]) % Hard cutoff at 95th percentile
+
+%%
+% You can manually set the colour of the lines as well, if you want all of the lines to be
+% the same colour
+set(h_patch,'EdgeColor','r')
+
+%%
+% For presenting results, we often show a rotating animation of the network. This can be
+% produced using the |osl_spinning_brain()| function. Specify an output file name, and 
+% a video file with one rotation will be generated. You can then add this file to a 
+% presentation, and set it to play automatically and loop playback.
+
+osl_spinning_brain('example.mp4')
 
 %%
 % Another option for displaying connectivity is to display components of the connectivity
