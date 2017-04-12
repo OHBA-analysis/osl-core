@@ -24,9 +24,9 @@ try, Sc.remove_montages=Sc.remove_montages; catch, Sc.remove_montages=1; end;
 
 if(size(Sc.newdata,4)==1)
     %TF    
-    D2=clone(Sc.D,Sc.newname,[size(Sc.D,1),size(Sc.newdata,2),size(Sc.newdata,3)],0);
+    D2=clone(Sc.D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,2),size(Sc.newdata,3)],0);
 else
-    D2=clone(Sc.D,Sc.newname,[size(Sc.D,1),size(Sc.newdata,4),size(Sc.newdata,2),size(Sc.newdata,3)],0);
+    D2=clone(Sc.D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,4),size(Sc.newdata,2),size(Sc.newdata,3)],0);
 end;
 
 % remove montages
@@ -51,7 +51,7 @@ else
 end
     
 if isempty(modalities)    
-    chanind = 1:size(Sc.D,1);
+    chanind = 1:size(Sc.newdata,1);
 else
     chanind = strmatch(modality_meeg, Sc.D.chantype);
 end;
