@@ -5,7 +5,6 @@ function [ mni_coords xform ] = osl_mnimask2mnicoords(fname)
 	% 
 	% INPUTS
 	% - fname - Name of a nii file with volume data. Spatial resolution stored in header
-	% - xstart - Optionally specify the MNI coordinates of first entry in each dimension
 	%
 	% Romesh Abeysuriya 2017
 	% MW (pre-2014)
