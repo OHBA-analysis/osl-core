@@ -14,6 +14,7 @@ function [ D2 ] = osl_change_spm_eeg_data( Sc )
 % Sc.frequencies (vector of freqs)
 % Sc.modalities ('MEG' or 'EEG')
 % Sc.remove_montages (default is yes)
+% Sc.chantype (default is 'LFP')
 % 
 % MWW
 
@@ -21,6 +22,7 @@ try, tmp=Sc.cond_list; catch, Sc.cond_list=Sc.D.conditions; end;
 try, modalities=Sc.modalities; catch, modalities=[];  end;
 try, Sc.time=Sc.time; catch, Sc.time=Sc.D.time; end;
 try, Sc.remove_montages=Sc.remove_montages; catch, Sc.remove_montages=1; end;
+try, chantype=Sc.chantype; catch, chantype='LFP';  end;
 
 if(size(Sc.newdata,4)==1)
     %TF    
@@ -73,6 +75,8 @@ end
 if(length(Sc.D.badchannels)>0)
     D2 = badchannels(D2, Sc.D.badchannels, ones(length(Sc.D.badchannels),1));
 end
+
+D2=D2.chantype(chanind, chantype);
 
 D2.save;
 
