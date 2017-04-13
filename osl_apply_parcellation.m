@@ -45,13 +45,22 @@ catch
     error('SPM file specification not recognised or incorrect');
 end
 
-D = montage(D,'switch',2);
-
+try
+    D = montage(D,'switch',2);
+catch ME
+    display(ME.message);
+    display('Continuing with existing montage');
+end
+    
 S.prefix            = ft_getopt(S,'prefix','p');
 S.orthogonalisation = ft_getopt(S,'orthogonalisation','none');
 S.method            = ft_getopt(S,'method','PCA');
 
-mni_coords=[];
+try 
+    maskfname=S.maskfname;
+catch
+    maskfname=[OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz'];                
+end
 
 if isfield(S,'hcp_sourcemodel3d') && ~isempty(S.hcp_sourcemodel3d)
     % HCP data
@@ -60,7 +69,7 @@ else
     switch class(S.parcellation)
         case {'char','cell'}
             try
-                stdbrain = read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz']);
+                stdbrain = read_avw(maskfname);
                 parc=read_avw(S.parcellation);
                 parcellation = vols2matrix(parc,stdbrain); %nVoxels x nSamples
             catch
