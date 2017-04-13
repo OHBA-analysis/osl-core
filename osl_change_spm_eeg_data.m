@@ -27,18 +27,18 @@ if(size(Sc.newdata,4)==1)
     D2=clone(Sc.D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,2),size(Sc.newdata,3)],0);
 else
     D2=clone(Sc.D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,4),size(Sc.newdata,2),size(Sc.newdata,3)],0);
-end;
+end
 
 % remove montages
 if Sc.remove_montages
     D2=montage(D2,'remove',1:montage(D2,'getnumber'));
-end;
+end
 
 D2=timeonset(D2,Sc.time(1));
 
 if(length(Sc.time)>1)
     D2 = fsample(D2, 1/diff(Sc.time(1:2)));
-end;
+end
 
 %%%%%%%%%%%%%%%
 %% setup channel_labels, which will be a list of the relevant
@@ -54,7 +54,7 @@ if isempty(modalities)
     chanind = 1:size(Sc.newdata,1);
 else
     chanind = strmatch(modality_meeg, Sc.D.chantype);
-end;
+end
 
 if(size(Sc.newdata,4)>1)
     % TF
@@ -64,15 +64,15 @@ if(size(Sc.newdata,4)>1)
 
 else
     D2(chanind,:,:)=Sc.newdata;    
-end;
+end
 
 for coni=1:length(Sc.cond_list),
     D2=conditions(D2,coni,Sc.cond_list{coni});
-end;
+end
 
 if(length(Sc.D.badchannels)>0)
     D2 = badchannels(D2, Sc.D.badchannels, ones(length(Sc.D.badchannels),1));
-end;
+end
 
 D2.save;
 
