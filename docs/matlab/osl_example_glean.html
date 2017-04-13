@@ -1,0 +1,281 @@
+---
+layout: matlab_wrapper
+title: osl_example_glean
+resource: true
+categories: examples
+---
+
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <title>osl_example_glean</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-13"><meta name="DC.source" content="osl_example_glean.m"></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Load results and visualise them</a></li><li><a href="#3">Creating the spatial maps for each state</a></li></ul></div><pre class="codeinput"><span class="comment">% GLEAN DEMO SCRIPT FOR INFERRING A GROUP HMM FROM SOURCE SPACE MEG DATA</span>
+<span class="comment">% Adam Baker, Jan 2016</span>
+<span class="comment">% Diego Vidaurre, Feb 2017</span>
+
+<span class="comment">% Directory of the data</span>
+data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>);
+<span class="comment">% Name for this GLEAN analysis:</span>
+glean_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>,<span class="string">'hmmmar_demo.mat'</span>);
+
+do_analysis = 0;
+
+<span class="comment">% List of data files. These data consist of 2 sessions of 10 minutes of</span>
+<span class="comment">% eyes open resting state data recorded from 6 subjects on an Elekta</span>
+<span class="comment">% Neuromag system (using the 204 planar gradiometers only). The data were</span>
+<span class="comment">% band-pass filtered between 4 and 30 Hz and projected onto a regular 8 mm</span>
+<span class="comment">% grid in source space using an LCMV beamformer. The data are saved as</span>
+<span class="comment">% SPM12 MEEG objects in sensor space, and the beamformer weights are saved</span>
+<span class="comment">% as a virtual montage.</span>
+data = {<span class="string">'/data/s01_rest1.mat'</span>
+        <span class="string">'/data/s01_rest2.mat'</span>
+        <span class="string">'/data/s02_rest1.mat'</span>
+        <span class="string">'/data/s02_rest2.mat'</span>
+        <span class="string">'/data/s03_rest1.mat'</span>
+        <span class="string">'/data/s03_rest2.mat'</span>
+        <span class="string">'/data/s04_rest1.mat'</span>
+        <span class="string">'/data/s04_rest2.mat'</span>
+        <span class="string">'/data/s05_rest1.mat'</span>
+        <span class="string">'/data/s05_rest2.mat'</span>
+        <span class="string">'/data/s06_rest1.mat'</span>
+        <span class="string">'/data/s06_rest2.mat'</span>};
+data = fullfile(data_dir,data);
+
+<span class="comment">% Clear settings</span>
+settings = struct;
+
+<span class="comment">% Envelope settings:</span>
+settings.envelope.overwrite = 0;
+settings.envelope.log       = 0;
+settings.envelope.fsample   = 20;
+settings.envelope.mask      = fullfile(data_dir,<span class="string">'MNI152_T1_8mm_brain.nii.gz'</span>);
+
+<span class="comment">% Subspace settings:</span>
+settings.subspace.overwrite                         = 0;
+settings.subspace.normalisation                     = <span class="string">'none'</span>;
+settings.subspace.parcellation.file                 = fullfile(data_dir,<span class="string">'fMRI_parcellation_ds8mm.nii.gz'</span>);
+settings.subspace.parcellation.orthogonalisation    = <span class="string">'symmetric'</span>;
+settings.subspace.parcellation.method               = <span class="string">'spatialBasis'</span>;
+
+<span class="comment">% Model settings:</span>
+settings.model.overwrite   = 0;
+settings.model.hmm.nstates = 8;
+settings.model.hmm.nreps   = 1;
+
+<span class="comment">% Set up the GLEAN settings, data paths etc:</span>
+GLEAN = glean.setup(glean_name,data,settings);
+
+<span class="comment">% Run the analysis:</span>
+<span class="keyword">if</span> do_analysis
+    glean.run(GLEAN)
+    save(glean_name,<span class="string">'GLEAN'</span>)
+<span class="keyword">end</span>
+</pre><pre class="">Using default values for dir, freqbands in GLEAN.envelope.settings
+Using default values for dir in GLEAN.subspace.settings
+Using default values for dir in GLEAN.model.settings
+Using default values for dir in GLEAN.results.settings
+</pre><h2 id="2">Load results and visualise them</h2><pre class="codeinput">load(glean_name)
+
+<span class="comment">% show the state time courses</span>
+glean.plot_timecourse(GLEAN)
+
+<span class="comment">% compute temporal properties related to the estimation</span>
+settings = struct(<span class="string">'plot'</span>,1);
+GLEAN = glean.temporal_stats(GLEAN,settings);
+
+<span class="comment">% display the "temporal_stats"</span>
+GLEAN.results.temporal_stats
+<span class="comment">% and Fractional occupancy within it</span>
+GLEAN.results.temporal_stats.FractionalOccupancy
+
+<span class="comment">% open the plots for this statistic</span>
+open(GLEAN.results.temporal_stats.FractionalOccupancy.plots.stats)
+</pre><pre class="">Computing statistics for Number of occurrences 
+Computing statistics for Fractional occupancy 
+Computing statistics for Mean life time 
+Computing statistics for Mean interval length 
+Computing statistics for Entropy 
+
+ans = 
+
+           nOccurrences: [1x1 struct]
+    FractionalOccupancy: [1x1 struct]
+           MeanLifeTime: [1x1 struct]
+     MeanIntervalLength: [1x1 struct]
+                Entropy: [1x1 struct]
+               settings: [1x1 struct]
+
+
+ans = 
+
+    label: 'Fractional occupancy'
+    units: '%'
+    stats: [12x8 double]
+    plots: [1x1 struct]
+
+</pre><img vspace="5" hspace="5" src="osl_example_glean_01.png" alt=""> <img vspace="5" hspace="5" src="osl_example_glean_02.png" alt=""> <h2 id="3">Creating the spatial maps for each state</h2><pre class="codeinput"><span class="comment">% The function "glean.pcorr" will create spatial maps for each state,</span>
+<span class="comment">% by computing the partial correlation between each session's state time</span>
+<span class="comment">% courses and the envelope data at each voxel. These maps may be output</span>
+<span class="comment">% as .nii files (or alternatively as .mat files), and may be computed using</span>
+<span class="comment">% the voxelwise or parcelwise data:</span>
+
+settings            = [];
+settings.format     = <span class="string">'nii'</span>;
+settings.space      = {<span class="string">'parcel'</span>};
+GLEAN = glean.pcorr(GLEAN,settings);
+
+
+<span class="comment">% GLEAN now contains a new field "temporal_stats" within GLEAN.results:</span>
+GLEAN.results.pcorr
+
+<span class="comment">% This results field contains the settings, as well as spatial maps in</span>
+<span class="comment">% each subspace (voxel/parcel) for each session and the group average:</span>
+GLEAN.results.pcorr.parcel
+
+fslview(GLEAN.results.pcorr.parcel.sessionmaps{1},[])
+</pre><pre class="">Saving parcel partial correlation maps for session 1
+ 
+Saving parcel partial correlation maps for session 2
+ 
+Saving parcel partial correlation maps for session 3
+ 
+Saving parcel partial correlation maps for session 4
+ 
+Saving parcel partial correlation maps for session 5
+ 
+Saving parcel partial correlation maps for session 6
+ 
+Saving parcel partial correlation maps for session 7
+ 
+Saving parcel partial correlation maps for session 8
+ 
+Saving parcel partial correlation maps for session 9
+ 
+Saving parcel partial correlation maps for session 10
+ 
+Saving parcel partial correlation maps for session 11
+ 
+Saving parcel partial correlation maps for session 12
+ 
+Saving parcel group partial correlation map
+ 
+
+ans = 
+
+      parcel: [1x1 struct]
+    settings: [1x1 struct]
+
+
+ans = 
+
+    sessionmaps: {12x1 cell}
+      groupmaps: {[1x173 char]}
+
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% GLEAN DEMO SCRIPT FOR INFERRING A GROUP HMM FROM SOURCE SPACE MEG DATA
+% Adam Baker, Jan 2016
+% Diego Vidaurre, Feb 2017
+   
+% Directory of the data
+data_dir = fullfile(osldir,'example_data','glean_example');
+% Name for this GLEAN analysis:
+glean_name = fullfile(osldir,'example_data','glean_example','hmmmar_demo.mat');
+
+do_analysis = 0; 
+
+% List of data files. These data consist of 2 sessions of 10 minutes of 
+% eyes open resting state data recorded from 6 subjects on an Elekta
+% Neuromag system (using the 204 planar gradiometers only). The data were
+% band-pass filtered between 4 and 30 Hz and projected onto a regular 8 mm
+% grid in source space using an LCMV beamformer. The data are saved as
+% SPM12 MEEG objects in sensor space, and the beamformer weights are saved
+% as a virtual montage.
+data = {'/data/s01_rest1.mat'
+        '/data/s01_rest2.mat'
+        '/data/s02_rest1.mat'
+        '/data/s02_rest2.mat'
+        '/data/s03_rest1.mat'
+        '/data/s03_rest2.mat'
+        '/data/s04_rest1.mat'
+        '/data/s04_rest2.mat'
+        '/data/s05_rest1.mat'
+        '/data/s05_rest2.mat'
+        '/data/s06_rest1.mat'
+        '/data/s06_rest2.mat'};
+data = fullfile(data_dir,data);
+
+% Clear settings
+settings = struct;
+
+% Envelope settings:
+settings.envelope.overwrite = 0;
+settings.envelope.log       = 0;
+settings.envelope.fsample   = 20;
+settings.envelope.mask      = fullfile(data_dir,'MNI152_T1_8mm_brain.nii.gz');
+
+% Subspace settings:
+settings.subspace.overwrite                         = 0;
+settings.subspace.normalisation                     = 'none';
+settings.subspace.parcellation.file                 = fullfile(data_dir,'fMRI_parcellation_ds8mm.nii.gz');
+settings.subspace.parcellation.orthogonalisation    = 'symmetric';
+settings.subspace.parcellation.method               = 'spatialBasis';
+
+% Model settings:
+settings.model.overwrite   = 0;
+settings.model.hmm.nstates = 8;
+settings.model.hmm.nreps   = 1;
+
+% Set up the GLEAN settings, data paths etc:
+GLEAN = glean.setup(glean_name,data,settings);
+
+% Run the analysis:
+if do_analysis
+    glean.run(GLEAN)
+    save(glean_name,'GLEAN')
+end
+
+%% Load results and visualise them 
+
+load(glean_name)
+
+% show the state time courses
+glean.plot_timecourse(GLEAN)
+
+% compute temporal properties related to the estimation
+settings = struct('plot',1);
+GLEAN = glean.temporal_stats(GLEAN,settings);
+
+% display the "temporal_stats"
+GLEAN.results.temporal_stats
+% and Fractional occupancy within it
+GLEAN.results.temporal_stats.FractionalOccupancy
+
+% open the plots for this statistic
+open(GLEAN.results.temporal_stats.FractionalOccupancy.plots.stats)
+
+
+%% Creating the spatial maps for each state 
+
+% The function "glean.pcorr" will create spatial maps for each state, 
+% by computing the partial correlation between each session's state time 
+% courses and the envelope data at each voxel. These maps may be output 
+% as .nii files (or alternatively as .mat files), and may be computed using 
+% the voxelwise or parcelwise data:
+
+settings            = [];
+settings.format     = 'nii';
+settings.space      = {'parcel'};
+GLEAN = glean.pcorr(GLEAN,settings);
+
+
+% GLEAN now contains a new field "temporal_stats" within GLEAN.results: 
+GLEAN.results.pcorr
+
+% This results field contains the settings, as well as spatial maps in 
+% each subspace (voxel/parcel) for each session and the group average:
+GLEAN.results.pcorr.parcel
+
+fslview(GLEAN.results.pcorr.parcel.sessionmaps{1},[])
+
+
+##### SOURCE END #####
+--></body></html>
