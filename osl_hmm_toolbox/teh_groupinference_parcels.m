@@ -455,6 +455,9 @@ if todo.output
             % convert parcel statemaps into voxel statemaps                    
             S2.interp='nearestneighbour';
             S2.parcelWeights=parcelWeights;
+            if isfield(D.parcellation.S,'maskfname')
+                S2.mask_fname=D.parcellation.S.maskfname;
+            end
             
             if isfield(D.parcellation,'S') && isfield(D.parcellation.S,'hcp_sourcemodel3d') 
                 hcp_nii_parcel_quicksave(statp, parcelAssignments, [statemaps,'_parcels'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)
