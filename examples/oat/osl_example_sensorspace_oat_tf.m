@@ -1,8 +1,8 @@
-%% Sensorspace ERF Analysis with OAT
+%% Sensorspace TF Analysis with OAT
 %
 % In this practical we will work with a single subject's data from an
-% emotional faces task (data courtesy of Susie Murphy) and perform an ERF
-% analysis in sensor space.
+% emotional faces task (data courtesy of Susie Murphy) and perform an
+% Time-Frequency analysis in sensor space.
 %
 % You will need the following files from the example_data directory:
 %
@@ -54,11 +54,39 @@ oat.source_recon.method='none';
 oat.source_recon.normalise_method='none';
 
 % Set this to something specific
-oat.source_recon.dirname = [workingdir '/sensorspace_erf'];
+oat.source_recon.dirname = [workingdir '/sensorspace_tf'];
+
+%% SETUP THE TIME-FREQUENCY DECOMPOSITION
+% Next we set up a single subject trial-wise GLM on our prepared data. Firstly the time-frequency parameters are defined, these must be within the bounds of the time-frequency window set in the source recon stage.
+%
+% Note the following settings in particular:
+%
+% * oat.first_level.tf_method  - This indicates we are doing a TF analysis using hilbert or morlet transform (or is set to 'none' if doing a time-domain ERF analysis)
+% * oat.first_level.tf_freq_range  - This indicates the overall freq range. 
+% * oat.first_level.tf_num_freqs  - This indicates the number of freq bins to use within the overall freq range
+% * oat.first_level.tf_hilbert_freq_res - This indicates the bandwidth of the freq bins, if doing a hilbert transform
+% * oat.first_level.time_range  - This indicates the time range. NOTE that this needs to be smaller than oat.source_recon.time_range to remove edge effects
+% 
+% We have also set the baseline correction to be turned off for the third contrast, [-3 1 1 1] (this is often a good idea for differential contrasts, for which we do not need to do baseline correction):
+%
+% * oat.first_level.bc=[1 1 0]
+
+oat.first_level.tf_method='morlet'; % can be morlet or hilbert
+oat.first_level.tf_freq_range=[5 40]; % frequency range in Hz
+oat.first_level.time_range=[-0.2 0.3]; % need to make this time range smallet than oat.source_recon.time_range to remove edge effects
+oat.first_level.tf_num_freqs=14; % we are keeping this unusally low in the practical for the sake of speed
+%oat.first_level.tf_hilbert_freq_res=8;
+
+% NOTE that you can also set HILBERT freq ranges explicitly, e.g.:
+% oat.first_level.tf_hilbert_freq_ranges=[[4 8];[8 12];[12 16];[16 20];[20 24];[24 30]]; % frequency range in Hz
+
+oat.first_level.post_tf_downsample_factor=4; % does downsampling after the TF decomposition
+
+oat.first_level.bc=[1 1 0]; % specifies whether or not baseline correction is done for the different contrasts
 
 %% SETUP THE FIRST LEVEL GLM
 % This cell defines the GLM parameters for the first level analysis. Critically this includes the design matrix (in Xsummary) and contrast matrix
-% Xsummary is a parsimonious description of the design matrix. It contains values Xsummary{reg,cond}, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to croat_settingse the (num_regressors x num_trials) design matrix:
+% Xsummary is a parsimonious description of the design matrix. It contains values Xsummary{reg,cond}, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix:
 % Each contrast is a vector containing a weight per condition defining how the condition parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. Contrasts 1 and 2 describe positive correlations between each sensors activity and the presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each sensors activity is larger for faces than motorbikes.
 
 Xsummary={};
@@ -78,69 +106,58 @@ oat.first_level.cope_type='cope';
 oat.first_level.report.first_level_cons_to_do=[2 1 3];
 oat.first_level.bc=[0 0 0];
 
-oat = osl_check_oat(oat);
-
-%% VIEW OAT SETTINGS
-% As well as using the settings we specified in the previous cell, calling osl_check_oat has filled in a bunch of other settings as well.
-
-oat
-oat.source_recon
-oat.first_level
-
-%% CHECK OVER OAT SETTINGS
-% The osl_check_oat.m function should be used to setup the settings for these three stages of the pipeline.  On the Matlab command line type
-%
-% help osl_check_oat
-%
-% to see what the mandatory fields are. Note that you MUST specify:
-%
-% * oat.source_recon.time_range
-% * oat.source_recon.conditions
-% * oat.source_recon.D_continuous
-% * oat.source_recon.D_epoched
-%
-% Descriptions of what these correspond to are also displayed when you type >> help osl_check_oat
-%
-% We are only interested in the first two stages of an OAT analysis, as we are not doing any group analysis here:
-%
-% * oat.source_recon
-% * oat.first_level
-%
-% Each of these contains the settings for the relevant stages of the pipeline. You can read the Pipeline Stagesù section of the OSL manual to get more description about these two stages.
-%
-% Take a look at oat.source_recon.dirname. This will be the name of the directory (full path) where the OAT will be stored, and is given a .oatextension. [Note that each OAT directory is associated with a specific source recon; a new source recon will overwrite an old directory if the same oat.source_recon.dirname is used, and the old source recon results will be lost. Hence, you should ensure that you change oat.source_recon.dirname for a new source recon analysis, if you want to avoid overwriting an old one.]
 
 %% RUN OAT
 %
-% The OAT structure you have created, oat, should be passed to the function osl_run_oat.m, to run the pipeline.
-% However, the OAT structure should contain a structure (oat.to_do), which is a list of binary values indicating which part of the pipeline is to be run.
-% E.g. oat.to_do=[1 1 0 0]; will run just the source recon and first level stages, whereas oat.to_do=[1 1 1 1]; will run all four (source-recon, first level, subject-level and group level).
-% Here we are not doing any group analysis, so we need:
-%
-% oat.to_do=[1 1 0 0];
+% We are only running the source-recon and first level
+
+oat = osl_check_oat(oat);
 
 oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 
-%% VIEW RESULTS
+%% READ REPORT
 %
-% The OAT runs GLM across all time-points and sensors. The results are
-% plotted for the sensor with the highest statistic for the faces contrast.
-% The COPE is plotted on the left and the t-stat on the right.
-%
-% <<osl_example_sensorspace_oat_stats_tc.png>>
-
-%% GENERATE REPORT
-%
-% The report creates a useful summary of the OAT results. You can click
-% through a log files from the analysis as well as range of diagnostic figures 
+% The OAT runs the GLM for every time point and frequency band across all
+% sensors and creates a useful summary of the results. You can access it 
+% by clicking the link in the console navigating a browser to the link in oat.results.report.html_fname
+% You can click through a log files from the analysis as well as range of diagnostic figures 
 % from the source recon and results from the first level.
+%
+% The report generates a summary of results based on the
+% information in oat.first_level.report. 
+%
+% * oat.first_level.report.modality_to_do % eg MEGPLANAR, MEGMAG (only in sensor space)
+% * oat.first_level.report.first_level_cons_to_do; % plots only these contrasts and uses first one in list to determine max vox, time, freq
+% * oat.first_level.report.time_range; % to determine max vox, time, freq
+% * oat.first_level.report.freq_range; % to determine max vox, time, freq
+%
+% The settings in the current OAT will generate an image with the COPE and t-stats for
+% all three contrasts from the sensor with the maximum statistic for
+% contrast 2 (faces) from the planar gradiometers as seen below
+%
+% <<osl_example_sensorspace_oat_tf_stats_tc.png>> 
 
-oat.first_level.report.modality_to_do='MEGPLANAR';
+
+%% GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS
+%
+% Regenerate the report after changing the settings to view the
+% results from the magnetometers based on the maximal sensor for the
+% faces-motorbikes contrast.
+%
+
+% Report settings
+oat.first_level.report.modality_to_do='MEGMAG';
+oat.first_level.report.first_level_cons_to_do = [2 1 3];
+oat.first_level.report.time_range = [-.2 .3];
+oat.first_level.report.freq_range = [5 40];
+
+% Regenerate report
 report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});
 
-% open the report in matlabs html browser
+% Open the report in matlabs html browser
 open(oat.results.report.html_fname);
+
 
 %% RESULTS
 %
@@ -151,13 +168,6 @@ disp(oat.results);
 
 % load first-level GLM result
 stats1=oat_load_results(oat,oat.first_level.results_fnames{1});
-
-%% VIEW THE GLM DESIGN MATRIX
-%
-% This is the nconditions by ntrials design matrix which is used to fit the GLM
-% (NOTE that column 1 is motorbikes, columns 2-4 are faces)
-
-figure;imagesc(stats1.x);title('GLM design matrix');xlabel('regressor no.');ylabel('trial no.');
 
 %% VISUALISE USING FIELDTRIP
 % note that this produces an interactive figure, with which you can:
@@ -170,9 +180,12 @@ figure;imagesc(stats1.x);title('GLM design matrix');xlabel('regressor no.');ylab
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
-S2.modality='MEGPLANAR'; % can also set this to 'MEGMAG'
-S2.first_level_contrast=[3]; % view faces-motorbikes contrast
-S2.view_cope=1; % set to 0 to see the t-stat
+S2.modality='MEGPLANAR';
+S2.first_level_contrast=[2];
+S2.cfg.colorbar='yes';
+S2.cfg.zlim = [0 35];
+S2.view_cope=0;
 
 % calculate t-stat using contrast of absolute value of parameter estimates
-[cfg, dats, fig_handle]=oat_stats_multiplotER(S2);
+[cfg, data]=osl_stats_multiplotTFR(S2);
+title([oat.first_level.contrast_name{S2.first_level_contrast}]);

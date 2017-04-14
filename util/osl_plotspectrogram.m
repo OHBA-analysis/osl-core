@@ -17,13 +17,14 @@ function [S,F,T] = osl_plotspectrogram(Sin)
 try D=Sin.D; catch error('Must specify S.D'); end
 try Sin.do_plot=Sin.do_plot; catch Sin.do_plot=true; end
 try D.fsample; catch D=spm_eeg_load(D); end
-
 try chantype=Sin.chantype; catch chantype='MEGGRAD'; end
+try chaninds=Sin.chaninds; catch chaninds=1:D.nchannels; end
 
 [S,F,T] = plotspectrogram(D(1,:,:),512,512*0.75,1024,D.fsample);
 
 chindex = 1:D.nchannels;
 ch = chindex(strcmp(D.chantype,chantype));
+ch=ch(chaninds);
 
 S(:)=0;
 for i = 1:length(ch)
@@ -34,9 +35,8 @@ end
 S=S/length(ch);
 
 %% Plot mean spectrogram
-if Sin.do_plot
-    figure
-    imagesc(T,F,S,[0 3]); colorbar
+if Sin.do_plot    
+    imagesc(T,F,S); colorbar
     set(gca,'ydir','normal');
     xlabel('time (s)');
     ylabel('frequency (Hz)');

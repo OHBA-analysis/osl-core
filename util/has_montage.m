@@ -20,15 +20,28 @@ function [n_present,montage_number] = has_montage(D,pattern,case_sensitive)
 	% D.montage('getmontage',idx).name
 	%	ans =
 	%	    'Parcellated with weights normalisation, class 1'
-	
+
 	if nargin < 3 || isempty(case_sensitive) 
 		case_sensitive = false;
 	end
 	
 	n_present = 0;
 	montage_number = [];
-
 	n_montages = D.montage('getnumber');
+
+	if nargin == 1
+		% If no search pattern, print the montages and return
+		if n_montages == 0
+			fprintf('No montages present\n');
+		else
+			for j = 1:n_montages
+				m = D.montage('getmontage',j);
+				fprintf('%d - %s\n',j,m.name);
+			end
+		end
+		return
+	end
+	
 	if n_montages == 0 % No online montages
 		return
 	end

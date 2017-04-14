@@ -1,0 +1,464 @@
+---
+layout: matlab_wrapper
+title: Sensorspace ERF Analysis with OAT
+resource: true
+categories: examples
+---
+
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <title>Sensorspace ERF Analysis with OAT</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-07"><meta name="DC.source" content="osl_example_sensorspace_oat.m"></head><body><div class="content"><h1>Sensorspace ERF Analysis with OAT</h1><!--introduction--><p>In this practical we will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy) and perform an ERF analysis in sensor space.</p><p>You will need the following files from the example_data directory:</p><div><ul><li>Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.</li><li>eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.</li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</a></li><li><a href="#3">SET UP THE SUBJECTS FOR THE ANALYSIS</a></li><li><a href="#4">SETUP SENSOR SPACE SOURCE RECON</a></li><li><a href="#5">SETUP THE FIRST LEVEL GLM</a></li><li><a href="#6">VIEW OAT SETTINGS</a></li><li><a href="#7">CHECK OVER OAT SETTINGS</a></li><li><a href="#8">RUN OAT</a></li><li><a href="#9">VIEW RESULTS</a></li><li><a href="#10">GENERATE REPORT</a></li><li><a href="#11">RESULTS</a></li><li><a href="#12">VIEW THE GLM DESIGN MATRIX</a></li><li><a href="#13">VISUALISE USING FIELDTRIP</a></li></ul></div><h2 id="1">SETUP THE MATLAB PATHS</h2><p>make sure that fieldtrip and spm are not in your matlab path</p><pre class="codeinput">setenv(<span class="string">'OSLDIR'</span>,<span class="string">'/Users/andrew/Software/Matlab/osl2.1/'</span>)
+addpath(genpath(getenv(<span class="string">'OSLDIR'</span>)));
+osl_startup(osldir);
+</pre><h2 id="2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</h2><p>This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.</p><pre class="codeinput"><span class="comment">% directory where the data is:</span>
+datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_singlesubject'</span>,<span class="string">'spm_files'</span>);
+
+<span class="comment">% directory to put the analysis in</span>
+workingdir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_singlesubject'</span>);
+</pre><h2 id="3">SET UP THE SUBJECTS FOR THE ANALYSIS</h2><p>Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:</p><p>fif_files{1}=[testdir '/fifs/sub1_face_sss.fif']; fif_files{2}=[testdir '/fifs/sub2_face_sss.fif']; etc... spm_files{1} = [workingdir '/sub1_face_sss.mat']; spm_files{2} = [workingdir '/sub2_face_sss.mat']; etc...</p><pre class="codeinput">spm_files_continuous{1}=[datadir <span class="string">'/Aface_meg1.mat'</span>];
+spm_files_epoched{1}=[datadir <span class="string">'/eAface_meg1.mat'</span>];
+</pre><h2 id="4">SETUP SENSOR SPACE SOURCE RECON</h2><p>This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis. In this example we define our input files (D_continuous and D_epoched) and conditions before setting a time frequency window from -200ms before stimulus onset to +400ms and 4 to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis The oat.source_recon.dirname is where all the analysis will be stored. This includes all the intermediate steps, diagnostic plots and final results. Make sure this directory does not contain any other analyses that might be overwritten.</p><pre class="codeinput">oat=[];
+oat.source_recon.D_epoched=spm_files_epoched; <span class="comment">% this is passed in so that the bad trials and bad channels can be read out</span>
+oat.source_recon.D_continuous=spm_files_continuous;
+oat.source_recon.conditions={<span class="string">'Motorbike'</span>,<span class="string">'Neutral face'</span>,<span class="string">'Happy face'</span>,<span class="string">'Fearful face'</span>};
+oat.source_recon.freq_range=[4 100]; <span class="comment">% frequency range in Hz</span>
+oat.source_recon.time_range=[-0.2 0.4];
+oat.source_recon.method=<span class="string">'none'</span>;
+oat.source_recon.normalise_method=<span class="string">'none'</span>;
+
+<span class="comment">% Set this to something specific</span>
+oat.source_recon.dirname = [workingdir <span class="string">'/sensorspace_erf'</span>];
+</pre><h2 id="5">SETUP THE FIRST LEVEL GLM</h2><p>This cell defines the GLM parameters for the first level analysis. Critically this includes the design matrix (in Xsummary) and contrast matrix Xsummary is a parsimonious description of the design matrix. It contains values Xsummary{reg,cond}, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to croat_settingse the (num_regressors x num_trials) design matrix: Each contrast is a vector containing a weight per condition defining how the condition parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. Contrasts 1 and 2 describe positive correlations between each sensors activity and the presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each sensors activity is larger for faces than motorbikes.</p><pre class="codeinput">Xsummary={};
+Xsummary{1}=[1 0 0 0];Xsummary{2}=[0 1 0 0];Xsummary{3}=[0 0 1 0];Xsummary{4}=[0 0 0 1];
+oat.first_level.design_matrix_summary=Xsummary;
+
+<span class="comment">% contrasts to be calculated:</span>
+oat.first_level.contrast={};
+oat.first_level.contrast{1}=[3 0 0 0]'; <span class="comment">% motorbikes</span>
+oat.first_level.contrast{2}=[0 1 1 1]'; <span class="comment">% faces</span>
+oat.first_level.contrast{3}=[-3 1 1 1]'; <span class="comment">% faces-motorbikes</span>
+oat.first_level.contrast_name{1}=<span class="string">'motorbikes'</span>;
+oat.first_level.contrast_name{2}=<span class="string">'faces'</span>;
+oat.first_level.contrast_name{3}=<span class="string">'faces-motorbikes'</span>;
+
+oat.first_level.cope_type=<span class="string">'cope'</span>;
+oat.first_level.report.first_level_cons_to_do=[2 1 3];
+oat.first_level.bc=[0 0 0];
+
+oat = osl_check_oat(oat);
+</pre><pre class="codeoutput">Detected Elekta Neuromag 306 data. Using default Elekta Neuromag 306 settings.
+Warning: oat.source_recon.modalities not set, or not set properly. Will
+set to default:MEGPLANARMEGMAG 
+Using oat.source_recon.freq_range for oat.first_level.tf_freq_range
+oat.source_recon.D_epoched set. OAT will do an epoched data trial-wise GLM
+</pre><h2 id="6">VIEW OAT SETTINGS</h2><p>As well as using the settings we specified in the previous cell, calling osl_check_oat has filled in a bunch of other settings as well.</p><pre class="codeinput">oat
+oat.source_recon
+oat.first_level
+</pre><pre class="codeoutput">
+oat = 
+
+            to_do: [1 1 1 1]
+         do_plots: 0
+     source_recon: [1x1 struct]
+      first_level: [1x1 struct]
+    subject_level: [1x1 struct]
+      group_level: [1x1 struct]
+     osl2_version: 'f53433d'
+
+
+ans = 
+
+                time_range: [-0.2000 0.4000]
+                conditions: {1x4 cell}
+              D_continuous: {'/Users/andrew/Software/Matlab/osl2.1/exampl...'}
+                 D_epoched: {'/Users/andrew/Software/Matlab/osl2.1/exampl...'}
+                freq_range: [4 100]
+                   dirname: '/Users/andrew/Software/Matlab/osl2.1/example_...'
+            sessions_to_do: 1
+                 epochinfo: []
+                    method: 'none'
+     bandstop_filter_mains: 0
+        artefact_chanlabel: []
+                modalities: {'MEGPLANAR'  'MEGMAG'}
+             session_names: {'session1'}
+          normalise_method: 'none'
+                     regpc: 0
+                  gridstep: 7
+               forward_meg: 'Single Shell'
+                       mri: []
+                   pca_dim: 50
+             force_pca_dim: 0
+                      type: 'Scalar'
+            hmm_num_states: 0
+            hmm_num_starts: 1
+               hmm_pca_dim: 40
+    hmm_av_class_occupancy: 35
+                    report: [1x1 struct]
+
+
+ans = 
+
+                                     doGLM: 1
+                     design_matrix_summary: {1x4 cell}
+                                  contrast: {1x3 cell}
+                             contrast_name: {1x3 cell}
+                            sessions_to_do: 1
+                                time_range: [-0.2000 0.4000]
+                         baseline_timespan: [-0.2000 0]
+                  do_weights_normalisation: 1
+                            use_robust_glm: 0
+                                        bc: [0 0 0]
+              sensor_space_combine_planars: 'combine_cartesian'
+                              bc_trialwise: 0
+                                      name: 'first_level'
+                   time_moving_av_win_size: []
+          post_glm_time_moving_av_win_size: []
+                      hmm_do_glm_statewise: 0
+                                 tf_method: 'none'
+                             tf_freq_range: [4 100]
+                              tf_num_freqs: 1
+                              time_average: 0
+                     tf_multitaper_ncycles: []
+      post_movingaverage_downsample_factor: []
+                 post_tf_downsample_factor: []
+                          tf_morlet_factor: 6
+                       tf_hilbert_freq_res: 2
+    tf_hilbert_do_bandpass_for_single_freq: 0
+                    tf_hilbert_freq_ranges: []
+                        tf_hanning_ncycles: []
+                                 cope_type: 'cope'
+                       save_trialwise_data: 0
+                       trialwise_directory: []
+                              parcellation: [1x1 struct]
+                                is_epoched: 1
+                             do_glm_demean: 0
+                                    report: [1x1 struct]
+                               warp_fields: []
+
+</pre><h2 id="7">CHECK OVER OAT SETTINGS</h2><p>The osl_check_oat.m function should be used to setup the settings for these three stages of the pipeline.  On the Matlab command line type</p><p>help osl_check_oat</p><p>to see what the mandatory fields are. Note that you MUST specify:</p><div><ul><li>oat.source_recon.time_range</li><li>oat.source_recon.conditions</li><li>oat.source_recon.D_continuous</li><li>oat.source_recon.D_epoched</li></ul></div><p>Descriptions of what these correspond to are also displayed when you type &gt;&gt; help osl_check_oat</p><p>We are only interested in the first two stages of an OAT analysis, as we are not doing any group analysis here:</p><div><ul><li>oat.source_recon</li><li>oat.first_level</li></ul></div><p>Each of these contains the settings for the relevant stages of the pipeline. You can read the Pipeline Stages&#157; section of the OSL manual to get more description about these two stages.</p><p>Take a look at oat.source_recon.dirname. This will be the name of the directory (full path) where the OAT will be stored, and is given a .oatextension. [Note that each OAT directory is associated with a specific source recon; a new source recon will overwrite an old directory if the same oat.source_recon.dirname is used, and the old source recon results will be lost. Hence, you should ensure that you change oat.source_recon.dirname for a new source recon analysis, if you want to avoid overwriting an old one.]</p><h2 id="8">RUN OAT</h2><p>The OAT structure you have created, oat, should be passed to the function osl_run_oat.m, to run the pipeline. However, the OAT structure should contain a structure (oat.to_do), which is a list of binary values indicating which part of the pipeline is to be run. E.g. oat.to_do=[1 1 0 0]; will run just the source recon and first level stages, whereas oat.to_do=[1 1 1 1]; will run all four (source-recon, first level, subject-level and group level). Here we are not doing any group analysis, so we need:</p><p>oat.to_do=[1 1 0 0];</p><pre class="codeinput">oat.to_do=[1 1 0 0];
+oat = osl_run_oat(oat);
+</pre><pre class="codeoutput">Detected Elekta Neuromag 306 data. Using default Elekta Neuromag 306 settings.
+Warning: oat.source_recon.modalities not set, or not set properly. Will
+set to default:MEGPLANARMEGMAG 
+oat.source_recon.D_epoched set. OAT will do an epoched data trial-wise GLM
+
+oat = 
+
+            to_do: [1 1 0 0]
+         do_plots: 0
+     source_recon: [1x1 struct]
+      first_level: [1x1 struct]
+    subject_level: [1x1 struct]
+      group_level: [1x1 struct]
+     osl2_version: 'f53433d'
+          results: [1x1 struct]
+
+*************************************************************
+Running source_recon
+*************************************************************
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%  RUNNING OAT SOURCE RECON (SENSOR SPACE SETUP) ON SESS = 1  %%%%%%%%%%%%%%%%%%%%%%%
+Using continuous data as input
+Using epoched data as input
+Preparing source recon stage for /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/spm_files/Aface_meg1.mat
+Will be designated session1
+
+SPM12: spm_eeg_copy (v5079)                        17:36:50 - 07/04/2017
+========================================================================
+
+SPM12: spm_eeg_copy (v5079)                        17:36:56 - 07/04/2017
+========================================================================
+Temporal filtering...
+
+SPM12: spm_eeg_filter (v5876)                      17:37:02 - 07/04/2017
+========================================================================
+Epoching...
+Doing no within-trial baseline correction at the point of epoching
+
+SPM12: spm_eeg_epochs (v6183)                      17:37:15 - 07/04/2017
+========================================================================
+Data type is missing or incorrect, assigning default.
+Changing the number of channels, so discarding online montages.
+
+source_recon_report = 
+
+            dir: '/Users/andrew/Software/Matlab/osl2.1/example_data/faces_...'
+          title: 'Source recon (epoched) - sensor space data setup'
+     plot_fname: []
+          index: 0
+     plot_names: {}
+    sub_reports: {[1x1 struct]}
+
+Saving beamformer results: session1_recon
+*************************************************************
+Running first_level
+*************************************************************
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%  RUNNING OAT FIRST LEVEL ON SESS = 1  %%%%%%%%%%%%%%%%%%%%%%%
+
+ans =
+
+/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_erf.oat/concatefsession1_spm_meeg.mat
+
+
+SPM12: spm_eeg_copy (v5079)                        17:37:50 - 07/04/2017
+========================================================================
+
+ans =
+
+/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_erf.oat/concatefsession1_spm_meeg_firstlevel.mat
+
+Working in sensor space
+TIME DOMAIN, NOT DOWNSAMPLING; raw data at 250Hz, GLM at 250Hz.
+Reconstruct time courses and computing stats for dataset session1_recon
+CAREFUL: are you sure you want no first_level.do_glm_demean flag on with no constant regressors in the design matrix!!!!?
+State 1 is active for 213.6secs
+First level COPEs outputted will have dimension Nvoxels x Ntpts x Ncontrasts x Nfreqs:
+306  151    3    1
+size(sens_data_tf)=[325 151 356 1], (nsens x ntpts x ntri x nfreq)
+ - estimated time to finish is 0 seconds
+reading layout from file /Users/andrew/Software/Matlab/osl2.1/layouts/neuromag306planar3.lay
+the call to "ft_prepare_layout" took 0 seconds and required the additional allocation of an estimated NaN MB
+reading layout from file /Users/andrew/Software/Matlab/osl2.1/layouts/neuromag306planar2.lay
+the call to "ft_prepare_layout" took 0 seconds and required the additional allocation of an estimated NaN MB
+reading layout from file /Users/andrew/Software/Matlab/osl2.1/layouts/neuromag306mag.lay
+the call to "ft_prepare_layout" took 0 seconds and required the additional allocation of an estimated NaN MB
+reading layout from file /Users/andrew/Software/Matlab/osl2.1/layouts/neuromag306cmb.lay
+the call to "ft_prepare_layout" took 0 seconds and required the additional allocation of an estimated NaN MB
+Warning: Gradiometers combined with ERF and COPE: gradiometer COPEs will
+be rectified 
+Saving statistics in file /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_erf.oat/session1_first_level
+selection avg along dimension 1
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+selection avg along dimension 1
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+selection avg along dimension 1
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+View first level report at:
+/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_erf.oat/plots/first_level/sess_session1_MEGPLANAR/report.html
+To view OAT report, point your browser to &lt;a href="/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_erf.oat/plots/report.html"&gt;/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_erf.oat/plots/report.html&lt;/a&gt;
+</pre><h2 id="9">VIEW RESULTS</h2><p>The OAT runs GLM across all time-points and sensors. The results are plotted for the sensor with the highest statistic for the faces contrast. The COPE is plotted on the left and the t-stat on the right.</p><p><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_stats_tc.png" alt=""> </p><h2 id="10">GENERATE REPORT</h2><p>The report creates a useful summary of the OAT results. You can click through a log files from the analysis as well as range of diagnostic figures from the source recon and results from the first level.</p><pre class="codeinput">oat.first_level.report.modality_to_do=<span class="string">'MEGPLANAR'</span>;
+report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});
+
+<span class="comment">% open the report in matlabs html browser</span>
+open(oat.results.report.html_fname);
+</pre><pre class="codeoutput">selection avg along dimension 1
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+selection avg along dimension 1
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+selection avg along dimension 1
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+View first level report at:
+/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_erf.oat/plots/first_level/sess_session1_MEGPLANAR/report.html
+</pre><h2 id="11">RESULTS</h2><p>The results are stored in the oat structure and the can be loaded back into matlab using oat_load_results. This is useful for checking over results of the GLM or as the basis for further analyses.</p><pre class="codeinput">disp(<span class="string">'oat.results:'</span>);
+disp(oat.results);
+
+<span class="comment">% load first-level GLM result</span>
+stats1=oat_load_results(oat,oat.first_level.results_fnames{1});
+</pre><pre class="codeoutput">oat.results:
+        date: '07-Apr-2017'
+    plotsdir: '/Users/andrew/Software/Matlab/osl2.1/example_data/faces_sin...'
+     logfile: '/Users/andrew/Software/Matlab/osl2.1/example_data/faces_sin...'
+      report: [1x1 struct]
+
+</pre><h2 id="12">VIEW THE GLM DESIGN MATRIX</h2><p>This is the nconditions by ntrials design matrix which is used to fit the GLM (NOTE that column 1 is motorbikes, columns 2-4 are faces)</p><pre class="codeinput">figure;imagesc(stats1.x);title(<span class="string">'GLM design matrix'</span>);xlabel(<span class="string">'regressor no.'</span>);ylabel(<span class="string">'trial no.'</span>);
+</pre><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_01.png" alt=""> <h2 id="13">VISUALISE USING FIELDTRIP</h2><p>note that this produces an interactive figure, with which you can: * draw around a set of sensors * click in the drawn box to produce a plot of the time series * on the time series plot you can draw a time window * and click in the window to create a topoplot averaged over that time window (which is itself interactive....!)</p><pre class="codeinput">S2=[];
+S2.oat=oat;
+S2.stats_fname=oat.first_level.results_fnames{1};
+S2.modality=<span class="string">'MEGPLANAR'</span>; <span class="comment">% can also set this to 'MEGMAG'</span>
+S2.first_level_contrast=[3]; <span class="comment">% view faces-motorbikes contrast</span>
+S2.view_cope=1; <span class="comment">% set to 0 to see the t-stat</span>
+
+<span class="comment">% calculate t-stat using contrast of absolute value of parameter estimates</span>
+[cfg, dats, fig_handle]=oat_stats_multiplotER(S2);
+</pre><pre class="codeoutput">selection avg along dimension 1
+reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306cmb.lay
+</pre><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Sensorspace ERF Analysis with OAT
+%
+% In this practical we will work with a single subject's data from an
+% emotional faces task (data courtesy of Susie Murphy) and perform an ERF
+% analysis in sensor space.
+%
+% You will need the following files from the example_data directory:
+%
+% * Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.
+% * eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.
+
+%% SETUP THE MATLAB PATHS
+% make sure that fieldtrip and spm are not in your matlab path
+
+setenv('OSLDIR','/Users/andrew/Software/Matlab/osl2.1/')
+addpath(genpath(getenv('OSLDIR')));
+osl_startup(osldir);
+
+%% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
+% This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.
+
+% directory where the data is:
+datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
+
+% directory to put the analysis in
+workingdir = fullfile(osldir,'example_data','faces_singlesubject');
+
+%% SET UP THE SUBJECTS FOR THE ANALYSIS
+%
+% Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:
+%
+% fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];
+% fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];
+% etc...
+% spm_files{1} = [workingdir '/sub1_face_sss.mat'];
+% spm_files{2} = [workingdir '/sub2_face_sss.mat'];
+% etc...
+
+spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
+spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
+
+%% SETUP SENSOR SPACE SOURCE RECON
+% This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis.
+% In this example we define our input files (D_continuous and D_epoched) and conditions before setting a time frequency window from -200ms before stimulus onset to +400ms and 4 to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis
+% The oat.source_recon.dirname is where all the analysis will be stored. This includes all the intermediate steps, diagnostic plots and final results. Make sure this directory does not contain any other analyses that might be overwritten.
+
+oat=[];
+oat.source_recon.D_epoched=spm_files_epoched; % this is passed in so that the bad trials and bad channels can be read out
+oat.source_recon.D_continuous=spm_files_continuous;
+oat.source_recon.conditions={'Motorbike','Neutral face','Happy face','Fearful face'};
+oat.source_recon.freq_range=[4 100]; % frequency range in Hz
+oat.source_recon.time_range=[-0.2 0.4];
+oat.source_recon.method='none';
+oat.source_recon.normalise_method='none';
+
+% Set this to something specific
+oat.source_recon.dirname = [workingdir '/sensorspace_erf'];
+
+%% SETUP THE FIRST LEVEL GLM
+% This cell defines the GLM parameters for the first level analysis. Critically this includes the design matrix (in Xsummary) and contrast matrix
+% Xsummary is a parsimonious description of the design matrix. It contains values Xsummary{reg,cond}, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to croat_settingse the (num_regressors x num_trials) design matrix:
+% Each contrast is a vector containing a weight per condition defining how the condition parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. Contrasts 1 and 2 describe positive correlations between each sensors activity and the presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each sensors activity is larger for faces than motorbikes.
+
+Xsummary={};
+Xsummary{1}=[1 0 0 0];Xsummary{2}=[0 1 0 0];Xsummary{3}=[0 0 1 0];Xsummary{4}=[0 0 0 1];
+oat.first_level.design_matrix_summary=Xsummary;
+
+% contrasts to be calculated:
+oat.first_level.contrast={};
+oat.first_level.contrast{1}=[3 0 0 0]'; % motorbikes
+oat.first_level.contrast{2}=[0 1 1 1]'; % faces
+oat.first_level.contrast{3}=[-3 1 1 1]'; % faces-motorbikes
+oat.first_level.contrast_name{1}='motorbikes';
+oat.first_level.contrast_name{2}='faces';
+oat.first_level.contrast_name{3}='faces-motorbikes';
+
+oat.first_level.cope_type='cope';
+oat.first_level.report.first_level_cons_to_do=[2 1 3];
+oat.first_level.bc=[0 0 0];
+
+oat = osl_check_oat(oat);
+
+%% VIEW OAT SETTINGS
+% As well as using the settings we specified in the previous cell, calling osl_check_oat has filled in a bunch of other settings as well.
+
+oat
+oat.source_recon
+oat.first_level
+
+%% CHECK OVER OAT SETTINGS
+% The osl_check_oat.m function should be used to setup the settings for these three stages of the pipeline.  On the Matlab command line type
+%
+% help osl_check_oat
+%
+% to see what the mandatory fields are. Note that you MUST specify:
+%
+% * oat.source_recon.time_range
+% * oat.source_recon.conditions
+% * oat.source_recon.D_continuous
+% * oat.source_recon.D_epoched
+%
+% Descriptions of what these correspond to are also displayed when you type >> help osl_check_oat
+%
+% We are only interested in the first two stages of an OAT analysis, as we are not doing any group analysis here:
+%
+% * oat.source_recon
+% * oat.first_level
+%
+% Each of these contains the settings for the relevant stages of the pipeline. You can read the Pipeline Stages section of the OSL manual to get more description about these two stages.
+%
+% Take a look at oat.source_recon.dirname. This will be the name of the directory (full path) where the OAT will be stored, and is given a .oatextension. [Note that each OAT directory is associated with a specific source recon; a new source recon will overwrite an old directory if the same oat.source_recon.dirname is used, and the old source recon results will be lost. Hence, you should ensure that you change oat.source_recon.dirname for a new source recon analysis, if you want to avoid overwriting an old one.]
+
+%% RUN OAT
+%
+% The OAT structure you have created, oat, should be passed to the function osl_run_oat.m, to run the pipeline.
+% However, the OAT structure should contain a structure (oat.to_do), which is a list of binary values indicating which part of the pipeline is to be run.
+% E.g. oat.to_do=[1 1 0 0]; will run just the source recon and first level stages, whereas oat.to_do=[1 1 1 1]; will run all four (source-recon, first level, subject-level and group level).
+% Here we are not doing any group analysis, so we need:
+%
+% oat.to_do=[1 1 0 0];
+
+oat.to_do=[1 1 0 0];
+oat = osl_run_oat(oat);
+
+%% VIEW RESULTS
+%
+% The OAT runs GLM across all time-points and sensors. The results are
+% plotted for the sensor with the highest statistic for the faces contrast.
+% The COPE is plotted on the left and the t-stat on the right.
+%
+% <<osl_example_sensorspace_oat_stats_tc.png>>
+
+%% GENERATE REPORT
+%
+% The report creates a useful summary of the OAT results. You can click
+% through a log files from the analysis as well as range of diagnostic figures 
+% from the source recon and results from the first level.
+
+oat.first_level.report.modality_to_do='MEGPLANAR';
+report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});
+
+% open the report in matlabs html browser
+open(oat.results.report.html_fname);
+
+%% RESULTS
+%
+% The results are stored in the oat structure and the can be loaded back into matlab using oat_load_results. This is useful for checking over results of the GLM or as the basis for further analyses.
+
+disp('oat.results:');
+disp(oat.results);
+
+% load first-level GLM result
+stats1=oat_load_results(oat,oat.first_level.results_fnames{1});
+
+%% VIEW THE GLM DESIGN MATRIX
+%
+% This is the nconditions by ntrials design matrix which is used to fit the GLM
+% (NOTE that column 1 is motorbikes, columns 2-4 are faces)
+
+figure;imagesc(stats1.x);title('GLM design matrix');xlabel('regressor no.');ylabel('trial no.');
+
+%% VISUALISE USING FIELDTRIP
+% note that this produces an interactive figure, with which you can:
+% * draw around a set of sensors
+% * click in the drawn box to produce a plot of the time series
+% * on the time series plot you can draw a time window
+% * and click in the window to create a topoplot averaged over that time
+% window (which is itself interactive....!)
+
+S2=[];
+S2.oat=oat;
+S2.stats_fname=oat.first_level.results_fnames{1};
+S2.modality='MEGPLANAR'; % can also set this to 'MEGMAG'
+S2.first_level_contrast=[3]; % view faces-motorbikes contrast
+S2.view_cope=1; % set to 0 to see the t-stat
+
+% calculate t-stat using contrast of absolute value of parameter estimates
+[cfg, dats, fig_handle]=oat_stats_multiplotER(S2);
+
+##### SOURCE END #####
+--></body></html>

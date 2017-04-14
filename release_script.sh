@@ -51,6 +51,7 @@ find $WORKINGDIR -name *DS_Store* | xargs rm -fr
 echo "osl = "$OSLDISTVERSION > $WORKINGDIR/osl/version.txt
 
 # Download git repos with specified release names
+# i.e. uncomment the version numbers below to use the specified tagged releases
 retrieve_repo osl-core #0.3
 retrieve_repo ohba-external #0.3
 retrieve_repo GLEAN #0.2
@@ -58,6 +59,8 @@ retrieve_repo MEG-ROI-nets #1.6.0
 retrieve_repo HMM-MAR #0.9
 
 rm -f $WORKINGDIR/osl_$OSLDISTVERSION.tar.gz
+
+# pigz does parallel gzip - can be installed with 'brew install pigz'
 if which pigz >/dev/null; then
     tar --exclude=osl/example_data -cvf  - osl | pigz -9 -p 8 > ${WORKINGDIR}/osl_${OSLDISTVERSION}.tar.gz
 else
@@ -66,6 +69,7 @@ fi
 
 echo "Main build complete"
 
+# Compressing the example data is time consuming and probably doesn't need to be done very often
 read -r -p "Compress example data? [y/N] " response
 case "$response" in
     [yY][eE][sS]|[yY]) 
@@ -79,7 +83,6 @@ case "$response" in
         echo "Cancelled"
         ;;
 esac
-
 
 read -r -p "Upload to Woolrich Jalapeno [y/N] " response
 case "$response" in
