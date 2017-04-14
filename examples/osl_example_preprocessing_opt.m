@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%
+%% Introduction to automatic preprocessing in OSL using OPT
 % This is a TEMPLATE script for running the OHBA recommended preprocessing
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
 % CTF data as well) using OPT. It works through the following steps:
@@ -6,27 +6,20 @@
 % You'll need to alter (at the very least) the settings in:
 % datadir, fif_files, spm_files, structurals_files
 
-%%%%%%%%%%%%%%%%%%
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
 
-OSLDIR = getenv('OSLDIR');
-    
-%osldir = '/Users/andrew/Software/Matlab/osl2.0';
-
-%addpath(osldir);
 osl_startup();
 
-%%%%%%%%%%%%%%%%%%
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
-
 % directory where the data is:
 datadir = fullfile(osldir,'example_data','preproc_example','automatic_opt');
  
-
+%%
 % Set up the list of subjects and their structural scans for the analysis 
 clear raw_fif_files input_files spm_files structural_files;
 
+%%
 % Specify a list of the existing raw fif files for subjects for input into
 % Maxfilter.
 % Note that here we only have 1 subject, but more generally there would be
@@ -46,47 +39,47 @@ raw_fif_files{1}=[datadir '/fifs/loc_S02.fif'];
 input_files{1}=[datadir '/fifs/loc_S02_sss1.fif']; 
 spm_files{1}=[datadir '/spm_files/loc_S02']; 
 
+%%
 % Setup a list of existing structural files, in the same order as spm_files and fif_files:
 % Note that here we only have 1 subject, but more generally there would be
 % more than one.
 structural_files{1}=[datadir '/structs/anat.nii']; % leave empty if no .nii structural file available
 
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%% SETUP OPT
 
+%% SETUP OPT
 opt=[];
 
-%%%%
+%%
 % required inputs
 
-%opt.raw_fif_files=raw_fif_files;
 opt.input_files=input_files;
-%opt.spm_files=spm_files;
-
 opt.datatype='neuromag';
 
-%%%%
+%%
 % optional inputs
 
 opt.dirname=[datadir '/practical_badseg_africa.opt']; % directory opt settings and results will be stored
 
-% maxfilter settings
+%%
+% Maxfilter settings:
 opt.maxfilter.do=0; % here we are going to skip the double maxfilter call as this has been run already for us
  
-% africa settings
-% RATHER NOT!!!!
+%%
+% AFRICA settings
+% In this tutorial, we will not use AFRICA as part of automatic
+% preprocessing:
 opt.africa.do=0;
-opt.africa.ident.artefact_chans={'ECG','EOG'}; % artefact channels
-opt.africa.ident.mains_kurt_thresh=0.5;
 
-% highpass filter settings
+%%
+% highpass filter settings:
 opt.highpass.do=0;
 
+%%
 % bad segments settings
 opt.bad_segments.do=0;
 
+%% 
 % Epoching settings
-%
 % Here the epochs are set to be from -1s to +2s relative to triggers
 % in the MEG data.
 opt.epoch.do=1;
@@ -116,24 +109,25 @@ opt.epoch.trialdef(8).conditionlabel = 'RespRRespR';
 opt.epoch.trialdef(8).eventtype = 'STI101_down';
 opt.epoch.trialdef(8).eventvalue = 29;
 
+%%
 % coreg settings
 opt.coreg.do=0; % not doing coreg here - although normally you would if you want to do subsequent analyses in source space 
 
+%%
 % outliers settings
 opt.outliers.do=1;
 
-%%%%
-% setup settings
+%%
+% Checking chosen settings
 
 opt=osl_check_opt(opt);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%
 %% LOOK AT OPT SETTINGS
 
 disp('opt settings:');
 disp(opt);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% LOOK AT OPT SUB-SETTINGS
 
 disp('opt.maxfilter settings:');
@@ -157,7 +151,6 @@ disp(opt.outliers);
 disp('opt.coreg settings:');
 disp(opt.coreg);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%
 %% RUN OPT
 
 opt=osl_run_opt(opt);
