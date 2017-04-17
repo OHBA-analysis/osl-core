@@ -7,6 +7,8 @@ data_dir = fullfile(osldir,'example_data','glean_example');
 % Name for this GLEAN analysis:
 glean_name = fullfile(osldir,'example_data','glean_example','hmmmar_demo.mat');
 
+do_analysis = 0; 
+
 % List of data files. These data consist of 2 sessions of 10 minutes of 
 % eyes open resting state data recorded from 6 subjects on an Elekta
 % Neuromag system (using the 204 planar gradiometers only). The data were
@@ -53,7 +55,10 @@ settings.model.hmm.nreps   = 1;
 GLEAN = glean.setup(glean_name,data,settings);
 
 % Run the analysis:
-glean.run(GLEAN)
+if do_analysis
+    glean.run(GLEAN)
+    save(glean_name,'GLEAN')
+end
 
 %% Load results and visualise them 
 
