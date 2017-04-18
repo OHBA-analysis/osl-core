@@ -7,10 +7,73 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Introduction to manual preprocessing in OSL</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-14"><meta name="DC.source" content="osl_example_preprocessing_manual.m"></head><body><div class="content"><h1>Introduction to manual preprocessing in OSL</h1><!--introduction--><p>In this practical/template script we will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy). This is contained in the downloadable zip.file available online.</p><p>Note that this contains the fif file: fifs/sub1_face_sss.fif that has already been SSS Maxfiltered and downsampled to 250 Hz.</p><p>In this example we will take this fif file and run it through a manual preprocessing pipeline</p><p>MWW 2013, adapted and updated by RB 2017</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">SPECIFY DIRECTORIES AND FILES FOR THIS ANALYSIS</a></li><li><a href="#5">CONVERT FROM FIF TO AN SPM MEEG OBJECT:</a></li><li><a href="#6">LOAD THE SPM M/EEG OBJECT</a></li><li><a href="#7">SOME BASICS ABOUT SPM OBJECTS</a></li><li><a href="#9">DOWNSAMPLE</a></li><li><a href="#10">LOAD THE DOWNSAMPLED SPM MEEG OBJECT</a></li><li><a href="#11">FILTERING</a></li><li><a href="#13">OSLVIEW</a></li><li><a href="#14">AFRICA WITH MANUAL COMPONENT REJECTION</a></li><li><a href="#21">EPOCHING OF DATA</a></li><li><a href="#23">LOAD THE EPOCHED SPM MEEG OBJECT</a></li><li><a href="#27">VISUAL ARTEFACT REJECTION</a></li><li><a href="#28">EXAMINE THE CLEANED EPOCHED DATA</a></li><li><a href="#31">PLOTTING EVENT-RELATED TOPOGRAPHIES AT DEFINED LATENCIES</a></li></ul></div><h2 id="1">SETUP THE MATLAB PATHS</h2><pre class="codeinput">osl_startup;
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Introduction to manual preprocessing in OSL</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-18"><meta name="DC.source" content="osl_example_preprocessing_manual.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Introduction to manual preprocessing in OSL</h1><!--introduction--><p>In this practical/template script we will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy). This is contained in the downloadable zip.file available online.</p><p>Note that this contains the fif file: fifs/sub1_face_sss.fif that has already been SSS Maxfiltered and downsampled to 250 Hz.</p><p>In this example we will take this fif file and run it through a manual preprocessing pipeline</p><p>MWW 2013, adapted and updated by RB 2017</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">SPECIFY DIRECTORIES AND FILES FOR THIS ANALYSIS</a></li><li><a href="#5">CONVERT FROM FIF TO AN SPM MEEG OBJECT:</a></li><li><a href="#6">LOAD THE SPM M/EEG OBJECT</a></li><li><a href="#7">SOME BASICS ABOUT SPM OBJECTS</a></li><li><a href="#9">DOWNSAMPLE</a></li><li><a href="#10">LOAD THE DOWNSAMPLED SPM MEEG OBJECT</a></li><li><a href="#11">FILTERING</a></li><li><a href="#13">OSLVIEW</a></li><li><a href="#14">AFRICA WITH MANUAL COMPONENT REJECTION</a></li><li><a href="#23">EPOCHING OF DATA</a></li><li><a href="#25">LOAD THE EPOCHED SPM MEEG OBJECT</a></li><li><a href="#29">VISUAL ARTEFACT REJECTION</a></li><li><a href="#31">EXAMINE THE CLEANED EPOCHED DATA</a></li><li><a href="#35">PLOTTING EVENT-RELATED TOPOGRAPHIES AT DEFINED LATENCIES</a></li><li><a href="#37">SOME EXERCISES</a></li></ul></div><h2>SETUP THE MATLAB PATHS<a name="1"></a></h2><pre class="codeinput">osl_startup;
 </pre><pre class="codeoutput">Warning: Duplicate directory name:
 /Applications/MATLAB_R2016a.app/toolbox/stateflow/stateflow 
-</pre><h2 id="2">SPECIFY DIRECTORIES AND FILES FOR THIS ANALYSIS</h2><pre class="codeinput"><span class="comment">% directory where the data is:</span>
+</pre><h2>SPECIFY DIRECTORIES AND FILES FOR THIS ANALYSIS<a name="2"></a></h2><pre class="codeinput"><span class="comment">% directory where the data is:</span>
 datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'preproc_example'</span>,<span class="string">'manual'</span>);
 
 
@@ -22,7 +85,7 @@ clear <span class="string">fif_files</span> <span class="string">spm_files_basen
 </pre><pre class="codeoutput">mkdir: /Applications/osl/example_data/preproc_example/manual: File exists
 </pre><p>Specify a list of the existing fif files for subjects Note that here we only have 1 subject, but more generally there would be more than one, e.g.: fif_files{1}=[testdir '/fifs/sub1_face_sss.fif']; fif_files{2}=[testdir '/fifs/sub2_face_sss.fif']; etc...</p><pre class="codeinput">fif_files{1}=[datadir <span class="string">'/fifs/sub1_face_sss.fif'</span>];
 </pre><p>Setup a list of SPM MEEG object file names to be created, in the same order as spm_files and fif_files: Note that here we only have 1 subject, but more generally there would be more than one, e.g.: spm_files{1}=[workingdir '/spm8_meg1.mat']; spm_files{2}=[workingdir '/spm8_meg1.mat']; etc...</p><pre class="codeinput">spm_files_basenames{1}=[<span class="string">'spm_meg1.mat'</span>];
-</pre><h2 id="5">CONVERT FROM FIF TO AN SPM MEEG OBJECT:</h2><p>The fif file that we are working with is sub1_face_sss.fif. This has already been max-filtered for you and downsampled to 250Hz.</p><p>This will produce a histogram plot showing the number of events detected for each code on the trigger channel. The codes used on the trigger channel for this experiment were:</p><p>1 = Neutral face 2 = Happy face 3 = Fearful face 4 = Motorbike 18 = Introduction screen 11 = Break between blocks 19 = Midway break 12 = Green fixation cross (response trials) 13 = Red fixation cross (following green on response trials) 14 = Red fixation cross (non-response trials)</p><p>For example, there should be 120 motorbike trials, and 80 of each of the face conditions</p><pre class="codeinput"> <span class="keyword">for</span> subnum = 1:length(fif_files), <span class="comment">% iterates over subjects</span>
+</pre><h2>CONVERT FROM FIF TO AN SPM MEEG OBJECT:<a name="5"></a></h2><p>The fif file that we are working with is sub1_face_sss.fif. This has already been max-filtered for you and downsampled to 250Hz.</p><p>This will produce a histogram plot showing the number of events detected for each code on the trigger channel. The codes used on the trigger channel for this experiment were:</p><p>1 = Neutral face 2 = Happy face 3 = Fearful face 4 = Motorbike 18 = Introduction screen 11 = Break between blocks 19 = Midway break 12 = Green fixation cross (response trials) 13 = Red fixation cross (following green on response trials) 14 = Red fixation cross (non-response trials)</p><p>For example, there should be 120 motorbike trials, and 80 of each of the face conditions</p><pre class="codeinput"> <span class="keyword">for</span> subnum = 1:length(fif_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -43,79 +106,16 @@ clear <span class="string">fif_files</span> <span class="string">spm_files_basen
 <span class="comment">% Note that this spmfile is the output from the conversion:</span>
 spm_files{1}
 </pre><pre class="codeoutput">
-SPM12: spm_eeg_convert_4osl (v6190)                21:51:23 - 14/04/2017
+SPM12: spm_eeg_convert_4osl (v6190)                12:31:49 - 18/04/2017
 ========================================================================
 
-SPM12: spm_eeg_convert_4osl (v6190)                21:51:23 - 14/04/2017
+SPM12: spm_eeg_convert_4osl (v6190)                12:31:49 - 18/04/2017
 ========================================================================
 	306 MEG channel locations transformed
 Reading /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif ...
 Opening raw data file /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif...
 	Range : 74500 ... 306499  =    298.000 ...  1225.996 secs
-Ready.
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif...
-	Range : 74500 ... 306499  =    298.000 ...  1225.996 secs
-Ready.
-Reading 74500 ... 306499  =    298.000 ...  1225.996 secs... [done]
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif...
-	Range : 74500 ... 306499  =    298.000 ...  1225.996 secs
-Ready.
-Warning: Could not obtain electrode locations automatically. 
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif...
-	Range : 74500 ... 306499  =    298.000 ...  1225.996 secs
-Ready.
-Data type is missing or incorrect, assigning default.
-creating layout from cfg.grad
-creating layout for neuromag306 system
-Reading 74500 ... 84643  =    298.000 ...   338.572 secs... [done]
-Reading 84644 ... 94787  =    338.576 ...   379.148 secs... [done]
-Reading 94788 ... 104931  =    379.152 ...   419.724 secs... [done]
-Reading 104932 ... 115075  =    419.728 ...   460.300 secs... [done]
-Reading 115076 ... 125219  =    460.304 ...   500.876 secs... [done]
-Reading 125220 ... 135363  =    500.880 ...   541.452 secs... [done]
-Reading 135364 ... 145507  =    541.456 ...   582.028 secs... [done]
-Reading 145508 ... 155651  =    582.032 ...   622.604 secs... [done]
-Reading 155652 ... 165795  =    622.608 ...   663.180 secs... [done]
-Reading 165796 ... 175939  =    663.184 ...   703.756 secs... [done]
-Reading 175940 ... 186083  =    703.760 ...   744.332 secs... [done]
-Reading 186084 ... 196227  =    744.336 ...   784.908 secs... [done]
-Reading 196228 ... 206371  =    784.912 ...   825.484 secs... [done]
-Reading 206372 ... 216515  =    825.488 ...   866.060 secs... [done]
-Reading 216516 ... 226659  =    866.064 ...   906.636 secs... [done]
-Reading 226660 ... 236803  =    906.640 ...   947.212 secs... [done]
-Reading 236804 ... 246947  =    947.216 ...   987.788 secs... [done]
-Reading 246948 ... 257091  =    987.792 ...  1028.364 secs... [done]
-Reading 257092 ... 267235  =   1028.368 ...  1068.940 secs... [done]
-Reading 267236 ... 277379  =   1068.944 ...  1109.516 secs... [done]
-Reading 277380 ... 287523  =   1109.520 ...  1150.092 secs... [done]
-Reading 287524 ... 297667  =   1150.096 ...  1190.668 secs... [done]
-Reading 297668 ... 306499  =   1190.672 ...  1225.996 secs... [done]
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif...
-	Range : 74500 ... 306499  =    298.000 ...  1225.996 secs
-Ready.
-Warning: Could not obtain electrode locations automatically. 
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/manual/fifs/sub1_face_sss.fif...
-	Range : 74500 ... 306499  =    298.000 ...  1225.996 secs
-Ready.
-Data type is missing or incorrect, assigning default.
-creating layout from cfg.grad
-creating layout for neuromag306 system
-
-ans =
-
-/Applications/osl/example_data/preproc_example/manual/spm_meg1.mat
-
-</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_01.png" style="width:560px;height:420px;" alt=""> <h2 id="6">LOAD THE SPM M/EEG OBJECT</h2><p>Set filenames used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+...</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_01.png" style="width:640px;height:480px;" alt=""> <h2>LOAD THE SPM M/EEG OBJECT<a name="6"></a></h2><p>Set filenames used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -136,11 +136,7 @@ Transform: time
 Sampling frequency: 250 Hz
 Loaded from file  /Applications/osl/example_data/preproc_example/manual/spm_meg1.mat
 
-Use the syntax D(channels, samples, trials) to access the data
-Type "methods('meeg')" for the list of methods performing other operations with the object
-Type "help meeg/method_name" to get help about methods
-
-</pre><h2 id="7">SOME BASICS ABOUT SPM OBJECTS</h2><p>The above output gives you some basic information about the M/EEG object that has been loaded into workspace. Note that the data values themselves are memory-mapped from spm_meg1.dat and can be accessed by indexing the D object (e.g, D(1,2,3) returns the field strength in the first sensor at the second sample point during the third trial).</p><pre class="codeinput">D.ntrials
+...</pre><h2>SOME BASICS ABOUT SPM OBJECTS<a name="7"></a></h2><p>The above output gives you some basic information about the M/EEG object that has been loaded into workspace. Note that the data values themselves are memory-mapped from spm_meg1.dat and can be accessed by indexing the D object (e.g, D(1,2,3) returns the field strength in the first sensor at the second sample point during the third trial).</p><pre class="codeinput">D.ntrials
 <span class="comment">% will return the number of trials.</span>
 
 <span class="comment">% Typing</span>
@@ -168,17 +164,7 @@ ans =
 
     'Undefined'
 
-
-ans = 
-
-    'Undefined'
-
-
-ans =
-
-         323      232000           1
-
-</pre><p>will show the size of the data matrix (for channels, samples and trials respectively). The size of each dimension separately can be accessed by D.nchannels, D.nsamples and D.ntrials. Note that although the syntax of these commands is similar to those used for accessing the fields of a struct data type in Matlab what?s actually happening here is that these commands evoke special functions called ?methods? and these methods collect and return the requested information from the internal data structure of the D object. The internal structure is not accessible directly when working with the object. This mechanism greatly enhances the robustness.</p><pre class="codeinput"><span class="comment">% Type</span>
+...</pre><p>will show the size of the data matrix (for channels, samples and trials respectively). The size of each dimension separately can be accessed by D.nchannels, D.nsamples and D.ntrials. Note that although the syntax of these commands is similar to those used for accessing the fields of a struct data type in Matlab what?s actually happening here is that these commands evoke special functions called ?methods? and these methods collect and return the requested information from the internal data structure of the D object. The internal structure is not accessible directly when working with the object. This mechanism greatly enhances the robustness.</p><pre class="codeinput"><span class="comment">% Type</span>
 methods(<span class="string">'meeg'</span>)
 <span class="comment">% for the full list of methods performing operations with the object.</span>
 
@@ -193,18 +179,7 @@ badtrials       frequencies     meeg            selectdata
 blank           fsample         modality        sensors         
 chanlabels      ftraw           montage         size            
 chantype        fttimelock      move            subsasgn        
-check           fullfile        nchannels       subsref         
-clone           getfield        nconditions     subsref1        
-conditions      history         nfrequencies    time            
-condlist        indchannel      nsamples        timeonset       
-coor2D          indchantype     ntrials         transformtype   
-copy            indfrequency    path            trialonset      
-delete          indsample       reload          type            
-display         indtrial        repl            units           
-events          isempty         rmdata          unlink          
-fiducials       isequal         rmfield         
-
-</pre><h2 id="9">DOWNSAMPLE</h2><p>(particularly important if movement compensation is used, as this stops you from downsampling when running Maxfilter - but worth doing anyway)</p><pre class="codeinput"><span class="comment">% Set filenames used in following steps</span>
+...</pre><h2>DOWNSAMPLE<a name="9"></a></h2><p>(particularly important if movement compensation is used, as this stops you from downsampling when running Maxfilter - but worth doing anyway)</p><pre class="codeinput"><span class="comment">% Set filenames used in following steps</span>
 <span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
@@ -218,9 +193,9 @@ S=[];
     D = spm_eeg_downsample (S);
 <span class="keyword">end</span>
 </pre><pre class="codeoutput">
-SPM12: spm_eeg_downsample (v6016)                  21:51:36 - 14/04/2017
+SPM12: spm_eeg_downsample (v6016)                  12:31:59 - 18/04/2017
 ========================================================================
-</pre><h2 id="10">LOAD THE DOWNSAMPLED SPM MEEG OBJECT</h2><p>Set filenames used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><h2>LOAD THE DOWNSAMPLED SPM MEEG OBJECT<a name="10"></a></h2><p>Set filenames used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/d'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -241,11 +216,7 @@ Transform: time
 Sampling frequency: 150 Hz
 Loaded from file  /Applications/osl/example_data/preproc_example/manual/dspm_meg1.mat
 
-Use the syntax D(channels, samples, trials) to access the data
-Type "methods('meeg')" for the list of methods performing other operations with the object
-Type "help meeg/method_name" to get help about methods
-
-</pre><h2 id="11">FILTERING</h2><p>Note that there are some large artefacts. Use the oslview functionality to remove the bad epochs (see the osl_example_africa.m practical for how to do this).</p><pre class="codeinput"><span class="comment">%set filenames used in following steps</span>
+...</pre><h2>FILTERING<a name="11"></a></h2><p>Note that there are some large artefacts. Use the oslview functionality to remove the bad epochs (see the osl_example_africa.m practical for how to do this).</p><pre class="codeinput"><span class="comment">%set filenames used in following steps</span>
 <span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/d'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
@@ -255,16 +226,18 @@ S2.band=<span class="string">'high'</span>;
 S2.freq=0.1;
 D=spm_eeg_filter(S2);
 </pre><pre class="codeoutput">
-SPM12: spm_eeg_filter (v5876)                      21:51:42 - 14/04/2017
+SPM12: spm_eeg_filter (v5876)                      12:32:03 - 18/04/2017
 ========================================================================
-</pre><h2 id="13">OSLVIEW</h2><p>Now load oslview. This data has some bad artefacts in. Mark the epochs at around 325s, 380s and 600s as bad. Marking is done by right-clicking in the proximity of the event and click on 'Mark Event'. A first click (green dashed label) marks the begin of a bad period, a nother second click indicates the end (in red). Also, mark the really bad artefacts at the end of the the experiment from about 650 secs to the end. This will mean that we are not using about half of the data. But with such bad artefacts this is the best we can do. We can still obtain good results with what remains. push disk button to save to disk (same name)</p><pre class="codeinput">D=oslview(D);
-
+</pre><h2>OSLVIEW<a name="13"></a></h2><p>Now load oslview. This data has some bad artefacts in. Mark the epochs at around 325s, 380s and 600s as bad. Marking is done by right-clicking in the proximity of the event and click on 'Mark Event'. A first click (green dashed label) marks the begin of a bad period, a nother second click indicates the end (in red). Also, mark the really bad artefacts at the end of the the experiment from about 650 secs to the end. This will mean that we are not using about half of the data. But with such bad artefacts this is the best we can do. We can still obtain good results with what remains. push disk button to save to disk (same name)</p><pre class="codeinput">figure;
+D=oslview(D);
 keyboard;
-</pre><h2 id="14">AFRICA WITH MANUAL COMPONENT REJECTION</h2><p>Run AFRICA ICA denoising. AFRICA uses independent component analysis to decompose sensor data into a set of maximally independent time courses. Using this framework, sources of interference such as eye-blinks, ECG artefacts and mains noise can be identified and removed from the data. % % In this practical we will use manual artefact rejection by looking at the time courses and sensor topographies of each component and rejecting those that correlate with EOG and ECG measurements. The user interface displays the time course, power spectrum and sensor topography for each component. These components are sorted based on one of a number of metrics, which you can toggle using the dropdown menu.</p><pre class="codeinput"><span class="comment">% Set new SPM MEEG object filenames to be used in following steps</span>
+snapnow;
+</pre> <img vspace="5" hspace="5" src="osl_example_preprocessing_manual_03.png" style="width:1280px;height:670px;" alt=""> <h2>AFRICA WITH MANUAL COMPONENT REJECTION<a name="14"></a></h2><p>Run AFRICA ICA denoising. AFRICA uses independent component analysis to decompose sensor data into a set of maximally independent time courses. Using this framework, sources of interference such as eye-blinks, ECG artefacts and mains noise can be identified and removed from the data. % % In this practical we will use manual artefact rejection by looking at the time courses and sensor topographies of each component and rejecting those that correlate with EOG and ECG measurements. The user interface displays the time course, power spectrum and sensor topography for each component. These components are sorted based on one of a number of metrics, which you can toggle using the dropdown menu.</p><pre class="codeinput"><span class="comment">% Set new SPM MEEG object filenames to be used in following steps</span>
 <span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/fd'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
-</pre><p>Scroll through components using the cursor keys. Identify the two components that correlate with the EOG and ECG measurements and mark them for rejection using the red cross. NB: Just close the window when finished to save your results.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files)
+</pre><p>Scroll through components using the cursor keys. Identify the two components that correlate with the EOG and ECG measurements and mark them for rejection using the red cross. NB: Just close the window when finished to save your results.</p><pre class="codeinput">figure;
+<span class="keyword">for</span> subnum = 1:length(spm_files)
 
     [dirname,filename] = fileparts(spm_files{subnum});
 
@@ -276,193 +249,40 @@ keyboard;
     S.ident.func      = @identify_artefactual_components_manual;
     S.to_do           = [1 1 1];
     S.ident.artefact_chans = {<span class="string">'EOG'</span>,<span class="string">'ECG'</span>};
-
     osl_africa(S);
-
 <span class="keyword">end</span>
 </pre><pre class="codeoutput">Number of signals: 306
-Number of samples: 91307
+Number of samples: 87824
 Calculating covariance...
 Reducing dimension...
 Selected [ 62 ] dimensions.
-Smallest remaining (non-zero) eigenvalue [ 2.25931 ]
-Largest remaining (non-zero) eigenvalue [ 51058 ]
-Sum of removed eigenvalues [ 7.96607 ]
-[ 99.9916 ] % of (non-zero) eigenvalues retained.
+Smallest remaining (non-zero) eigenvalue [ 2.25263 ]
+Largest remaining (non-zero) eigenvalue [ 19270.6 ]
+Sum of removed eigenvalues [ 7.95623 ]
+[ 99.9849 ] % of (non-zero) eigenvalues retained.
 Whitening...
-Check: covariance differs from identity by [ 5.16884e-13 ].
-Used approach [ symm ].
-Used nonlinearity [ tanh ].
-Using stabilized algorithm.
-Starting ICA calculation...
-Step no. 1
-Step no. 2, change in value of estimate: 0.808 
-Step no. 3, change in value of estimate: 0.943 
-Step no. 4, change in value of estimate: 0.974 
-Step no. 5, change in value of estimate: 0.983 
-Step no. 6, change in value of estimate: 0.623 
-Step no. 7, change in value of estimate: 0.157 
-Step no. 8, change in value of estimate: 0.0559 
-Step no. 9, change in value of estimate: 0.0265 
-Step no. 10, change in value of estimate: 0.0302 
-Step no. 11, change in value of estimate: 0.0214 
-Step no. 12, change in value of estimate: 0.0128 
-Step no. 13, change in value of estimate: 0.00953 
-Step no. 14, change in value of estimate: 0.00916 
-Step no. 15, change in value of estimate: 0.0067 
-Step no. 16, change in value of estimate: 0.00438 
-Step no. 17, change in value of estimate: 0.00441 
-Step no. 18, change in value of estimate: 0.0047 
-Step no. 19, change in value of estimate: 0.00481 
-Step no. 20, change in value of estimate: 0.00451 
-Step no. 21, change in value of estimate: 0.00485 
-Step no. 22, change in value of estimate: 0.00532 
-Step no. 23, change in value of estimate: 0.0056 
-Step no. 24, change in value of estimate: 0.00515 
-Step no. 25, change in value of estimate: 0.00385 
-Step no. 26, change in value of estimate: 0.00246 
-Step no. 27, change in value of estimate: 0.00159 
-Step no. 28, change in value of estimate: 0.00111 
-Step no. 29, change in value of estimate: 0.000849 
-Step no. 30, change in value of estimate: 0.000818 
-Step no. 31, change in value of estimate: 0.000782 
-Step no. 32, change in value of estimate: 0.000756 
-Step no. 33, change in value of estimate: 0.000731 
-Step no. 34, change in value of estimate: 0.000709 
-Step no. 35, change in value of estimate: 0.000764 
-Step no. 36, change in value of estimate: 0.000849 
-Step no. 37, change in value of estimate: 0.000943 
-Step no. 38, change in value of estimate: 0.00105 
-Step no. 39, change in value of estimate: 0.00115 
-Step no. 40, change in value of estimate: 0.00124 
-Step no. 41, change in value of estimate: 0.00131 
-Step no. 42, change in value of estimate: 0.00134 
-Step no. 43, change in value of estimate: 0.00159 
-Step no. 44, change in value of estimate: 0.00194 
-Step no. 45, change in value of estimate: 0.00234 
-Step no. 46, change in value of estimate: 0.00278 
-Step no. 47, change in value of estimate: 0.00322 
-Step no. 48, change in value of estimate: 0.0036 
-Step no. 49, change in value of estimate: 0.00381 
-Step no. 50, change in value of estimate: 0.00371 
-Step no. 51, change in value of estimate: 0.00318 
-Step no. 52, change in value of estimate: 0.00236 
-Step no. 53, change in value of estimate: 0.00155 
-Step no. 54, change in value of estimate: 0.000931 
-Step no. 55, change in value of estimate: 0.00071 
-Step no. 56, change in value of estimate: 0.000583 
-Step no. 57, change in value of estimate: 0.000462 
-Step no. 58, change in value of estimate: 0.000366 
-Step no. 59, change in value of estimate: 0.000294 
-Step no. 60, change in value of estimate: 0.00024 
-Step no. 61, change in value of estimate: 0.000201 
-Step no. 62, change in value of estimate: 0.000173 
-Step no. 63, change in value of estimate: 0.000153 
-Step no. 64, change in value of estimate: 0.00014 
-Step no. 65, change in value of estimate: 0.00013 
-Step no. 66, change in value of estimate: 0.000123 
-Step no. 67, change in value of estimate: 0.000118 
-Step no. 68, change in value of estimate: 0.000114 
-Step no. 69, change in value of estimate: 0.000112 
-Step no. 70, change in value of estimate: 0.000111 
-Step no. 71, change in value of estimate: 0.000112 
-Step no. 72, change in value of estimate: 0.000114 
-Step no. 73, change in value of estimate: 0.000117 
-Step no. 74, change in value of estimate: 0.000123 
-Step no. 75, change in value of estimate: 0.000132 
-Step no. 76, change in value of estimate: 0.000143 
-Step no. 77, change in value of estimate: 0.000158 
-Step no. 78, change in value of estimate: 0.000176 
-Step no. 79, change in value of estimate: 0.000198 
-Step no. 80, change in value of estimate: 0.000222 
-Step no. 81, change in value of estimate: 0.000248 
-Step no. 82, change in value of estimate: 0.000274 
-Step no. 83, change in value of estimate: 0.000298 
-Step no. 84, change in value of estimate: 0.000319 
-Step no. 85, change in value of estimate: 0.000333 
-Step no. 86, change in value of estimate: 0.000339 
-Step no. 87, change in value of estimate: 0.000336 
-Step no. 88, change in value of estimate: 0.000322 
-Step no. 89, change in value of estimate: 0.0003 
-Step no. 90, change in value of estimate: 0.00027 
-Step no. 91, change in value of estimate: 0.000237 
-Step no. 92, change in value of estimate: 0.000204 
-Step no. 93, change in value of estimate: 0.000172 
-Step no. 94, change in value of estimate: 0.000142 
-Step no. 95, change in value of estimate: 0.000117 
-Convergence after 96 steps
-Adding the mean back to the data.
-
-Saving ICA results to /Applications/osl/example_data/preproc_example/manual/fdspm_meg1_africa.mat
-Precomputing sensor topographies for modality MEGMAG
-Precomputing sensor topographies for modality MEGPLANAR
-
-Saving metrics and topos to /Applications/osl/example_data/preproc_example/manual/fdspm_meg1_africa.mat
-Warning: The DrawMode property will be removed in a future release. Use the
-SortMethod property instead. 
-Warning: The DrawMode property will be removed in a future release. Use the
-SortMethod property instead. 
-Warning: The DrawMode property will be removed in a future release. Use the
-SortMethod property instead. 
-Warning: The DrawMode property will be removed in a future release. Use the
-SortMethod property instead. 
-Warning: The DrawMode property will be removed in a future release. Use the
-SortMethod property instead. 
-Warning: The DrawMode property will be removed in a future release. Use the
-SortMethod property instead. 
-
-Saving bad component selection to /Applications/osl/example_data/preproc_example/manual/fdspm_meg1_africa.mat
-
-SPM12: spm_eeg_montage (v6370)                     23:37:37 - 14/04/2017
-========================================================================
-Warning: copying input chantype to montage 
-Warning: copying input chanunit to montage 
-Warning: assuming that planar channel units are T/mm 
-creating layout from cfg.grad
-Warning: UndoBalancing is disabled. Your analysis will proceed using the
-third-order gradiometer-corrected signals.
- 
-creating layout for neuromag306 system
-SPM M/EEG data object
-Type: continuous
-Transform: time
-1 conditions
-323 channels
-139200 samples/trial
-1 trials
-Sampling frequency: 150 Hz
-Loaded from file  /Applications/osl/example_data/preproc_example/manual/Mfdspm_meg1.mat
-
-Use the syntax D(channels, samples, trials) to access the data
-Type "methods('meeg')" for the list of methods performing other operations with the object
-Type "help meeg/method_name" to get help about methods
-
-
-SPM12: spm_eeg_copy (v5079)                        23:37:45 - 14/04/2017
-========================================================================
-</pre><p>Now, after having done AFRICA denoising, let's have a look at the differences. AFRICA saved the cleaned data by default with 'A' preceding all other prefixes. However, it also saved an online montage to the current D object. This is what we will use now to have a look.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+...</pre><p><img vspace="5" hspace="5" src="AFRICA_HEARTBEAT.png" alt=""> </p><p><img vspace="5" hspace="5" src="AFRICA_EYEMOVEMTS.png" alt=""> </p><p>Now, after having done AFRICA denoising, let's have a look at the differences. AFRICA saved the cleaned data by default with 'A' preceding all other prefixes. However, it also saved an online montage to the current D object. This is what we will use now to have a look.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/fd'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 </pre><p>We load in the SPM M/EEG object</p><pre class="codeinput">subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 </pre><p>We load the data in, just switching between RAW and AFRICA denoised version.</p><pre class="codeinput">D_raw=D.montage(<span class="string">'switch'</span>,0);
 D_africa=D.montage(<span class="string">'switch'</span>,1);
-</pre><p>The first part is to plot the ECG channel included in the recording as reference.</p><pre class="codeinput">figure;
+</pre><p>Now we plot some data to check the differences between raw and denoised data.</p><pre class="codeinput">figure;
 subplot(2,1,1);
 plot(D_raw.time(1:10000),D_raw(308,1:10000))
 title(<span class="string">'ECG channel'</span>)
 xlim([10 20]);xlabel(<span class="string">'Time (s)'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_02.png" style="width:560px;height:420px;" alt=""> <p>In a second part we plot both a channel that has some ECG artifacts in without any preprocessing and with AFRICA run on it. The difference is clearly there.</p><pre class="codeinput">subplot(2,1,2);
+
+subplot(2,1,2);
 plot(D_raw.time(1:10000),D_raw(306,1:10000))
 title(<span class="string">'ECG contaminated channel'</span>)
 xlim([10 20]);
-
 hold <span class="string">on</span>;
 plot(D_africa.time(1:10000),D_africa(306,1:10000),<span class="string">'r'</span>);
 xlim([10 20]);xlabel(<span class="string">'Time (s)'</span>);
-
 legend({<span class="string">'Raw'</span> <span class="string">'AFRICA denoised'</span>})
-</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_03.png" style="width:560px;height:420px;" alt=""> <h2 id="21">EPOCHING OF DATA</h2><p>Does preliminary epoching for the purpose of finding outliers This is not the final epoching. Instead this sets up the epoch definitions, and performs a temporary epoching for the purpose of doing semi-automated outlier trial rejection (before running the fully automated OAT). The epoch definitions and the continuous data will be kept and passed into OAT. This is so that things like temporal filtering (which is dones as part of OAT) can be done on the continuous data, before the data is epoched inside OAT. Note that this will also remove those trials that overlap with the bad epochs identified using OSLview. Here the epochs are set to be from -1000ms to +2000ms relative to the triggers in the MEG data. We also specify the trigger values for each of the 4 epoch types of interest (motorcycle images, neutral faces, fearful faces, happy faces). The codes used on the trigger channel for this experiment were: 1 = Neutral face 2 = Happy face 3 = Fearful face 4 = Motorbike 18 = Introduction screen 11 = Break between blocks 19 = Midway break 12 = Green fixation cross (response trials) 13 = Red fixation cross (following green on response trials) 14 = Red fixation cross (non-response trials) Note that we're only interested in the first 4 event codes listed here for today's workshop.</p><p>Set filenames used in following step</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_06.png" style="width:1280px;height:800px;" alt=""> <p>The first part of this figure plots the ECG channel included in the recording as reference. In the second part we plot two versions of the same channel, one that shows the raw time series, so without any preprocessing and the other with AFRICA run on it. You can see that there is some commonalities between the ECG and some part of the raw time-series in the data, but that this is gone in the denoised version. So AFRICA has removed most of the ECG contaminated parts in the signal. If this is not the case in your plot, make sure you have indeed removed the first independent component in AFRICA.</p><h2>EPOCHING OF DATA<a name="23"></a></h2><p>Does preliminary epoching for the purpose of finding outliers This is not the final epoching. Instead this sets up the epoch definitions, and performs a temporary epoching for the purpose of doing semi-automated outlier trial rejection (before running the fully automated OAT). The epoch definitions and the continuous data will be kept and passed into OAT. This is so that things like temporal filtering (which is dones as part of OAT) can be done on the continuous data, before the data is epoched inside OAT. Note that this will also remove those trials that overlap with the bad epochs identified using OSLview. Here the epochs are set to be from -1000ms to +2000ms relative to the triggers in the MEG data. We also specify the trigger values for each of the 4 epoch types of interest (motorcycle images, neutral faces, fearful faces, happy faces). The codes used on the trigger channel for this experiment were: 1 = Neutral face 2 = Happy face 3 = Fearful face 4 = Motorbike 18 = Introduction screen 11 = Break between blocks 19 = Midway break 12 = Green fixation cross (response trials) 13 = Red fixation cross (following green on response trials) 14 = Red fixation cross (non-response trials) Note that we're only interested in the first 4 event codes listed here for today's workshop.</p><p>Set filenames used in following step</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/fd'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -510,13 +330,13 @@ legend({<span class="string">'Raw'</span> <span class="string">'AFRICA denoised'
     D = osl_epoch(S3);
 <span class="keyword">end</span>;
 </pre><pre class="codeoutput">
-	SPM12: spm_eeg_definetrial (v6182)         23:37:47 - 14/04/2017
+	SPM12: spm_eeg_definetrial (v6182)         12:37:06 - 18/04/2017
 	----------------------------------------------------------------
 
-SPM12: spm_eeg_epochs (v6183)                      23:37:47 - 14/04/2017
+SPM12: spm_eeg_epochs (v6183)                      12:37:06 - 18/04/2017
 ========================================================================
 Data type is missing or incorrect, assigning default.
-</pre><h2 id="23">LOAD THE EPOCHED SPM MEEG OBJECT</h2><p>set filenames used in following step. Prefix 'e' is the default prefix for epoched data, followed by the prefixes of preceding preprocessing steps.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><h2>LOAD THE EPOCHED SPM MEEG OBJECT<a name="25"></a></h2><p>set filenames used in following step. Prefix 'e' is the default prefix for epoched data, followed by the prefixes of preceding preprocessing steps.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/efd'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -536,12 +356,14 @@ D.time;
 motorbike_trls = indtrial(D,<span class="string">'Motorbike'</span>);
 </pre><p>Identify channels of certain types using the meegchannels function. E.g. identify the channel indices for the planar gradiometers and for the magnetometers (what you have available may depend on the actual MEG device) (Note that you can use 'MEGMAG' to get the gradiometers, and D.chantype gives you a list of all channel types by index).</p><pre class="codeinput">planars = D.indchantype(<span class="string">'MEGPLANAR'</span>);
 magnetos = D.indchantype(<span class="string">'MEGMAG'</span>);
-</pre><p>We can access the actual MEG data using the syntax: D(channels, samples, trials). E.g. plot a figure showing all the trials for the motorbike condition in the 135th MEGPLANAR channel. Note that the squeeze function is needed to remove single dimensions for passing to the plot function, and D.time is used to return the time labels of the within trial time points in seconds.</p><pre class="codeinput">figure; plot(D.time,squeeze(D(planars(135),:,motorbike_trls))); xlabel(<span class="string">'time (seconds)'</span>);
+</pre><p>We can access the actual MEG data using the syntax: D(channels, samples, trials). E.g. plot a figure showing all the trials for the motorbike condition in the 135th MEGPLANAR channel. Note that the squeeze function is needed to remove single dimensions for passing to the plot function, and D.time is used to return the time labels of the within trial time points in seconds.</p><pre class="codeinput">figure; plot(D.time,squeeze(D(planars(135),:,motorbike_trls)));
+xlabel(<span class="string">'time (seconds)'</span>);
 <span class="comment">% We can average over all the motorbike trials to get a rudimentary ERF</span>
 <span class="comment">% (Event-Related Field):</span>
 
-figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3))); xlabel(<span class="string">'time (seconds)'</span>);
-</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_04.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="osl_example_preprocessing_manual_05.png" style="width:560px;height:420px;" alt=""> <p>As you will notive, the ERFs look pretty bad. However, we should bear in mind that this data is averaging over all data including noisy data segments, channels and trials. To do better than this we need to perform outlier rejection and exclude bad trials (see below).</p><h2 id="27">VISUAL ARTEFACT REJECTION</h2><p>This runs a Fieldtrip interactive tool.</p><p>- Pass over the first interactive figure as it is the EOG channel - so just press the "quit" button.</p><p>This will bring up another interactive figure which will show the magnetometers. You can choose the metric to display - it is best to stick to the default, which is variance. This metric is then displayed for the different trials (bottom left), the different channels (top right), and for the combination of the two (top left). You need to use this information to identify those trials and channels with high variance and remove them.</p><p>- Remove the worst channel (with highest variance) by drawing a box around it in the top right plot with the mouse. - Now remove the trials with high variance by drawing a box around them in the bottom left plot. - Repeat this until you are happy that there are no more outliers.</p><p>- Press "quit" and repeat the process for the gradiometers.</p><pre class="codeinput"><span class="comment">%set filenames used in following step</span>
+figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3)));
+xlabel(<span class="string">'time (seconds)'</span>);
+</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_07.png" style="width:640px;height:400px;" alt=""> <img vspace="5" hspace="5" src="osl_example_preprocessing_manual_08.png" style="width:640px;height:400px;" alt=""> <p>As you will notive, the ERFs look pretty bad. However, we should bear in mind that this data is averaging over all data including noisy data segments, channels and trials. To do better than this we need to perform outlier rejection and exclude bad trials (see below).</p><h2>VISUAL ARTEFACT REJECTION<a name="29"></a></h2><p>This runs a Fieldtrip interactive tool.</p><p>- Pass over the first interactive figure as it is the EOG channel - so just press the "quit" button.</p><p>This will bring up another interactive figure which will show the magnetometers. You can choose the metric to display - it is best to stick to the default, which is variance. This metric is then displayed for the different trials (bottom left), the different channels (top right), and for the combination of the two (top left). You need to use this information to identify those trials and channels with high variance and remove them.</p><p>- Remove the worst channel (with highest variance) by drawing a box around it in the top right plot with the mouse. - Now remove the trials with high variance by drawing a box around them in the bottom left plot. - Repeat this until you are happy that there are no more outliers.</p><p>- Press "quit" and repeat the process for the gradiometers.</p><pre class="codeinput"><span class="comment">%set filenames used in following step</span>
 <span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/efd'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
@@ -554,99 +376,16 @@ figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3))); xlabel(<
     D2=osl_rejectvisual(S2);
 <span class="keyword">end</span>;
 </pre><pre class="codeoutput">No bad channels currently marked.
-112 trials of 360 have already been marked as bad.
+121 trials of 360 have already been marked as bad.
 %%% 1. EOG %%%
 mapping condition label "Motorbike" to condition code 1
 mapping condition label "Happy face" to condition code 2
 mapping condition label "Fearful face" to condition code 3
 mapping condition label "Neutral face" to condition code 4
-the input is raw data with 323 channels and 248 trials
+the input is raw data with 323 channels and 239 trials
 showing a summary of the data for all channels and trials
-computing metric [--------------------------------------------------------/]
-234 trials marked as GOOD, 14 trials marked as BAD
-1 channels marked as GOOD, 322 channels marked as BAD
-the following trials were removed: 63, 72, 76, 80, 81, 84, 112, 114, 131, 153, 154, 156, 169, 170
-the following channels were removed: MEG0113, MEG0112, MEG0111, MEG0122, MEG0123, MEG0121, MEG0132, MEG0133, MEG0131, MEG0143, MEG0142, MEG0141, MEG0213, MEG0212, MEG0211, MEG0222, MEG0223, MEG0221, MEG0232, MEG0233, MEG0231, MEG0243, MEG0242, MEG0241, MEG0313, MEG0312, MEG0311, MEG0322, MEG0323, MEG0321, MEG0333, MEG0332, MEG0331, MEG0343, MEG0342, MEG0341, MEG0413, MEG0412, MEG0411, MEG0422, MEG0423, MEG0421, MEG0432, MEG0433, MEG0431, MEG0443, MEG0442, MEG0441, MEG0513, MEG0512, MEG0511, MEG0523, MEG0522, MEG0521, MEG0532, MEG0533, MEG0531, MEG0542, MEG0543, MEG0541, MEG0613, MEG0612, MEG0611, MEG0622, MEG0623, MEG0621, MEG0633, MEG0632, MEG0631, MEG0642, MEG0643, MEG0641, MEG0713, MEG0712, MEG0711, MEG0723, MEG0722, MEG0721, MEG0733, MEG0732, MEG0731, MEG0743, MEG0742, MEG0741, MEG0813, MEG0812, MEG0811, MEG0822, MEG0823, MEG0821, MEG0913, MEG0912, MEG0911, MEG0923, MEG0922, MEG0921, MEG0932, MEG0933, MEG0931, MEG0942, MEG0943, MEG0941, MEG1013, MEG1012, MEG1011, MEG1023, MEG1022, MEG1021, MEG1032, MEG1033, MEG1031, MEG1043, MEG1042, MEG1041, MEG1112, MEG1113, MEG1111, MEG1123, MEG1122, MEG1121, MEG1133, MEG1132, MEG1131, MEG1142, MEG1143, MEG1141, MEG1213, MEG1212, MEG1211, MEG1223, MEG1222, MEG1221, MEG1232, MEG1233, MEG1231, MEG1243, MEG1242, MEG1241, MEG1312, MEG1313, MEG1311, MEG1323, MEG1322, MEG1321, MEG1333, MEG1332, MEG1331, MEG1342, MEG1343, MEG1341, MEG1412, MEG1413, MEG1411, MEG1423, MEG1422, MEG1421, MEG1433, MEG1432, MEG1431, MEG1442, MEG1443, MEG1441, MEG1512, MEG1513, MEG1511, MEG1522, MEG1523, MEG1521, MEG1533, MEG1532, MEG1531, MEG1543, MEG1542, MEG1541, MEG1613, MEG1612, MEG1611, MEG1622, MEG1623, MEG1621, MEG1632, MEG1633, MEG1631, MEG1643, MEG1642, MEG1641, MEG1713, MEG1712, MEG1711, MEG1722, MEG1723, MEG1721, MEG1732, MEG1733, MEG1731, MEG1743, MEG1742, MEG1741, MEG1813, MEG1812, MEG1811, MEG1822, MEG1823, MEG1821, MEG1832, MEG1833, MEG1831, MEG1843, MEG1842, MEG1841, MEG1912, MEG1913, MEG1911, MEG1923, MEG1922, MEG1921, MEG1932, MEG1933, MEG1931, MEG1943, MEG1942, MEG1941, MEG2013, MEG2012, MEG2011, MEG2023, MEG2022, MEG2021, MEG2032, MEG2033, MEG2031, MEG2042, MEG2043, MEG2041, MEG2113, MEG2112, MEG2111, MEG2122, MEG2123, MEG2121, MEG2133, MEG2132, MEG2131, MEG2143, MEG2142, MEG2141, MEG2212, MEG2213, MEG2211, MEG2223, MEG2222, MEG2221, MEG2233, MEG2232, MEG2231, MEG2242, MEG2243, MEG2241, MEG2312, MEG2313, MEG2311, MEG2323, MEG2322, MEG2321, MEG2332, MEG2333, MEG2331, MEG2343, MEG2342, MEG2341, MEG2412, MEG2413, MEG2411, MEG2423, MEG2422, MEG2421, MEG2433, MEG2432, MEG2431, MEG2442, MEG2443, MEG2441, MEG2512, MEG2513, MEG2511, MEG2522, MEG2523, MEG2521, MEG2533, MEG2532, MEG2531, MEG2543, MEG2542, MEG2541, MEG2612, MEG2613, MEG2611, MEG2623, MEG2622, MEG2621, MEG2633, MEG2632, MEG2631, MEG2642, MEG2643, MEG2641, ECG062, STI101, STI201, STI301, MISC201, MISC202, MISC203, MISC204, MISC205, MISC206, MISC301, MISC302, MISC303, MISC304, MISC305, MISC306
-SPM M/EEG data object
-Type: single
-Transform: time
-4 conditions
-323 channels
-451 samples/trial
-360 trials
-Sampling frequency: 150 Hz
-Loaded from file  /Applications/osl/example_data/preproc_example/manual/efdspm_meg1.mat
-
-1 online montage(s) setup
-Current montage applied (0=none): 0
-
-Use the syntax D(channels, samples, trials) to access the data
-Type "methods('meeg')" for the list of methods performing other operations with the object
-Type "help meeg/method_name" to get help about methods
-
-%%% 2. MAGNETOMETERS %%%
-mapping condition label "Motorbike" to condition code 1
-mapping condition label "Happy face" to condition code 2
-mapping condition label "Fearful face" to condition code 3
-mapping condition label "Neutral face" to condition code 4
-the input is raw data with 323 channels and 234 trials
-showing a summary of the data for all channels and trials
-computing metric [--------------------------------------------------------/]
-233 trials marked as GOOD, 1 trials marked as BAD
-102 channels marked as GOOD, 221 channels marked as BAD
-the following trials were removed: 76
-the following channels were removed: MEG0113, MEG0112, MEG0122, MEG0123, MEG0132, MEG0133, MEG0143, MEG0142, MEG0213, MEG0212, MEG0222, MEG0223, MEG0232, MEG0233, MEG0243, MEG0242, MEG0313, MEG0312, MEG0322, MEG0323, MEG0333, MEG0332, MEG0343, MEG0342, MEG0413, MEG0412, MEG0422, MEG0423, MEG0432, MEG0433, MEG0443, MEG0442, MEG0513, MEG0512, MEG0523, MEG0522, MEG0532, MEG0533, MEG0542, MEG0543, MEG0613, MEG0612, MEG0622, MEG0623, MEG0633, MEG0632, MEG0642, MEG0643, MEG0713, MEG0712, MEG0723, MEG0722, MEG0733, MEG0732, MEG0743, MEG0742, MEG0813, MEG0812, MEG0822, MEG0823, MEG0913, MEG0912, MEG0923, MEG0922, MEG0932, MEG0933, MEG0942, MEG0943, MEG1013, MEG1012, MEG1023, MEG1022, MEG1032, MEG1033, MEG1043, MEG1042, MEG1112, MEG1113, MEG1123, MEG1122, MEG1133, MEG1132, MEG1142, MEG1143, MEG1213, MEG1212, MEG1223, MEG1222, MEG1232, MEG1233, MEG1243, MEG1242, MEG1312, MEG1313, MEG1323, MEG1322, MEG1333, MEG1332, MEG1342, MEG1343, MEG1412, MEG1413, MEG1423, MEG1422, MEG1433, MEG1432, MEG1442, MEG1443, MEG1512, MEG1513, MEG1522, MEG1523, MEG1533, MEG1532, MEG1543, MEG1542, MEG1613, MEG1612, MEG1622, MEG1623, MEG1632, MEG1633, MEG1643, MEG1642, MEG1713, MEG1712, MEG1722, MEG1723, MEG1732, MEG1733, MEG1743, MEG1742, MEG1813, MEG1812, MEG1822, MEG1823, MEG1832, MEG1833, MEG1843, MEG1842, MEG1912, MEG1913, MEG1923, MEG1922, MEG1932, MEG1933, MEG1943, MEG1942, MEG2013, MEG2012, MEG2023, MEG2022, MEG2032, MEG2033, MEG2042, MEG2043, MEG2113, MEG2112, MEG2122, MEG2123, MEG2133, MEG2132, MEG2143, MEG2142, MEG2212, MEG2213, MEG2223, MEG2222, MEG2233, MEG2232, MEG2242, MEG2243, MEG2312, MEG2313, MEG2323, MEG2322, MEG2332, MEG2333, MEG2343, MEG2342, MEG2412, MEG2413, MEG2423, MEG2422, MEG2433, MEG2432, MEG2442, MEG2443, MEG2512, MEG2513, MEG2522, MEG2523, MEG2533, MEG2532, MEG2543, MEG2542, MEG2612, MEG2613, MEG2623, MEG2622, MEG2633, MEG2632, MEG2642, MEG2643, EOG061, ECG062, STI101, STI201, STI301, MISC201, MISC202, MISC203, MISC204, MISC205, MISC206, MISC301, MISC302, MISC303, MISC304, MISC305, MISC306
-SPM M/EEG data object
-Type: single
-Transform: time
-4 conditions
-323 channels
-451 samples/trial
-360 trials
-Sampling frequency: 150 Hz
-Loaded from file  /Applications/osl/example_data/preproc_example/manual/efdspm_meg1.mat
-
-1 online montage(s) setup
-Current montage applied (0=none): 0
-
-Use the syntax D(channels, samples, trials) to access the data
-Type "methods('meeg')" for the list of methods performing other operations with the object
-Type "help meeg/method_name" to get help about methods
-
-%%% 3. PLANAR GRADIOMETERS %%%
-mapping condition label "Motorbike" to condition code 1
-mapping condition label "Happy face" to condition code 2
-mapping condition label "Fearful face" to condition code 3
-mapping condition label "Neutral face" to condition code 4
-the input is raw data with 323 channels and 233 trials
-showing a summary of the data for all channels and trials
-computing metric [--------------------------------------------------------/]
-227 trials marked as GOOD, 6 trials marked as BAD
-204 channels marked as GOOD, 119 channels marked as BAD
-the following trials were removed: 124, 125, 127, 160, 162, 206
-the following channels were removed: MEG0111, MEG0121, MEG0131, MEG0141, MEG0211, MEG0221, MEG0231, MEG0241, MEG0311, MEG0321, MEG0331, MEG0341, MEG0411, MEG0421, MEG0431, MEG0441, MEG0511, MEG0521, MEG0531, MEG0541, MEG0611, MEG0621, MEG0631, MEG0641, MEG0711, MEG0721, MEG0731, MEG0741, MEG0811, MEG0821, MEG0911, MEG0921, MEG0931, MEG0941, MEG1011, MEG1021, MEG1031, MEG1041, MEG1111, MEG1121, MEG1131, MEG1141, MEG1211, MEG1221, MEG1231, MEG1241, MEG1311, MEG1321, MEG1331, MEG1341, MEG1411, MEG1421, MEG1431, MEG1441, MEG1511, MEG1521, MEG1531, MEG1541, MEG1611, MEG1621, MEG1631, MEG1641, MEG1711, MEG1721, MEG1731, MEG1741, MEG1811, MEG1821, MEG1831, MEG1841, MEG1911, MEG1921, MEG1931, MEG1941, MEG2011, MEG2021, MEG2031, MEG2041, MEG2111, MEG2121, MEG2131, MEG2141, MEG2211, MEG2221, MEG2231, MEG2241, MEG2311, MEG2321, MEG2331, MEG2341, MEG2411, MEG2421, MEG2431, MEG2441, MEG2511, MEG2521, MEG2531, MEG2541, MEG2611, MEG2621, MEG2631, MEG2641, EOG061, ECG062, STI101, STI201, STI301, MISC201, MISC202, MISC203, MISC204, MISC205, MISC206, MISC301, MISC302, MISC303, MISC304, MISC305, MISC306
-SPM M/EEG data object
-Type: single
-Transform: time
-4 conditions
-323 channels
-451 samples/trial
-360 trials
-Sampling frequency: 150 Hz
-Loaded from file  /Applications/osl/example_data/preproc_example/manual/efdspm_meg1.mat
-
-1 online montage(s) setup
-Current montage applied (0=none): 0
-
-Use the syntax D(channels, samples, trials) to access the data
-Type "methods('meeg')" for the list of methods performing other operations with the object
-Type "help meeg/method_name" to get help about methods
-
-Warning: No axial gradiometers found. 
-Warning: No EEG channels found. 
-No bad channels marked.
-133 trials of 360 are now been marked as bad.
-</pre><h2 id="28">EXAMINE THE CLEANED EPOCHED DATA</h2><p>We can now repeat the average over all the motorbike trials with the bad trials removed to get a rudimentary ERF (Event-Related Field).</p><pre class="codeinput"><span class="comment">% Set new SPM MEEG object filenames to be used in following steps</span>
+computing metric [---------------------------------------------------------]
+...</pre><p><img vspace="5" hspace="5" src="OSL_REJ_VISUAL.png" alt=""> </p><h2>EXAMINE THE CLEANED EPOCHED DATA<a name="31"></a></h2><p>We can now repeat the average over all the motorbike trials with the bad trials removed to get a rudimentary ERF (Event-Related Field).</p><pre class="codeinput"><span class="comment">% Set new SPM MEEG object filenames to be used in following steps</span>
 <span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/efd'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
@@ -657,11 +396,8 @@ D = spm_eeg_load(spm_files{subnum});
 
 <span class="comment">% switch to montage zero (raw)</span>
 D_raw=D.montage(<span class="string">'switch'</span>,0)
-planars = D_raw.indchantype(<span class="string">'MEGPLANAR'</span>);
-magnetos = D_raw.indchantype(<span class="string">'MEGMAG'</span>);
-
-
-
+planars = D_raw.indchantype(<span class="string">'MEGPLANAR'</span>)
+magnetos = D_raw.indchantype(<span class="string">'MEGMAG'</span>)
 
 <span class="comment">% List the marked bad channels</span>
 D_raw.badchannels
@@ -683,66 +419,7 @@ Transform: time
 Sampling frequency: 150 Hz
 Loaded from file  /Applications/osl/example_data/preproc_example/manual/efdspm_meg1.mat
 
-1 online montage(s) setup
-Current montage applied (0=none): 0
-
-Use the syntax D(channels, samples, trials) to access the data
-Type "methods('meeg')" for the list of methods performing other operations with the object
-Type "help meeg/method_name" to get help about methods
-
-
-ans =
-
-   Empty matrix: 1-by-0
-
-
-ans =
-
-  Columns 1 through 13
-
-    63    72    76    79    80    81    84   112   114   131   134   135   136
-
-  Columns 14 through 26
-
-   137   138   139   140   141   142   143   144   145   147   158   159   160
-
-  Columns 27 through 39
-
-   161   162   163   164   165   166   167   168   169   170   176   177   179
-
-  Columns 40 through 52
-
-   192   193   198   200   244   246   247   248   249   250   251   252   253
-
-  Columns 53 through 65
-
-   254   255   256   257   284   285   286   287   288   289   290   291   292
-
-  Columns 66 through 78
-
-   293   294   295   296   297   298   299   300   301   302   303   304   305
-
-  Columns 79 through 91
-
-   306   307   308   309   310   311   312   313   314   315   316   317   318
-
-  Columns 92 through 104
-
-   319   320   321   322   323   324   325   326   327   328   329   330   331
-
-  Columns 105 through 117
-
-   332   333   334   335   336   337   338   339   340   341   342   343   344
-
-  Columns 118 through 130
-
-   345   346   347   348   349   350   351   352   353   354   355   356   357
-
-  Columns 131 through 133
-
-   358   359   360
-
-</pre><p>here we switch to online montage 1. Montages are linear combinations of the sensor data (= montage 0) that can be used to do basically any linear operation and be able to switch between different linear mixings Keep in mind that switching is not enough, you need to assign the switched montage a variable (if same it gets overwritten). Without output it will switch, but the D object will not actually change.</p><pre class="codeinput">D_africa=D.montage(<span class="string">'switch'</span>,1)
+...</pre><p>here we switch to online montage 1. Montages are linear combinations of the sensor data (= montage 0) that can be used to do basically any linear operation and be able to switch between different linear mixings Keep in mind that switching is not enough, you need to assign the switched montage a variable (if same it gets overwritten). Without output it will switch, but the D object will not actually change.</p><pre class="codeinput">D_africa=D.montage(<span class="string">'switch'</span>,1)
 </pre><pre class="codeoutput">SPM M/EEG data object
 Type: single
 Transform: time
@@ -753,49 +430,43 @@ Transform: time
 Sampling frequency: 150 Hz
 Loaded from file  /Applications/osl/example_data/preproc_example/manual/efdspm_meg1.mat
 
-1 online montage(s) setup
-Current montage applied (0=none): 1 ,named: "AFRICA denoised data"
-
-Use the syntax D(channels, samples, trials) to access the data
-Type "methods('meeg')" for the list of methods performing other operations with the object
-Type "help meeg/method_name" to get help about methods
-
-</pre><p>Now let us plot a cleaned rudimentary ERF. After having excluded the bad samples from oslview and the rejected trials from the artifact rejection, data should look much better. Now, even for the epoched data, the online montage for the AFRICA denoised data is still applicable. So let's see how much the task-related activity differs between 'raw' and AFRICA denoised data. You will find that due to averaging there is less of a difference.</p><pre class="codeinput">figure;
-subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_raw(planars(135),:,good_motorbike_trls),3))); xlabel(<span class="string">'time (seconds)'</span>);ylim([-10 6])
+...</pre><p>Now let us plot a cleaned rudimentary ERF. After having excluded the bad samples from oslview and the rejected trials from the artifact rejection, data should look much better. Now, even for the epoched data, the online montage for the AFRICA denoised data is still applicable. So let's see how much the task-related activity differs between 'raw' and AFRICA denoised data. You will find that due to averaging there is less of a difference.</p><pre class="codeinput">figure;
+subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_raw(planars(135),:,good_motorbike_trls),3)));
+xlabel(<span class="string">'time (seconds)'</span>);ylim([-10 6])
 ylabel(D.units(planars(1)));
 hold <span class="string">on</span>;
-subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3))); xlabel(<span class="string">'time (seconds)'</span>);ylim([-10 6])
+subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3)));
+xlabel(<span class="string">'time (seconds)'</span>);ylim([-10 6])
 legend({<span class="string">'Raw'</span> <span class="string">'AFRICA denoised'</span>})
 
-subplot(1,2,2);plot(D_raw.time,squeeze(mean(D_raw(magnetos(49),:,good_motorbike_trls),3))); xlabel(<span class="string">'time (seconds)'</span>);ylim([-300 500])
+subplot(1,2,2);plot(D_raw.time,squeeze(mean(D_raw(magnetos(49),:,good_motorbike_trls),3)));
+xlabel(<span class="string">'time (seconds)'</span>);ylim([-300 500])
 ylabel(D.units(magnetos(1)));
 hold <span class="string">on</span>;
-subplot(1,2,2);plot(D_africa.time,squeeze(mean(D_africa(magnetos(49),:,good_motorbike_trls),3))); xlabel(<span class="string">'time (seconds)'</span>);ylim([-300 500])
+subplot(1,2,2);plot(D_africa.time,squeeze(mean(D_africa(magnetos(49),:,good_motorbike_trls),3)));
+xlabel(<span class="string">'time (seconds)'</span>);ylim([-300 500])
 legend({<span class="string">'Raw'</span> <span class="string">'AFRICA denoised'</span>})
-
-
-
-
-<span class="comment">% Plot a cleaned rudimentary ERF for all sensors</span>
-figure;
-subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3))); xlabel(<span class="string">'time (seconds)'</span>);
+</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_09.png" style="width:800px;height:400px;" alt=""> <p>Plot a cleaned rudimentary ERF for all sensors</p><pre class="codeinput">figure;
+subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3)));
+xlabel(<span class="string">'time (seconds)'</span>);
 ylabel(<span class="string">'Trials'</span>);colorbar
 title(<span class="string">'MEGPLANAR, single trials'</span>)
 
-subplot(1,2,2);imagesc(D.time,[],squeeze(mean(D_africa([magnetos(:)],:,good_motorbike_trls),3))); xlabel(<span class="string">'time (seconds)'</span>);
+subplot(1,2,2);imagesc(D.time,[],squeeze(mean(D_africa([magnetos(:)],:,good_motorbike_trls),3)));
+xlabel(<span class="string">'time (seconds)'</span>);
 ylabel(<span class="string">'Trials'</span>);colorbar
 title(<span class="string">'MEGMAG, single trials'</span>)
-</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_06.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="osl_example_preprocessing_manual_07.png" style="width:560px;height:420px;" alt=""> <h2 id="31">PLOTTING EVENT-RELATED TOPOGRAPHIES AT DEFINED LATENCIES</h2><p>To plot a cleaned rudimentary ERF topography at a relatively late latency, do:</p><pre class="codeinput">topo=squeeze(mean(D(:,188,good_motorbike_trls),3));
+</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_10.png" style="width:800px;height:600px;" alt=""> <h2>PLOTTING EVENT-RELATED TOPOGRAPHIES AT DEFINED LATENCIES<a name="35"></a></h2><p>To plot a cleaned rudimentary ERF topography at a relatively late latency, do:</p><pre class="codeinput">topo=squeeze(mean(D(:,188,good_motorbike_trls),3));
 
 figure;sensors_topoplot(D,topo,{<span class="string">'MEGPLANAR'</span> <span class="string">'MEGMAG'</span>},1);
 </pre><pre class="codeoutput">reading layout from file /Applications/osl/layouts/neuromag306mag.lay
 reading layout from file /Applications/osl/layouts/neuromag306mag.lay
-</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_08.png" style="width:560px;height:420px;" alt=""> <p>Plot the same rudimentary ERF topography for AFRICA denoised data</p><pre class="codeinput">topo2=squeeze(mean(D_africa(:,188,good_motorbike_trls),3));
+</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_11.png" style="width:1000px;height:600px;" alt=""> <p>Plot the same rudimentary ERF topography for AFRICA denoised data</p><pre class="codeinput">topo2=squeeze(mean(D_africa(:,188,good_motorbike_trls),3));
 
 figure;sensors_topoplot(D_africa,topo2,{<span class="string">'MEGPLANAR'</span> <span class="string">'MEGMAG'</span>},1);
 </pre><pre class="codeoutput">reading layout from file /Applications/osl/layouts/neuromag306mag.lay
 reading layout from file /Applications/osl/layouts/neuromag306mag.lay
-</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_09.png" style="width:560px;height:420px;" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="osl_example_preprocessing_manual_12.png" style="width:1000px;height:600px;" alt=""> <h2>SOME EXERCISES<a name="37"></a></h2><p>If you want to play around with the data and the cleaning approaches presented here, have a look at what happens when you remove more independent components during AFRICA. Also you can have a look at the interaction of oslview and AFRICA. For example, if you do not cut out the bad segments during oslview rejection, can you still get decent ERFs in the end? How many independent components would you need to remove to get some ERFs and are they still comparable to the ones generated earlier?</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Introduction to manual preprocessing in OSL
 % In this practical/template script we will work with a single subject's
@@ -1002,9 +673,11 @@ D=spm_eeg_filter(S2);
 % mean that we are not using about half of the data. But with such bad
 % artefacts this is the best we can do. We can still obtain good results
 % with what remains. push disk button to save to disk (same name)
+figure;
 D=oslview(D);
-
 keyboard;
+snapnow;
+
 %% AFRICA WITH MANUAL COMPONENT REJECTION
 % Run AFRICA ICA denoising. AFRICA uses independent component analysis to
 % decompose sensor data into a set of maximally independent time courses.
@@ -1027,6 +700,7 @@ end
 % components that correlate with the EOG and ECG measurements and mark them
 % for rejection using the red cross. NB: Just close the window when
 % finished to save your results.
+figure;
 for subnum = 1:length(spm_files)
 
     [dirname,filename] = fileparts(spm_files{subnum});
@@ -1039,10 +713,18 @@ for subnum = 1:length(spm_files)
     S.ident.func      = @identify_artefactual_components_manual;
     S.to_do           = [1 1 1];
     S.ident.artefact_chans = {'EOG','ECG'};
-
     osl_africa(S);
-
 end
+
+%%
+% 
+% <<AFRICA_HEARTBEAT.png>>
+% 
+
+%%
+% 
+% <<AFRICA_EYEMOVEMTS.png>>
+% 
 
 
 %%
@@ -1065,28 +747,31 @@ D_raw=D.montage('switch',0);
 D_africa=D.montage('switch',1);
 
 %%
-% The first part is to plot the ECG channel included in the recording as
-% reference.
+% Now we plot some data to check the differences between raw and denoised data. 
 figure;
 subplot(2,1,1);
 plot(D_raw.time(1:10000),D_raw(308,1:10000))
 title('ECG channel')
 xlim([10 20]);xlabel('Time (s)')
 
-%%
-% In a second part we plot both a channel that has some ECG artifacts in
-% without any preprocessing and with AFRICA run on it. The difference is
-% clearly there.
 subplot(2,1,2);
 plot(D_raw.time(1:10000),D_raw(306,1:10000))
 title('ECG contaminated channel')
 xlim([10 20]);
-
 hold on;
 plot(D_africa.time(1:10000),D_africa(306,1:10000),'r');
 xlim([10 20]);xlabel('Time (s)');
-
 legend({'Raw' 'AFRICA denoised'})
+
+%%
+% The first part of this figure plots the ECG channel included in the recording as
+% reference. In the second part we plot two versions of the same channel,
+% one that shows the raw time series, so without any preprocessing and the other 
+% with AFRICA run on it. You can see that there is some commonalities between the ECG and 
+% some part of the raw time-series in the data, but that this is gone in the denoised version.
+% So AFRICA has removed most of the ECG contaminated parts in the signal.
+% If this is not the case in your plot, make sure you have indeed removed
+% the first independent component in AFRICA.
 
 
 
@@ -1205,11 +890,13 @@ magnetos = D.indchantype('MEGMAG');
 % and D.time is used to return the time labels of the within trial time
 % points in seconds.
 
-figure; plot(D.time,squeeze(D(planars(135),:,motorbike_trls))); xlabel('time (seconds)');
+figure; plot(D.time,squeeze(D(planars(135),:,motorbike_trls)));
+xlabel('time (seconds)');
 % We can average over all the motorbike trials to get a rudimentary ERF
 % (Event-Related Field):
 
-figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3))); xlabel('time (seconds)');
+figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3)));
+xlabel('time (seconds)');
 
 %%
 % As you will notive, the ERFs look pretty bad. However, we should bear in
@@ -1252,6 +939,10 @@ for i=1:length(spm_files),
     D2=osl_rejectvisual(S2);
 end;
 
+%%
+% 
+% <<OSL_REJ_VISUAL.png>>
+% 
 
 %%  EXAMINE THE CLEANED EPOCHED DATA
 % 
@@ -1269,11 +960,8 @@ D = spm_eeg_load(spm_files{subnum});
 
 % switch to montage zero (raw)
 D_raw=D.montage('switch',0)
-planars = D_raw.indchantype('MEGPLANAR');
-magnetos = D_raw.indchantype('MEGMAG');
-
-
-
+planars = D_raw.indchantype('MEGPLANAR')
+magnetos = D_raw.indchantype('MEGMAG')
 
 % List the marked bad channels
 D_raw.badchannels
@@ -1305,28 +993,32 @@ D_africa=D.montage('switch',1)
 % difference. 
 
 figure; 
-subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_raw(planars(135),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-10 6])
+subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_raw(planars(135),:,good_motorbike_trls),3)));
+xlabel('time (seconds)');ylim([-10 6])
 ylabel(D.units(planars(1)));
 hold on;
-subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-10 6])
+subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3)));
+xlabel('time (seconds)');ylim([-10 6])
 legend({'Raw' 'AFRICA denoised'})
 
-subplot(1,2,2);plot(D_raw.time,squeeze(mean(D_raw(magnetos(49),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-300 500])
+subplot(1,2,2);plot(D_raw.time,squeeze(mean(D_raw(magnetos(49),:,good_motorbike_trls),3)));
+xlabel('time (seconds)');ylim([-300 500])
 ylabel(D.units(magnetos(1)));
 hold on;
-subplot(1,2,2);plot(D_africa.time,squeeze(mean(D_africa(magnetos(49),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-300 500])
+subplot(1,2,2);plot(D_africa.time,squeeze(mean(D_africa(magnetos(49),:,good_motorbike_trls),3)));
+xlabel('time (seconds)');ylim([-300 500])
 legend({'Raw' 'AFRICA denoised'})
 
-
-
-
+%%
 % Plot a cleaned rudimentary ERF for all sensors
 figure; 
-subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3))); xlabel('time (seconds)');
+subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3)));
+xlabel('time (seconds)');
 ylabel('Trials');colorbar
 title('MEGPLANAR, single trials')
 
-subplot(1,2,2);imagesc(D.time,[],squeeze(mean(D_africa([magnetos(:)],:,good_motorbike_trls),3))); xlabel('time (seconds)');
+subplot(1,2,2);imagesc(D.time,[],squeeze(mean(D_africa([magnetos(:)],:,good_motorbike_trls),3)));
+xlabel('time (seconds)');
 ylabel('Trials');colorbar
 title('MEGMAG, single trials')
 
@@ -1344,5 +1036,14 @@ topo2=squeeze(mean(D_africa(:,188,good_motorbike_trls),3));
 
 figure;sensors_topoplot(D_africa,topo2,{'MEGPLANAR' 'MEGMAG'},1);
 
+
+%% SOME EXERCISES
+% If you want to play around with the data and the cleaning approaches
+% presented here, have a look at what happens when you remove more
+% independent components during AFRICA. Also you can have a look at the
+% interaction of oslview and AFRICA. For example, if you do not cut out the
+% bad segments during oslview rejection, can you still get decent ERFs in
+% the end? How many independent components would you need to remove to get
+% some ERFs and are they still comparable to the ones generated earlier?
 ##### SOURCE END #####
 --></body></html>

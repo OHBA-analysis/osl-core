@@ -1,4 +1,4 @@
-function osl_publish(filename,evalCode,stylesheet)
+function osl_publish(filename,evalCode,stylesheet,maxOutputLines)
 	% Make an HTML page on the OSL website
 	%
 	% INPUTS
@@ -19,14 +19,15 @@ function osl_publish(filename,evalCode,stylesheet)
 	%
 	% Romesh Abeysuriya 2017
 	
-	if nargin < 3
+	if nargin < 3 || isempty(stylesheet) 
 		stylesheet = fullfile(osldir,'osl-core','docs','mxdom2simplehtml_jekyll.xsl');
-	end
+        maxOutputLines=Inf;
+    end
 	
 	if nargin < 2 || isempty(evalCode) 
 		evalCode = true;
 	end
 		
-	output_html = publish(filename,'evalCode',evalCode,'stylesheet',stylesheet,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'));
+	output_html = publish(filename,'evalCode',evalCode,'stylesheet',stylesheet,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'),'maxOutputLines',maxOutputLines);
 
 	runcmd('open %s',output_html)
