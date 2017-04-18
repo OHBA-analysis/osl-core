@@ -1,6 +1,6 @@
 ---
 layout: matlab_wrapper
-title: BEAMFORMER ANALYSIS WITH OAT
+title: Beamformer Analysis With OAT
 resource: true
 categories: examples
 ---
@@ -809,18 +809,8 @@ S2.resamp_gridstep=oat.source_recon.gridstep;
 mni_brain=[osldir <span class="string">'/std_masks/MNI152_T1_'</span> num2str(S2.resamp_gridstep) <span class="string">'mm_brain.nii.gz'</span>];
 contrast_num=2;
 runcmd([<span class="string">'fslview '</span> mni_brain <span class="string">' '</span> statsdir <span class="string">'/tstat'</span> num2str(contrast_num) <span class="string">'_'</span> num2str(S2.resamp_gridstep) <span class="string">'mm &amp;'</span>]);
-</pre><pre class="codeoutput error">Error using matrix2vols (line 15)
-mask and nvoxels in the data incompatible
-
-Error in nii_quicksave (line 119)
-save_avw(matrix2vols(mat,stdbrain),fname,'f',[input_spat_res input_spat_res input_spat_res tres]);
-
-Error in oat_save_nii_stats (line 181)
-            fname_out = nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
-
-Error in osl_example_beamformer_oat (line 391)
-[statsdir,times]=oat_save_nii_stats(S2);
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+</pre>
+<p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% BEAMFORMER ANALYSIS WITH OAT
 % This practical will work with a single subject's data from an emotional
