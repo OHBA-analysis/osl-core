@@ -19,7 +19,7 @@ function osl_publish(filename,evalCode,stylesheet,maxOutputLines)
 	%
 	% Romesh Abeysuriya 2017
 	
-	if nargin < 3
+	if nargin < 3 || isempty(stylesheet) 
 		stylesheet = fullfile(osldir,'osl-core','docs','mxdom2simplehtml_jekyll.xsl');
         maxOutputLines=Inf;
     end
