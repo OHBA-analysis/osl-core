@@ -18,10 +18,13 @@
 
 % directory where the data is:
 datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
+structdir =  fullfile(osldir,'example_data','faces_singlesubject','structurals');
 %datadir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 
 % directory to put the analysis in
 workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
+
+
 
 %% SET UP THE SUBJECTS FOR THE ANALYSIS
 %
@@ -37,6 +40,20 @@ workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
 spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 
+% This bit changes the paths for the structural information to the correct
+% ones.
+
+oldpath='/home/disk3/ajquinn/Projects/drugface/structurals/M10/';
+newpath=[osldir '/example_data/faces_singlesubject/structurals/'];
+
+D_cont=spm_eeg_load(spm_files_continuous{1});
+D_epoched=spm_eeg_load(spm_files_epoched{1});
+
+D_cont_new=osl_relink_Dinv(D_cont,oldpath,newpath);
+D_epoched_new=osl_relink_Dinv(D_epoched,oldpath,newpath);
+
+D_cont_new.save;
+D_epoched_new.save;
 
 %% SETUP THE OAT:
 %
@@ -62,6 +79,7 @@ spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 oat=[];
 oat.source_recon.D_continuous=spm_files_continuous;
 oat.source_recon.D_epoched=spm_files_epoched;
+
 oat.source_recon.conditions={'Motorbike','Neutral face','Happy face','Fearful face'};
 oat.source_recon.freq_range=[3 20]; % frequency range in Hz
 oat.source_recon.time_range=[-0.2 0.4]; % time range in secs
