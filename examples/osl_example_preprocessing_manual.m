@@ -203,9 +203,11 @@ D=spm_eeg_filter(S2);
 % mean that we are not using about half of the data. But with such bad
 % artefacts this is the best we can do. We can still obtain good results
 % with what remains. push disk button to save to disk (same name)
+figure;
 D=oslview(D);
-
 keyboard;
+snapnow;
+
 %% AFRICA WITH MANUAL COMPONENT REJECTION
 % Run AFRICA ICA denoising. AFRICA uses independent component analysis to
 % decompose sensor data into a set of maximally independent time courses.
@@ -228,6 +230,7 @@ end
 % components that correlate with the EOG and ECG measurements and mark them
 % for rejection using the red cross. NB: Just close the window when
 % finished to save your results.
+figure;
 for subnum = 1:length(spm_files)
 
     [dirname,filename] = fileparts(spm_files{subnum});
@@ -240,10 +243,18 @@ for subnum = 1:length(spm_files)
     S.ident.func      = @identify_artefactual_components_manual;
     S.to_do           = [1 1 1];
     S.ident.artefact_chans = {'EOG','ECG'};
-
     osl_africa(S);
-
 end
+
+%%
+% 
+% <<AFRICA_HEARTBEAT.png>>
+% 
+
+%%
+% 
+% <<AFRICA_EYEMOVEMTS.png>>
+% 
 
 
 %%
@@ -266,28 +277,31 @@ D_raw=D.montage('switch',0);
 D_africa=D.montage('switch',1);
 
 %%
-% The first part is to plot the ECG channel included in the recording as
-% reference.
+% Now we plot some data to check the differences between raw and denoised data. 
 figure;
 subplot(2,1,1);
 plot(D_raw.time(1:10000),D_raw(308,1:10000))
 title('ECG channel')
 xlim([10 20]);xlabel('Time (s)')
 
-%%
-% In a second part we plot both a channel that has some ECG artifacts in
-% without any preprocessing and with AFRICA run on it. The difference is
-% clearly there.
 subplot(2,1,2);
 plot(D_raw.time(1:10000),D_raw(306,1:10000))
 title('ECG contaminated channel')
 xlim([10 20]);
-
 hold on;
 plot(D_africa.time(1:10000),D_africa(306,1:10000),'r');
 xlim([10 20]);xlabel('Time (s)');
-
 legend({'Raw' 'AFRICA denoised'})
+
+%%
+% The first part of this figure plots the ECG channel included in the recording as
+% reference. In the second part we plot two versions of the same channel,
+% one that shows the raw time series, so without any preprocessing and the other 
+% with AFRICA run on it. You can see that there is some commonalities between the ECG and 
+% some part of the raw time-series in the data, but that this is gone in the denoised version.
+% So AFRICA has removed most of the ECG contaminated parts in the signal.
+% If this is not the case in your plot, make sure you have indeed removed
+% the first independent component in AFRICA.
 
 
 
@@ -406,11 +420,13 @@ magnetos = D.indchantype('MEGMAG');
 % and D.time is used to return the time labels of the within trial time
 % points in seconds.
 
-figure; plot(D.time,squeeze(D(planars(135),:,motorbike_trls))); xlabel('time (seconds)');
+figure; plot(D.time,squeeze(D(planars(135),:,motorbike_trls)));
+xlabel('time (seconds)');
 % We can average over all the motorbike trials to get a rudimentary ERF
 % (Event-Related Field):
 
-figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3))); xlabel('time (seconds)');
+figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3)));
+xlabel('time (seconds)');
 
 %%
 % As you will notive, the ERFs look pretty bad. However, we should bear in
@@ -453,6 +469,10 @@ for i=1:length(spm_files),
     D2=osl_rejectvisual(S2);
 end;
 
+%%
+% 
+% <<OSL_REJ_VISUAL.png>>
+% 
 
 %%  EXAMINE THE CLEANED EPOCHED DATA
 % 
@@ -470,11 +490,8 @@ D = spm_eeg_load(spm_files{subnum});
 
 % switch to montage zero (raw)
 D_raw=D.montage('switch',0)
-planars = D_raw.indchantype('MEGPLANAR');
-magnetos = D_raw.indchantype('MEGMAG');
-
-
-
+planars = D_raw.indchantype('MEGPLANAR')
+magnetos = D_raw.indchantype('MEGMAG')
 
 % List the marked bad channels
 D_raw.badchannels
@@ -506,28 +523,32 @@ D_africa=D.montage('switch',1)
 % difference. 
 
 figure; 
-subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_raw(planars(135),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-10 6])
+subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_raw(planars(135),:,good_motorbike_trls),3)));
+xlabel('time (seconds)');ylim([-10 6])
 ylabel(D.units(planars(1)));
 hold on;
-subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-10 6])
+subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3)));
+xlabel('time (seconds)');ylim([-10 6])
 legend({'Raw' 'AFRICA denoised'})
 
-subplot(1,2,2);plot(D_raw.time,squeeze(mean(D_raw(magnetos(49),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-300 500])
+subplot(1,2,2);plot(D_raw.time,squeeze(mean(D_raw(magnetos(49),:,good_motorbike_trls),3)));
+xlabel('time (seconds)');ylim([-300 500])
 ylabel(D.units(magnetos(1)));
 hold on;
-subplot(1,2,2);plot(D_africa.time,squeeze(mean(D_africa(magnetos(49),:,good_motorbike_trls),3))); xlabel('time (seconds)');ylim([-300 500])
+subplot(1,2,2);plot(D_africa.time,squeeze(mean(D_africa(magnetos(49),:,good_motorbike_trls),3)));
+xlabel('time (seconds)');ylim([-300 500])
 legend({'Raw' 'AFRICA denoised'})
 
-
-
-
+%%
 % Plot a cleaned rudimentary ERF for all sensors
 figure; 
-subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3))); xlabel('time (seconds)');
+subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3)));
+xlabel('time (seconds)');
 ylabel('Trials');colorbar
 title('MEGPLANAR, single trials')
 
-subplot(1,2,2);imagesc(D.time,[],squeeze(mean(D_africa([magnetos(:)],:,good_motorbike_trls),3))); xlabel('time (seconds)');
+subplot(1,2,2);imagesc(D.time,[],squeeze(mean(D_africa([magnetos(:)],:,good_motorbike_trls),3)));
+xlabel('time (seconds)');
 ylabel('Trials');colorbar
 title('MEGMAG, single trials')
 
@@ -544,3 +565,13 @@ figure;sensors_topoplot(D,topo,{'MEGPLANAR' 'MEGMAG'},1);
 topo2=squeeze(mean(D_africa(:,188,good_motorbike_trls),3));
 
 figure;sensors_topoplot(D_africa,topo2,{'MEGPLANAR' 'MEGMAG'},1);
+
+
+%% SOME EXERCISES
+% If you want to play around with the data and the cleaning approaches
+% presented here, have a look at what happens when you remove more
+% independent components during AFRICA. Also you can have a look at the
+% interaction of oslview and AFRICA. For example, if you do not cut out the
+% bad segments during oslview rejection, can you still get decent ERFs in
+% the end? How many independent components would you need to remove to get
+% some ERFs and are they still comparable to the ones generated earlier?
