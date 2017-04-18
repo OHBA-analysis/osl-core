@@ -52,6 +52,9 @@ function osl_startup( osldir )
     %% Copy changes to SPM code from osl
     filelist={};targetdir={};
 
+    filelist{end+1}='osl-core/spm-changes/bf_save.m';
+    targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
+
     filelist{end+1}='osl-core/spm-changes/bf_output_montage_osl.m';
     targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
@@ -114,6 +117,7 @@ function osl_startup( osldir )
     addpath(fullfile(spm('dir'),'matlabbatch')); % Required for cfg_getfile
 
     addpath(fullfile(osldir, 'spm12','external','fieldtrip','src'));
+    addpath(fullfile(osldir, 'spm12','toolbox','spm-beamforming-toolbox'));
 
     % Add OHBA shared libraries
     if ~exist(fullfile(osldir,'ohba-external'))
