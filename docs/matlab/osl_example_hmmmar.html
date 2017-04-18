@@ -1,21 +1,13 @@
 ---
 layout: matlab_wrapper
-title: osl_example_hmmmar
+title: HMM-MAR
 resource: true
 categories: examples
 ---
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>osl_example_hmmmar</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-19"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">HMM-MAR</a></li><li><a href="#2">1) HMM-MAR on hilbert envelopes</a></li><li><a href="#3">Loading and preparing the data</a></li><li><a href="#4">Prepare the HMM options and run the HMMMAR</a></li><li><a href="#5">Compute the spectral information of the states (power, coherence, etc)</a></li><li><a href="#6">2) HMM-MAR on raw signals</a></li><li><a href="#7">Loading and preparing the data</a></li><li><a href="#8">Signs might be arbitrarily flipped, so we need to disambiguate this</a></li><li><a href="#9">And run the HMM-MAR on this</a></li><li><a href="#10">Compute the spectral information of the states (power, coherence, etc)</a></li><li><a href="#11">Now we do some plotting of the HMM on power envelopes and HMM-MAR results</a></li><li><a href="#12">Now let's see the state evoked probability, locked to the stimulus</a></li><li><a href="#13">Show the spectral info (power and coherence) for the</a></li><li><a href="#14">HMM-based Time-frequency analysis</a></li><li><a href="#15">Probability of transit between states for the</a></li></ul></div><h2 id="1">HMM-MAR</h2><pre class="codeinput"><span class="comment">% This example shows how to use the HMM-MAR to infer transient states that:</span>
-<span class="comment">% (i) are pectrally defined, i.e. the characteristics of interest are defined as a function of frequency.</span>
-<span class="comment">% (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes.</span>
-<span class="comment">% (iii) are not only sensitive to power differences but also to phase coupling.</span>
-
-<span class="comment">% The script infers a group (spectrally-defined) HMM from source space MEG data, following the paper</span>
-<span class="comment">% Vidaurre et al, NeuroImage (2016)</span>
-
-<span class="comment">% Directory of the data:</span>
+   <title>HMM-MAR</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-19"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h1>HMM-MAR</h1><!--introduction--><p>This example shows how to use the HMM-MAR to infer transient states that: (i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency. (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes. (iii) are not only sensitive to power differences but also to phase coupling. The script infers a group (spectrally-defined) HMM from source space MEG data, following the paper Vidaurre et al, NeuroImage (2016)</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">1) HMM-MAR on hilbert envelopes</a></li><li><a href="#3">Loading and preparing the data</a></li><li><a href="#4">Prepare the HMM options and run the HMMMAR</a></li><li><a href="#5">Compute the spectral information of the states (power, coherence, etc)</a></li><li><a href="#6">2) HMM-MAR on raw signals</a></li><li><a href="#7">Loading and preparing the data</a></li><li><a href="#8">Signs might be arbitrarily flipped, so we need to disambiguate this</a></li><li><a href="#9">And run the HMM-MAR on this</a></li><li><a href="#10">Compute the spectral information of the states (power, coherence, etc)</a></li><li><a href="#11">Now we do some plotting of the HMM on power envelopes and HMM-MAR results</a></li><li><a href="#12">Now let's see the state evoked probability, locked to the stimulus</a></li><li><a href="#13">Show the spectral info (power and coherence) for the</a></li><li><a href="#14">HMM-based Time-frequency analysis</a></li><li><a href="#15">Probability of transit between states for the</a></li></ul></div><pre class="codeinput"><span class="comment">% Directory of the data:</span>
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>);
 <span class="comment">% Name for this HMM-MAR analysis:</span>
 hmmmar_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>,<span class="string">'hmmmar_demo.mat'</span>);
@@ -102,21 +94,21 @@ Run 1, Cycle 7, score +0
 Run 1, Cycle 8, score +0
 Run 1, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 2, Init, score 0.839457 
-Run 2, Cycle 1, score +1.103117, flipped (4,1) 
-Run 2, Cycle 2, score +0.473740, flipped (5,1) 
-Run 2, Cycle 3, score +0
-Run 2, Cycle 4, score +0
+Run 2, Init, score 1.078799 
+Run 2, Cycle 1, score +0.809976, flipped (7,1) 
+Run 2, Cycle 2, score +0.226747, flipped (3,1) 
+Run 2, Cycle 3, score +0.212811, flipped (6,1) 
+Run 2, Cycle 4, score +0.087981, flipped (8,1) 
 Run 2, Cycle 5, score +0
 Run 2, Cycle 6, score +0
 Run 2, Cycle 7, score +0
 Run 2, Cycle 8, score +0
 Run 2, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 3, Init, score 0.467071 
-Run 3, Cycle 1, score +1.167960, flipped (4,1) 
-Run 3, Cycle 2, score +0.476804, flipped (3,1) 
-Run 3, Cycle 3, score +0.304479, flipped (6,1) 
+Run 3, Init, score 0.961397 
+Run 3, Cycle 1, score +1.326664, flipped (7,1) 
+Run 3, Cycle 2, score +0.128253, flipped (2,1) 
+Run 3, Cycle 3, score +0
 Run 3, Cycle 4, score +0
 Run 3, Cycle 5, score +0
 Run 3, Cycle 6, score +0
@@ -124,10 +116,10 @@ Run 3, Cycle 7, score +0
 Run 3, Cycle 8, score +0
 Run 3, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 4, Init, score 1.614103 
-Run 4, Cycle 1, score +0.497732, flipped (5,1) 
-Run 4, Cycle 2, score +0.304479, flipped (6,1) 
-Run 4, Cycle 3, score +0
+Run 4, Init, score 0.850912 
+Run 4, Cycle 1, score +0.884314, flipped (7,1) 
+Run 4, Cycle 2, score +0.477826, flipped (5,1) 
+Run 4, Cycle 3, score +0.203262, flipped (1,1) 
 Run 4, Cycle 4, score +0
 Run 4, Cycle 5, score +0
 Run 4, Cycle 6, score +0
@@ -135,10 +127,10 @@ Run 4, Cycle 7, score +0
 Run 4, Cycle 8, score +0
 Run 4, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 5, Init, score 0.914075 
-Run 5, Cycle 1, score +1.100059, flipped (7,1) 
-Run 5, Cycle 2, score +0.080315, flipped (3,1) 
-Run 5, Cycle 3, score +0.233883, flipped (1,1) 
+Run 5, Init, score 1.348806 
+Run 5, Cycle 1, score +0.676692, flipped (5,1) 
+Run 5, Cycle 2, score +0.194492, flipped (6,1) 
+Run 5, Cycle 3, score +0.108343, flipped (2,1) 
 Run 5, Cycle 4, score +0.087981, flipped (8,1) 
 Run 5, Cycle 5, score +0
 Run 5, Cycle 6, score +0
@@ -146,10 +138,10 @@ Run 5, Cycle 7, score +0
 Run 5, Cycle 8, score +0
 Run 5, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 6, Init, score 1.955992 
-Run 6, Cycle 1, score +0.159530, flipped (1,1) 
-Run 6, Cycle 2, score +0.212811, flipped (6,1) 
-Run 6, Cycle 3, score +0.087981, flipped (8,1) 
+Run 6, Init, score 2.001942 
+Run 6, Cycle 1, score +0.286119, flipped (6,1) 
+Run 6, Cycle 2, score +0.128253, flipped (2,1) 
+Run 6, Cycle 3, score +0
 Run 6, Cycle 4, score +0
 Run 6, Cycle 5, score +0
 Run 6, Cycle 6, score +0
@@ -157,9 +149,9 @@ Run 6, Cycle 7, score +0
 Run 6, Cycle 8, score +0
 Run 6, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 7, Init, score 2.014135 
-Run 7, Cycle 1, score +0.080315, flipped (3,1) 
-Run 7, Cycle 2, score +0.233883, flipped (1,1) 
+Run 7, Init, score 0.910688 
+Run 7, Cycle 1, score +1.204835, flipped (7,1) 
+Run 7, Cycle 2, score +0.212811, flipped (6,1) 
 Run 7, Cycle 3, score +0.087981, flipped (8,1) 
 Run 7, Cycle 4, score +0
 Run 7, Cycle 5, score +0
@@ -168,32 +160,32 @@ Run 7, Cycle 7, score +0
 Run 7, Cycle 8, score +0
 Run 7, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 8, Init, score 1.474316 
-Run 8, Cycle 1, score +0.641207, flipped (5,1) 
-Run 8, Cycle 2, score +0.212811, flipped (6,1) 
-Run 8, Cycle 3, score +0.087981, flipped (8,1) 
-Run 8, Cycle 4, score +0
-Run 8, Cycle 5, score +0
+Run 8, Init, score 1.085290 
+Run 8, Cycle 1, score +0.717838, flipped (5,1) 
+Run 8, Cycle 2, score +0.211006, flipped (2,1) 
+Run 8, Cycle 3, score +0.080315, flipped (3,1) 
+Run 8, Cycle 4, score +0.233883, flipped (1,1) 
+Run 8, Cycle 5, score +0.087981, flipped (8,1) 
 Run 8, Cycle 6, score +0
 Run 8, Cycle 7, score +0
 Run 8, Cycle 8, score +0
 Run 8, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 9, Init, score 0.758114 
-Run 9, Cycle 1, score +0.987409, flipped (4,1) 
-Run 9, Cycle 2, score +0.474467, flipped (3,1) 
-Run 9, Cycle 3, score +0.108343, flipped (2,1) 
-Run 9, Cycle 4, score +0.087981, flipped (8,1) 
+Run 9, Init, score 0.941540 
+Run 9, Cycle 1, score +0.949002, flipped (4,1) 
+Run 9, Cycle 2, score +0.437791, flipped (3,1) 
+Run 9, Cycle 3, score +0.087981, flipped (8,1) 
+Run 9, Cycle 4, score +0
 Run 9, Cycle 5, score +0
 Run 9, Cycle 6, score +0
 Run 9, Cycle 7, score +0
 Run 9, Cycle 8, score +0
 Run 9, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 10, Init, score 0.587931 
-Run 10, Cycle 1, score +1.346726, flipped (7,1) 
-Run 10, Cycle 2, score +0.278396, flipped (6,1) 
-Run 10, Cycle 3, score +0.203262, flipped (1,1) 
+Run 10, Init, score 0.839457 
+Run 10, Cycle 1, score +1.103117, flipped (4,1) 
+Run 10, Cycle 2, score +0.473740, flipped (5,1) 
+Run 10, Cycle 3, score +0
 Run 10, Cycle 4, score +0
 Run 10, Cycle 5, score +0
 Run 10, Cycle 6, score +0
@@ -201,10 +193,10 @@ Run 10, Cycle 7, score +0
 Run 10, Cycle 8, score +0
 Run 10, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 11, Init, score 1.816843 
-Run 11, Cycle 1, score +0.273109, flipped (6,1) 
-Run 11, Cycle 2, score +0.198109, flipped (1,1) 
-Run 11, Cycle 3, score +0.128253, flipped (2,1) 
+Run 11, Init, score 1.803856 
+Run 11, Cycle 1, score +0.484205, flipped (5,1) 
+Run 11, Cycle 2, score +0.128253, flipped (2,1) 
+Run 11, Cycle 3, score +0
 Run 11, Cycle 4, score +0
 Run 11, Cycle 5, score +0
 Run 11, Cycle 6, score +0
@@ -212,32 +204,32 @@ Run 11, Cycle 7, score +0
 Run 11, Cycle 8, score +0
 Run 11, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 12, Init, score 1.221421 
-Run 12, Cycle 1, score +0.774702, flipped (5,1) 
-Run 12, Cycle 2, score +0.018012, flipped (6,1) 
-Run 12, Cycle 3, score +0.080315, flipped (3,1) 
-Run 12, Cycle 4, score +0.233883, flipped (1,1) 
-Run 12, Cycle 5, score +0.087981, flipped (8,1) 
+Run 12, Init, score 1.803128 
+Run 12, Cycle 1, score +0.211006, flipped (2,1) 
+Run 12, Cycle 2, score +0.080315, flipped (3,1) 
+Run 12, Cycle 3, score +0.233883, flipped (1,1) 
+Run 12, Cycle 4, score +0.087981, flipped (8,1) 
+Run 12, Cycle 5, score +0
 Run 12, Cycle 6, score +0
 Run 12, Cycle 7, score +0
 Run 12, Cycle 8, score +0
 Run 12, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 13, Init, score 1.221498 
-Run 13, Cycle 1, score +0.667277, flipped (5,1) 
-Run 13, Cycle 2, score +0.226747, flipped (3,1) 
-Run 13, Cycle 3, score +0.212811, flipped (6,1) 
-Run 13, Cycle 4, score +0.087981, flipped (8,1) 
+Run 13, Init, score 0.597673 
+Run 13, Cycle 1, score +1.056669, flipped (4,1) 
+Run 13, Cycle 2, score +0.435610, flipped (3,1) 
+Run 13, Cycle 3, score +0.198109, flipped (1,1) 
+Run 13, Cycle 4, score +0.128253, flipped (2,1) 
 Run 13, Cycle 5, score +0
 Run 13, Cycle 6, score +0
 Run 13, Cycle 7, score +0
 Run 13, Cycle 8, score +0
 Run 13, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 14, Init, score 1.735226 
-Run 14, Cycle 1, score +0.477826, flipped (5,1) 
-Run 14, Cycle 2, score +0.203262, flipped (1,1) 
-Run 14, Cycle 3, score +0
+Run 14, Init, score 0.910688 
+Run 14, Cycle 1, score +1.204835, flipped (7,1) 
+Run 14, Cycle 2, score +0.212811, flipped (6,1) 
+Run 14, Cycle 3, score +0.087981, flipped (8,1) 
 Run 14, Cycle 4, score +0
 Run 14, Cycle 5, score +0
 Run 14, Cycle 6, score +0
@@ -245,54 +237,54 @@ Run 14, Cycle 7, score +0
 Run 14, Cycle 8, score +0
 Run 14, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 15, Init, score 0.785258 
-Run 15, Cycle 1, score +0.960265, flipped (7,1) 
-Run 15, Cycle 2, score +0.474467, flipped (3,1) 
-Run 15, Cycle 3, score +0.108343, flipped (2,1) 
-Run 15, Cycle 4, score +0.087981, flipped (8,1) 
+Run 15, Init, score 1.735226 
+Run 15, Cycle 1, score +0.477826, flipped (5,1) 
+Run 15, Cycle 2, score +0.203262, flipped (1,1) 
+Run 15, Cycle 3, score +0
+Run 15, Cycle 4, score +0
 Run 15, Cycle 5, score +0
 Run 15, Cycle 6, score +0
 Run 15, Cycle 7, score +0
 Run 15, Cycle 8, score +0
 Run 15, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 16, Init, score 1.787234 
-Run 16, Cycle 1, score +0.541099, flipped (5,1) 
-Run 16, Cycle 2, score +0.087981, flipped (8,1) 
-Run 16, Cycle 3, score +0
-Run 16, Cycle 4, score +0
+Run 16, Init, score 1.335315 
+Run 16, Cycle 1, score +0.620677, flipped (5,1) 
+Run 16, Cycle 2, score +0.159530, flipped (1,1) 
+Run 16, Cycle 3, score +0.212811, flipped (6,1) 
+Run 16, Cycle 4, score +0.087981, flipped (8,1) 
 Run 16, Cycle 5, score +0
 Run 16, Cycle 6, score +0
 Run 16, Cycle 7, score +0
 Run 16, Cycle 8, score +0
 Run 16, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 17, Init, score 1.108471 
-Run 17, Cycle 1, score +1.179590, flipped (4,1) 
-Run 17, Cycle 2, score +0.128253, flipped (2,1) 
-Run 17, Cycle 3, score +0
-Run 17, Cycle 4, score +0
+Run 17, Init, score 0.757912 
+Run 17, Cycle 1, score +1.198080, flipped (7,1) 
+Run 17, Cycle 2, score +0.159530, flipped (1,1) 
+Run 17, Cycle 3, score +0.212811, flipped (6,1) 
+Run 17, Cycle 4, score +0.087981, flipped (8,1) 
 Run 17, Cycle 5, score +0
 Run 17, Cycle 6, score +0
 Run 17, Cycle 7, score +0
 Run 17, Cycle 8, score +0
 Run 17, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 18, Init, score 0.640127 
-Run 18, Cycle 1, score +1.170861, flipped (4,1) 
-Run 18, Cycle 2, score +0.605325, flipped (3,1) 
-Run 18, Cycle 3, score +0
-Run 18, Cycle 4, score +0
-Run 18, Cycle 5, score +0
+Run 18, Init, score 1.785116 
+Run 18, Cycle 1, score +0.211006, flipped (2,1) 
+Run 18, Cycle 2, score +0.018012, flipped (6,1) 
+Run 18, Cycle 3, score +0.080315, flipped (3,1) 
+Run 18, Cycle 4, score +0.233883, flipped (1,1) 
+Run 18, Cycle 5, score +0.087981, flipped (8,1) 
 Run 18, Cycle 6, score +0
 Run 18, Cycle 7, score +0
 Run 18, Cycle 8, score +0
 Run 18, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 19, Init, score 1.821856 
-Run 19, Cycle 1, score +0.391196, flipped (3,1) 
-Run 19, Cycle 2, score +0.203262, flipped (1,1) 
-Run 19, Cycle 3, score +0
+Run 19, Init, score 1.745523 
+Run 19, Cycle 1, score +0.474467, flipped (3,1) 
+Run 19, Cycle 2, score +0.108343, flipped (2,1) 
+Run 19, Cycle 3, score +0.087981, flipped (8,1) 
 Run 19, Cycle 4, score +0
 Run 19, Cycle 5, score +0
 Run 19, Cycle 6, score +0
@@ -300,10 +292,10 @@ Run 19, Cycle 7, score +0
 Run 19, Cycle 8, score +0
 Run 19, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 20, Init, score 1.132373 
-Run 20, Cycle 1, score +0.671483, flipped (3,1) 
-Run 20, Cycle 2, score +0.484205, flipped (5,1) 
-Run 20, Cycle 3, score +0.128253, flipped (2,1) 
+Run 20, Init, score 1.308615 
+Run 20, Cycle 1, score +0.581927, flipped (5,1) 
+Run 20, Cycle 2, score +0.437791, flipped (3,1) 
+Run 20, Cycle 3, score +0.087981, flipped (8,1) 
 Run 20, Cycle 4, score +0
 Run 20, Cycle 5, score +0
 Run 20, Cycle 6, score +0
@@ -311,10 +303,10 @@ Run 20, Cycle 7, score +0
 Run 20, Cycle 8, score +0
 Run 20, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 21, Init, score 0.646260 
-Run 21, Cycle 1, score +1.175596, flipped (7,1) 
-Run 21, Cycle 2, score +0.391196, flipped (3,1) 
-Run 21, Cycle 3, score +0.203262, flipped (1,1) 
+Run 21, Init, score 1.060020 
+Run 21, Cycle 1, score +1.055503, flipped (4,1) 
+Run 21, Cycle 2, score +0.212811, flipped (6,1) 
+Run 21, Cycle 3, score +0.087981, flipped (8,1) 
 Run 21, Cycle 4, score +0
 Run 21, Cycle 5, score +0
 Run 21, Cycle 6, score +0
@@ -322,32 +314,32 @@ Run 21, Cycle 7, score +0
 Run 21, Cycle 8, score +0
 Run 21, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 22, Init, score 0.850912 
-Run 22, Cycle 1, score +0.884314, flipped (7,1) 
-Run 22, Cycle 2, score +0.477826, flipped (5,1) 
-Run 22, Cycle 3, score +0.203262, flipped (1,1) 
-Run 22, Cycle 4, score +0
+Run 22, Init, score 1.348806 
+Run 22, Cycle 1, score +0.676692, flipped (5,1) 
+Run 22, Cycle 2, score +0.194492, flipped (6,1) 
+Run 22, Cycle 3, score +0.108343, flipped (2,1) 
+Run 22, Cycle 4, score +0.087981, flipped (8,1) 
 Run 22, Cycle 5, score +0
 Run 22, Cycle 6, score +0
 Run 22, Cycle 7, score +0
 Run 22, Cycle 8, score +0
 Run 22, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 23, Init, score 0.573057 
-Run 23, Cycle 1, score +1.214176, flipped (7,1) 
-Run 23, Cycle 2, score +0.541099, flipped (5,1) 
-Run 23, Cycle 3, score +0.087981, flipped (8,1) 
-Run 23, Cycle 4, score +0
+Run 23, Init, score 1.251333 
+Run 23, Cycle 1, score +0.565510, flipped (5,1) 
+Run 23, Cycle 2, score +0.273109, flipped (6,1) 
+Run 23, Cycle 3, score +0.198109, flipped (1,1) 
+Run 23, Cycle 4, score +0.128253, flipped (2,1) 
 Run 23, Cycle 5, score +0
 Run 23, Cycle 6, score +0
 Run 23, Cycle 7, score +0
 Run 23, Cycle 8, score +0
 Run 23, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 24, Init, score 0.572610 
-Run 24, Cycle 1, score +1.123479, flipped (7,1) 
-Run 24, Cycle 2, score +0.591972, flipped (3,1) 
-Run 24, Cycle 3, score +0.128253, flipped (2,1) 
+Run 24, Init, score 2.115522 
+Run 24, Cycle 1, score +0.212811, flipped (6,1) 
+Run 24, Cycle 2, score +0.087981, flipped (8,1) 
+Run 24, Cycle 3, score +0
 Run 24, Cycle 4, score +0
 Run 24, Cycle 5, score +0
 Run 24, Cycle 6, score +0
@@ -355,10 +347,10 @@ Run 24, Cycle 7, score +0
 Run 24, Cycle 8, score +0
 Run 24, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 25, Init, score 0.992995 
-Run 25, Cycle 1, score +1.335338, flipped (7,1) 
-Run 25, Cycle 2, score +0.087981, flipped (8,1) 
-Run 25, Cycle 3, score +0
+Run 25, Init, score 0.854354 
+Run 25, Cycle 1, score +1.235597, flipped (7,1) 
+Run 25, Cycle 2, score +0.198109, flipped (1,1) 
+Run 25, Cycle 3, score +0.128253, flipped (2,1) 
 Run 25, Cycle 4, score +0
 Run 25, Cycle 5, score +0
 Run 25, Cycle 6, score +0
@@ -366,21 +358,21 @@ Run 25, Cycle 7, score +0
 Run 25, Cycle 8, score +0
 Run 25, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 26, Init, score 1.132373 
-Run 26, Cycle 1, score +0.671483, flipped (3,1) 
-Run 26, Cycle 2, score +0.484205, flipped (5,1) 
-Run 26, Cycle 3, score +0.128253, flipped (2,1) 
-Run 26, Cycle 4, score +0
+Run 26, Init, score 1.052163 
+Run 26, Cycle 1, score +0.836612, flipped (4,1) 
+Run 26, Cycle 2, score +0.226747, flipped (3,1) 
+Run 26, Cycle 3, score +0.212811, flipped (6,1) 
+Run 26, Cycle 4, score +0.087981, flipped (8,1) 
 Run 26, Cycle 5, score +0
 Run 26, Cycle 6, score +0
 Run 26, Cycle 7, score +0
 Run 26, Cycle 8, score +0
 Run 26, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 27, Init, score 1.474316 
-Run 27, Cycle 1, score +0.641207, flipped (5,1) 
-Run 27, Cycle 2, score +0.212811, flipped (6,1) 
-Run 27, Cycle 3, score +0.087981, flipped (8,1) 
+Run 27, Init, score 2.213052 
+Run 27, Cycle 1, score +0.203262, flipped (1,1) 
+Run 27, Cycle 2, score +0
+Run 27, Cycle 3, score +0
 Run 27, Cycle 4, score +0
 Run 27, Cycle 5, score +0
 Run 27, Cycle 6, score +0
@@ -388,65 +380,65 @@ Run 27, Cycle 7, score +0
 Run 27, Cycle 8, score +0
 Run 27, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 28, Init, score 0.563713 
-Run 28, Cycle 1, score +1.245317, flipped (7,1) 
-Run 28, Cycle 2, score +0.216468, flipped (1,1) 
-Run 28, Cycle 3, score +0.194492, flipped (6,1) 
-Run 28, Cycle 4, score +0.108343, flipped (2,1) 
-Run 28, Cycle 5, score +0.087981, flipped (8,1) 
-Run 28, Cycle 6, score +0
+Run 28, Init, score 0.556344 
+Run 28, Cycle 1, score +1.160652, flipped (4,1) 
+Run 28, Cycle 2, score +0.279126, flipped (8,1) 
+Run 28, Cycle 3, score +0.018012, flipped (6,1) 
+Run 28, Cycle 4, score +0.080315, flipped (3,1) 
+Run 28, Cycle 5, score +0.233883, flipped (1,1) 
+Run 28, Cycle 6, score +0.087981, flipped (8,1) 
 Run 28, Cycle 7, score +0
 Run 28, Cycle 8, score +0
 Run 28, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 29, Init, score 1.785116 
-Run 29, Cycle 1, score +0.211006, flipped (2,1) 
-Run 29, Cycle 2, score +0.018012, flipped (6,1) 
-Run 29, Cycle 3, score +0.080315, flipped (3,1) 
-Run 29, Cycle 4, score +0.233883, flipped (1,1) 
-Run 29, Cycle 5, score +0.087981, flipped (8,1) 
+Run 29, Init, score 0.910688 
+Run 29, Cycle 1, score +1.204835, flipped (7,1) 
+Run 29, Cycle 2, score +0.212811, flipped (6,1) 
+Run 29, Cycle 3, score +0.087981, flipped (8,1) 
+Run 29, Cycle 4, score +0
+Run 29, Cycle 5, score +0
 Run 29, Cycle 6, score +0
 Run 29, Cycle 7, score +0
 Run 29, Cycle 8, score +0
 Run 29, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 30, Init, score 1.052163 
-Run 30, Cycle 1, score +0.836612, flipped (4,1) 
-Run 30, Cycle 2, score +0.226747, flipped (3,1) 
-Run 30, Cycle 3, score +0.212811, flipped (6,1) 
-Run 30, Cycle 4, score +0.087981, flipped (8,1) 
-Run 30, Cycle 5, score +0
+Run 30, Init, score 1.084411 
+Run 30, Cycle 1, score +0.911712, flipped (4,1) 
+Run 30, Cycle 2, score +0.018012, flipped (6,1) 
+Run 30, Cycle 3, score +0.080315, flipped (3,1) 
+Run 30, Cycle 4, score +0.233883, flipped (1,1) 
+Run 30, Cycle 5, score +0.087981, flipped (8,1) 
 Run 30, Cycle 6, score +0
 Run 30, Cycle 7, score +0
 Run 30, Cycle 8, score +0
 Run 30, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 31, Init, score 1.335315 
-Run 31, Cycle 1, score +0.620677, flipped (5,1) 
-Run 31, Cycle 2, score +0.159530, flipped (1,1) 
-Run 31, Cycle 3, score +0.212811, flipped (6,1) 
-Run 31, Cycle 4, score +0.087981, flipped (8,1) 
+Run 31, Init, score 1.475385 
+Run 31, Cycle 1, score +0.526557, flipped (5,1) 
+Run 31, Cycle 2, score +0.286119, flipped (6,1) 
+Run 31, Cycle 3, score +0.128253, flipped (2,1) 
+Run 31, Cycle 4, score +0
 Run 31, Cycle 5, score +0
 Run 31, Cycle 6, score +0
 Run 31, Cycle 7, score +0
 Run 31, Cycle 8, score +0
 Run 31, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 32, Init, score 0.945845 
-Run 32, Cycle 1, score +0.839271, flipped (5,1) 
-Run 32, Cycle 2, score +0.211006, flipped (2,1) 
-Run 32, Cycle 3, score +0.018012, flipped (6,1) 
-Run 32, Cycle 4, score +0.080315, flipped (3,1) 
-Run 32, Cycle 5, score +0.233883, flipped (1,1) 
-Run 32, Cycle 6, score +0.087981, flipped (8,1) 
+Run 32, Init, score 0.451356 
+Run 32, Cycle 1, score +1.133797, flipped (7,1) 
+Run 32, Cycle 2, score +0.509297, flipped (5,1) 
+Run 32, Cycle 3, score +0.233883, flipped (1,1) 
+Run 32, Cycle 4, score +0.087981, flipped (8,1) 
+Run 32, Cycle 5, score +0
+Run 32, Cycle 6, score +0
 Run 32, Cycle 7, score +0
 Run 32, Cycle 8, score +0
 Run 32, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 33, Init, score 1.308615 
-Run 33, Cycle 1, score +0.581927, flipped (5,1) 
-Run 33, Cycle 2, score +0.437791, flipped (3,1) 
-Run 33, Cycle 3, score +0.087981, flipped (8,1) 
+Run 33, Init, score 0.628563 
+Run 33, Cycle 1, score +1.193293, flipped (4,1) 
+Run 33, Cycle 2, score +0.391196, flipped (3,1) 
+Run 33, Cycle 3, score +0.203262, flipped (1,1) 
 Run 33, Cycle 4, score +0
 Run 33, Cycle 5, score +0
 Run 33, Cycle 6, score +0
@@ -454,21 +446,21 @@ Run 33, Cycle 7, score +0
 Run 33, Cycle 8, score +0
 Run 33, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 34, Init, score 1.108471 
-Run 34, Cycle 1, score +1.179590, flipped (4,1) 
-Run 34, Cycle 2, score +0.128253, flipped (2,1) 
-Run 34, Cycle 3, score +0
-Run 34, Cycle 4, score +0
+Run 34, Init, score 1.348806 
+Run 34, Cycle 1, score +0.676692, flipped (5,1) 
+Run 34, Cycle 2, score +0.194492, flipped (6,1) 
+Run 34, Cycle 3, score +0.108343, flipped (2,1) 
+Run 34, Cycle 4, score +0.087981, flipped (8,1) 
 Run 34, Cycle 5, score +0
 Run 34, Cycle 6, score +0
 Run 34, Cycle 7, score +0
 Run 34, Cycle 8, score +0
 Run 34, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 35, Init, score 0.981690 
-Run 35, Cycle 1, score +1.112760, flipped (4,1) 
-Run 35, Cycle 2, score +0.233883, flipped (1,1) 
-Run 35, Cycle 3, score +0.087981, flipped (8,1) 
+Run 35, Init, score 2.288061 
+Run 35, Cycle 1, score +0.128253, flipped (2,1) 
+Run 35, Cycle 2, score +0
+Run 35, Cycle 3, score +0
 Run 35, Cycle 4, score +0
 Run 35, Cycle 5, score +0
 Run 35, Cycle 6, score +0
@@ -476,20 +468,20 @@ Run 35, Cycle 7, score +0
 Run 35, Cycle 8, score +0
 Run 35, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 36, Init, score 1.528218 
-Run 36, Cycle 1, score +0.288625, flipped (3,1) 
-Run 36, Cycle 2, score +0.273109, flipped (6,1) 
-Run 36, Cycle 3, score +0.198109, flipped (1,1) 
-Run 36, Cycle 4, score +0.128253, flipped (2,1) 
+Run 36, Init, score 1.221498 
+Run 36, Cycle 1, score +0.667277, flipped (5,1) 
+Run 36, Cycle 2, score +0.226747, flipped (3,1) 
+Run 36, Cycle 3, score +0.212811, flipped (6,1) 
+Run 36, Cycle 4, score +0.087981, flipped (8,1) 
 Run 36, Cycle 5, score +0
 Run 36, Cycle 6, score +0
 Run 36, Cycle 7, score +0
 Run 36, Cycle 8, score +0
 Run 36, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 37, Init, score 0.961397 
-Run 37, Cycle 1, score +1.326664, flipped (7,1) 
-Run 37, Cycle 2, score +0.128253, flipped (2,1) 
+Run 37, Init, score 0.996748 
+Run 37, Cycle 1, score +1.216304, flipped (4,1) 
+Run 37, Cycle 2, score +0.203262, flipped (1,1) 
 Run 37, Cycle 3, score +0
 Run 37, Cycle 4, score +0
 Run 37, Cycle 5, score +0
@@ -498,31 +490,31 @@ Run 37, Cycle 7, score +0
 Run 37, Cycle 8, score +0
 Run 37, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 38, Init, score 0.992995 
-Run 38, Cycle 1, score +1.335338, flipped (7,1) 
-Run 38, Cycle 2, score +0.087981, flipped (8,1) 
-Run 38, Cycle 3, score +0
-Run 38, Cycle 4, score +0
-Run 38, Cycle 5, score +0
+Run 38, Init, score 1.084411 
+Run 38, Cycle 1, score +0.911712, flipped (4,1) 
+Run 38, Cycle 2, score +0.018012, flipped (6,1) 
+Run 38, Cycle 3, score +0.080315, flipped (3,1) 
+Run 38, Cycle 4, score +0.233883, flipped (1,1) 
+Run 38, Cycle 5, score +0.087981, flipped (8,1) 
 Run 38, Cycle 6, score +0
 Run 38, Cycle 7, score +0
 Run 38, Cycle 8, score +0
 Run 38, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 39, Init, score 1.661724 
-Run 39, Cycle 1, score +0.558266, flipped (5,1) 
-Run 39, Cycle 2, score +0.108343, flipped (2,1) 
-Run 39, Cycle 3, score +0.087981, flipped (8,1) 
-Run 39, Cycle 4, score +0
+Run 39, Init, score 1.221498 
+Run 39, Cycle 1, score +0.667277, flipped (5,1) 
+Run 39, Cycle 2, score +0.226747, flipped (3,1) 
+Run 39, Cycle 3, score +0.212811, flipped (6,1) 
+Run 39, Cycle 4, score +0.087981, flipped (8,1) 
 Run 39, Cycle 5, score +0
 Run 39, Cycle 6, score +0
 Run 39, Cycle 7, score +0
 Run 39, Cycle 8, score +0
 Run 39, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 40, Init, score 1.821856 
-Run 40, Cycle 1, score +0.391196, flipped (3,1) 
-Run 40, Cycle 2, score +0.203262, flipped (1,1) 
+Run 40, Init, score 0.475000 
+Run 40, Cycle 1, score +1.335988, flipped (7,1) 
+Run 40, Cycle 2, score +0.605325, flipped (3,1) 
 Run 40, Cycle 3, score +0
 Run 40, Cycle 4, score +0
 Run 40, Cycle 5, score +0
@@ -531,20 +523,20 @@ Run 40, Cycle 7, score +0
 Run 40, Cycle 8, score +0
 Run 40, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 41, Init, score 1.888775 
-Run 41, Cycle 1, score +0.226747, flipped (3,1) 
-Run 41, Cycle 2, score +0.212811, flipped (6,1) 
-Run 41, Cycle 3, score +0.087981, flipped (8,1) 
-Run 41, Cycle 4, score +0
+Run 41, Init, score 0.951265 
+Run 41, Cycle 1, score +1.062869, flipped (4,1) 
+Run 41, Cycle 2, score +0.080315, flipped (3,1) 
+Run 41, Cycle 3, score +0.233883, flipped (1,1) 
+Run 41, Cycle 4, score +0.087981, flipped (8,1) 
 Run 41, Cycle 5, score +0
 Run 41, Cycle 6, score +0
 Run 41, Cycle 7, score +0
 Run 41, Cycle 8, score +0
 Run 41, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 42, Init, score 0.962475 
-Run 42, Cycle 1, score +0.928067, flipped (7,1) 
-Run 42, Cycle 2, score +0.437791, flipped (3,1) 
+Run 42, Init, score 1.888775 
+Run 42, Cycle 1, score +0.226747, flipped (3,1) 
+Run 42, Cycle 2, score +0.212811, flipped (6,1) 
 Run 42, Cycle 3, score +0.087981, flipped (8,1) 
 Run 42, Cycle 4, score +0
 Run 42, Cycle 5, score +0
@@ -553,10 +545,10 @@ Run 42, Cycle 7, score +0
 Run 42, Cycle 8, score +0
 Run 42, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 43, Init, score 0.475000 
-Run 43, Cycle 1, score +1.335988, flipped (7,1) 
-Run 43, Cycle 2, score +0.605325, flipped (3,1) 
-Run 43, Cycle 3, score +0
+Run 43, Init, score 0.551302 
+Run 43, Cycle 1, score +1.144787, flipped (4,1) 
+Run 43, Cycle 2, score +0.591972, flipped (3,1) 
+Run 43, Cycle 3, score +0.128253, flipped (2,1) 
 Run 43, Cycle 4, score +0
 Run 43, Cycle 5, score +0
 Run 43, Cycle 6, score +0
@@ -564,30 +556,30 @@ Run 43, Cycle 7, score +0
 Run 43, Cycle 8, score +0
 Run 43, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 44, Init, score 0.831001 
-Run 44, Cycle 1, score +0.697217, flipped (5,1) 
-Run 44, Cycle 2, score +0.288625, flipped (3,1) 
-Run 44, Cycle 3, score +0.273109, flipped (6,1) 
-Run 44, Cycle 4, score +0.198109, flipped (1,1) 
-Run 44, Cycle 5, score +0.128253, flipped (2,1) 
+Run 44, Init, score 0.704044 
+Run 44, Cycle 1, score +1.099084, flipped (4,1) 
+Run 44, Cycle 2, score +0.211006, flipped (2,1) 
+Run 44, Cycle 3, score +0.080315, flipped (3,1) 
+Run 44, Cycle 4, score +0.233883, flipped (1,1) 
+Run 44, Cycle 5, score +0.087981, flipped (8,1) 
 Run 44, Cycle 6, score +0
 Run 44, Cycle 7, score +0
 Run 44, Cycle 8, score +0
 Run 44, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 45, Init, score 0.850912 
-Run 45, Cycle 1, score +0.884314, flipped (7,1) 
-Run 45, Cycle 2, score +0.477826, flipped (5,1) 
-Run 45, Cycle 3, score +0.203262, flipped (1,1) 
-Run 45, Cycle 4, score +0
+Run 45, Init, score 1.411533 
+Run 45, Cycle 1, score +0.562517, flipped (5,1) 
+Run 45, Cycle 2, score +0.245940, flipped (1,1) 
+Run 45, Cycle 3, score +0.108343, flipped (2,1) 
+Run 45, Cycle 4, score +0.087981, flipped (8,1) 
 Run 45, Cycle 5, score +0
 Run 45, Cycle 6, score +0
 Run 45, Cycle 7, score +0
 Run 45, Cycle 8, score +0
 Run 45, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 46, Init, score 1.661724 
-Run 46, Cycle 1, score +0.558266, flipped (5,1) 
+Run 46, Init, score 1.745523 
+Run 46, Cycle 1, score +0.474467, flipped (3,1) 
 Run 46, Cycle 2, score +0.108343, flipped (2,1) 
 Run 46, Cycle 3, score +0.087981, flipped (8,1) 
 Run 46, Cycle 4, score +0
@@ -597,120 +589,120 @@ Run 46, Cycle 7, score +0
 Run 46, Cycle 8, score +0
 Run 46, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 47, Init, score 0.738342 
-Run 47, Cycle 1, score +1.373493, flipped (7,1) 
-Run 47, Cycle 2, score +0.304479, flipped (6,1) 
-Run 47, Cycle 3, score +0
-Run 47, Cycle 4, score +0
-Run 47, Cycle 5, score +0
+Run 47, Init, score 1.085290 
+Run 47, Cycle 1, score +0.717838, flipped (5,1) 
+Run 47, Cycle 2, score +0.211006, flipped (2,1) 
+Run 47, Cycle 3, score +0.080315, flipped (3,1) 
+Run 47, Cycle 4, score +0.233883, flipped (1,1) 
+Run 47, Cycle 5, score +0.087981, flipped (8,1) 
 Run 47, Cycle 6, score +0
 Run 47, Cycle 7, score +0
 Run 47, Cycle 8, score +0
 Run 47, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 48, Init, score 0.451356 
-Run 48, Cycle 1, score +1.133797, flipped (7,1) 
-Run 48, Cycle 2, score +0.509297, flipped (5,1) 
-Run 48, Cycle 3, score +0.233883, flipped (1,1) 
-Run 48, Cycle 4, score +0.087981, flipped (8,1) 
+Run 48, Init, score 0.728541 
+Run 48, Cycle 1, score +1.088302, flipped (4,1) 
+Run 48, Cycle 2, score +0.273109, flipped (6,1) 
+Run 48, Cycle 3, score +0.198109, flipped (1,1) 
+Run 48, Cycle 4, score +0.128253, flipped (2,1) 
 Run 48, Cycle 5, score +0
 Run 48, Cycle 6, score +0
 Run 48, Cycle 7, score +0
 Run 48, Cycle 8, score +0
 Run 48, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 49, Init, score 1.084411 
-Run 49, Cycle 1, score +0.911712, flipped (4,1) 
-Run 49, Cycle 2, score +0.018012, flipped (6,1) 
-Run 49, Cycle 3, score +0.080315, flipped (3,1) 
-Run 49, Cycle 4, score +0.233883, flipped (1,1) 
-Run 49, Cycle 5, score +0.087981, flipped (8,1) 
+Run 49, Init, score 1.511337 
+Run 49, Cycle 1, score +0.490606, flipped (3,1) 
+Run 49, Cycle 2, score +0.286119, flipped (6,1) 
+Run 49, Cycle 3, score +0.128253, flipped (2,1) 
+Run 49, Cycle 4, score +0
+Run 49, Cycle 5, score +0
 Run 49, Cycle 6, score +0
 Run 49, Cycle 7, score +0
 Run 49, Cycle 8, score +0
 Run 49, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 50, Init, score 0.754825 
-Run 50, Cycle 1, score +0.899517, flipped (7,1) 
-Run 50, Cycle 2, score +0.435610, flipped (3,1) 
-Run 50, Cycle 3, score +0.198109, flipped (1,1) 
-Run 50, Cycle 4, score +0.128253, flipped (2,1) 
+Run 50, Init, score 2.001942 
+Run 50, Cycle 1, score +0.286119, flipped (6,1) 
+Run 50, Cycle 2, score +0.128253, flipped (2,1) 
+Run 50, Cycle 3, score +0
+Run 50, Cycle 4, score +0
 Run 50, Cycle 5, score +0
 Run 50, Cycle 6, score +0
 Run 50, Cycle 7, score +0
 Run 50, Cycle 8, score +0
 Run 50, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 51, Init, score 1.614103 
-Run 51, Cycle 1, score +0.497732, flipped (5,1) 
-Run 51, Cycle 2, score +0.304479, flipped (6,1) 
-Run 51, Cycle 3, score +0
-Run 51, Cycle 4, score +0
-Run 51, Cycle 5, score +0
+Run 51, Init, score 1.113547 
+Run 51, Cycle 1, score +0.695482, flipped (5,1) 
+Run 51, Cycle 2, score +0.216468, flipped (1,1) 
+Run 51, Cycle 3, score +0.194492, flipped (6,1) 
+Run 51, Cycle 4, score +0.108343, flipped (2,1) 
+Run 51, Cycle 5, score +0.087981, flipped (8,1) 
 Run 51, Cycle 6, score +0
 Run 51, Cycle 7, score +0
 Run 51, Cycle 8, score +0
 Run 51, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 52, Init, score 1.706988 
-Run 52, Cycle 1, score +0.318509, flipped (3,1) 
-Run 52, Cycle 2, score +0.194492, flipped (6,1) 
-Run 52, Cycle 3, score +0.108343, flipped (2,1) 
-Run 52, Cycle 4, score +0.087981, flipped (8,1) 
+Run 52, Init, score 2.416314 
+Run 52, Cycle 1, score +0
+Run 52, Cycle 2, score +0
+Run 52, Cycle 3, score +0
+Run 52, Cycle 4, score +0
 Run 52, Cycle 5, score +0
 Run 52, Cycle 6, score +0
 Run 52, Cycle 7, score +0
 Run 52, Cycle 8, score +0
 Run 52, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 53, Init, score 1.785116 
-Run 53, Cycle 1, score +0.211006, flipped (2,1) 
-Run 53, Cycle 2, score +0.018012, flipped (6,1) 
-Run 53, Cycle 3, score +0.080315, flipped (3,1) 
-Run 53, Cycle 4, score +0.233883, flipped (1,1) 
-Run 53, Cycle 5, score +0.087981, flipped (8,1) 
+Run 53, Init, score 0.587931 
+Run 53, Cycle 1, score +1.346726, flipped (7,1) 
+Run 53, Cycle 2, score +0.278396, flipped (6,1) 
+Run 53, Cycle 3, score +0.203262, flipped (1,1) 
+Run 53, Cycle 4, score +0
+Run 53, Cycle 5, score +0
 Run 53, Cycle 6, score +0
 Run 53, Cycle 7, score +0
 Run 53, Cycle 8, score +0
 Run 53, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 54, Init, score 0.914075 
-Run 54, Cycle 1, score +1.100059, flipped (7,1) 
-Run 54, Cycle 2, score +0.080315, flipped (3,1) 
-Run 54, Cycle 3, score +0.233883, flipped (1,1) 
-Run 54, Cycle 4, score +0.087981, flipped (8,1) 
+Run 54, Init, score 0.573057 
+Run 54, Cycle 1, score +1.214176, flipped (7,1) 
+Run 54, Cycle 2, score +0.541099, flipped (5,1) 
+Run 54, Cycle 3, score +0.087981, flipped (8,1) 
+Run 54, Cycle 4, score +0
 Run 54, Cycle 5, score +0
 Run 54, Cycle 6, score +0
 Run 54, Cycle 7, score +0
 Run 54, Cycle 8, score +0
 Run 54, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 55, Init, score 0.981690 
-Run 55, Cycle 1, score +1.112760, flipped (4,1) 
-Run 55, Cycle 2, score +0.233883, flipped (1,1) 
-Run 55, Cycle 3, score +0.087981, flipped (8,1) 
-Run 55, Cycle 4, score +0
+Run 55, Init, score 1.348806 
+Run 55, Cycle 1, score +0.676692, flipped (5,1) 
+Run 55, Cycle 2, score +0.194492, flipped (6,1) 
+Run 55, Cycle 3, score +0.108343, flipped (2,1) 
+Run 55, Cycle 4, score +0.087981, flipped (8,1) 
 Run 55, Cycle 5, score +0
 Run 55, Cycle 6, score +0
 Run 55, Cycle 7, score +0
 Run 55, Cycle 8, score +0
 Run 55, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 56, Init, score 0.720158 
-Run 56, Cycle 1, score +0.996839, flipped (7,1) 
-Run 56, Cycle 2, score +0.279126, flipped (8,1) 
-Run 56, Cycle 3, score +0.018012, flipped (6,1) 
-Run 56, Cycle 4, score +0.080315, flipped (3,1) 
-Run 56, Cycle 5, score +0.233883, flipped (1,1) 
-Run 56, Cycle 6, score +0.087981, flipped (8,1) 
+Run 56, Init, score 1.803856 
+Run 56, Cycle 1, score +0.484205, flipped (5,1) 
+Run 56, Cycle 2, score +0.128253, flipped (2,1) 
+Run 56, Cycle 3, score +0
+Run 56, Cycle 4, score +0
+Run 56, Cycle 5, score +0
+Run 56, Cycle 6, score +0
 Run 56, Cycle 7, score +0
 Run 56, Cycle 8, score +0
 Run 56, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 57, Init, score 1.090452 
-Run 57, Cycle 1, score +0.655071, flipped (5,1) 
-Run 57, Cycle 2, score +0.474467, flipped (3,1) 
-Run 57, Cycle 3, score +0.108343, flipped (2,1) 
+Run 57, Init, score 0.451356 
+Run 57, Cycle 1, score +1.133797, flipped (7,1) 
+Run 57, Cycle 2, score +0.509297, flipped (5,1) 
+Run 57, Cycle 3, score +0.233883, flipped (1,1) 
 Run 57, Cycle 4, score +0.087981, flipped (8,1) 
 Run 57, Cycle 5, score +0
 Run 57, Cycle 6, score +0
@@ -718,21 +710,21 @@ Run 57, Cycle 7, score +0
 Run 57, Cycle 8, score +0
 Run 57, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 58, Init, score 0.914075 
-Run 58, Cycle 1, score +1.100059, flipped (7,1) 
-Run 58, Cycle 2, score +0.080315, flipped (3,1) 
-Run 58, Cycle 3, score +0.233883, flipped (1,1) 
-Run 58, Cycle 4, score +0.087981, flipped (8,1) 
+Run 58, Init, score 0.467071 
+Run 58, Cycle 1, score +1.167960, flipped (4,1) 
+Run 58, Cycle 2, score +0.476804, flipped (3,1) 
+Run 58, Cycle 3, score +0.304479, flipped (6,1) 
+Run 58, Cycle 4, score +0
 Run 58, Cycle 5, score +0
 Run 58, Cycle 6, score +0
 Run 58, Cycle 7, score +0
 Run 58, Cycle 8, score +0
 Run 58, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 59, Init, score 1.108471 
-Run 59, Cycle 1, score +1.179590, flipped (4,1) 
-Run 59, Cycle 2, score +0.128253, flipped (2,1) 
-Run 59, Cycle 3, score +0
+Run 59, Init, score 1.060020 
+Run 59, Cycle 1, score +1.055503, flipped (4,1) 
+Run 59, Cycle 2, score +0.212811, flipped (6,1) 
+Run 59, Cycle 3, score +0.087981, flipped (8,1) 
 Run 59, Cycle 4, score +0
 Run 59, Cycle 5, score +0
 Run 59, Cycle 6, score +0
@@ -740,32 +732,32 @@ Run 59, Cycle 7, score +0
 Run 59, Cycle 8, score +0
 Run 59, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 60, Init, score 0.785258 
-Run 60, Cycle 1, score +0.960265, flipped (7,1) 
-Run 60, Cycle 2, score +0.474467, flipped (3,1) 
-Run 60, Cycle 3, score +0.108343, flipped (2,1) 
-Run 60, Cycle 4, score +0.087981, flipped (8,1) 
+Run 60, Init, score 1.942574 
+Run 60, Cycle 1, score +0.473740, flipped (5,1) 
+Run 60, Cycle 2, score +0
+Run 60, Cycle 3, score +0
+Run 60, Cycle 4, score +0
 Run 60, Cycle 5, score +0
 Run 60, Cycle 6, score +0
 Run 60, Cycle 7, score +0
 Run 60, Cycle 8, score +0
 Run 60, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 61, Init, score 1.785116 
-Run 61, Cycle 1, score +0.211006, flipped (2,1) 
-Run 61, Cycle 2, score +0.018012, flipped (6,1) 
-Run 61, Cycle 3, score +0.080315, flipped (3,1) 
-Run 61, Cycle 4, score +0.233883, flipped (1,1) 
-Run 61, Cycle 5, score +0.087981, flipped (8,1) 
+Run 61, Init, score 0.725668 
+Run 61, Cycle 1, score +1.487384, flipped (7,1) 
+Run 61, Cycle 2, score +0.203262, flipped (1,1) 
+Run 61, Cycle 3, score +0
+Run 61, Cycle 4, score +0
+Run 61, Cycle 5, score +0
 Run 61, Cycle 6, score +0
 Run 61, Cycle 7, score +0
 Run 61, Cycle 8, score +0
 Run 61, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 62, Init, score 1.635031 
-Run 62, Cycle 1, score +0.476804, flipped (3,1) 
-Run 62, Cycle 2, score +0.304479, flipped (6,1) 
-Run 62, Cycle 3, score +0
+Run 62, Init, score 0.587931 
+Run 62, Cycle 1, score +1.346726, flipped (7,1) 
+Run 62, Cycle 2, score +0.278396, flipped (6,1) 
+Run 62, Cycle 3, score +0.203262, flipped (1,1) 
 Run 62, Cycle 4, score +0
 Run 62, Cycle 5, score +0
 Run 62, Cycle 6, score +0
@@ -773,10 +765,10 @@ Run 62, Cycle 7, score +0
 Run 62, Cycle 8, score +0
 Run 62, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 63, Init, score 1.942574 
-Run 63, Cycle 1, score +0.473740, flipped (5,1) 
-Run 63, Cycle 2, score +0
-Run 63, Cycle 3, score +0
+Run 63, Init, score 1.308615 
+Run 63, Cycle 1, score +0.581927, flipped (5,1) 
+Run 63, Cycle 2, score +0.437791, flipped (3,1) 
+Run 63, Cycle 3, score +0.087981, flipped (8,1) 
 Run 63, Cycle 4, score +0
 Run 63, Cycle 5, score +0
 Run 63, Cycle 6, score +0
@@ -784,21 +776,21 @@ Run 63, Cycle 7, score +0
 Run 63, Cycle 8, score +0
 Run 63, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 64, Init, score 0.947272 
-Run 64, Cycle 1, score +1.164563, flipped (4,1) 
-Run 64, Cycle 2, score +0.304479, flipped (6,1) 
-Run 64, Cycle 3, score +0
-Run 64, Cycle 4, score +0
-Run 64, Cycle 5, score +0
+Run 64, Init, score 0.668972 
+Run 64, Cycle 1, score +1.134157, flipped (7,1) 
+Run 64, Cycle 2, score +0.211006, flipped (2,1) 
+Run 64, Cycle 3, score +0.080315, flipped (3,1) 
+Run 64, Cycle 4, score +0.233883, flipped (1,1) 
+Run 64, Cycle 5, score +0.087981, flipped (8,1) 
 Run 64, Cycle 6, score +0
 Run 64, Cycle 7, score +0
 Run 64, Cycle 8, score +0
 Run 64, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 65, Init, score 0.846854 
-Run 65, Cycle 1, score +1.155088, flipped (4,1) 
-Run 65, Cycle 2, score +0.286119, flipped (6,1) 
-Run 65, Cycle 3, score +0.128253, flipped (2,1) 
+Run 65, Init, score 0.573057 
+Run 65, Cycle 1, score +1.214176, flipped (7,1) 
+Run 65, Cycle 2, score +0.541099, flipped (5,1) 
+Run 65, Cycle 3, score +0.087981, flipped (8,1) 
 Run 65, Cycle 4, score +0
 Run 65, Cycle 5, score +0
 Run 65, Cycle 6, score +0
@@ -806,9 +798,9 @@ Run 65, Cycle 7, score +0
 Run 65, Cycle 8, score +0
 Run 65, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 66, Init, score 1.424954 
-Run 66, Cycle 1, score +0.509703, flipped (5,1) 
-Run 66, Cycle 2, score +0.278396, flipped (6,1) 
+Run 66, Init, score 1.252448 
+Run 66, Cycle 1, score +0.569408, flipped (5,1) 
+Run 66, Cycle 2, score +0.391196, flipped (3,1) 
 Run 66, Cycle 3, score +0.203262, flipped (1,1) 
 Run 66, Cycle 4, score +0
 Run 66, Cycle 5, score +0
@@ -817,10 +809,10 @@ Run 66, Cycle 7, score +0
 Run 66, Cycle 8, score +0
 Run 66, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 67, Init, score 1.474316 
-Run 67, Cycle 1, score +0.641207, flipped (5,1) 
-Run 67, Cycle 2, score +0.212811, flipped (6,1) 
-Run 67, Cycle 3, score +0.087981, flipped (8,1) 
+Run 67, Init, score 2.213052 
+Run 67, Cycle 1, score +0.203262, flipped (1,1) 
+Run 67, Cycle 2, score +0
+Run 67, Cycle 3, score +0
 Run 67, Cycle 4, score +0
 Run 67, Cycle 5, score +0
 Run 67, Cycle 6, score +0
@@ -828,31 +820,31 @@ Run 67, Cycle 7, score +0
 Run 67, Cycle 8, score +0
 Run 67, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 68, Init, score 0.992995 
-Run 68, Cycle 1, score +1.335338, flipped (7,1) 
-Run 68, Cycle 2, score +0.087981, flipped (8,1) 
-Run 68, Cycle 3, score +0
-Run 68, Cycle 4, score +0
-Run 68, Cycle 5, score +0
+Run 68, Init, score 1.716997 
+Run 68, Cycle 1, score +0.279126, flipped (8,1) 
+Run 68, Cycle 2, score +0.018012, flipped (6,1) 
+Run 68, Cycle 3, score +0.080315, flipped (3,1) 
+Run 68, Cycle 4, score +0.233883, flipped (1,1) 
+Run 68, Cycle 5, score +0.087981, flipped (8,1) 
 Run 68, Cycle 6, score +0
 Run 68, Cycle 7, score +0
 Run 68, Cycle 8, score +0
 Run 68, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 69, Init, score 1.661724 
-Run 69, Cycle 1, score +0.558266, flipped (5,1) 
-Run 69, Cycle 2, score +0.108343, flipped (2,1) 
-Run 69, Cycle 3, score +0.087981, flipped (8,1) 
-Run 69, Cycle 4, score +0
+Run 69, Init, score 1.706988 
+Run 69, Cycle 1, score +0.318509, flipped (3,1) 
+Run 69, Cycle 2, score +0.194492, flipped (6,1) 
+Run 69, Cycle 3, score +0.108343, flipped (2,1) 
+Run 69, Cycle 4, score +0.087981, flipped (8,1) 
 Run 69, Cycle 5, score +0
 Run 69, Cycle 6, score +0
 Run 69, Cycle 7, score +0
 Run 69, Cycle 8, score +0
 Run 69, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 70, Init, score 1.785116 
-Run 70, Cycle 1, score +0.211006, flipped (2,1) 
-Run 70, Cycle 2, score +0.018012, flipped (6,1) 
+Run 70, Init, score 0.668972 
+Run 70, Cycle 1, score +1.134157, flipped (7,1) 
+Run 70, Cycle 2, score +0.211006, flipped (2,1) 
 Run 70, Cycle 3, score +0.080315, flipped (3,1) 
 Run 70, Cycle 4, score +0.233883, flipped (1,1) 
 Run 70, Cycle 5, score +0.087981, flipped (8,1) 
@@ -861,43 +853,43 @@ Run 70, Cycle 7, score +0
 Run 70, Cycle 8, score +0
 Run 70, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 71, Init, score 0.738342 
-Run 71, Cycle 1, score +1.373493, flipped (7,1) 
-Run 71, Cycle 2, score +0.304479, flipped (6,1) 
-Run 71, Cycle 3, score +0
-Run 71, Cycle 4, score +0
+Run 71, Init, score 1.052163 
+Run 71, Cycle 1, score +0.836612, flipped (4,1) 
+Run 71, Cycle 2, score +0.226747, flipped (3,1) 
+Run 71, Cycle 3, score +0.212811, flipped (6,1) 
+Run 71, Cycle 4, score +0.087981, flipped (8,1) 
 Run 71, Cycle 5, score +0
 Run 71, Cycle 6, score +0
 Run 71, Cycle 7, score +0
 Run 71, Cycle 8, score +0
 Run 71, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 72, Init, score 1.113547 
-Run 72, Cycle 1, score +0.695482, flipped (5,1) 
-Run 72, Cycle 2, score +0.216468, flipped (1,1) 
-Run 72, Cycle 3, score +0.194492, flipped (6,1) 
-Run 72, Cycle 4, score +0.108343, flipped (2,1) 
-Run 72, Cycle 5, score +0.087981, flipped (8,1) 
+Run 72, Init, score 0.467071 
+Run 72, Cycle 1, score +1.167960, flipped (4,1) 
+Run 72, Cycle 2, score +0.476804, flipped (3,1) 
+Run 72, Cycle 3, score +0.304479, flipped (6,1) 
+Run 72, Cycle 4, score +0
+Run 72, Cycle 5, score +0
 Run 72, Cycle 6, score +0
 Run 72, Cycle 7, score +0
 Run 72, Cycle 8, score +0
 Run 72, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 73, Init, score 2.089952 
-Run 73, Cycle 1, score +0.198109, flipped (1,1) 
-Run 73, Cycle 2, score +0.128253, flipped (2,1) 
-Run 73, Cycle 3, score +0
-Run 73, Cycle 4, score +0
-Run 73, Cycle 5, score +0
+Run 73, Init, score 1.716997 
+Run 73, Cycle 1, score +0.279126, flipped (8,1) 
+Run 73, Cycle 2, score +0.018012, flipped (6,1) 
+Run 73, Cycle 3, score +0.080315, flipped (3,1) 
+Run 73, Cycle 4, score +0.233883, flipped (1,1) 
+Run 73, Cycle 5, score +0.087981, flipped (8,1) 
 Run 73, Cycle 6, score +0
 Run 73, Cycle 7, score +0
 Run 73, Cycle 8, score +0
 Run 73, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 74, Init, score 0.587931 
-Run 74, Cycle 1, score +1.346726, flipped (7,1) 
-Run 74, Cycle 2, score +0.278396, flipped (6,1) 
-Run 74, Cycle 3, score +0.203262, flipped (1,1) 
+Run 74, Init, score 1.308615 
+Run 74, Cycle 1, score +0.581927, flipped (5,1) 
+Run 74, Cycle 2, score +0.437791, flipped (3,1) 
+Run 74, Cycle 3, score +0.087981, flipped (8,1) 
 Run 74, Cycle 4, score +0
 Run 74, Cycle 5, score +0
 Run 74, Cycle 6, score +0
@@ -905,21 +897,21 @@ Run 74, Cycle 7, score +0
 Run 74, Cycle 8, score +0
 Run 74, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 75, Init, score 1.888775 
-Run 75, Cycle 1, score +0.226747, flipped (3,1) 
-Run 75, Cycle 2, score +0.212811, flipped (6,1) 
-Run 75, Cycle 3, score +0.087981, flipped (8,1) 
-Run 75, Cycle 4, score +0
+Run 75, Init, score 0.930610 
+Run 75, Cycle 1, score +1.094888, flipped (4,1) 
+Run 75, Cycle 2, score +0.194492, flipped (6,1) 
+Run 75, Cycle 3, score +0.108343, flipped (2,1) 
+Run 75, Cycle 4, score +0.087981, flipped (8,1) 
 Run 75, Cycle 5, score +0
 Run 75, Cycle 6, score +0
 Run 75, Cycle 7, score +0
 Run 75, Cycle 8, score +0
 Run 75, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 76, Init, score 2.416314 
-Run 76, Cycle 1, score +0
-Run 76, Cycle 2, score +0
-Run 76, Cycle 3, score +0
+Run 76, Init, score 0.572610 
+Run 76, Cycle 1, score +1.123479, flipped (7,1) 
+Run 76, Cycle 2, score +0.591972, flipped (3,1) 
+Run 76, Cycle 3, score +0.128253, flipped (2,1) 
 Run 76, Cycle 4, score +0
 Run 76, Cycle 5, score +0
 Run 76, Cycle 6, score +0
@@ -927,9 +919,9 @@ Run 76, Cycle 7, score +0
 Run 76, Cycle 8, score +0
 Run 76, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 77, Init, score 2.288061 
-Run 77, Cycle 1, score +0.128253, flipped (2,1) 
-Run 77, Cycle 2, score +0
+Run 77, Init, score 1.285242 
+Run 77, Cycle 1, score +0.657331, flipped (3,1) 
+Run 77, Cycle 2, score +0.473740, flipped (5,1) 
 Run 77, Cycle 3, score +0
 Run 77, Cycle 4, score +0
 Run 77, Cycle 5, score +0
@@ -938,9 +930,9 @@ Run 77, Cycle 7, score +0
 Run 77, Cycle 8, score +0
 Run 77, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 78, Init, score 1.614103 
-Run 78, Cycle 1, score +0.497732, flipped (5,1) 
-Run 78, Cycle 2, score +0.304479, flipped (6,1) 
+Run 78, Init, score 1.890542 
+Run 78, Cycle 1, score +0.437791, flipped (3,1) 
+Run 78, Cycle 2, score +0.087981, flipped (8,1) 
 Run 78, Cycle 3, score +0
 Run 78, Cycle 4, score +0
 Run 78, Cycle 5, score +0
@@ -949,87 +941,87 @@ Run 78, Cycle 7, score +0
 Run 78, Cycle 8, score +0
 Run 78, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 79, Init, score 2.001942 
-Run 79, Cycle 1, score +0.286119, flipped (6,1) 
-Run 79, Cycle 2, score +0.128253, flipped (2,1) 
-Run 79, Cycle 3, score +0
-Run 79, Cycle 4, score +0
-Run 79, Cycle 5, score +0
+Run 79, Init, score 1.113547 
+Run 79, Cycle 1, score +0.695482, flipped (5,1) 
+Run 79, Cycle 2, score +0.216468, flipped (1,1) 
+Run 79, Cycle 3, score +0.194492, flipped (6,1) 
+Run 79, Cycle 4, score +0.108343, flipped (2,1) 
+Run 79, Cycle 5, score +0.087981, flipped (8,1) 
 Run 79, Cycle 6, score +0
 Run 79, Cycle 7, score +0
 Run 79, Cycle 8, score +0
 Run 79, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 80, Init, score 0.850912 
-Run 80, Cycle 1, score +0.884314, flipped (7,1) 
-Run 80, Cycle 2, score +0.477826, flipped (5,1) 
-Run 80, Cycle 3, score +0.203262, flipped (1,1) 
-Run 80, Cycle 4, score +0
-Run 80, Cycle 5, score +0
+Run 80, Init, score 1.785116 
+Run 80, Cycle 1, score +0.211006, flipped (2,1) 
+Run 80, Cycle 2, score +0.018012, flipped (6,1) 
+Run 80, Cycle 3, score +0.080315, flipped (3,1) 
+Run 80, Cycle 4, score +0.233883, flipped (1,1) 
+Run 80, Cycle 5, score +0.087981, flipped (8,1) 
 Run 80, Cycle 6, score +0
 Run 80, Cycle 7, score +0
 Run 80, Cycle 8, score +0
 Run 80, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 81, Init, score 1.036028 
-Run 81, Cycle 1, score +0.618314, flipped (5,1) 
-Run 81, Cycle 2, score +0.435610, flipped (3,1) 
-Run 81, Cycle 3, score +0.198109, flipped (1,1) 
-Run 81, Cycle 4, score +0.128253, flipped (2,1) 
+Run 81, Init, score 1.735226 
+Run 81, Cycle 1, score +0.477826, flipped (5,1) 
+Run 81, Cycle 2, score +0.203262, flipped (1,1) 
+Run 81, Cycle 3, score +0
+Run 81, Cycle 4, score +0
 Run 81, Cycle 5, score +0
 Run 81, Cycle 6, score +0
 Run 81, Cycle 7, score +0
 Run 81, Cycle 8, score +0
 Run 81, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 82, Init, score 0.842725 
-Run 82, Cycle 1, score +0.668611, flipped (5,1) 
-Run 82, Cycle 2, score +0.490606, flipped (3,1) 
-Run 82, Cycle 3, score +0.286119, flipped (6,1) 
-Run 82, Cycle 4, score +0.128253, flipped (2,1) 
+Run 82, Init, score 1.065259 
+Run 82, Cycle 1, score +1.154731, flipped (4,1) 
+Run 82, Cycle 2, score +0.108343, flipped (2,1) 
+Run 82, Cycle 3, score +0.087981, flipped (8,1) 
+Run 82, Cycle 4, score +0
 Run 82, Cycle 5, score +0
 Run 82, Cycle 6, score +0
 Run 82, Cycle 7, score +0
 Run 82, Cycle 8, score +0
 Run 82, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 83, Init, score 0.941540 
-Run 83, Cycle 1, score +0.949002, flipped (4,1) 
-Run 83, Cycle 2, score +0.437791, flipped (3,1) 
-Run 83, Cycle 3, score +0.087981, flipped (8,1) 
-Run 83, Cycle 4, score +0
-Run 83, Cycle 5, score +0
+Run 83, Init, score 1.785116 
+Run 83, Cycle 1, score +0.211006, flipped (2,1) 
+Run 83, Cycle 2, score +0.018012, flipped (6,1) 
+Run 83, Cycle 3, score +0.080315, flipped (3,1) 
+Run 83, Cycle 4, score +0.233883, flipped (1,1) 
+Run 83, Cycle 5, score +0.087981, flipped (8,1) 
 Run 83, Cycle 6, score +0
 Run 83, Cycle 7, score +0
 Run 83, Cycle 8, score +0
 Run 83, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 84, Init, score 0.835233 
-Run 84, Cycle 1, score +1.107341, flipped (7,1) 
-Run 84, Cycle 2, score +0.473740, flipped (5,1) 
-Run 84, Cycle 3, score +0
-Run 84, Cycle 4, score +0
+Run 84, Init, score 1.331802 
+Run 84, Cycle 1, score +0.682333, flipped (5,1) 
+Run 84, Cycle 2, score +0.080315, flipped (3,1) 
+Run 84, Cycle 3, score +0.233883, flipped (1,1) 
+Run 84, Cycle 4, score +0.087981, flipped (8,1) 
 Run 84, Cycle 5, score +0
 Run 84, Cycle 6, score +0
 Run 84, Cycle 7, score +0
 Run 84, Cycle 8, score +0
 Run 84, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 85, Init, score 0.572610 
-Run 85, Cycle 1, score +1.123479, flipped (7,1) 
-Run 85, Cycle 2, score +0.591972, flipped (3,1) 
-Run 85, Cycle 3, score +0.128253, flipped (2,1) 
-Run 85, Cycle 4, score +0
+Run 85, Init, score 1.996123 
+Run 85, Cycle 1, score +0.018012, flipped (6,1) 
+Run 85, Cycle 2, score +0.080315, flipped (3,1) 
+Run 85, Cycle 3, score +0.233883, flipped (1,1) 
+Run 85, Cycle 4, score +0.087981, flipped (8,1) 
 Run 85, Cycle 5, score +0
 Run 85, Cycle 6, score +0
 Run 85, Cycle 7, score +0
 Run 85, Cycle 8, score +0
 Run 85, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 86, Init, score 1.635031 
-Run 86, Cycle 1, score +0.476804, flipped (3,1) 
-Run 86, Cycle 2, score +0.304479, flipped (6,1) 
-Run 86, Cycle 3, score +0
+Run 86, Init, score 0.762707 
+Run 86, Cycle 1, score +1.171949, flipped (4,1) 
+Run 86, Cycle 2, score +0.278396, flipped (6,1) 
+Run 86, Cycle 3, score +0.203262, flipped (1,1) 
 Run 86, Cycle 4, score +0
 Run 86, Cycle 5, score +0
 Run 86, Cycle 6, score +0
@@ -1037,31 +1029,31 @@ Run 86, Cycle 7, score +0
 Run 86, Cycle 8, score +0
 Run 86, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 87, Init, score 1.810989 
-Run 87, Cycle 1, score +0.605325, flipped (3,1) 
-Run 87, Cycle 2, score +0
-Run 87, Cycle 3, score +0
-Run 87, Cycle 4, score +0
+Run 87, Init, score 0.754825 
+Run 87, Cycle 1, score +0.899517, flipped (7,1) 
+Run 87, Cycle 2, score +0.435610, flipped (3,1) 
+Run 87, Cycle 3, score +0.198109, flipped (1,1) 
+Run 87, Cycle 4, score +0.128253, flipped (2,1) 
 Run 87, Cycle 5, score +0
 Run 87, Cycle 6, score +0
 Run 87, Cycle 7, score +0
 Run 87, Cycle 8, score +0
 Run 87, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 88, Init, score 1.108471 
-Run 88, Cycle 1, score +1.179590, flipped (4,1) 
-Run 88, Cycle 2, score +0.128253, flipped (2,1) 
-Run 88, Cycle 3, score +0
-Run 88, Cycle 4, score +0
-Run 88, Cycle 5, score +0
+Run 88, Init, score 1.084411 
+Run 88, Cycle 1, score +0.911712, flipped (4,1) 
+Run 88, Cycle 2, score +0.018012, flipped (6,1) 
+Run 88, Cycle 3, score +0.080315, flipped (3,1) 
+Run 88, Cycle 4, score +0.233883, flipped (1,1) 
+Run 88, Cycle 5, score +0.087981, flipped (8,1) 
 Run 88, Cycle 6, score +0
 Run 88, Cycle 7, score +0
 Run 88, Cycle 8, score +0
 Run 88, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 89, Init, score 1.810989 
-Run 89, Cycle 1, score +0.605325, flipped (3,1) 
-Run 89, Cycle 2, score +0
+Run 89, Init, score 1.696089 
+Run 89, Cycle 1, score +0.591972, flipped (3,1) 
+Run 89, Cycle 2, score +0.128253, flipped (2,1) 
 Run 89, Cycle 3, score +0
 Run 89, Cycle 4, score +0
 Run 89, Cycle 5, score +0
@@ -1070,9 +1062,9 @@ Run 89, Cycle 7, score +0
 Run 89, Cycle 8, score +0
 Run 89, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 90, Init, score 1.803856 
-Run 90, Cycle 1, score +0.484205, flipped (5,1) 
-Run 90, Cycle 2, score +0.128253, flipped (2,1) 
+Run 90, Init, score 1.787234 
+Run 90, Cycle 1, score +0.541099, flipped (5,1) 
+Run 90, Cycle 2, score +0.087981, flipped (8,1) 
 Run 90, Cycle 3, score +0
 Run 90, Cycle 4, score +0
 Run 90, Cycle 5, score +0
@@ -1081,21 +1073,21 @@ Run 90, Cycle 7, score +0
 Run 90, Cycle 8, score +0
 Run 90, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 91, Init, score 0.728541 
-Run 91, Cycle 1, score +1.088302, flipped (4,1) 
-Run 91, Cycle 2, score +0.273109, flipped (6,1) 
-Run 91, Cycle 3, score +0.198109, flipped (1,1) 
-Run 91, Cycle 4, score +0.128253, flipped (2,1) 
+Run 91, Init, score 1.511337 
+Run 91, Cycle 1, score +0.490606, flipped (3,1) 
+Run 91, Cycle 2, score +0.286119, flipped (6,1) 
+Run 91, Cycle 3, score +0.128253, flipped (2,1) 
+Run 91, Cycle 4, score +0
 Run 91, Cycle 5, score +0
 Run 91, Cycle 6, score +0
 Run 91, Cycle 7, score +0
 Run 91, Cycle 8, score +0
 Run 91, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 92, Init, score 1.816843 
-Run 92, Cycle 1, score +0.273109, flipped (6,1) 
-Run 92, Cycle 2, score +0.198109, flipped (1,1) 
-Run 92, Cycle 3, score +0.128253, flipped (2,1) 
+Run 92, Init, score 2.094450 
+Run 92, Cycle 1, score +0.233883, flipped (1,1) 
+Run 92, Cycle 2, score +0.087981, flipped (8,1) 
+Run 92, Cycle 3, score +0
 Run 92, Cycle 4, score +0
 Run 92, Cycle 5, score +0
 Run 92, Cycle 6, score +0
@@ -1103,32 +1095,32 @@ Run 92, Cycle 7, score +0
 Run 92, Cycle 8, score +0
 Run 92, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 93, Init, score 1.955992 
-Run 93, Cycle 1, score +0.159530, flipped (1,1) 
-Run 93, Cycle 2, score +0.212811, flipped (6,1) 
-Run 93, Cycle 3, score +0.087981, flipped (8,1) 
-Run 93, Cycle 4, score +0
-Run 93, Cycle 5, score +0
-Run 93, Cycle 6, score +0
+Run 93, Init, score 0.556344 
+Run 93, Cycle 1, score +1.160652, flipped (4,1) 
+Run 93, Cycle 2, score +0.279126, flipped (8,1) 
+Run 93, Cycle 3, score +0.018012, flipped (6,1) 
+Run 93, Cycle 4, score +0.080315, flipped (3,1) 
+Run 93, Cycle 5, score +0.233883, flipped (1,1) 
+Run 93, Cycle 6, score +0.087981, flipped (8,1) 
 Run 93, Cycle 7, score +0
 Run 93, Cycle 8, score +0
 Run 93, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 94, Init, score 1.803856 
-Run 94, Cycle 1, score +0.484205, flipped (5,1) 
-Run 94, Cycle 2, score +0.128253, flipped (2,1) 
-Run 94, Cycle 3, score +0
-Run 94, Cycle 4, score +0
+Run 94, Init, score 1.251333 
+Run 94, Cycle 1, score +0.565510, flipped (5,1) 
+Run 94, Cycle 2, score +0.273109, flipped (6,1) 
+Run 94, Cycle 3, score +0.198109, flipped (1,1) 
+Run 94, Cycle 4, score +0.128253, flipped (2,1) 
 Run 94, Cycle 5, score +0
 Run 94, Cycle 6, score +0
 Run 94, Cycle 7, score +0
 Run 94, Cycle 8, score +0
 Run 94, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 95, Init, score 1.132373 
-Run 95, Cycle 1, score +0.671483, flipped (3,1) 
-Run 95, Cycle 2, score +0.484205, flipped (5,1) 
-Run 95, Cycle 3, score +0.128253, flipped (2,1) 
+Run 95, Init, score 1.888775 
+Run 95, Cycle 1, score +0.226747, flipped (3,1) 
+Run 95, Cycle 2, score +0.212811, flipped (6,1) 
+Run 95, Cycle 3, score +0.087981, flipped (8,1) 
 Run 95, Cycle 4, score +0
 Run 95, Cycle 5, score +0
 Run 95, Cycle 6, score +0
@@ -1136,10 +1128,10 @@ Run 95, Cycle 7, score +0
 Run 95, Cycle 8, score +0
 Run 95, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 96, Init, score 0.467071 
-Run 96, Cycle 1, score +1.167960, flipped (4,1) 
-Run 96, Cycle 2, score +0.476804, flipped (3,1) 
-Run 96, Cycle 3, score +0.304479, flipped (6,1) 
+Run 96, Init, score 1.696089 
+Run 96, Cycle 1, score +0.591972, flipped (3,1) 
+Run 96, Cycle 2, score +0.128253, flipped (2,1) 
+Run 96, Cycle 3, score +0
 Run 96, Cycle 4, score +0
 Run 96, Cycle 5, score +0
 Run 96, Cycle 6, score +0
@@ -1147,10 +1139,10 @@ Run 96, Cycle 7, score +0
 Run 96, Cycle 8, score +0
 Run 96, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 97, Init, score 1.661724 
-Run 97, Cycle 1, score +0.558266, flipped (5,1) 
-Run 97, Cycle 2, score +0.108343, flipped (2,1) 
-Run 97, Cycle 3, score +0.087981, flipped (8,1) 
+Run 97, Init, score 1.252448 
+Run 97, Cycle 1, score +0.569408, flipped (5,1) 
+Run 97, Cycle 2, score +0.391196, flipped (3,1) 
+Run 97, Cycle 3, score +0.203262, flipped (1,1) 
 Run 97, Cycle 4, score +0
 Run 97, Cycle 5, score +0
 Run 97, Cycle 6, score +0
@@ -1158,9 +1150,9 @@ Run 97, Cycle 7, score +0
 Run 97, Cycle 8, score +0
 Run 97, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 98, Init, score 0.650212 
-Run 98, Cycle 1, score +1.323838, flipped (7,1) 
-Run 98, Cycle 2, score +0.245940, flipped (1,1) 
+Run 98, Init, score 1.348806 
+Run 98, Cycle 1, score +0.676692, flipped (5,1) 
+Run 98, Cycle 2, score +0.194492, flipped (6,1) 
 Run 98, Cycle 3, score +0.108343, flipped (2,1) 
 Run 98, Cycle 4, score +0.087981, flipped (8,1) 
 Run 98, Cycle 5, score +0
@@ -1169,9 +1161,9 @@ Run 98, Cycle 7, score +0
 Run 98, Cycle 8, score +0
 Run 98, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 99, Init, score 1.113547 
-Run 99, Cycle 1, score +0.695482, flipped (5,1) 
-Run 99, Cycle 2, score +0.216468, flipped (1,1) 
+Run 99, Init, score 0.985879 
+Run 99, Cycle 1, score +0.721109, flipped (5,1) 
+Run 99, Cycle 2, score +0.318509, flipped (3,1) 
 Run 99, Cycle 3, score +0.194492, flipped (6,1) 
 Run 99, Cycle 4, score +0.108343, flipped (2,1) 
 Run 99, Cycle 5, score +0.087981, flipped (8,1) 
@@ -1180,10 +1172,10 @@ Run 99, Cycle 7, score +0
 Run 99, Cycle 8, score +0
 Run 99, Cycle 9, score +0
 Convergence, score=2.416314 
-Run 100, Init, score 0.961397 
-Run 100, Cycle 1, score +1.326664, flipped (7,1) 
-Run 100, Cycle 2, score +0.128253, flipped (2,1) 
-Run 100, Cycle 3, score +0
+Run 100, Init, score 0.628563 
+Run 100, Cycle 1, score +1.193293, flipped (4,1) 
+Run 100, Cycle 2, score +0.391196, flipped (3,1) 
+Run 100, Cycle 3, score +0.203262, flipped (1,1) 
 Run 100, Cycle 4, score +0
 Run 100, Cycle 5, score +0
 Run 100, Cycle 6, score +0
@@ -1404,15 +1396,14 @@ P_raw =
 </pre><img vspace="5" hspace="5" src="osl_example_hmmmar_05.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% HMM-MAR 
-
 % This example shows how to use the HMM-MAR to infer transient states that:
-% (i) are pectrally defined, i.e. the characteristics of interest are defined as a function of frequency.
+% (i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency.
 % (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes.
 % (iii) are not only sensitive to power differences but also to phase coupling.
-
 % The script infers a group (spectrally-defined) HMM from source space MEG data, following the paper
 % Vidaurre et al, NeuroImage (2016)
-   
+%%
+
 % Directory of the data:
 data_dir = fullfile(osldir,'example_data','hmmmar_example');
 % Name for this HMM-MAR analysis:

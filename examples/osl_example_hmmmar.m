@@ -1,13 +1,12 @@
 %% HMM-MAR 
-
 % This example shows how to use the HMM-MAR to infer transient states that:
-% (i) are pectrally defined, i.e. the characteristics of interest are defined as a function of frequency.
+% (i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency.
 % (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes.
 % (iii) are not only sensitive to power differences but also to phase coupling.
-
 % The script infers a group (spectrally-defined) HMM from source space MEG data, following the paper
 % Vidaurre et al, NeuroImage (2016)
-   
+%%
+
 % Directory of the data:
 data_dir = fullfile(osldir,'example_data','hmmmar_example');
 % Name for this HMM-MAR analysis:
