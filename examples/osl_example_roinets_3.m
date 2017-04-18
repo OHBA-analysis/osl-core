@@ -16,11 +16,12 @@
 run_analysis = false;
 
 %%
-% Either way, the spatial basis will be useful for analysis, so select it it now
+% Either way, we will now walk through how to set up the analysis and then visualize the results. 
+% First, we select the spatial basis we want to use
 spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
 
 %%
-% If we are running the analysis, we need to get a list of MEEG objects. Below, we identify
+% To run the analysis, we need a list of MEEG objects. Below, we identify
 % where the data are, and where the output should be saved to.
 data_dir = fullfile(osldir,'example_data','roinets_example');
 output_directory = fullfile(osldir,'practical','roinets_demo');
@@ -31,7 +32,7 @@ end
 %%
 % Next, we load the MEEG files. Typically, the source-space signals are stored as an 
 % online montage. _It is essential that this montage is the selected montage_. Therefore, 
-% make sure that the montage is switched to the correct montage before going any further.
+% we need to make sure at this point that the montage is switched to the correct one. 
 if run_analysis
 	subjects = 1:10;
 	D_files = {};
@@ -106,7 +107,19 @@ colorbar
 title('Envelope correlation')
 
 %%
-% Partial correlation matrices can also be obtained using regularization
+% Note that we can see the parcel 37 is the PCC, which shows a lot of 
+% connectivity with the rest of the brain. The ability to resolve this connectivity 
+% can depend on the parcellation, because the region of interest must be accurately
+% represented. When performing a network analysis, it is not unusual to to test a number
+% of different parcellations to verify how robust the results are.
+% 
+% Colclough et al. (2015) strongly advocates using partial correlations as a measure
+% of connectivity. In that study, it is also shown that estimating direct network 
+% connections using partial correlations without regularisation is noisy.
+% A typical ROInets analysis pipeline includes a regularization step. 
+% We can plot the connectivity based on partial correlation with and without 
+% regularization to see the effect of regularizing
+
 figure
 imagesc(mean(d.correlationMats{1}.envPartialCorrelation,3)+diag(nan(38,1)))
 axis square
@@ -120,9 +133,17 @@ colorbar
 title('Envelope partial correlation (regularized)')
 
 %% 
-% The statistical significance of the connectivity profiles is obtained by 
-% converting them to z-scores by using a simulated empirical null distribution.
-% This is generated using an autoregressive model. 
+% Notice how the regularized matrix is much less noisy, and shows the PCC
+% connectivity much more clearly than without regularization. 
+% 
+% Another important step is to assess the statistical significance of the connectivity
+% provides. This can be tested by using a null model to generate simulated timecourses
+% with some of the same properties (e.g. spectral content) as the original data, but
+% without any real functional connectivity. By repeating this multiple times, a null
+% distribution of connectivity values for each edge can be computed, and this distribution
+% can then be used to convert the real connectivity profile to a Z-score. In ROInets, an
+% autoregressive model is used to generate the null data. ROInets automatically computes 
+% and saves a connection matrix with the Z-scores, so we can plot this directly
 figure
 imagesc(d.correlationMats{1}.groupEnvCorrelation_z+diag(nan(38,1)))
 axis square
@@ -175,13 +196,33 @@ set(h_patch,'EdgeColor','r')
 % produced using the |osl_spinning_brain()| function. Specify an output file name, and 
 % a video file with one rotation will be generated. You can then add this file to a 
 % presentation, and set it to play automatically and loop playback.
-
 osl_spinning_brain('example.mp4')
 
 %%
+% Try opening this video file and setting your video player (e.g. Quicktime) to loop the video.
+%
 % Another option for displaying connectivity is to display components of the connectivity
 % as an activation map. For example, performing an eigenvalue decomposition of the 
 % connectivity matrix, and then rendering spatial maps of each of the states.
 % This functionality is also provided by the Parcellation object.
 [a,b] = eig(mean(d.correlationMats{1}.envCorrelation,3));
 p.plot_activation(a(:,1));
+
+%%
+% Having computed the individual connection matrices for the entire group, we can now look
+% at some of the group level statistics. For example, we could use a paired t-test to investigate
+% where the connectivity is different between the alpha and beta band
+alpha_connectivity = d.correlationMats{1}.envCorrelation;
+beta_connectivity = d.correlationMats{2}.envCorrelation;
+[sig,p_val] = ttest(alpha_connectivity-beta_connectivity,0,'dim',3); % Set the dimension to test the same edges across subjects
+
+figure
+imagesc(sig)
+axis square
+colorbar
+title('alpha-beta significant differences')
+
+%%
+% Don't forget to correct for multiple-comparisons! As the size of the data set increases
+% (more subjects, more bands), other approaches for examining group level differences such as 
+% permutation testing could be used. 
