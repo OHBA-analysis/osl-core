@@ -18,7 +18,9 @@ source_recon=oat.source_recon;
 if(isfield(source_recon,'mask_fname'))
 
     if ~isempty(source_recon.gridstep)
-        mask_fname=osl_resample_nii(source_recon.mask_fname, [source_recon.mask_fname '_' num2str(source_recon.gridstep) 'mm'], source_recon.gridstep, 'nearestneighbour', [OSLDIR '/std_masks/MNI152_T1_' num2str(source_recon.gridstep) 'mm_brain']);
+        mask_fname=osl_resample_nii(source_recon.mask_fname, ...
+            [source_recon.mask_fname '_' num2str(source_recon.gridstep) 'mm.nii.gz'], ...
+            source_recon.gridstep, 'nearestneighbour',[OSLDIR '/std_masks/MNI152_T1_' num2str(source_recon.gridstep) 'mm_brain']);
     else
         mask_fname = source_recon.mask_fname;
     end
@@ -53,7 +55,7 @@ elseif(isfield(source_recon,'mni_coords'))
     
     mask_fname='';    
 else
-    mask_fname=[OSLDIR '/std_masks/MNI152_T1_' num2str(source_recon.gridstep) 'mm_brain'];
+    mask_fname=[osldir '/std_masks/MNI152_T1_' num2str(source_recon.gridstep) 'mm_brain.nii.gz']
     disp(['Using whole brain']);
     
     % setup mni coords usource_recong std space mask
