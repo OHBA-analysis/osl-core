@@ -194,6 +194,18 @@ S2.freq=0.1;
 D=spm_eeg_filter(S2);
 
 %% OSLVIEW
+
+%%
+% Load in the filtered data (prefix 'f')
+for subnum = 1:length(spm_files), % iterates over subjects
+    spm_files{subnum}=[workingdir '/fd' spm_files_basenames{subnum}];
+end
+
+% load in the SPM MEEG object
+subnum = 1;
+D = spm_eeg_load(spm_files{subnum});
+
+%% 
 % Now load oslview. This data has some bad artefacts in. Mark the epochs at
 % around 325s, 380s and 600s as bad. Marking is done by right-clicking in
 % the proximity of the event and click on 'Mark Event'. A first click
@@ -203,6 +215,7 @@ D=spm_eeg_filter(S2);
 % mean that we are not using about half of the data. But with such bad
 % artefacts this is the best we can do. We can still obtain good results
 % with what remains. push disk button to save to disk (same name)
+
 figure;
 D=oslview(D);
 keyboard;
@@ -230,7 +243,6 @@ end
 % components that correlate with the EOG and ECG measurements and mark them
 % for rejection using the red cross. NB: Just close the window when
 % finished to save your results.
-figure;
 for subnum = 1:length(spm_files)
 
     [dirname,filename] = fileparts(spm_files{subnum});
@@ -278,7 +290,7 @@ D_africa=D.montage('switch',1);
 
 %%
 % Now we plot some data to check the differences between raw and denoised data. 
-figure;
+figure('units','normalized','outerposition',[0 0 0.4 0.5])
 subplot(2,1,1);
 plot(D_raw.time(1:10000),D_raw(308,1:10000))
 title('ECG channel')
@@ -291,7 +303,8 @@ xlim([10 20]);
 hold on;
 plot(D_africa.time(1:10000),D_africa(306,1:10000),'r');
 xlim([10 20]);xlabel('Time (s)');
-legend({'Raw' 'AFRICA denoised'})
+legend({'Raw' 'AFRICA'});
+saveas(gcf,[plot_dir_osl '/osl_example_preprocessing_manual_06'],'png')
 
 %%
 % The first part of this figure plots the ECG channel included in the recording as
@@ -420,13 +433,19 @@ magnetos = D.indchantype('MEGMAG');
 % and D.time is used to return the time labels of the within trial time
 % points in seconds.
 
-figure; plot(D.time,squeeze(D(planars(135),:,motorbike_trls)));
+figure('units','normalized','outerposition',[0 0 0.4 0.5])
+plot(D.time,squeeze(D(planars(135),:,motorbike_trls)));
 xlabel('time (seconds)');
+
+saveas(gcf,[plot_dir_osl '/osl_example_preprocessing_manual_07'],'png')
+
 % We can average over all the motorbike trials to get a rudimentary ERF
 % (Event-Related Field):
 
-figure; plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3)));
+figure('units','normalized','outerposition',[0 0 0.4 0.5])
+plot(D.time,squeeze(mean(D(planars(135),:,motorbike_trls),3)));
 xlabel('time (seconds)');
+saveas(gcf,[plot_dir_osl '/osl_example_preprocessing_manual_08'],'png')
 
 %%
 % As you will notive, the ERFs look pretty bad. However, we should bear in
@@ -522,14 +541,14 @@ D_africa=D.montage('switch',1)
 % denoised data. You will find that due to averaging there is less of a
 % difference. 
 
-figure; 
+figure('units','normalized','outerposition',[0 0 0.4 0.5])
 subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_raw(planars(135),:,good_motorbike_trls),3)));
 xlabel('time (seconds)');ylim([-10 6])
 ylabel(D.units(planars(1)));
 hold on;
 subplot(1,2,1);plot(D_raw.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3)));
 xlabel('time (seconds)');ylim([-10 6])
-legend({'Raw' 'AFRICA denoised'})
+legend({'Raw' 'AFRICA'});
 
 subplot(1,2,2);plot(D_raw.time,squeeze(mean(D_raw(magnetos(49),:,good_motorbike_trls),3)));
 xlabel('time (seconds)');ylim([-300 500])
@@ -537,11 +556,14 @@ ylabel(D.units(magnetos(1)));
 hold on;
 subplot(1,2,2);plot(D_africa.time,squeeze(mean(D_africa(magnetos(49),:,good_motorbike_trls),3)));
 xlabel('time (seconds)');ylim([-300 500])
-legend({'Raw' 'AFRICA denoised'})
+legend({'Raw' 'AFRICA'})
+
+saveas(gcf,[plot_dir_osl '/osl_example_preprocessing_manual_09'],'png')
+
 
 %%
 % Plot a cleaned rudimentary ERF for all sensors
-figure; 
+figure('units','normalized','outerposition',[0 0 0.4 0.5])
 subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3)));
 xlabel('time (seconds)');
 ylabel('Trials');colorbar
@@ -552,19 +574,25 @@ xlabel('time (seconds)');
 ylabel('Trials');colorbar
 title('MEGMAG, single trials')
 
+saveas(gcf,[plot_dir_osl '/osl_example_preprocessing_manual_10'],'png')
+
 %% PLOTTING EVENT-RELATED TOPOGRAPHIES AT DEFINED LATENCIES
 % To plot a cleaned rudimentary ERF topography at a relatively late
 % latency, do:
 
 topo=squeeze(mean(D(:,188,good_motorbike_trls),3));
 
-figure;sensors_topoplot(D,topo,{'MEGPLANAR' 'MEGMAG'},1);
+figure('units','normalized','outerposition',[0 0 0.4 0.5]);
+sensors_topoplot(D,topo,{'MEGPLANAR' 'MEGMAG'},1);
+saveas(gcf,[plot_dir_osl '/osl_example_preprocessing_manual_11'],'png')
 
 %%
 % Plot the same rudimentary ERF topography for AFRICA denoised data
 topo2=squeeze(mean(D_africa(:,188,good_motorbike_trls),3));
 
-figure;sensors_topoplot(D_africa,topo2,{'MEGPLANAR' 'MEGMAG'},1);
+figure('units','normalized','outerposition',[0 0 0.4 0.5]);
+sensors_topoplot(D_africa,topo2,{'MEGPLANAR' 'MEGMAG'},1);
+saveas(gcf,[plot_dir_osl '/osl_example_preprocessing_manual_12'],'png')
 
 
 %% SOME EXERCISES
