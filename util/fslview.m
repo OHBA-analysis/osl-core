@@ -16,6 +16,8 @@
 
 function fslview(fnames,thresholds,colour_maps,anatomical)
 
+assert(ischar(fnames) || iscell(fnames),'Input must be either a file name or a cell array of file names');
+
 OSLDIR = getenv('OSLDIR');
 
 available_maps = {'Red-Yellow';
