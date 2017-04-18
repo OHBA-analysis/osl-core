@@ -1,7 +1,12 @@
-% HMM-MAR DEMO SCRIPT FOR INFERRING A GROUP SPECTRALLY DEFINED 
-% HMM FROM SOURCE SPACE MEG DATA
-% This follows the paper: Vidaurre et al, NeuroImage (2016)
-% Diego Vidaurre, Feb 2017
+%% HMM-MAR 
+
+% This example shows how to use the HMM-MAR to infer transient states that:
+% (i) are pectrally defined, i.e. the characteristics of interest are defined as a function of frequency.
+% (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes.
+% (iii) are not only sensitive to power differences but also to phase coupling.
+
+% The script infers a group (spectrally-defined) HMM from source space MEG data, following the paper
+% Vidaurre et al, NeuroImage (2016)
    
 % Directory of the data:
 data_dir = fullfile(osldir,'example_data','hmmmar_example');
@@ -24,7 +29,7 @@ subjects = [1 2 4 5 6 7 8 9]; % index of the subjects
 N = length(subjects);
 
 for j = subjects % iterate through subjects
-    file = [data_dir 'sub' num2str(j) '.mat'];
+    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file); % load the data
     sourcedata = sourcedata' ; % we need it (time by channels)
     T = [T size(sourcedata,1)]; % time length of this subject
@@ -85,7 +90,7 @@ subjects = [1 2 4 5 6 7 8 9]; % index of the subjects
 N = length(subjects);
 
 for j = subjects % iterate through subjects
-    file = [data_dir 'sub' num2str(j) '.mat'];
+    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file); % load the data
     sourcedata = sourcedata' ; % we need it (time by channels)
     T = [T size(sourcedata,1)]; % time length of this subject
@@ -156,7 +161,7 @@ window = Hz*L+1;
 evokedGamma_env = zeros(window,hmm_env.K,length(subjects));
 t0 = 0;
 for j = subjects % iterate through subjects
-    file = [data_dir 'sub' num2str(j) '.mat'];
+    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file,'onset'); % load the data
     T = length(onset);
     index = t0 + (1:T);
@@ -170,7 +175,7 @@ evokedGamma_env = mean(evokedGamma_env,3); % average across subjects
 evokedGamma_raw = zeros(window,hmm_env.K,length(subjects));
 t0 = 0;
 for j = subjects % iterate through subjects
-    file = [data_dir 'sub' num2str(j) '.mat'];
+    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file,'onset'); % load the data
     T = length(onset);
     index = t0 + (1:T-hmm_raw.train.order);
