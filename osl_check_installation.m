@@ -83,7 +83,7 @@ function osl_check_installation(do_log,test_fslview)
 		log('FSL environment variable not set')
 		log('Attempting automatic configuration')
 		try
-			addpath(fullfile(osldir,'util'));
+			addpath(fullfile(osldir,'osl-core','util'));
 			fsl_initialise;
 		catch ME
 			log_error('Error initialising FSL',ME)
@@ -109,6 +109,7 @@ function osl_check_installation(do_log,test_fslview)
 	try
 		runcmd('fslmaths %s -thr 100 osl_fslmaths_test.nii.gz',input_mask);
 		log('PASS - fslmaths')
+		delete('osl_fslmaths_test.nii.gz')
 	catch ME
 		log(sprintf('FAIL - fslmaths\n%s',ME.message));
 	end
