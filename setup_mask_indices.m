@@ -29,7 +29,7 @@ if(isfield(current_level,'mask_fname')) % current level mask also provided
     disp(['Basing mask on high res mask ' current_level.mask_fname]);
 
     % setup current level mask at grid resolution 
-    current_level_mask_fname_lowres = osl_resample_nii(current_level.mask_fname, [current_level.mask_fname '_' num2str(gridstep) 'mm'], gridstep, 'sinc', [OSLDIR '/std_masks/MNI152_T1_' num2str(gridstep) 'mm_brain']);
+    current_level_mask_fname_lowres = osl_resample_nii(current_level.mask_fname, [current_level.mask_fname '_' num2str(gridstep) 'mm.nii.gz'], gridstep, 'sinc', [osldir '/std_masks/MNI152_T1_' num2str(gridstep) 'mm_brain.nii.gz']);
     % only use mask that intersects with the lower level mask
     runcmd(['fslmaths ' current_level_mask_fname_lowres ' -mas ' Sin.lower_level_mask_fname ' -thr 0.05 ' current_level_mask_fname_lowres]);
     
