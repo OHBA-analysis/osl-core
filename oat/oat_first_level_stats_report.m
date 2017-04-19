@@ -145,17 +145,17 @@ if is_sensor_space,
         else
             S2.do_plots=1;
 
-            fig_name{1}=['cope_at_max_multiplot_c' num2str(con)];
-            fig_title{1}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} ']'];
-            fig_title{1}=[fig_title{1} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
+            fig_name{(2*coni)-1}=['cope_at_max_multiplot_c' num2str(con)];
+            fig_title{(2*coni)-1}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} ']'];
+            fig_title{(2*coni)-1}=[fig_title{1} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
 
-            [cfg, dat, fig_handle(1)]=oat_stats_multiplotER(S2);
+            [cfg, dat, fig_handle((2*coni)-1)]=oat_stats_multiplotER(S2);
             view([90 90])
 
-            fig_handle(2)=sfigure;
-            fig_name{2}=['cope_at_max_topo_c' num2str(con)];
-            fig_title{2}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} ']'];
-            fig_title{2}=[fig_title{2} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
+            fig_handle(2*coni)=sfigure;
+            fig_name{2*coni}=['cope_at_max_topo_c' num2str(con)];
+            fig_title{2*coni}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} ']'];
+            fig_title{2*coni}=[fig_title{2*coni} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
 
             cfg.xlim        = [first_level_results.times(time_ind_max) first_level_results.times(time_ind_max)];
             cfg.ylim        = 'maxmin';
@@ -166,8 +166,6 @@ if is_sensor_space,
             ft_topoplotTFR(cfg,dat{1});axis tight;
             title([oat.first_level.report.modality_to_do]);
 
-            report=osl_report_set_figs(report,fig_name,fig_handle,fig_title);
-            report=osl_report_print_figs(report);
         end;
 
     end;
