@@ -33,13 +33,15 @@ mkdir -p $WORKINGDIR/osl
 cd $WORKINGDIR
 
 # Copy supplementary directories - this will also clean any previous downloads
-rsync -azP --delete hbapc33:/data/analysis_data/osl/current_supplements/ osl/
-
-# Alternatively, may want to do it via a tar file and a version - something to consider
-# SUPPDIRVERSION=0.2
-# rsync -a hbapc33:/data/analysis_data/osl/supplements/supplement_v$SUPPDIRVERSION.tar.gz $WORKINDIR
-# tar xvf supplement_v$SUPPDIRVERSION.tar.gz
-# rm -rf supplement_v$SUPPDIRVERSION.tar.gz
+read -r -p "Include example data? [y/N] " response
+case "$response" in
+    [yY][eE][sS]|[yY]) 
+		rsync -azP --delete hbapc33:/data/analysis_data/osl/current_supplements/ osl/
+        ;;
+    *)
+		rsync -azP --exclude="example_data" --delete hbapc33:/data/analysis_data/osl/current_supplements/ osl/
+        ;;
+esac
 
 # Clean supplements
 rm osl/update.sh
