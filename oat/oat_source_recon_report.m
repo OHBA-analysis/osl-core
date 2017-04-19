@@ -50,7 +50,7 @@ for sessi=1:length(oat.source_recon.sessions_to_do), sessnum=oat.source_recon.se
         if oat.source_recon.report.do_source_variance_maps
             D=spm_eeg_load(res.BF.write.spmeeg.files{1});
             [~, mean_V] = osl_source_variance(D);
-            source_recon_results.source_variance_nii_fname{sessi}=nii_quicksave(mean_V,[oat.source_recon.dirname '/source_variance_sess' num2str(sessi)]);
+            source_recon_results.source_variance_nii_fname{sessi}=nii_quicksave(mean_V,[oat.source_recon.dirname '/source_variance_sess' num2str(sessi) '.nii.gz']);
 
             % diagnostic fig
             S2=[];                
