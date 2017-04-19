@@ -7,7 +7,7 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Beamformer Analysis With OAT</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-19"><meta name="DC.source" content="osl_example_beamformer_oat.m"></head><body><div class="content"><h1>Beamformer Analysis With OAT</h1><!--introduction--><p>This practical will work with a single subject's data from an emotional faces experiment (Elekta Neuromag data).</p><p>Work your way through the script cell by cell using the supplied dataset. As well as following the instructions below, make sure that you read all of the comments and understand each step as you go.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</a></li><li><a href="#3">SET UP THE SUBJECTS FOR THE ANALYSIS</a></li><li><a href="#4">SETUP THE OAT:</a></li><li><a href="#5">SPECIFIY FIRST LEVEL OPTIONS</a></li><li><a href="#6">RUN THE OAT:</a></li><li><a href="#7">VIEW OAT  REPORT</a></li><li><a href="#8">OUTPUT SUBJECT'S NIFTII FILES</a></li><li><a href="#9">OPEN NIFTII RESULTS IN FSLVIEW</a></li><li><a href="#10">VIEW RESULTS IN FLSVIEW</a></li><li><a href="#11">INVESTIGATING LOCATION OF INTEREST USING AN MNI COORDINATE</a></li><li><a href="#12">INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK</a></li><li><a href="#13">ROI TIME-FREQUENCY ANALYSIS</a></li><li><a href="#14">SOURCE ROI TIME-FREQUENCY PLOT</a></li><li><a href="#15">SOURCE ROI SINGLE-FREQUENCY POWER PLOT</a></li><li><a href="#16">BROADBAND WHOLEBRAIN TF ANALYSIS</a></li><li><a href="#17">OUTPUT SUBJECT'S NIFTII FILES</a></li></ul></div><h2 id="1">SETUP THE MATLAB PATHS</h2><p>make sure that fieldtrip and spm are not in your matlab path</p><pre class="codeinput"><span class="comment">% setenv('OSLDIR','/Users/andrew/Software/Matlab/osl2.1/')</span>
+   <title>Beamformer Analysis With OAT</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-19"><meta name="DC.source" content="osl_example_beamformer_oat.m"></head><body><div class="content"><h1>Beamformer Analysis With OAT</h1><!--introduction--><p>This practical will work with a single subject's data from an emotional faces experiment (Elekta Neuromag data).</p><p>Work your way through the script cell by cell using the supplied dataset. As well as following the instructions below, make sure that you read all of the comments and understand each step as you go.</p><p>This practical requires the first part of the osl_example_coregistration practical to be run first. If you haven't run this before, please do so before starting this session.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</a></li><li><a href="#3">SET UP THE SUBJECTS FOR THE ANALYSIS</a></li><li><a href="#4">SETUP THE OAT:</a></li><li><a href="#5">SPECIFIY FIRST LEVEL OPTIONS</a></li><li><a href="#6">RUN THE OAT:</a></li><li><a href="#7">VIEW OAT  REPORT</a></li><li><a href="#8">OUTPUT SUBJECT'S NIFTII FILES</a></li><li><a href="#9">OPEN NIFTII RESULTS IN FSLVIEW</a></li><li><a href="#10">VIEW RESULTS IN FLSVIEW</a></li><li><a href="#11">INVESTIGATING LOCATION OF INTEREST USING AN MNI COORDINATE</a></li><li><a href="#12">INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK</a></li><li><a href="#13">ROI TIME-FREQUENCY ANALYSIS</a></li><li><a href="#14">SOURCE ROI TIME-FREQUENCY PLOT</a></li><li><a href="#15">SOURCE ROI SINGLE-FREQUENCY POWER PLOT</a></li><li><a href="#16">BROADBAND WHOLEBRAIN TF ANALYSIS</a></li><li><a href="#17">OUTPUT SUBJECT'S NIFTII FILES</a></li></ul></div><h2 id="1">SETUP THE MATLAB PATHS</h2><p>make sure that fieldtrip and spm are not in your matlab path</p><pre class="codeinput"><span class="comment">% setenv('OSLDIR','/Users/andrew/Software/Matlab/osl2.1/')</span>
 <span class="comment">% addpath(genpath(getenv('OSLDIR')));</span>
 <span class="comment">% osl_startup(osldir);</span>
 </pre><h2 id="2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</h2><p>This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.</p><pre class="codeinput"><span class="comment">% directory where the data is:</span>
@@ -18,21 +18,6 @@ structdir =  fullfile(osldir,<span class="string">'example_data'</span>,<span cl
 workingdir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_subject1_data_osl2'</span>);
 </pre><h2 id="3">SET UP THE SUBJECTS FOR THE ANALYSIS</h2><p>Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:</p><p>fif_files{1}=[testdir '/fifs/sub1_face_sss.fif']; fif_files{2}=[testdir '/fifs/sub2_face_sss.fif']; etc... spm_files{1} = [workingdir '/sub1_face_sss.mat']; spm_files{2} = [workingdir '/sub2_face_sss.mat']; etc...</p><pre class="codeinput">spm_files_continuous{1}=[datadir <span class="string">'/Aface_meg1.mat'</span>];
 spm_files_epoched{1}=[datadir <span class="string">'/eAface_meg1.mat'</span>];
-
-<span class="comment">% This bit changes the paths for the structural information to the correct</span>
-<span class="comment">% ones.</span>
-
-<span class="comment">% oldpath='/home/disk3/ajquinn/Projects/drugface/structurals/M10/';</span>
-<span class="comment">% newpath=[osldir '/example_data/faces_singlesubject/structurals/'];</span>
-<span class="comment">%</span>
-<span class="comment">% D_cont=spm_eeg_load(spm_files_continuous{1});</span>
-<span class="comment">% D_epoched=spm_eeg_load(spm_files_epoched{1});</span>
-<span class="comment">%</span>
-<span class="comment">% D_cont_new=osl_relink_Dinv(D_cont,oldpath,newpath);</span>
-<span class="comment">% D_epoched_new=osl_relink_Dinv(D_epoched,oldpath,newpath);</span>
-<span class="comment">%</span>
-<span class="comment">% D_cont_new.save;</span>
-<span class="comment">% D_epoched_new.save;</span>
 </pre><h2 id="4">SETUP THE OAT:</h2><p>The oat.source_recon options define the parameters for the data filtering, windowing and beamforming. We define the D files, conditions and time-frequency options in the same way as the sensorspace OAT. THe In this section we will do a wholebrain beamformer, followed by a trial-wise GLM that will correspond to a comparison of the ERFs for the different conditions. The source-space projection is defined by a new set of options.</p><p>The critical options are:</p><div><ul><li>method - Which algorithm to use, We will use 'beamform'</li><li>normalise_method - How to normalise the magnetometers and gradiometers</li><li>gridstep - This sets the resolution of the grid through the brain. We are using 8mm which is lower than usual but faster to compute.</li><li>forward_meg - This specifies the forward model used.</li><li>modalidities - Defines which types of sensor to use.</li><li>do_source_variance_maps - If set to 1, this outputs an optional sanity check</li></ul></div><pre class="codeinput"><span class="comment">% These options are the same as the sensorspace OAT and define input-data,</span>
 <span class="comment">% conditions, filtering and windowing.</span>
 oat=[];
@@ -73,15 +58,15 @@ oat.first_level.name=[<span class="string">'wholebrain_first_level'</span>];
 
 oat = osl_check_oat(oat);
 </pre><pre class="codeoutput">Detected Elekta Neuromag 306 data. Using default Elekta Neuromag 306 settings.
-Warning: oat.source_recon.modalities not set, or not set properly. Will set to
-default:MEGPLANARMEGMAG 
+Warning: oat.source_recon.modalities not set, or not set
+properly. Will set to default:MEGPLANARMEGMAG 
 Using oat.source_recon.freq_range for oat.first_level.tf_freq_range
 oat.source_recon.D_epoched set. OAT will do an epoched data trial-wise GLM
 </pre><h2 id="6">RUN THE OAT:</h2><p>We only need to run the source_recon and first_level stages in this tutorial, the subject_level and group_level options can be set to 0.</p><p>The OAT will produce and close a number of figures as it processes, we will discuss what they mean once it has finished (this takes a couple of minutes)</p><pre class="codeinput">oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 </pre><pre class="codeoutput">Detected Elekta Neuromag 306 data. Using default Elekta Neuromag 306 settings.
-Warning: oat.source_recon.modalities not set, or not set properly. Will set to
-default:MEGPLANARMEGMAG 
+Warning: oat.source_recon.modalities not set, or not set
+properly. Will set to default:MEGPLANARMEGMAG 
 oat.source_recon.D_epoched set. OAT will do an epoched data trial-wise GLM
 
 oat = 
@@ -92,7 +77,7 @@ oat =
       first_level: [1x1 struct]
     subject_level: [1x1 struct]
       group_level: [1x1 struct]
-     osl2_version: '30a215c'
+     osl2_version: '688244f'
           results: [1x1 struct]
 
 *************************************************************
@@ -113,19 +98,19 @@ Using epoched data as input
 Preparing source recon stage for /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/spm_files/Aface_meg1.mat
 Will be designated session1
 
-SPM12: spm_eeg_copy (v5079)                        02:40:43 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:01:57 - 19/04/2017
 ========================================================================
 
-SPM12: spm_eeg_copy (v5079)                        02:40:49 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:02:03 - 19/04/2017
 ========================================================================
 Temporal filtering...
 
-SPM12: spm_eeg_filter (v5876)                      02:40:59 - 19/04/2017
+SPM12: spm_eeg_filter (v5876)                      18:02:09 - 19/04/2017
 ========================================================================
 Epoching...
 Doing no within-trial baseline correction at the point of epoching
 
-SPM12: spm_eeg_epochs (v6183)                      02:41:14 - 19/04/2017
+SPM12: spm_eeg_epochs (v6183)                      18:02:28 - 19/04/2017
 ========================================================================
 Data type is missing or incorrect, assigning default.
 Establish dimensionality and Normalising modalities...
@@ -140,11 +125,11 @@ Modality MEGMAG has smallest sqrt(eig) = 236.9319
 Modality MEGPLANAR has data normalisation 6.9318
 Modality MEGMAG has data normalisation 236.9319
 
-SPM12: spm_eeg_montage (v6370)                     02:41:35 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:02:49 - 19/04/2017
 ========================================================================
 creating layout from cfg.grad
-Warning: UndoBalancing is disabled. Your analysis will proceed using the
-third-order gradiometer-corrected signals.
+Warning: UndoBalancing is disabled. Your analysis will proceed
+using the third-order gradiometer-corrected signals.
  
 creating layout for neuromag306 system
 SPM M/EEG data object
@@ -177,7 +162,7 @@ Co-registration and setting up forward model...
 
 
 ------------------------------------------------------------------------
-Running job #1
+Running job #2
 ------------------------------------------------------------------------
 Running 'Prepare data'
 Done    'Prepare data'
@@ -193,10 +178,10 @@ Running 'Output'
 Done    'Output'
 Running 'Write'
 
-SPM12: spm_eeg_montage (v6370)                     02:43:32 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:04:34 - 19/04/2017
 ========================================================================
 
-SPM12: spm_eeg_montage (v6370)                     02:43:34 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:04:36 - 19/04/2017
 ========================================================================
 Done    'Write'
 Done
@@ -217,7 +202,7 @@ ans =
 /Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/concatMefsession1_spm_meeg.mat
 
 
-SPM12: spm_eeg_copy (v5079)                        02:44:46 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:05:55 - 19/04/2017
 ========================================================================
 
 ans =
@@ -251,7 +236,7 @@ fslview('/Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_o
 View first level report at:
 /Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/plots/wholebrain_first_level/sess_session1/report.html
 To view OAT report, point your browser to &lt;a href="/Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/plots/report.html"&gt;/Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/plots/report.html&lt;/a&gt;
-</pre><h2 id="7">VIEW OAT  REPORT</h2><p>Once finished, the OAT will print a link to a html report. Click to open it in the matlab html browser.</p><p><b>Source Recon</b></p><p>Firstly, click to open the "Session_1_reoprt". This contains the plots relevent to the source_recon. In our case this is the sensor normalisation. Note that the eigenspectrum of the sensordata ('Pre-normalised log eigenspectrum') drops off sharply at around 64, this indicates the rank of the sensor data which limited by maxfilter de-noising.</p><p>The Pre-normalised variances shows the sensor-by-sensor variance across time. Channels 200-300 are the Magnetometers and have much higher variance than the Gradiometers. We need to normalise the data to remove this disparity or the information in the Magnetometers will dominate the reconstruction.</p><p>In the normalised_eigs plot below, we can see that the 'mean_eig' sensor normalisation has both removed the shelf in the eigenspectrum and brought the sensor variances in line with each other.</p><p><b>First Level</b></p><p>Click back to the first page and on to the 'First level (epoched) report' and then the 'session1 report'. This contains a results summary from the voxel-wise GLM</p><p>The first figure is the design matrix from the GLM, this is the same as the sensorspace OAT.</p><p>Next we see a set of time-series from the voxel with the peak response to the Faces contrast. The COPE is on the left and the t-stat on the right. Note the large peak around 150ms after stimulus onset.</p><p>Finally the source maps for each contrast are shown for the peak time-point in the Faces contrast. This time-point is around 136ms and shows peaks in lateral and medial occipital cortex. These are right hemisphere lateralised for the Faces and Faces-Motorbikes condition.</p><p><img vspace="5" hspace="5" src="osl_example_beamfomer_oat_05.png" alt=""> </p><h2 id="8">OUTPUT SUBJECT'S NIFTII FILES</h2><p>The html report gives a brief summary of the results but we would like to go into more detail.</p><p>We can do this by saving the contrast of parameter estimates (COPEs) and t-statistics for each of our contrasts to NIFTI images.</p><pre class="codeinput">S2=[];
+</pre><h2 id="7">VIEW OAT  REPORT</h2><p>Once finished, the OAT will print a link to a html report. Click to open it in the matlab html browser.</p><p><b>Source Recon</b></p><p>Firstly, click to open the "Session_1_reoprt". This contains the plots relevent to the source_recon. In our case this is the sensor normalisation. Note that the eigenspectrum of the sensordata ('Pre-normalised log eigenspectrum') drops off sharply at around 64, this indicates the rank of the sensor data which limited by maxfilter de-noising.</p><p>The Pre-normalised variances shows the sensor-by-sensor variance across time. Channels 200-300 are the Magnetometers and have much higher variance than the Gradiometers. We need to normalise the data to remove this disparity or the information in the Magnetometers will dominate the reconstruction.</p><p>In the normalised_eigs plot below, we can see that the 'mean_eig' sensor normalisation has both removed the shelf in the eigenspectrum and brought the sensor variances in line with each other.</p><p><b>First Level</b></p><p>Click back to the first page and on to the 'First level (epoched) report' and then the 'session1 report'. This contains a results summary from the voxel-wise GLM</p><p>The first figure is the design matrix from the GLM, this is the same as the sensorspace OAT.</p><p>Next we see a set of time-series from the voxel with the peak response to the Faces contrast. The COPE is on the left and the t-stat on the right. Note the large peak around 150ms after stimulus onset.</p><p>Finally the source maps for each contrast are shown for the peak time-point in the Faces contrast. This time-point is around 136ms and shows peaks in lateral and medial occipital cortex. These are right hemisphere lateralised for the Faces and Faces-Motorbikes condition.</p><p><img vspace="5" hspace="5" src="osl_example_beamformer_oat_cope_at_maxt_smap_c2.png" alt=""> </p><h2 id="8">OUTPUT SUBJECT'S NIFTII FILES</h2><p>The html report gives a brief summary of the results but we would like to go into more detail.</p><p>We can do this by saving the contrast of parameter estimates (COPEs) and t-statistics for each of our contrasts to NIFTI images.</p><pre class="codeinput">S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
 S2.first_level_contrasts=[3,1,2];
@@ -327,12 +312,12 @@ S2.stats_fname=oat.first_level.results_fnames{1};
 S2.mask_fname=[osldir <span class="string">'/std_masks/Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz'</span>];
 [stats,times,mni_coords_used]=oat_output_roi_stats(S2);
 </pre><pre class="codeoutput">Detected Elekta Neuromag 306 data. Using default Elekta Neuromag 306 settings.
-Warning: oat.source_recon.modalities not set, or not set properly. Will set to
-default:MEGPLANARMEGMAG 
+Warning: oat.source_recon.modalities not set, or not set
+properly. Will set to default:MEGPLANARMEGMAG 
 oat.source_recon.D_epoched set. OAT will do an epoched data trial-wise GLM
 Detected Elekta Neuromag 306 data. Using default Elekta Neuromag 306 settings.
-Warning: oat.source_recon.modalities not set, or not set properly. Will set to
-default:MEGPLANARMEGMAG 
+Warning: oat.source_recon.modalities not set, or not set
+properly. Will set to default:MEGPLANARMEGMAG 
 oat.source_recon.D_epoched set. OAT will do an epoched data trial-wise GLM
 
 oat = 
@@ -344,7 +329,7 @@ oat =
     subject_level: [1x1 struct]
       group_level: [1x1 struct]
           results: [1x1 struct]
-     osl2_version: '30a215c'
+     osl2_version: '688244f'
 
 *************************************************************
 Running source_recon
@@ -360,19 +345,19 @@ Using epoched data as input
 Preparing source recon stage for /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/spm_files/Aface_meg1.mat
 Will be designated session1
 
-SPM12: spm_eeg_copy (v5079)                        02:47:26 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:08:41 - 19/04/2017
 ========================================================================
 
-SPM12: spm_eeg_copy (v5079)                        02:47:29 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:08:47 - 19/04/2017
 ========================================================================
 Temporal filtering...
 
-SPM12: spm_eeg_filter (v5876)                      02:47:34 - 19/04/2017
+SPM12: spm_eeg_filter (v5876)                      18:08:51 - 19/04/2017
 ========================================================================
 Epoching...
 Doing no within-trial baseline correction at the point of epoching
 
-SPM12: spm_eeg_epochs (v6183)                      02:47:46 - 19/04/2017
+SPM12: spm_eeg_epochs (v6183)                      18:09:03 - 19/04/2017
 ========================================================================
 Data type is missing or incorrect, assigning default.
 Establish dimensionality and Normalising modalities...
@@ -387,11 +372,11 @@ Modality MEGMAG has smallest sqrt(eig) = 236.9319
 Modality MEGPLANAR has data normalisation 6.9318
 Modality MEGMAG has data normalisation 236.9319
 
-SPM12: spm_eeg_montage (v6370)                     02:48:07 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:09:24 - 19/04/2017
 ========================================================================
 creating layout from cfg.grad
-Warning: UndoBalancing is disabled. Your analysis will proceed using the
-third-order gradiometer-corrected signals.
+Warning: UndoBalancing is disabled. Your analysis will proceed
+using the third-order gradiometer-corrected signals.
  
 creating layout for neuromag306 system
 SPM M/EEG data object
@@ -424,7 +409,7 @@ Co-registration and setting up forward model...
 
 
 ------------------------------------------------------------------------
-Running job #1
+Running job #2
 ------------------------------------------------------------------------
 Running 'Prepare data'
 Done    'Prepare data'
@@ -440,10 +425,10 @@ Running 'Output'
 Done    'Output'
 Running 'Write'
 
-SPM12: spm_eeg_montage (v6370)                     02:49:09 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:10:06 - 19/04/2017
 ========================================================================
 
-SPM12: spm_eeg_montage (v6370)                     02:49:10 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:10:07 - 19/04/2017
 ========================================================================
 Done    'Write'
 Done
@@ -461,7 +446,7 @@ Error in nii_quicksave (line 77)
         input_spat_res=getmasksize(size(mat,1));
 
 Error in oat_source_recon_report (line 53)
-            source_recon_results.source_variance_nii_fname{sessi}=nii_quicksave(mean_V,[oat.source_recon.dirname '/source_variance_sess' num2str(sessi)]);
+            source_recon_results.source_variance_nii_fname{sessi}=nii_quicksave(mean_V,[oat.source_recon.dirname '/source_variance_sess' num2str(sessi) '.nii.gz']);
 
 Error in oat_run_source_recon (line 218)
 [source_recon_report source_recon_results] = oat_source_recon_report(oat, source_recon_report, source_recon_results);
@@ -469,7 +454,7 @@ Error in oat_run_source_recon (line 218)
 Error in osl_run_oat (line 51)
             [results_fnames results]=oat_run_source_recon(oat);
 
-Error in osl_example_beamformer_oat (line 325)
+Error in osl_example_beamformer_oat (line 314)
 oat = osl_run_oat(oat);
 
 Error in evalmxdom&gt;instrumentAndRun (line 97)
@@ -498,7 +483,7 @@ ans =
 /Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/concatMefsession1_spm_meeg.mat
 
 
-SPM12: spm_eeg_copy (v5079)                        02:49:28 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:10:23 - 19/04/2017
 ========================================================================
 
 ans =
@@ -605,6 +590,7 @@ oat=osl_load_oat(oat);
 
 oat.source_recon.gridstep=14;
 oat.source_recon.freq_range=[4 40]; <span class="comment">% broadband</span>
+oat.source_recon.report.do_source_variance_maps=0;
 
 <span class="comment">% Set up first level time-frequency transforms</span>
 oat.first_level.tf_num_freqs=1;
@@ -619,8 +605,8 @@ oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 </pre><pre class="codeoutput">Loaded OAT: /Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/oat_wholebrain_first_level_sub_level_group_level.mat
 Detected Elekta Neuromag 306 data. Using default Elekta Neuromag 306 settings.
-Warning: oat.source_recon.modalities not set, or not set properly. Will set to
-default:MEGPLANARMEGMAG 
+Warning: oat.source_recon.modalities not set, or not set
+properly. Will set to default:MEGPLANARMEGMAG 
 oat.source_recon.D_epoched set. OAT will do an epoched data trial-wise GLM
 
 oat = 
@@ -632,7 +618,7 @@ oat =
     subject_level: [1x1 struct]
       group_level: [1x1 struct]
           results: [1x1 struct]
-     osl2_version: '30a215c'
+     osl2_version: '688244f'
 
 *************************************************************
 Running source_recon
@@ -652,19 +638,19 @@ Using epoched data as input
 Preparing source recon stage for /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/spm_files/Aface_meg1.mat
 Will be designated session1
 
-SPM12: spm_eeg_copy (v5079)                        02:55:37 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:16:53 - 19/04/2017
 ========================================================================
 
-SPM12: spm_eeg_copy (v5079)                        02:55:41 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:16:58 - 19/04/2017
 ========================================================================
 Temporal filtering...
 
-SPM12: spm_eeg_filter (v5876)                      02:55:46 - 19/04/2017
+SPM12: spm_eeg_filter (v5876)                      18:17:04 - 19/04/2017
 ========================================================================
 Epoching...
 Doing no within-trial baseline correction at the point of epoching
 
-SPM12: spm_eeg_epochs (v6183)                      02:56:00 - 19/04/2017
+SPM12: spm_eeg_epochs (v6183)                      18:17:16 - 19/04/2017
 ========================================================================
 Data type is missing or incorrect, assigning default.
 Establish dimensionality and Normalising modalities...
@@ -679,11 +665,11 @@ Modality MEGMAG has smallest sqrt(eig) = 227.3871
 Modality MEGPLANAR has data normalisation 6.6858
 Modality MEGMAG has data normalisation 227.3871
 
-SPM12: spm_eeg_montage (v6370)                     02:56:21 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:17:37 - 19/04/2017
 ========================================================================
 creating layout from cfg.grad
-Warning: UndoBalancing is disabled. Your analysis will proceed using the
-third-order gradiometer-corrected signals.
+Warning: UndoBalancing is disabled. Your analysis will proceed
+using the third-order gradiometer-corrected signals.
  
 creating layout for neuromag306 system
 SPM M/EEG data object
@@ -716,7 +702,7 @@ Co-registration and setting up forward model...
 
 
 ------------------------------------------------------------------------
-Running job #1
+Running job #2
 ------------------------------------------------------------------------
 Running 'Prepare data'
 Done    'Prepare data'
@@ -732,17 +718,15 @@ Running 'Output'
 Done    'Output'
 Running 'Write'
 
-SPM12: spm_eeg_montage (v6370)                     02:57:33 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:18:27 - 19/04/2017
 ========================================================================
 
-SPM12: spm_eeg_montage (v6370)                     02:57:35 - 19/04/2017
+SPM12: spm_eeg_montage (v6370)                     18:18:28 - 19/04/2017
 ========================================================================
 Done    'Write'
 Done
 
 Saving source-space results: session1_recon
-Processing trial 360 of 360 - estimated time to finish is 0 seconds
- 
 View source recon report at:
 &lt;a href="/Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/plots/19-Apr-2017_source_recon/report.html"&gt;/Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/plots/19-Apr-2017_source_recon/report.html&lt;/a&gt;
 *************************************************************
@@ -756,7 +740,7 @@ ans =
 /Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/concatMefsession1_spm_meeg.mat
 
 
-SPM12: spm_eeg_copy (v5079)                        02:57:58 - 19/04/2017
+SPM12: spm_eeg_copy (v5079)                        18:18:40 - 19/04/2017
 ========================================================================
 
 ans =
@@ -775,7 +759,7 @@ First level COPEs outputted will have dimension Nvoxels x Ntpts x Ncontrasts x N
 676   50    3    1
 Doing T-F transform in sensor space on [4 40] Hz...
 size(sens_data_tf)=[325 76 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Hilbert transform... [-----------------------------------------------]
+Doing Hilbert transform... [----------------------------------------------/]
  - estimated time to finish is 0 seconds
 Saving statistics in file /Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_osl2/beamformer_erf.oat/session1_wholebrain_tf_first_level
 To create niftii files from this use a call to oat_save_nii_stats
@@ -819,11 +803,15 @@ fslview('/Users/andrew/Software/Matlab/osl2.1/example_data/faces_subject1_data_o
 ##### SOURCE BEGIN #####
 %% Beamformer Analysis With OAT
 % This practical will work with a single subject's data from an emotional
-% faces experiment (Elekta Neuromag data). 
+% faces experiment (Elekta Neuromag data).
 %
 % Work your way through the script cell by cell using the supplied dataset.
 % As well as following the instructions below, make sure that you read all
 % of the comments and understand each step as you go.
+%
+% This practical requires the first part of the osl_example_coregistration
+% practical to be run first. If you haven't run this before, please do so
+% before starting this session.
 
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
@@ -858,30 +846,15 @@ workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
 spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 
-% This bit changes the paths for the structural information to the correct
-% ones.
-
-% oldpath='/home/disk3/ajquinn/Projects/drugface/structurals/M10/';
-% newpath=[osldir '/example_data/faces_singlesubject/structurals/'];
-% 
-% D_cont=spm_eeg_load(spm_files_continuous{1});
-% D_epoched=spm_eeg_load(spm_files_epoched{1});
-% 
-% D_cont_new=osl_relink_Dinv(D_cont,oldpath,newpath);
-% D_epoched_new=osl_relink_Dinv(D_epoched,oldpath,newpath);
-% 
-% D_cont_new.save;
-% D_epoched_new.save;
-
 %% SETUP THE OAT:
 %
 % The oat.source_recon options define the parameters for the data
 % filtering, windowing and beamforming. We define the D files, conditions
-% and time-frequency options in the same way as the sensorspace OAT. THe 
+% and time-frequency options in the same way as the sensorspace OAT. THe
 % In this section we will do a wholebrain beamformer, followed by a trial-wise
 % GLM that will correspond to a comparison of the ERFs for the different
 % conditions. The source-space projection is defined by a new set of
-% options. 
+% options.
 %
 % The critical options are:
 %
@@ -965,7 +938,7 @@ oat = osl_run_oat(oat);
 %
 % Firstly, click to open the "Session_1_reoprt". This contains the plots
 % relevent to the source_recon. In our case this is the sensor
-% normalisation. Note that the eigenspectrum of the sensordata 
+% normalisation. Note that the eigenspectrum of the sensordata
 % ('Pre-normalised log eigenspectrum') drops off sharply at
 % around 64, this indicates the rank of the sensor data which limited by
 % maxfilter de-noising.
@@ -975,7 +948,7 @@ oat = osl_run_oat(oat);
 % variance than the Gradiometers. We need to normalise the data to remove
 % this disparity or the information in the Magnetometers will dominate the
 % reconstruction.
-% 
+%
 % In the normalised_eigs plot below, we can see that the 'mean_eig' sensor
 % normalisation has both removed the shelf in the eigenspectrum and brought
 % the sensor variances in line with each other.
@@ -998,7 +971,7 @@ oat = osl_run_oat(oat);
 % medial occipital cortex. These are right hemisphere lateralised for the
 % Faces and Faces-Motorbikes condition.
 %
-% <<osl_example_beamfomer_oat_05.png>>
+% <<osl_example_beamformer_oat_cope_at_maxt_smap_c2.png>>
 
 %% OUTPUT SUBJECT'S NIFTII FILES
 %
@@ -1011,7 +984,7 @@ oat = osl_run_oat(oat);
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
-S2.first_level_contrasts=[3,1,2]; 
+S2.first_level_contrasts=[3,1,2];
 S2.resamp_gridstep=oat.source_recon.gridstep;
 [statsdir,times,count]=oat_save_nii_stats(S2);
 
@@ -1200,8 +1173,9 @@ oat=osl_load_oat(oat);
 % Set up source recon options, using a lower spatial resolution here than
 % you might normally use to speed up computation
 
-oat.source_recon.gridstep=14; 
+oat.source_recon.gridstep=14;
 oat.source_recon.freq_range=[4 40]; % broadband
+oat.source_recon.report.do_source_variance_maps=0;
 
 % Set up first level time-frequency transforms
 oat.first_level.tf_num_freqs=1;
