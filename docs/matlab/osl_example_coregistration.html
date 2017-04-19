@@ -1,0 +1,187 @@
+---
+layout: matlab_wrapper
+title: Coregistration with SPM and RHINO
+resource: true
+categories: examples
+---
+
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <title>Coregistration with SPM and RHINO</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-19"><meta name="DC.source" content="osl_example_coregistration.m"></head><body><div class="content"><h1>Coregistration with SPM and RHINO</h1><!--introduction--><p>This tutorial covers the registration of mri and meg datasets into a common space to allow for analysis in sourcespace.</p><p>This practical uses data from the face_singlesubject and glean_example subfolders in the osl2.1/example_data directory. Please make sure these are both present before starting.</p><p>There are several co-ordinate systems which must be aligned before we can project our sensor MEG data into source space. These are:</p><div><ul><li>Scanner Coordinates - These are the locations of MEG sensors within the dewar.</li><li>Polhemus Coordinates - These include the relative locations of the Fiducial Locations (LPA, RPA and Nasion), Head Position Indicator Coils and headshape points. These are acquired prior to the MEG scan.</li><li>MRI Coordinates - This is the information from the individuals structural T1 MRI scan.</li></ul></div><p>The coregistration follows these steps</p><div><ol><li>Extraction of the scalp shape and fiducial points from the MRI scan.</li><li>Alignment of the MRI and Polhemus data, first by fiducials and refined by the scalp and headshape points.</li><li>Positioning the Polhemus and MRI coordinates within the sensors using the Head Position Indicator Coils.</li></ol></div><p>Once these transforms have been identified we can move between MEG sensors and specific locations within the MRI scan.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">COREGISTRATION WITH SPM</a></li><li><a href="#2">VIEW SPM REGISTRATION</a></li><li><a href="#3">ADVANCED COREGISTRATION WITH RHINO</a></li></ul></div><h2 id="1">COREGISTRATION WITH SPM</h2><p>Coregistration is performed in OSL using osl_headmodel.</p><p>This takes an option structure defining several key parameters:</p><div><ul><li>S.D - spm object filename</li><li>S.mri - structural mri scan filename</li><li>S.useheadshape - set to 0 or 1 to indicate whether to use the Polhemus headshape points to refine the alignment between the MRI and Polhemus data</li></ul></div><p>The following example runs the coregstration on two datasets which are required for the sourcespace OAT practical. While running, SPM will open an window showing the alignment of the headshape points to the scalp.</p><pre class="codeinput"><span class="comment">% Set up data paths</span>
+datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_singlesubject'</span>,<span class="string">'spm_files'</span>);
+spm_files_continuous=[datadir <span class="string">'/Aface_meg1.mat'</span>];
+spm_files_epoched=[datadir <span class="string">'/eAface_meg1.mat'</span>];
+
+S = [];
+S.D = spm_files_continuous;
+S.mri = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_singlesubject'</span>,<span class="string">'structurals'</span>,<span class="string">'struct.nii'</span>);
+S.useheadshape = 1;
+S.use_rhino = 0;
+S.forward_meg = <span class="string">'Single Shell'</span>;
+S.fid.label.nasion = <span class="string">'Nasion'</span>;
+S.fid.label.lpa = <span class="string">'LPA'</span>;
+S.fid.label.rpa = <span class="string">'RPA'</span>;
+D=osl_headmodel(S);
+
+S = [];
+S.D = spm_files_epoched;
+S.mri = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_singlesubject'</span>,<span class="string">'structurals'</span>,<span class="string">'struct.nii'</span>);
+S.useheadshape = 1;
+S.use_rhino = 0;
+S.forward_meg = <span class="string">'Single Shell'</span>;
+S.fid.label.nasion = <span class="string">'Nasion'</span>;
+S.fid.label.lpa = <span class="string">'LPA'</span>;
+S.fid.label.rpa = <span class="string">'RPA'</span>;
+D=osl_headmodel(S);
+</pre><h2 id="2">VIEW SPM REGISTRATION</h2><p>This SPM tool allows us to view the results of the coregistration (click and drag to rotate)</p><p>The coregistration shows several types of information:</p><div><ul><li>Green circles - MEG sensors</li><li>Pink Diamonds - Fiducial locations (LPA, RPA and Nasion)</li><li>Light Red Surfact - Scalp extraction</li><li>Red Surface - Inner skull extraction</li><li>Blue Surface - Brain surface</li><li>Tiny Red Dots - Headshape points</li></ul></div><p><img vspace="5" hspace="5" src="osl_example_coregistration_spm.png" alt=""> </p><pre class="codeinput">figure(<span class="string">'Position'</span>,[100 100 1024 1024])
+spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
+</pre><h2 id="3">ADVANCED COREGISTRATION WITH RHINO</h2><p>To ensure a good coregistration we must make sure that the alignment between the MRI and Polhemus coordinates is as accurate as possible. There are several things we can do to improve on the typical pipeline:</p><div><ul><li>Having a large number of Polhemus headshape points (&gt;100) to avoid local minima in the alignment.</li><li>Including the nose in the MRI surface extraction and Polhemus headshape points. As the head is approximately spherical, it is easy to get a rotational error if we just use the scalp. By including parts of the face and nose, we can improve the alignment.</li></ul></div><p>RHINO is an OSL tool implementing these additional improvements. You need to make sure that you have a clear nose on your MRI scan and a large number of headshape points covering the scalp and ridgid parts of the face.</p><pre class="codeinput">datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'roinets_example'</span>);
+spm_file=[datadir <span class="string">'/subject_1'</span>];
+
+S = [];
+S.D = spm_file;
+S.mri = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>,<span class="string">'structurals'</span>,<span class="string">'struct.nii'</span>);
+S.useheadshape = 1;
+S.use_rhino = 0;
+S.forward_meg = <span class="string">'Single Shell'</span>;
+S.fid.label.nasion = <span class="string">'Nasion'</span>;
+S.fid.label.lpa = <span class="string">'LPA'</span>;
+S.fid.label.rpa = <span class="string">'RPA'</span>;
+D=osl_headmodel(S);
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Coregistration with SPM and RHINO
+%
+% This tutorial covers the registration of mri and meg datasets into a
+% common space to allow for analysis in sourcespace.
+%
+% This practical uses data from the face_singlesubject and glean_example
+% subfolders in the osl2.1/example_data directory. Please make sure these
+% are both present before starting.
+%
+% There are several co-ordinate systems which must be aligned before we can
+% project our sensor MEG data into source space. These are:
+%
+% * Scanner Coordinates - These are the locations of MEG sensors within the
+% dewar.
+% * Polhemus Coordinates - These include the relative locations of the Fiducial
+% Locations (LPA, RPA and Nasion), Head Position Indicator Coils and
+% headshape points. These are acquired prior to the MEG scan.
+% * MRI Coordinates - This is the information from the individuals
+% structural T1 MRI scan.
+%
+% The coregistration follows these steps
+%
+% # Extraction of the scalp shape and fiducial points from the MRI scan.
+% # Alignment of the MRI and Polhemus data, first by fiducials and refined
+% by the scalp and headshape points.
+% # Positioning the Polhemus and MRI coordinates within the sensors using
+% the Head Position Indicator Coils.
+%
+% Once these transforms have been identified we can move between MEG
+% sensors and specific locations within the MRI scan.
+
+%% COREGISTRATION WITH SPM
+%
+% Coregistration is performed in OSL using osl_headmodel.
+%
+% This takes an option structure defining several key parameters:
+%
+% * S.D - spm object filename
+% * S.mri - structural mri scan filename
+% * S.useheadshape - set to 0 or 1 to indicate whether to use the Polhemus
+% headshape points to refine the alignment between the MRI and Polhemus
+% data
+%
+% The following example runs the coregstration on two datasets which are
+% required for the sourcespace OAT practical. While running, SPM will open
+% an window showing the alignment of the headshape points to the scalp.
+
+% Set up data paths
+datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
+spm_files_continuous=[datadir '/Aface_meg1.mat'];
+spm_files_epoched=[datadir '/eAface_meg1.mat'];
+
+S = [];
+S.D = spm_files_continuous;
+S.mri = fullfile(osldir,'example_data','faces_singlesubject','structurals','struct.nii');
+S.useheadshape = 1;
+S.use_rhino = 0;
+S.forward_meg = 'Single Shell';
+S.fid.label.nasion = 'Nasion';
+S.fid.label.lpa = 'LPA';
+S.fid.label.rpa = 'RPA';
+D=osl_headmodel(S);
+
+S = [];
+S.D = spm_files_epoched;
+S.mri = fullfile(osldir,'example_data','faces_singlesubject','structurals','struct.nii');
+S.useheadshape = 1;
+S.use_rhino = 0;
+S.forward_meg = 'Single Shell';
+S.fid.label.nasion = 'Nasion';
+S.fid.label.lpa = 'LPA';
+S.fid.label.rpa = 'RPA';
+D=osl_headmodel(S);
+
+%% VIEW SPM REGISTRATION
+%
+% This SPM tool allows us to view the results of the coregistration (click and drag to rotate)
+%
+% The coregistration shows several types of information:
+%
+% * Green circles - MEG sensors
+% * Pink Diamonds - Fiducial locations (LPA, RPA and Nasion)
+% * Light Red Surfact - Scalp extraction
+% * Red Surface - Inner skull extraction
+% * Blue Surface - Brain surface
+% * Tiny Red Dots - Headshape points
+%
+% <<osl_example_coregistration_spm.png>>
+
+figure('Position',[100 100 1024 1024])
+spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
+
+%% ADVANCED COREGISTRATION WITH RHINO
+%
+% To ensure a good coregistration we must make sure that the alignment
+% between the MRI and Polhemus coordinates is as accurate as possible.
+% There are several things we can do to improve on the typical pipeline:
+% 
+% * Having a large number of Polhemus headshape points (>100) to avoid
+% local minima in the alignment.
+% * Including the nose in the MRI surface extraction and Polhemus headshape
+% points. As the head is approximately spherical, it is easy to get a
+% rotational error if we just use the scalp. By including parts of the face
+% and nose, we can improve the alignment.
+%
+% RHINO is an OSL tool implementing these additional improvements. You need
+% to make sure that you have a clear nose on your MRI scan and a large
+% number of headshape points covering the scalp and ridgid parts of the
+% face.
+
+datadir = fullfile(osldir,'example_data','roinets_example');
+spm_file=[datadir '/subject_1'];
+
+S = [];
+S.D = spm_file;
+S.mri = fullfile(osldir,'example_data','glean_example','structurals','struct.nii');
+S.useheadshape = 1;
+S.use_rhino = 0;
+S.forward_meg = 'Single Shell';
+S.fid.label.nasion = 'Nasion';
+S.fid.label.lpa = 'LPA';
+S.fid.label.rpa = 'RPA';
+D=osl_headmodel(S);
+
+
+
+
+
+
+
+
+
+
+##### SOURCE END #####
+--></body></html>
