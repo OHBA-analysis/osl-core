@@ -25,8 +25,12 @@ function workbench_initialize(conf_file)
 		fclose(f);
 	end
 
-	if exist(workbenchdir)
-		workbench_path = fullfile(workbenchdir,'bin_macosx64');
+	if exist(workbenchdir) && isempty(strfind(getenv('PATH'),workbenchdir))
+		if ismac
+			workbench_path = fullfile(workbenchdir,'bin_macosx64');
+		else
+			workbench_path = fullfile(workbenchdir,'bin_linux64');
+		end
 		setenv( 'PATH', strjoin([ {workbench_path}, strsplit(getenv('PATH'),pathsep) ],pathsep) );
 	end
 
