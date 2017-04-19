@@ -61,7 +61,7 @@ end
 if(size(Sc.newdata,4)>1)
     % TF
     D2 = transformtype(D2, 'TF');
-	D2 = D2.frequencies(:, Sc.frequencies);
+    D2 = D2.frequencies(:, Sc.frequencies);
     D2(chanind,:,:,:)=permute(Sc.newdata,[1 4 2 3]);
 
 else
@@ -72,13 +72,6 @@ for coni=1:length(Sc.cond_list),
     D2=conditions(D2,coni,Sc.cond_list{coni});
 end
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-if(length(Sc.D.badchannels)>0)
-    D2 = badchannels(D2, D.badchannels, ones(length(D.badchannels),1));
-=======
->>>>>>> Stashed changes
 if size(Sc.D,1) == size(Sc.newdata,1)
     % We aren't changing the number of channels, keep all information
     if(length(Sc.D.badchannels)>0)
@@ -93,10 +86,6 @@ elseif ~isempty(modalities)
 else
     % We are completely changing the channels, change type to LFP
     D2=D2.chantype(chanind, chantype);
-<<<<<<< Updated upstream
-=======
->>>>>>> origin/master
->>>>>>> Stashed changes
 end
 
 D2.save;
