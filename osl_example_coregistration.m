@@ -47,9 +47,9 @@
 % headshape points to refine the alignment between the MRI and Polhemus
 % data
 %
-% The following example runs the coregstration on two datasets which are
+% The following example runs the coregistration on two datasets which are
 % required for the sourcespace OAT practical. While running, SPM will open
-% an window showing the alignment of the headshape points to the scalp.
+% a window showing the alignment of the headshape points to the scalp.
 
 % Set up data paths
 datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
@@ -138,7 +138,7 @@ D=osl_headmodel(S);
 %
 % <https://sites.google.com/site/ohbaosl/preprocessing/rhino>
 %
-% We can visualise the extracted scalp surface and original MRI scna in fslview with the
+% We can visualise the extracted scalp surface and original MRI scan in fslview with the
 % following call.
 %
 % This will load the structural scan overlayed on the scalp extraction.
@@ -148,11 +148,10 @@ D=osl_headmodel(S);
 % (outside) and black (inside) regions.
 %
 % Try turning the structural scan on and off whilst exploring the
-% image. There is a good correspondnace between the scalp on the MRI and
+% image. There is a good correspondance between the scalp on the MRI and
 % the extracted scalp image. Any deformations in the extracted scalp could 
 % be misleading when we align to our headshape points. In this case, the
-% structual preprcessing has done a good job.
-% worked well.
+% structrual preprcessing has worked well.
 
 mri = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon.nii');
 scalp = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon_scalp.nii.gz');
@@ -190,6 +189,7 @@ system(['fslview ' mri ' ' scalp ])
 % * Badly estimated Fiducial locations can be reestimated.
 %
 
+D = spm_eeg_load(S.D);
 rhino_display(D);
 
 
