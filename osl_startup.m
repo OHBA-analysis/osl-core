@@ -7,6 +7,10 @@ function osl_startup( osldir )
         osldir = fileparts(f);
     end
     
+    if ~exist(osldir,'dir')
+        error(sprintf('Specified OSL directory does not exist: %s',osldir));
+    end
+
     setenv('OSLDIR',osldir)
 
     % does no path-changing if running in deployed mode (gw '13).
