@@ -24,16 +24,16 @@ try, Sc.time=Sc.time; catch, Sc.time=Sc.D.time; end;
 try, Sc.remove_montages=Sc.remove_montages; catch, Sc.remove_montages=1; end;
 try, chantype=Sc.chantype; catch, chantype='LFP';  end;
 
-if(size(Sc.newdata,4)==1)
-    %TF    
-    D2=clone(Sc.D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,2),size(Sc.newdata,3)],0);
-else
-    D2=clone(Sc.D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,4),size(Sc.newdata,2),size(Sc.newdata,3)],0);
-end
-
 % remove montages
 if Sc.remove_montages
-    D2=montage(D2,'remove',1:montage(D2,'getnumber'));
+    D=montage(Sc.D,'remove',1:montage(Sc.D,'getnumber'));
+end
+
+if(size(Sc.newdata,4)==1)
+    %TF    
+    D2=clone(D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,2),size(Sc.newdata,3)],0);
+else
+    D2=clone(D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,4),size(Sc.newdata,2),size(Sc.newdata,3)],0);
 end
 
 D2=timeonset(D2,Sc.time(1));
@@ -55,7 +55,7 @@ end
 if isempty(modalities)    
     chanind = 1:size(Sc.newdata,1);
 else
-    chanind = strmatch(modality_meeg, Sc.D.chantype);
+    chanind = strmatch(modality_meeg, D.chantype);
 end
 
 if(size(Sc.newdata,4)>1)
@@ -72,6 +72,13 @@ for coni=1:length(Sc.cond_list),
     D2=conditions(D2,coni,Sc.cond_list{coni});
 end
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+if(length(Sc.D.badchannels)>0)
+    D2 = badchannels(D2, D.badchannels, ones(length(D.badchannels),1));
+=======
+>>>>>>> Stashed changes
 if size(Sc.D,1) == size(Sc.newdata,1)
     % We aren't changing the number of channels, keep all information
     if(length(Sc.D.badchannels)>0)
@@ -86,6 +93,10 @@ elseif ~isempty(modalities)
 else
     % We are completely changing the channels, change type to LFP
     D2=D2.chantype(chanind, chantype);
+<<<<<<< Updated upstream
+=======
+>>>>>>> origin/master
+>>>>>>> Stashed changes
 end
 
 D2.save;
