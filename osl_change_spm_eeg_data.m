@@ -72,11 +72,21 @@ for coni=1:length(Sc.cond_list),
     D2=conditions(D2,coni,Sc.cond_list{coni});
 end
 
-if(length(Sc.D.badchannels)>0)
-    D2 = badchannels(D2, Sc.D.badchannels, ones(length(Sc.D.badchannels),1));
+if size(Sc.D,1) == size(Sc.newdata,1)
+    % We aren't changing the number of channels, keep all information
+    if(length(Sc.D.badchannels)>0)
+        D2 = badchannels(D2, Sc.D.badchannels, ones(length(Sc.D.badchannels),1));
+    end
+    D2=D2.chantype(chanind, Sc.D.chantype);
+    D2=D2.chanlabels(chanind, Sc.D.chanlabels);
+elseif ~isempty(modalities)
+    % We are using a subset of modalities, keep only their information
+    D2=D2.chantype(chanind, Sc.D.chantype(chanind));
+    D2=D2.chanlabels(chanind, Sc.D.chanlabels(chanind));
+else
+    % We are completely changing the channels, change type to LFP
+    D2=D2.chantype(chanind, chantype);
 end
-
-D2=D2.chantype(chanind, chantype);
 
 D2.save;
 

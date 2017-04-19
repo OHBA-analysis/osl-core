@@ -1,6 +1,6 @@
-%% BEAMFORMER ANALYSIS WITH OAT
+%% Beamformer Analysis With OAT
 % This practical will work with a single subject's data from an emotional
-% faces experiment (Elekta Neuromag data). 
+% faces experiment (Elekta Neuromag data).
 %
 % Work your way through the script cell by cell using the supplied dataset.
 % As well as following the instructions below, make sure that you read all
@@ -19,7 +19,6 @@
 % directory where the data is:
 datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
 structdir =  fullfile(osldir,'example_data','faces_singlesubject','structurals');
-%datadir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 
 % directory to put the analysis in
 workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
@@ -43,29 +42,30 @@ spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 % This bit changes the paths for the structural information to the correct
 % ones.
 
-oldpath='/home/disk3/ajquinn/Projects/drugface/structurals/M10/';
-newpath=[osldir '/example_data/faces_singlesubject/structurals/'];
-
-D_cont=spm_eeg_load(spm_files_continuous{1});
-D_epoched=spm_eeg_load(spm_files_epoched{1});
-
-D_cont_new=osl_relink_Dinv(D_cont,oldpath,newpath);
-D_epoched_new=osl_relink_Dinv(D_epoched,oldpath,newpath);
-
-D_cont_new.save;
-D_epoched_new.save;
+% oldpath='/home/disk3/ajquinn/Projects/drugface/structurals/M10/';
+% newpath=[osldir '/example_data/faces_singlesubject/structurals/'];
+%
+% D_cont=spm_eeg_load(spm_files_continuous{1});
+% D_epoched=spm_eeg_load(spm_files_epoched{1});
+%
+% D_cont_new=osl_relink_Dinv(D_cont,oldpath,newpath);
+% D_epoched_new=osl_relink_Dinv(D_epoched,oldpath,newpath);
+%
+% D_cont_new.save;
+% D_epoched_new.save;
 
 %% SETUP THE OAT:
 %
 % The oat.source_recon options define the parameters for the data
 % filtering, windowing and beamforming. We define the D files, conditions
-% and time-frequency options in the same way as the sensorspace OAT. THe 
+% and time-frequency options in the same way as the sensorspace OAT. THe
 % In this section we will do a wholebrain beamformer, followed by a trial-wise
 % GLM that will correspond to a comparison of the ERFs for the different
 % conditions. The source-space projection is defined by a new set of
-% options. 
+% options.
 %
 % The critical options are:
+%
 % * method - Which algorithm to use, We will use 'beamform'
 % * normalise_method - How to normalise the magnetometers and gradiometers
 % * gridstep - This sets the resolution of the grid through the brain. We
@@ -81,7 +81,7 @@ oat.source_recon.D_continuous=spm_files_continuous;
 oat.source_recon.D_epoched=spm_files_epoched;
 
 oat.source_recon.conditions={'Motorbike','Neutral face','Happy face','Fearful face'};
-oat.source_recon.freq_range=[3 20]; % frequency range in Hz
+oat.source_recon.freq_range=[3 40]; % frequency range in Hz
 oat.source_recon.time_range=[-0.2 0.4]; % time range in secs
 
 % These options specify the source reconstruction that will take place.
@@ -146,7 +146,7 @@ oat = osl_run_oat(oat);
 %
 % Firstly, click to open the "Session_1_reoprt". This contains the plots
 % relevent to the source_recon. In our case this is the sensor
-% normalisation. Note that the eigenspectrum of the sensordata 
+% normalisation. Note that the eigenspectrum of the sensordata
 % ('Pre-normalised log eigenspectrum') drops off sharply at
 % around 64, this indicates the rank of the sensor data which limited by
 % maxfilter de-noising.
@@ -156,7 +156,7 @@ oat = osl_run_oat(oat);
 % variance than the Gradiometers. We need to normalise the data to remove
 % this disparity or the information in the Magnetometers will dominate the
 % reconstruction.
-% 
+%
 % In the normalised_eigs plot below, we can see that the 'mean_eig' sensor
 % normalisation has both removed the shelf in the eigenspectrum and brought
 % the sensor variances in line with each other.
@@ -179,7 +179,7 @@ oat = osl_run_oat(oat);
 % medial occipital cortex. These are right hemisphere lateralised for the
 % Faces and Faces-Motorbikes condition.
 %
-% <<osl_example_beamfomer_oat_05.png>>
+% <<osl_example_beamformer_oat_cope_at_maxt_smap_c2.png>>
 
 %% OUTPUT SUBJECT'S NIFTII FILES
 %
@@ -192,7 +192,7 @@ oat = osl_run_oat(oat);
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
-S2.first_level_contrasts=[3,1,2]; 
+S2.first_level_contrasts=[3,1,2];
 S2.resamp_gridstep=oat.source_recon.gridstep;
 [statsdir,times,count]=oat_save_nii_stats(S2);
 
@@ -377,26 +377,35 @@ S2.first_level_cons_to_do=3; % plots all of these contrasts
 oat.source_recon.dirname=[workingdir '/beamformer_erf']; % Make sure this matches the dirname used above
 oat.first_level.name=['wholebrain_first_level'];
 oat=osl_load_oat(oat);
-try, oat.first_level=rmfield(oat.first_level,'freq_average'); catch, end;
-res=oat_load_results(oat,oat.source_recon.results_fnames{1});
 
-% RUN THE OAT:
-oat.to_do=[1 1 0 0];
-oat.source_recon.gridstep=14; % in mm, using a lower resolution here than you would normally, for computational speed
+% Set up source recon options, using a lower spatial resolution here than
+% you might normally use to speed up computation
+
+oat.source_recon.gridstep=14;
 oat.source_recon.freq_range=[4 40]; % broadband
+oat.source_recon.report.do_source_variance_maps=0;
 
+% Set up first level time-frequency transforms
 oat.first_level.tf_num_freqs=1;
 oat.first_level.tf_method='hilbert';
 oat.first_level.tf_freq_range=oat.source_recon.freq_range;
 oat.first_level.post_tf_downsample_factor=2;
 oat.first_level.name=['wholebrain_tf_first_level'];
 
+% Run the source recon and first_level
+oat.to_do=[1 1 0 0];
+
 oat = osl_run_oat(oat);
 
 %% OUTPUT SUBJECT'S NIFTII FILES
 %
 % Again, we can output the nifti files from this participant to explore the
-% results in more detail
+% results in more detail. This time we specify a freq_bin defining which
+% frequency band we are interested in viewing.
+%
+% Once FSLVIEW has opened, follow the visualisation results above to
+% explore the data. This time, Volume 26 is around 100ms after stimulus
+% onset and Volume 35 is around 170ms.
 
 % output and view niis
 S2=[];
