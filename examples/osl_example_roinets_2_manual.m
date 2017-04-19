@@ -89,8 +89,7 @@ ts = D(:,:,:);
 ts = ft_preproc_bandpassfilter(ts, D.fsample, [8 12], 4, 'but','twopass','no');
 parcel_power = sum(abs(ts),2)/size(ts,2)/(D.time(end)-D.time(1));
 p.plot_activation(parcel_power);
-fname = p.savenii(p.to_vol(parcel_power),'roinets_example_parcel_power');
-fslview(fname)
+p.fslview(parcel_power);
 
 %%
 % This could be compared to power distribution computed using the original voxel data
