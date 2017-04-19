@@ -1,108 +1,134 @@
-%% HMM-MAR 
-% This example shows how to use the HMM-MAR to infer transient states that:
-% (i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency.
-% (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes.
-% (iii) are not only sensitive to power differences but also to phase coupling.
-% The script infers a group (spectrally-defined) HMM from source space MEG data, following the paper
-% Vidaurre et al, NeuroImage (2016)
 %%
+% This example shows how to use the HMM-MAR to infer transient states that:
+%
+% (i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency,
+% (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes,
+% (iii) are not only sensitive to power differences but also to phase coupling.
+%
+% In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, 
+% using two source-reconstructed regions in the motor cortex (left and right).
+% The task is a finger-tapping motor task, where subjects press a button volitionally.
+% We will see whether, with no prior information of the task during training, 
+% the estimated HMM contains states that are temporally related to the task timing,
+% and we will inspect if these states contain meaningful features.
+% We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).
+%
+% The script follows the paper Vidaurre et al. (2016)
 
 % Directory of the data:
 data_dir = fullfile(osldir,'example_data','hmmmar_example');
 % Name for this HMM-MAR analysis:
 hmmmar_name = fullfile(osldir,'example_data','hmmmar_example','hmmmar_demo.mat');
-
-% Set |do_analysis=1| to re-run the analysis, otherwise use precomputed result
+% Set do_analysis=1 to re-run the analysis, otherwise use precomputed result
 do_analysis = 0; 
 
-%% 1) HMM-MAR on hilbert envelopes 
-% Such as in Baker et al, Elife (2014)
-%% Loading and preparing the data
+%% HMM-Gaussian on hilbert envelopes 
+% First we are running the HMM on the Hilbert envelopes (or power time series) using a
+% Gaussian distribution as observation model.
+% This is the method established in Baker et al. (2014), but applied in task and in two regions only.
 
-% We are going to concatenate data into a single matrix
-% (if data is too big, the file names can also be provided to the hmmmar function)
+%% 
+% We first need to load and prepare the data.
+% Data, for any variety of the HMM, is usually provided in a matrix (time by regions) with all concatenated subjects.
+% However, if data is too big, we can pass a cell (subjects by 1) where each elements contains
+% the name of the file containing the data for one subject. 
+
+% Here, we are going to concatenate data into a single matrix. 
+% We will also need to let the toolbox know the length of each subject's data (within this big matrix).
 X = []; % data, time by regions
 T = []; % length of trials, a vector containing how long is each session/trial/subject
 
-subjects = [1 2 4 5 6 7 8 9]; % index of the subjects
+subjects = [1 2 4 5 6 7 8 9]; % index of the subjects that we are using
 N = length(subjects);
 
 for j = subjects % iterate through subjects
     file = fullfile(data_dir,['sub' num2str(j) '.mat']);
     load(file); % load the data
-    sourcedata = sourcedata' ; % we need it (time by channels)
+    sourcedata = sourcedata' ; % data is stored as (channels by time); we need it (time by channels)
     T = [T size(sourcedata,1)]; % time length of this subject
-    for i=1:size(sourcedata,2)
-        sourcedata(:,i) = abs(hilbert(sourcedata(:,i))); % Hilbert envelope
-    end
-    sourcedata = zscore(sourcedata); % standardize subject such that it has mean 0 and stdev 1
     X = [X; sourcedata]; % concat subject
 end
 
-%% Prepare the HMM options and run the HMMMAR
+%% 
+% Prepare the HMM options, where we will configure it to use  and run the HMMMAR
     
 options = struct();
-options.K = 3; % number of states
-options.order =  0; % order 0 means a Gaussian distribution (adequate for power time series)
+options.K = 3; 
+% number of states: in general, the higher this number, the more "detailed" will be the segmentation.
+% (By running the model with different number of states, we could get some sense of "state hierarchy").
+options.order =  0; 
+% order=0 corresponds to a Gaussian distribution (adequate for power time series, i.e. Baker et al's approach).
+% By setting order>0, we will be running the HMM-MAR (see below).
 options.covtype = 'full'; 
-% model connectivity, covtype='full' means that we model the covariance between regions
+% model connectivity, covtype='full' means that we model the covariance between regions;
+% otherwise, we would set covtype='diag', such that we would ignore the convariance and would focus on variance.
 options.zeromean = 0; 
-% zeromean=0 means that we model the mean, i.e. model the "amount of power"
-% zeromean=1 means that we do *not* model the mean
-options.cyc = 100;  
-options.initcyc = 10;  
-options.initrep = 3;  
-options.verbose = 1; % show progress?
-if do_analysis
+% zeromean=0 means that we model the mean, i.e. model the "amount of power"; 
+% zeromean=1 means that we do *not* model the mean.
+options.standardise = 1; 
+% standardize each subject such that it has mean 0 and stdev 1;
+% this is typically done in order to avoid between-subject differences being the main driving cause of the states.
+options.onpower = 1; 
+% onpower=1 indicates that we will be taking the Hilbert envelopes of the signal (ignoring phase)
+options.cyc = 100; 
+% number of training cycles, although might stop earlier if convergence is attained. 
+options.verbose = 1; 
+% show progress?
+
+%% 
+% And run the HMM-MAR. Note that the same function will be used for both "HMM-flavours".
+if do_analysis % run the HMM-MAR
     [hmm_env,Gamma_env] = hmmmar(X,T,options);
-else
+else % load a precomputed run
     load(hmmmar_name,'hmm_env','Gamma_env')
 end
 
-%% Compute the spectral information of the states (power, coherence, etc) 
-% using a weighted version of the multitaper
-% Note that we can't get an estimation of the spectra directly from the
-% parameters in this case, as the HMM has been run in wideband power time series
+%% 
+% Now that we have the HMM model, we shall compute the spectral information of the states (power, coherence, etc).
+% In the case of the HMM-MAR, as we will see below, the MAR parameters themselves contain this spectral information.
+% Here, because we are using a Gaussian distribution on wideband power, 
+% we don't know what is happening in the frequency
+% domain when each state is active, above and beyond gross changes in wideband power. 
+% For example, in our current HMM estimation there is no information about phase coupling.
+% Hence, we need to estimate this frequency information (including phase coupling), 
+% looking back at the data and using the state time courses we inferred. 
+% For this, we will be using a weighted version of the multitaper, proposed in (Vidaurre et al. 2016).
+% In brief, this basically weights the data with the state time course for each state, 
+% such that segments of the data where a given state has a higher probability of being active will 
+% contribute more to the final spectral estimation.
 
+% We set the options for the spectral estimation:
 options = struct();
-options.fpass = [1 40]; % frequency range we want to look at
+options.fpass = [1 40]; % frequency range we want to look at, in this case between 1 and 40 Hertzs.
 options.tapers = [4 7]; % internal multitaper parameter
-options.Fs = 200; % sampling frequency in hertzs
-options.win = 10 * options.Fs; % window, related to the level of detail in frequency of the estimation
+options.Fs = 200; % sampling frequency in Hertzs
+options.win = 10 * options.Fs; % window length, related to the level of detail of the estimation;
+% that is, if we increase the win parameter, we will obtain an estimation that is more detailed in the frequency scale
+% (i.e. contains more frequency bins between 1 and 40 Hertzs) at the expense of some robustness,.
 
-if do_analysis
+if do_analysis % Estimate the spectra 
     spectra_env = hmmspectramt(X,T,Gamma_env,options);
-else
+else % load a precomputed results
     load(hmmmar_name,'spectra_env')
 end
 
-%% 2) HMM-MAR on raw signals 
-% Such as in Vidaurre et al, NeuroImage (2016)
-%% Loading and preparing the data
 
-% We are going to concatenate data into a single matrix
-% (if data is too big, the file names can also be provided to the hmmmar function)
-X = []; % data, time by regions
-T = []; % length of trials, a vector containing how long is each session/trial/subject
+%% HMM-MAR on raw time series
 
-subjects = [1 2 4 5 6 7 8 9]; % index of the subjects
-N = length(subjects);
+% We have estimated a HMM-Gaussian on the power time series, 
+% now we look at the raw data (which contains phase) following (Vidaurre et al. 2016).
 
-for j = subjects % iterate through subjects
-    file = fullfile(data_dir,['sub' num2str(j) '.mat']);
-    load(file); % load the data
-    sourcedata = sourcedata' ; % we need it (time by channels)
-    T = [T size(sourcedata,1)]; % time length of this subject
-    sourcedata = zscore(sourcedata); % standardize subject such that it has mean 0 and stdev 1
-    X = [X; sourcedata]; % concat subject
-end
-
-%% Signs might be arbitrarily flipped, so we need to disambiguate this
-% this is because the intrinsic ambiguity in source-reconstructed signals
+%% 
+% One thing we must take care of when working on raw data in source-space is sign ambiguity.
+% As a consequence of the nature of the source-reconstruction process, the sign of the time series 
+% are arbitrary. That means that, because different subjects might have different signs in different channels,
+% the phase relations between regions can cancel across subjects. 
+% The HMM-MAR toolbox includes a set of functions to correct for sign ambiguity. 
 
 options = struct();
 options.maxlag = 8;
 options.noruns = 100;
+options.verbose = 0;
 
 [flips,scorepath] = findflip(X,T,options);
 X = flipdata(X,T,flips);
