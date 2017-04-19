@@ -22,6 +22,12 @@ case "$response" in
     [yY][eE][sS]|[yY]) 
 		wd=${PWD##*/}
 		if [ "$wd" == "osl-core" ]; then
+
+			if [ -d ".git" ]; then
+				echo "ERROR - A .git folder is present. Updating should be done via git"
+				exit 1
+			fi
+
 			cd .. # This is now osldir
 			echo `head version.txt -n 1`\+UPGRADE > version.txt
 			retrieve_repo osl-core 
