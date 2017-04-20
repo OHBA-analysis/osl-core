@@ -24,7 +24,10 @@ try chaninds=Sin.chaninds; catch chaninds=1:D.nchannels; end
 
 chindex = 1:D.nchannels;
 ch = chindex(strcmp(D.chantype,chantype));
-ch=ch(chaninds);
+%ch=ch(chaninds);
+
+ch=chaninds(ch);
+
 
 S(:)=0;
 for i = 1:length(ch)

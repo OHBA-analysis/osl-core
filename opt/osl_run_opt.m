@@ -949,7 +949,7 @@ opt.results.report=osl_report_write(opt_report);
 
 %%%%%%%%%%%%%%%%%%%
 %% output res
-opt.osl2_version=osl2_version;
+opt.osl2_version=osl_version;
 
 opt.fname=[opt.dirname '/opt'];
 
