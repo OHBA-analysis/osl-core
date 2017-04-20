@@ -19,16 +19,16 @@ categories: examples
 fif_files{1}=[datadir <span class="string">'/fifs/sub1_face_sss.fif'</span>];
 
 spm_files_basenames{1}=[<span class="string">'spm_meg1.mat'</span>];
-</pre><h2 id="8">CONVERT FROM FIF TO AN SPM M/EEG OBJECT</h2><p>The fif file that we are working with is sub1_face_sss.fif. This has already been max-filtered for you and downsampled to 250Hz.</p><p>This will produce a histogram plot showing the number of events detected for each code on the trigger channel. The codes used on the trigger channel for this experiment were:</p><pre>1 = Neutral face
-2 = Happy face
-3 = Fearful face
-4 = Motorbike
-18 = Introduction screen
-11 = Break between blocks
-19 = Midway break
-12 =   Green fixation cross (response trials)
-13 = Red fixation cross (following green on response trials)
-14 = Red fixation cross (non-response trials)</pre><p>For example, there should be 120 motorbike trials, and 80 of each of the face conditions. Check that the histogram plot corresponds to these trials numbers.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(fif_files), <span class="comment">% iterates over subjects</span>
+</pre><h2 id="8">CONVERT FROM FIF TO AN SPM M/EEG OBJECT</h2><p>The fif file that we are working with is sub1_face_sss.fif. This has already been max-filtered for you and downsampled to 250Hz.</p><p>This will produce a histogram plot showing the number of events detected for each code on the trigger channel. The codes used on the trigger channel for this experiment were:</p><pre>1  =  Neutral face
+2  =  Happy face
+3  =  Fearful face
+4  =  Motorbike
+18 =  Introduction screen
+11 =  Break between blocks
+19 =  Midway break
+12 =  Green fixation cross (response trials)
+13 =  Red fixation cross (following green on response trials)
+14 =  Red fixation cross (non-response trials)</pre><p>For example, there should be 120 motorbike trials, and 80 of each of the face conditions. Check that the histogram plot corresponds to these trials numbers.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(fif_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -62,7 +62,7 @@ D = spm_eeg_load(spm_files{subnum});
 </pre><pre class="codeinput">D.chantype
 </pre><p>Corresponding to above order, <i>ntrials</i> gives you the number of trials, <i>conditions</i> shows a list of condition labels per trial, <i>condlist</i> shows the list of conditions, <i>chanlabels</i> provides order and names of channels, and <i>chantype</i> about the type.</p><p>This will show the size of the data matrix:</p><pre class="codeinput">D.size
 </pre><p>Size is given in number of channels, samples and trials (respectively). The size of each dimension separately can be accessed by <i>D.nchannels</i>, <i>D.nsamples</i> and <i>D.ntrials</i>. Note that although the syntax of these commands is similar to those used for accessing the fields of a struct data type in Matlab what is actually happening here is that these commands evoke special functions called 'methods' and these methods collect and return the requested information from the internal data structure of the D object. The internal structure is not accessible directly when working with the object. This mechanism greatly enhances the robustness.</p><p>For the full list of methods performing operations with the object, type:</p><pre class="codeinput">methods(<span class="string">'meeg'</span>)
-</pre><p>For help on any method, type help <i>meeg/method_name_of_choice</i> to get help about a method. In terms of using above methods - you can use it in the way shown (e.g. <i>D.ntrials</i>) or in the way you normally use functions, i.e. <i>ntrials(D)</i> where D is an argument (might need additional arguments as well).</p><h2 id="23">FILTERING: HIGH-PASS AND NOTCH FILTERING</h2><p>Some artefacts are relatively easy to come by by filtering. Line noise is often filtered out by using an appropriate notch filter. Also, low frequency drifts can be removed by filtering. This is what we will do now.</p><p>First we perform some high-pass filtering to remove the worst of the trends in the data. SPM file names for input are already set, but we repeat this here so this cell can be used independent of the others. The filtered data set will get the prefix 'f' preceding the file name. Set filenames used in following steps and filter.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><p>For help on any method, type help <i>meeg/method_name_of_choice</i> to get help about a method. In terms of using above methods - you can use it in the way shown (e.g. <i>D.ntrials</i>) or in the way you normally use functions, i.e. <i>ntrials(D)</i> where D is an argument (might need additional arguments as well).</p><h2 id="23">FILTERING: HIGH-PASS AND NOTCH FILTERING</h2><p>Some artefacts are relatively easy to remove by filtering. Line noise is often filtered out by using an appropriate notch filter. Also, low frequency drifts can be removed by filtering. This is what we will do now.</p><p>First we perform some high-pass filtering to remove the worst of the trends in the data. SPM file names for input are already set, but we repeat this here so this code snippet can be used independent of the others. The filtered data set will get the prefix 'f' preceding the file name. Set filenames used in following steps and filter.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -102,7 +102,7 @@ D = spm_eeg_load(spm_files{subnum});
 <span class="comment">% load in the SPM M/EEG object</span>
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
-</pre><p>Now load oslview. This data has some bad artefacts in. Mark the epochs at around 325s, 380s and 600s as bad, as well as everything from 650 seconds to the end. Marking is done by right-clicking in the proximity of the event and click on 'Mark Event'. A first click (green dashed label) marks the begin of a bad period, another second click indicates the end (in red). This will mean that we are not using about half of the data. But with such bad artefacts this is the best we can do. We can still obtain good results with what remains. NB: Push the disk button to save to disk (no prefix will be added, same name is kept).</p><pre class="codeinput">D=oslview(D);
+</pre><p>Now load oslview. This data has some exceptionally bad artefacts in. Mark the epochs at around 325s, 380s and 600s as bad, as well as everything from 650 seconds to the end. Marking is done by right-clicking in the proximity of the event and click on 'Mark Event'. A first click (green dashed label) marks the begin of a bad period, another second click indicates the end (in red). This will mean that we are not using about half of the data. But with such bad artefacts this is the best we can do. We can still obtain good results with what remains. NB: Push the disk button to save to disk (no prefix will be added, same name is kept).</p><pre class="codeinput">D=oslview(D);
 </pre><h2 id="35">MANUAL AFRICA DENOISING</h2><p>In a next step we will run AFRICA denoising. AFRICA uses independent component analysis (ICA) to decompose sensor data into a set of maximally independent time courses. Using this framework, sources of interference such as eye-blinks, ECG artefacts and mains noise can be identified and removed from the data or at least attenuated. In this practical we will use manual artefact rejection by looking at the time courses and sensor topographies of each component and rejecting those that correlate with EOG and ECG measurements. The user interface displays the time course, power spectrum and sensor topography for each component. These components are sorted based on one of a number of metrics, which you can toggle using the dropdown menu. For more information about AFRICA and how to use it, please see the AFRICA wiki manual on <a href="https://sites.google.com/site/ohbaosl/preprocessing/africa">https://sites.google.com/site/ohbaosl/preprocessing/africa</a> .</p><p>Set new SPM M/EEG object filenames to be used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/dff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
@@ -211,7 +211,7 @@ D = spm_eeg_load(spm_files{subnum});
 </pre><p>The command below helps to identify trials of a certain type using the indtrial function. E.g.:</p><pre class="codeinput">motorbike_trls = indtrial(D,<span class="string">'Motorbike'</span>)
 </pre><p>It displays all trials for the motorbike condition in the data (regardless of whether they contain good or bad data segments).</p><p>Identify channels of certain types using the meegchannels function. E.g. identify the channel indices for the planar gradiometers and for the magnetometers (what you have available may depend on the actual MEG device) (Note that you can use 'MEGMAG' to get the magnetometers, and D.chantype gives you a list of all channel types by index).</p><pre class="codeinput">planars = D.indchantype(<span class="string">'MEGPLANAR'</span>)
 </pre><pre class="codeinput">magnetos = D.indchantype(<span class="string">'MEGMAG'</span>)
-</pre><p>We can access the actual MEG data using the syntax: D(channels, samples, trials). E.g. plot a figure showing all the trials for the motorbike condition in the 135th MEGPLANAR channel. Note that the squeeze function is needed to remove single dimensions for passing to the plot function, and D.time is used to return the time points relative to the trigger events (t=0) in seconds.</p><pre class="codeinput">figure(<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 0.5 0.4]);
+</pre><p>We can access the actual MEG data using the syntax: D(channels, samples, trials). E.g. plot a figure showing all the trials for the motorbike condition in the 135th MEGPLANAR channel. Note that the squeeze function is needed to remove single dimensions for passing to the plot function, and D.time is used to return the time points relative to the trigger events (t=0 is time of stimulus onset) in seconds.</p><pre class="codeinput">figure(<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 0.5 0.4]);
 subplot(1,2,1); <span class="comment">% this plots all single trials</span>
 plot(D.time,squeeze(D(planars(135),:,motorbike_trls)));
 xlabel(<span class="string">'Time (seconds)'</span>,<span class="string">'FontSize'</span>,20);
@@ -245,7 +245,7 @@ D = spm_eeg_load(spm_files{subnum});
 </pre><pre class="codeinput">magnetos = D_raw.indchantype(<span class="string">'MEGMAG'</span>)
 </pre><p>We list the marked bad channels and bad trials:</p><pre class="codeinput">D_raw.badchannels
 </pre><pre class="codeinput">D_raw.badtrials
-</pre><p>Depending on how strict you were with the visual artefact rejection, you should have quite some rejected trials and possibly channels.</p><p>Nowe we identify the motorbike image trials. Note that <i>indtrial</i> includes good AND bad trials, so bad trials need to be excluded. <i>Setdiff</i> finds the trials that are not bad.</p><pre class="codeinput">good_motorbike_trls = setdiff(D_raw.indtrial(<span class="string">'Motorbike'</span>),D_raw.badtrials)
+</pre><p>Depending on how strict you were with the visual artefact rejection, you should have quite a lot of rejected trials and possibly some rejected channels.</p><p>Now we identify the motorbike image trials. Note that <i>indtrial</i> includes good AND bad trials, so bad trials need to be excluded. <i>'good'</i> finds the trials that are not bad.</p><pre class="codeinput">good_motorbike_trls = D_raw.indtrial(<span class="string">'Motorbike'</span>),<span class="string">'good'</span>)
 </pre><p>As before after AFRICA, we will make use of the online montages. Note that the online montage got carried over when doing the epoching. So in principle there is no need to do epoching on both the 'raw' and AFRICA denoised data separately. Epoching on the raw data containing the AFRICA montage allows you to switch between raw and AFRICA denoised data after epoching without problems. So now we switch to online montage 1 ('AFRICA denoised data'). Again, keep in mind to assign it a new object (e.g. D_africa):</p><pre class="codeinput">D_africa=D.montage(<span class="string">'switch'</span>,1)
 </pre><p>Now let us plot a cleaned rudimentary ERF for both the raw and AFRICA denoised data, but after having excluded the bad samples from oslview and the rejected trials from the artifact rejection. Now, data should look much better. Also, let us see how much the task-related activity, i.e. the ERF differs between 'raw' and AFRICA denoised data.</p><p>This should give you some nice event-related fields.</p><pre class="codeinput">figure(<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 0.4 0.3]);
 subplot(1,2,1); <span class="comment">% plots gradiometers, raw</span>
@@ -366,16 +366,16 @@ spm_files_basenames{1}=['spm_meg1.mat'];
 % for each code on the trigger channel. The codes used on the trigger
 % channel for this experiment were:
 %
-%  1 = Neutral face 
-%  2 = Happy face
-%  3 = Fearful face
-%  4 = Motorbike
-%  18 = Introduction screen
-%  11 = Break between blocks
-%  19 = Midway break
-%  12 =   Green fixation cross (response trials)
-%  13 = Red fixation cross (following green on response trials)
-%  14 = Red fixation cross (non-response trials)
+%  1  =  Neutral face 
+%  2  =  Happy face
+%  3  =  Fearful face
+%  4  =  Motorbike
+%  18 =  Introduction screen
+%  11 =  Break between blocks
+%  19 =  Midway break
+%  12 =  Green fixation cross (response trials)
+%  13 =  Red fixation cross (following green on response trials)
+%  14 =  Red fixation cross (non-response trials)
 %
 % For example, there should be 120 motorbike trials, and 80 of each of the
 % face conditions. Check that the histogram plot corresponds to these
@@ -475,7 +475,7 @@ methods('meeg')
 
 
 %% FILTERING: HIGH-PASS AND NOTCH FILTERING
-% Some artefacts are relatively easy to come by by filtering. Line noise is
+% Some artefacts are relatively easy to remove by filtering. Line noise is
 % often filtered out by using an appropriate notch filter. Also, low
 % frequency drifts can be removed by filtering. This is what we will do
 % now.
@@ -483,7 +483,7 @@ methods('meeg')
 %%
 % First we perform some high-pass filtering to remove the worst of the
 % trends in the data. SPM file names for input are already set, but we
-% repeat this here so this cell can be used independent of the others. The
+% repeat this here so this code snippet can be used independent of the others. The
 % filtered data set will get the prefix 'f' preceding the file name. Set
 % filenames used in following steps and filter.
 
@@ -588,7 +588,7 @@ subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 
 %% 
-% Now load oslview. This data has some bad artefacts in. Mark the epochs at
+% Now load oslview. This data has some exceptionally bad artefacts in. Mark the epochs at
 % around 325s, 380s and 600s as bad, as well as everything from 650 seconds
 % to the end. Marking is done by right-clicking in the proximity of the
 % event and click on 'Mark Event'. A first click (green dashed label) marks
@@ -906,7 +906,7 @@ magnetos = D.indchantype('MEGMAG')
 % condition in the 135th MEGPLANAR channel. Note that the squeeze function
 % is needed to remove single dimensions for passing to the plot function,
 % and D.time is used to return the time points relative to the trigger
-% events (t=0) in seconds.
+% events (t=0 is time of stimulus onset) in seconds.
 
 figure('units','normalized','outerposition',[0 0 0.5 0.4]);
 subplot(1,2,1); % this plots all single trials
@@ -1014,13 +1014,13 @@ D_raw.badtrials
 
 %%
 % Depending on how strict you were with the visual artefact rejection, you
-% should have quite some rejected trials and possibly channels.
+% should have quite a lot of rejected trials and possibly some rejected channels.
 
 %%
-% Nowe we identify the motorbike image trials. Note that _indtrial_
+% Now we identify the motorbike image trials. Note that _indtrial_
 % includes good AND bad trials, so bad trials need to be excluded.
-% _Setdiff_ finds the trials that are not bad.
-good_motorbike_trls = setdiff(D_raw.indtrial('Motorbike'),D_raw.badtrials)
+% _'good'_ finds the trials that are not bad.
+good_motorbike_trls = D_raw.indtrial('Motorbike'),'good')
 
 %%
 % As before after AFRICA, we will make use of the online montages. Note that
