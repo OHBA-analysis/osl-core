@@ -12,7 +12,7 @@
 % 
 
 %%
-% Each section corresponds to a single cell in the accompanying Matlab
+% Each section corresponds to a one or more cells in the accompanying Matlab
 % script. As mentioned above, this should be run cell-by-cell by clicking
 % "Run Section" or "Run and Advance" in the run part of the Matlab editor.
 % Some sections will require user input to continue.
@@ -29,9 +29,8 @@
 
 
 
-%% SETUP ANALYSIS
-% The only thing you need to do is to go into your OSL directory (i.e. cd
-% /somedirectory/osl-core ) and type the following.
+%% SET UP ANALYSIS
+% The only thing you need to do is to go into your OSL directory (i.e. type _cd /somedirectory/osl-core_ ) and then run the following.
 osl_startup;
 %%
 % This will not be necessary after you have done this once, i.e. no need to
