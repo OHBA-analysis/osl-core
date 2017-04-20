@@ -298,6 +298,7 @@ oat.first_level.name='roi_tf_first_level';
 
 % Re-use the mask we used above
 oat.source_recon.mask_fname=[osldir '/std_masks/Right_Temporal_Occipital_Fusiform_Cortex'];
+oat.source_recon.report.do_source_variance_maps=0;
 
 % Add first level source recon options
 oat.first_level.tf_freq_range=[4 48]; % frequency range in Hz

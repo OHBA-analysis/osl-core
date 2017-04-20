@@ -29,5 +29,8 @@ function osl_publish(filename,evalCode,stylesheet,maxOutputLines)
 	end
 		
 	output_html = publish(filename,'evalCode',evalCode,'stylesheet',stylesheet,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'),'maxOutputLines',maxOutputLines);
+    
+    %   To check locally, with standard MATLAB html formatting
+    %	output_html = publish(filename,'evalCode',evalCode,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'),'maxOutputLines',maxOutputLines);
 
 	runcmd('open %s',output_html)
