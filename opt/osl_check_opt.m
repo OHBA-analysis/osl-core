@@ -393,7 +393,8 @@ if ~isempty(wierdfields)
 end % if ~isempty(wierdfields)
 end;
 
-try, optin = rmfield(optin,'osl_version');catch, end;
+%try, optin = rmfield(optin,'osl_version');catch, end;
+try, optin = rmfield(optin,'osl2_version');catch, end;
 try, optin = rmfield(optin,'epoch');catch, end;
 try, optin = rmfield(optin,'outliers');catch, end;
 try, optin = rmfield(optin,'bad_segments');catch, end;
@@ -406,6 +407,7 @@ try, optin = rmfield(optin,'convert');catch, end;
 try, optin = rmfield(optin,'africa');catch, end;
 try, optin = rmfield(optin,'fname'); catch, end;
 
+
 wierdfields = fieldnames(optin);
 if ~isempty(wierdfields)
     disp('The following opt settings were not recognized by osl_check_opt');
@@ -417,5 +419,5 @@ if ~isempty(wierdfields)
 end % if ~isempty(wierdfields)
 
 %% add osl version
-
 opt.osl2_version=osl_version;
+

@@ -5,13 +5,24 @@
 %
 % You'll need to alter (at the very least) the settings in:
 % datadir, fif_files, spm_files, structurals_files
+% In this practical we will use the OHBA Preprocessing Tool (OPT) to perform fully automated preprocessing. This will go through the following steps:
 
-%% SETUP THE MATLAB PATHS
+%%
+% Each section corresponds to a one or more neighbouring cells in the accompanying Matlab script. These should be run cell-by-cell by clicking "Run Section" or "Run and Advance" in the run part of the Matlab editor. 
+% We will work with a single subject's data from a button press experiment.
+% This should be available in your installation already. Note that this contains the fif file:
+% fifs/loc_S02_sss1.fif, which has already been SSS Maxfiltered and downsampled to 250 Hz, and which we will use as the input into this analysis.
+
+
+
+
+%% SET UP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
+% You do not need to run this if you have already done this previously.
 
 osl_startup();
 
-%% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
+%% SPECIFY DIRECTORIES FOR THIS ANALYSIS
 % directory where the data is:
 datadir = fullfile(osldir,'example_data','preproc_example','automatic_opt');
  
