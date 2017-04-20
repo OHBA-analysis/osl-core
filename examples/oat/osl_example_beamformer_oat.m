@@ -1,10 +1,22 @@
-%% Beamformer Analysis With OAT
+%% OAT 3 - Sourcespace Analysis
 % This practical will work with a single subject's data from an emotional
 % faces experiment (Elekta Neuromag data).
 %
 % Work your way through the script cell by cell using the supplied dataset.
 % As well as following the instructions below, make sure that you read all
 % of the comments and understand each step as you go.
+%
+% We will estimate neural activity in the brain's source space using a beamformer algorithm, 
+% task dependant differences in this source activity is then quantified using a GLM. 
+% This will go through the following steps:
+%
+% # Set-up an OAT Analysis: source_recon and first_level
+% # Run source space GLM fitting and contrasts
+% # Check coregistration
+% # Save and view t-stat volumes
+% # GLM analysis in an ROI
+% # Time-frequency analysis in an ROI
+% # Whole brain time-frequency analysis
 %
 % This practical requires the first part of the osl_example_coregistration
 % practical to be run first. If you haven't run this before, please do so
@@ -33,12 +45,20 @@ workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 %
 % Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:
 %
-% fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];
-% fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];
+% |fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];|
+%
+% |fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];|
+%
 % etc...
-% spm_files{1} = [workingdir '/sub1_face_sss.mat'];
-% spm_files{2} = [workingdir '/sub2_face_sss.mat'];
+%
+% |spm_files{1} = [workingdir '/sub1_face_sss.mat'];|
+%
+% |spm_files{2} = [workingdir '/sub2_face_sss.mat'];|
+%
 % etc...
+
+% clear old spm files
+clear spm_files_continuous spm_files_epoched
 
 spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
 spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
@@ -55,13 +75,13 @@ spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 %
 % The critical options are:
 %
-% * method - Which algorithm to use, We will use 'beamform'
-% * normalise_method - How to normalise the magnetometers and gradiometers
-% * gridstep - This sets the resolution of the grid through the brain. We
+% * |method| -   This defines the source reconstruction method to be used. other options include 'beamform_bilateral' and 'mne_datacov' 
+% * |normalise_method| - How to normalise the magnetometers and gradiometers
+% * |gridstep| - This is the distance (in mm) between points to be reconstructed, the spatial resolution of the analysis. We
 % are using 8mm which is lower than usual but faster to compute.
-% * forward_meg - This specifies the forward model used.
-% * modalidities - Defines which types of sensor to use.
-% * do_source_variance_maps - If set to 1, this outputs an optional sanity check
+% * |forward_meg| - This specifies the forward model used.
+% * |modalidities| - Defines which types of sensor to use.
+% * |do_source_variance_maps| - If set to 1, this outputs an optional sanity check
 
 % These options are the same as the sensorspace OAT and define input-data,
 % conditions, filtering and windowing.
@@ -89,7 +109,7 @@ oat.source_recon.dirname=[workingdir '/beamformer_erf']; % directory the oat and
 % These options are the same as the sensorspace ERF tutorial.
 %
 % design_matrix_summary is a parsimonious description of the design matrix.
-% It contains values design_matrix_summary{reg,cond}, where reg is a regressor no. and cond
+% It contains values |design_matrix_summary{reg,cond}|, where reg is a regressor no. and cond
 % is a condition no. This will be used (by expanding the conditions over
 % trials) to create the (num_regressors x num_trials) design matrix:
 design_matrix_summary={};
@@ -156,15 +176,28 @@ oat = osl_run_oat(oat);
 % and then the 'session1 report'. This contains a results summary from the
 % voxel-wise GLM
 %
-% The first figure is the design matrix from the GLM, this is the same as
-% the sensorspace OAT.
+% Design matrix plot. At the top is the design matrix used for each subject. 
+% Red values indicate a value of 1, blue indicates a value of zero. It is worth 
+% noting if every regressor (in this case corresponding to the four different conditions) 
+% is well represented. For example, if aggressive amounts of outlier rejection has been 
+% applied then it is possible to end up with very few trials in a regressor.
 %
-% Next we see a set of time-series from the voxel with the peak response to
-% the Faces contrast. The COPE is on the left and the t-stat on the right.
+% *Stats plots* These show the time courses of the COPEs and t-stats for the 
+% different contrasts listed in |oat.first_level.report.first_level_cons_to_do|, 
+% at the MNI coordinated indicated in the title of the plots. This MNI coordinate 
+% is chosen by finding the voxel with the maximum t-stat for the first contrast 
+% listed in |oat.first_level.report.first_level_cons_to_do|. 
+%
+% The COPE is on the left and the t-stat on the right.
 % Note the large peak around 150ms after stimulus onset.
 %
-% Finally the source maps for each contrast are shown for the peak time-point in the Faces
-% contrast. This time-point is around 136ms and shows peaks in lateral and
+% *COPE and t-stat orthoview plots* These show orthoviews of the COPEs and t-stats 
+% for the different contrasts listed in |oat.first_level.report.first_level_cons_to_do|, 
+% at the time point indicated in the title of the plots. This time point is chosen 
+% by finding the time point with the maximum t-stat for the first contrast listed in 
+% |oat.first_level.report.first_level_cons_to_do|.
+%
+% This time-point is around 136ms and shows peaks in lateral and
 % medial occipital cortex. These are right hemisphere lateralised for the
 % Faces and Faces-Motorbikes condition.
 %
@@ -262,10 +295,14 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 
 %% INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK
 %
-% We can also interrogate the wholebrain OAT (run above) using
-% an ROI mask rather than a single voxel.
+% In this section we will interrogate the wholebrain OAT (run above) using an 
+% ROI mask. Here we will use an MNI mask of the right temporal occipital fusiform cortex, 
+% to perform first level statistics restricted to the mask. The final result 
+% will correspond to a spatial average over the mask.
 %
-% In this case we will look at the Right Hemisphere Fusiform Cortex.
+% Unlike the virtual electrode, the results from many voxels (all defined in 
+% the binary mask in |S2.mask_fname|) are extracted and the average results across these points presented.
+%
 
 % Apply a mask and spatially average the results over an ROI
 S2=[];
@@ -290,7 +327,18 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 % Most of the OAT settings do not need to be changed. We do need to define
 % the mask in the source recon stage and add the time-frequency
 % decomposition parameters in the first level.
-
+%
+% As in the last section the final result will correspond to a spatial average of the first-level 
+% statistics over the mask. 
+%
+% We are going to use the wholebrain OAT (which was run above), to make use of the settings and source_recon results already in there. The new parameters are:
+%
+% * |tf_freq_range| - The lower and upper bounds on the frequency range of interest 
+% * |tf_num_freqs| - The number of frequency bands to estimate within the bounds in |tf_freq_range| 
+% * |tf_method|-  The spectral power estimation method 
+% * |tf_hilbert_freq_res| - The resolution to use in the hilbert spectral estimation 
+% * |post_tf_downsample_factor|- How much to downsample the tf results
+%
 
 % Give the first level analysis a new name to avoid copying over previous
 % first-level analyses:
@@ -390,7 +438,7 @@ oat = osl_run_oat(oat);
 %% OUTPUT SUBJECT'S NIFTII FILES
 %
 % Again, we can output the nifti files from this participant to explore the
-% results in more detail. This time we specify a freq_bin defining which
+% results in more detail. This time we specify a |freq_bin| defining which
 % frequency band we are interested in viewing.
 %
 % Once FSLVIEW has opened, follow the visualisation results above to
