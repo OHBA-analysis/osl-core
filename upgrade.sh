@@ -29,7 +29,7 @@ case "$response" in
 			fi
 
 			cd .. # This is now osldir
-			echo `head version.txt -n 1`\+UPGRADE > version.txt
+			echo `head -n 1 version.txt`\+UPGRADE > version.txt
 			retrieve_repo osl-core 
 			retrieve_repo ohba-external 
 			retrieve_repo GLEAN 
