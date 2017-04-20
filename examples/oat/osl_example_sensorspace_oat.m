@@ -32,7 +32,7 @@
 % # subject-level fixed effects averaging over multiple sessions
 % # group-level GLM subject-wise analysis
 %
-% <<oat_stage_summary.jpg>>
+% <<oat_stage_summary.png>>
 %
 % Since we are only analyzing a single session for a single subject here, we will only use the first two stages.
 
