@@ -7,20 +7,17 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>OAT 2 - Sensorspace Time-Frequency Analysis</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-20"><meta name="DC.source" content="osl_example_sensorspace_oat_tf.m"></head><body><div class="content"><h1>OAT 2 - Sensorspace Time-Frequency Analysis</h1><!--introduction--><p>In this practical we will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy) and perform an Time-Frequency analysis in sensor space.</p><div><ol><li>Prepare data for OAT analysis</li><li>Bandpass filter data and split into epochs</li><li>Compute a first level GLM analysis with OAT</li><li>Visualise results with FieldTrip</li><li>Compute a topoplot averaged within a time-frequency window</li></ol></div><p>Please read each cell in turn before copying it's contents either directly into the MatLab console or your own blank script. By the end of this session you should have created your own template analysis script which can be applied to further analysis.</p><p>You will need the following files from the example_data directory:</p><div><ul><li>Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.</li><li>eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.</li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</a></li><li><a href="#3">SET UP THE SUBJECTS FOR THE ANALYSIS</a></li><li><a href="#4">SETUP SENSOR SPACE SOURCE RECON</a></li><li><a href="#5">SETUP THE TIME-FREQUENCY DECOMPOSITION</a></li><li><a href="#6">SETUP THE FIRST LEVEL GLM</a></li><li><a href="#7">RUN OAT</a></li><li><a href="#8">READ REPORT</a></li><li><a href="#9">GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS</a></li><li><a href="#10">RESULTS</a></li><li><a href="#11">VISUALISE USING FIELDTRIP</a></li></ul></div><h2 id="1">SETUP THE MATLAB PATHS</h2><p>make sure that fieldtrip and spm are not in your matlab path</p><pre class="codeinput">setenv(<span class="string">'OSLDIR'</span>,<span class="string">'/Users/andrew/Software/Matlab/osl2.1/'</span>)
-addpath(genpath(getenv(<span class="string">'OSLDIR'</span>)));
-osl_startup(osldir);
-</pre><h2 id="2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</h2><p>This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.</p><pre class="codeinput"><span class="comment">% directory where the data is:</span>
+   <title>OAT 2 - Sensorspace Time-Frequency Analysis</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-20"><meta name="DC.source" content="osl_example_sensorspace_oat_tf.m"></head><body><div class="content"><h1>OAT 2 - Sensorspace Time-Frequency Analysis</h1><!--introduction--><p>In this practical we will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy) and perform an Time-Frequency analysis in sensor space.</p><div><ol><li>Prepare data for OAT analysis</li><li>Bandpass filter data and split into epochs</li><li>Compute a first level GLM analysis with OAT</li><li>Visualise results with FieldTrip</li><li>Compute a topoplot averaged within a time-frequency window</li></ol></div><p>Please read each cell in turn before copying it's contents either directly into the MatLab console or your own blank script. By the end of this session you should have created your own template analysis script which can be applied to further analysis.</p><p>You will need the following files from the example_data directory:</p><div><ul><li>Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.</li><li>eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.</li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</a></li><li><a href="#2">SET UP THE SUBJECTS FOR THE ANALYSIS</a></li><li><a href="#3">SETUP SENSOR SPACE SOURCE RECON</a></li><li><a href="#4">SETUP THE TIME-FREQUENCY DECOMPOSITION</a></li><li><a href="#5">SETUP THE FIRST LEVEL GLM</a></li><li><a href="#6">RUN OAT</a></li><li><a href="#7">READ REPORT</a></li><li><a href="#8">GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS</a></li><li><a href="#9">RESULTS</a></li><li><a href="#10">VISUALISE USING FIELDTRIP</a></li></ul></div><h2 id="1">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</h2><p>This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.</p><pre class="codeinput"><span class="comment">% directory where the data is:</span>
 datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_singlesubject'</span>,<span class="string">'spm_files'</span>);
 
 <span class="comment">% directory to put the analysis in</span>
 workingdir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_singlesubject'</span>);
-</pre><h2 id="3">SET UP THE SUBJECTS FOR THE ANALYSIS</h2><p>Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:</p><p><tt>fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];</tt></p><p><tt>fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];</tt></p><p>etc...</p><p><tt>spm_files{1} = [workingdir '/sub1_face_sss.mat'];</tt></p><p><tt>spm_files{2} = [workingdir '/sub2_face_sss.mat'];</tt></p><p>etc...</p><pre class="codeinput"><span class="comment">% clear old spm files</span>
+</pre><h2 id="2">SET UP THE SUBJECTS FOR THE ANALYSIS</h2><p>Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:</p><p><tt>fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];</tt></p><p><tt>fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];</tt></p><p>etc...</p><p><tt>spm_files{1} = [workingdir '/sub1_face_sss.mat'];</tt></p><p><tt>spm_files{2} = [workingdir '/sub2_face_sss.mat'];</tt></p><p>etc...</p><pre class="codeinput"><span class="comment">% clear old spm files</span>
 clear <span class="string">spm_files_continuous</span> <span class="string">spm_files_epoched</span>
 
 spm_files_continuous{1}=[datadir <span class="string">'/Aface_meg1.mat'</span>];
 spm_files_epoched{1}=[datadir <span class="string">'/eAface_meg1.mat'</span>];
-</pre><h2 id="4">SETUP SENSOR SPACE SOURCE RECON</h2><p>This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis. In this example we define our input files (<tt>D_continuous</tt> and <tt>D_epoched</tt>) and conditions before setting a time frequency window from -200ms before stimulus onset to +400ms and 4 to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis The <tt>oat.source_recon.dirname</tt> is where all the analysis will be stored. This includes all the intermediate steps, diagnostic plots and final results.</p><pre class="codeinput">oat=[];
+</pre><h2 id="3">SETUP SENSOR SPACE SOURCE RECON</h2><p>This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis. In this example we define our input files (<tt>D_continuous</tt> and <tt>D_epoched</tt>) and conditions before setting a time frequency window from -200ms before stimulus onset to +400ms and 4 to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis The <tt>oat.source_recon.dirname</tt> is where all the analysis will be stored. This includes all the intermediate steps, diagnostic plots and final results.</p><pre class="codeinput">oat=[];
 oat.source_recon.D_epoched=spm_files_epoched; <span class="comment">% this is passed in so that the bad trials and bad channels can be read out</span>
 oat.source_recon.D_continuous=spm_files_continuous;
 oat.source_recon.conditions={<span class="string">'Motorbike'</span>,<span class="string">'Neutral face'</span>,<span class="string">'Happy face'</span>,<span class="string">'Fearful face'</span>};
@@ -31,7 +28,7 @@ oat.source_recon.normalise_method=<span class="string">'none'</span>;
 
 <span class="comment">% Set this to something specific</span>
 oat.source_recon.dirname = [workingdir <span class="string">'/sensorspace_tf'</span>];
-</pre><h2 id="5">SETUP THE TIME-FREQUENCY DECOMPOSITION</h2><p>Next we set up a single subject trial-wise GLM on our prepared data. Firstly the time-frequency parameters are defined, these must be within the bounds of the time-frequency window set in the source recon stage.</p><p>Note the following settings in particular:</p><div><ul><li><tt>oat.first_level.tf_method</tt>  - This indicates we are doing a TF analysis using hilbert or morlet transform (or is set to 'none' if doing a time-domain ERF analysis)</li><li><tt>oat.first_level.tf_freq_range</tt>  - This indicates the overall freq range.</li><li><tt>oat.first_level.tf_num_freqs</tt>  - This indicates the number of freq bins to use within the overall freq range</li><li><tt>oat.first_level.tf_hilbert_freq_res</tt> - This indicates the bandwidth of the freq bins, if doing a hilbert transform</li><li><tt>oat.first_level.time_range</tt>  - This indicates the time range. NOTE that this needs to be smaller than oat.source_recon.time_range to remove edge effects</li></ul></div><p>We have also set the baseline correction to be turned off for the third contrast, <tt>[-3 1 1 1]</tt> (this is often a good idea for differential contrasts, for which we do not need to do baseline correction):</p><div><ul><li><tt>oat.first_level.bc=[1 1 0]</tt></li></ul></div><pre class="codeinput">oat.first_level.tf_method=<span class="string">'morlet'</span>; <span class="comment">% can be morlet or hilbert</span>
+</pre><h2 id="4">SETUP THE TIME-FREQUENCY DECOMPOSITION</h2><p>Next we set up a single subject trial-wise GLM on our prepared data. Firstly the time-frequency parameters are defined, these must be within the bounds of the time-frequency window set in the source recon stage.</p><p>Note the following settings in particular:</p><div><ul><li><tt>oat.first_level.tf_method</tt>  - This indicates we are doing a TF analysis using hilbert or morlet transform (or is set to 'none' if doing a time-domain ERF analysis)</li><li><tt>oat.first_level.tf_freq_range</tt>  - This indicates the overall freq range.</li><li><tt>oat.first_level.tf_num_freqs</tt>  - This indicates the number of freq bins to use within the overall freq range</li><li><tt>oat.first_level.tf_hilbert_freq_res</tt> - This indicates the bandwidth of the freq bins, if doing a hilbert transform</li><li><tt>oat.first_level.time_range</tt>  - This indicates the time range. NOTE that this needs to be smaller than oat.source_recon.time_range to remove edge effects</li></ul></div><p>We have also set the baseline correction to be turned off for the third contrast, <tt>[-3 1 1 1]</tt> (this is often a good idea for differential contrasts, for which we do not need to do baseline correction):</p><div><ul><li><tt>oat.first_level.bc=[1 1 0]</tt></li></ul></div><pre class="codeinput">oat.first_level.tf_method=<span class="string">'morlet'</span>; <span class="comment">% can be morlet or hilbert</span>
 oat.first_level.tf_freq_range=[5 40]; <span class="comment">% frequency range in Hz</span>
 oat.first_level.time_range=[-0.2 0.3]; <span class="comment">% need to make this time range smallet than oat.source_recon.time_range to remove edge effects</span>
 oat.first_level.tf_num_freqs=14; <span class="comment">% we are keeping this unusally low in the practical for the sake of speed</span>
@@ -43,7 +40,7 @@ oat.first_level.tf_num_freqs=14; <span class="comment">% we are keeping this unu
 oat.first_level.post_tf_downsample_factor=4; <span class="comment">% does downsampling after the TF decomposition</span>
 
 oat.first_level.bc=[1 1 0]; <span class="comment">% specifies whether or not baseline correction is done for the different contrasts</span>
-</pre><h2 id="6">SETUP THE FIRST LEVEL GLM</h2><p>This cell defines the GLM parameters for the first level analysis. Critically this includes the design matrix (in Xsummary) and contrast matrix Xsummary is a parsimonious description of the design matrix. It contains values <tt>Xsummary{reg,cond}</tt>, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix: Each contrast is a vector containing a weight per condition defining how the condition parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. Contrasts 1 and 2 describe positive correlations between each sensors activity and the presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each sensors activity is larger for faces than motorbikes.</p><pre class="codeinput">Xsummary={};
+</pre><h2 id="5">SETUP THE FIRST LEVEL GLM</h2><p>This cell defines the GLM parameters for the first level analysis. Critically this includes the design matrix (in Xsummary) and contrast matrix Xsummary is a parsimonious description of the design matrix. It contains values <tt>Xsummary{reg,cond}</tt>, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix: Each contrast is a vector containing a weight per condition defining how the condition parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. Contrasts 1 and 2 describe positive correlations between each sensors activity and the presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each sensors activity is larger for faces than motorbikes.</p><pre class="codeinput">Xsummary={};
 Xsummary{1}=[1 0 0 0];Xsummary{2}=[0 1 0 0];Xsummary{3}=[0 0 1 0];Xsummary{4}=[0 0 0 1];
 oat.first_level.design_matrix_summary=Xsummary;
 
@@ -59,7 +56,7 @@ oat.first_level.contrast_name{3}=<span class="string">'faces-motorbikes'</span>;
 oat.first_level.cope_type=<span class="string">'cope'</span>;
 oat.first_level.report.first_level_cons_to_do=[2 1 3];
 oat.first_level.bc=[0 0 0];
-</pre><h2 id="7">RUN OAT</h2><p>We are only running the source-recon and first level</p><pre class="codeinput">oat = osl_check_oat(oat);
+</pre><h2 id="6">RUN OAT</h2><p>We are only running the source-recon and first level</p><pre class="codeinput">oat = osl_check_oat(oat);
 
 oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
@@ -80,7 +77,7 @@ oat =
       first_level: [1x1 struct]
     subject_level: [1x1 struct]
       group_level: [1x1 struct]
-     osl2_version: 'be4c1e8'
+     osl2_version: '6b5602d'
           results: [1x1 struct]
 
 *************************************************************
@@ -93,19 +90,19 @@ Using epoched data as input
 Preparing source recon stage for /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/spm_files/Aface_meg1.mat
 Will be designated session1
 
-SPM12: spm_eeg_copy (v5079)                        14:57:35 - 20/04/2017
+SPM12: spm_eeg_copy (v5079)                        16:10:32 - 20/04/2017
 ========================================================================
 
-SPM12: spm_eeg_copy (v5079)                        14:57:37 - 20/04/2017
+SPM12: spm_eeg_copy (v5079)                        16:10:35 - 20/04/2017
 ========================================================================
 Temporal filtering...
 
-SPM12: spm_eeg_filter (v5876)                      14:57:39 - 20/04/2017
+SPM12: spm_eeg_filter (v5876)                      16:10:36 - 20/04/2017
 ========================================================================
 Epoching...
 Doing no within-trial baseline correction at the point of epoching
 
-SPM12: spm_eeg_epochs (v6183)                      14:57:48 - 20/04/2017
+SPM12: spm_eeg_epochs (v6183)                      16:10:49 - 20/04/2017
 ========================================================================
 Data type is missing or incorrect, assigning default.
 Changing the number of channels, so discarding online montages.
@@ -131,7 +128,7 @@ ans =
 /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_tf.oat/concatefsession1_spm_meeg.mat
 
 
-SPM12: spm_eeg_copy (v5079)                        14:58:20 - 20/04/2017
+SPM12: spm_eeg_copy (v5079)                        16:11:25 - 20/04/2017
 ========================================================================
 
 ans =
@@ -149,19 +146,19 @@ First level COPEs outputted will have dimension Nvoxels x Ntpts x Ncontrasts x N
 306   31    3   14
 Doing T-F transform in sensor space on [3.65384615384615 6.34615384615385] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [------------------------------------------------]
+Doing Morlet transform... [-----------------------------------------------|]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [6.34615384615385 9.03846153846154] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------\]
+Doing Morlet transform... [-----------------------------------------------/]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [9.03846153846154 11.7307692307692] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------/]
+Doing Morlet transform... [------------------------------------------------]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [11.7307692307692 14.4230769230769] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------|]
+Doing Morlet transform... [------------------------------------------------]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [14.4230769230769 17.1153846153846] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
@@ -169,23 +166,23 @@ Doing Morlet transform... [-----------------------------------------------|]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [17.1153846153846 19.8076923076923] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------|]
+Doing Morlet transform... [-----------------------------------------------/]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [19.8076923076923 22.5] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------|]
+Doing Morlet transform... [------------------------------------------------]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [22.5 25.1923076923077] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------\]
+Doing Morlet transform... [------------------------------------------------]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [25.1923076923077 27.8846153846154] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------/]
+Doing Morlet transform... [-----------------------------------------------\]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [27.8846153846154 30.5769230769231] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------|]
+Doing Morlet transform... [-----------------------------------------------\]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [30.5769230769231 33.2692307692308] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
@@ -197,11 +194,11 @@ Doing Morlet transform... [-----------------------------------------------/]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [35.9615384615385 38.6538461538462] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------\]
+Doing Morlet transform... [-----------------------------------------------/]
  - estimated time to finish is 0 seconds
 Doing T-F transform in sensor space on [38.6538461538462 41.3461538461538] Hz...
 size(sens_data_tf)=[325 38 356 1], (nsens x ntpts x ntri x nfreq)
-Doing Morlet transform... [-----------------------------------------------\]
+Doing Morlet transform... [-----------------------------------------------|]
  - estimated time to finish is 0 seconds
 reading layout from file /Users/andrew/Software/Matlab/osl2.1/layouts/neuromag306planar3.lay
 the call to "ft_prepare_layout" took 0 seconds and required the additional allocation of an estimated NaN MB
@@ -230,9 +227,9 @@ reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag3
 View first level report at:
 /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_tf.oat/plots/first_level/sess_session1_MEGPLANAR/report.html
 To view OAT report, point your browser to &lt;a href="/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_tf.oat/plots/report.html"&gt;/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_tf.oat/plots/report.html&lt;/a&gt;
-</pre><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_01.png" alt=""> <img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_02.png" alt=""> <img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_03.png" alt=""> <h2 id="8">READ REPORT</h2><p>The OAT runs the GLM for every time point and frequency band across all sensors and creates a useful summary of the results as well as range of diagnostic figures from the source recon and results from the first level.</p><p>The report generates a summary of results based on the information in oat.first_level.report.</p><div><ul><li><tt>oat.first_level.report.modality_to_do</tt> % eg MEGPLANAR, MEGMAG (only in sensor space)</li><li><tt>oat.first_level.report.first_level_cons_to_do;</tt> % plots only these contrasts and uses first one in list to determine max vox, time, freq</li><li><tt>oat.first_level.report.time_range;</tt> % to determine max vox, time, freq</li><li><tt>oat.first_level.report.freq_range;</tt> % to determine max vox, time, freq</li></ul></div><p>Open the web page report indicated in oat.results.report in a web browser (there will also be a link to this available in the Matlab output). This displays diagnostic plots.</p><div><ul><li>At the top of the file is a link to oat.results.logfile (a file containing the matlab output) - you should check this for any errors or unusual warnings.</li><li>Then there will be a list of reports for each OAT stage.</li><li>Click on the "First level (epoched)" link to bring up the first level reports.</li></ul></div><p>This brings up a list of sessions. Here we have only preprocessed one session. Click on the "Session 1 report" link to bring up the diagnostic plots for session 1 and take a look.</p><p>The settings in the current OAT will generate an image with the COPE and t-stats for all three contrasts from the sensor with the maximum statistic for contrast 2 (faces) from the planar gradiometers as seen below</p><p><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_stats_tc.png" alt=""> </p><pre class="codeinput">disp(oat.results.report.html_fname); <span class="comment">% show path to web page report</span>
+</pre><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_01.png" alt=""> <img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_02.png" alt=""> <img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_03.png" alt=""> <h2 id="7">READ REPORT</h2><p>The OAT runs the GLM for every time point and frequency band across all sensors and creates a useful summary of the results as well as range of diagnostic figures from the source recon and results from the first level.</p><p>The report generates a summary of results based on the information in oat.first_level.report.</p><div><ul><li><tt>oat.first_level.report.modality_to_do</tt> % eg MEGPLANAR, MEGMAG (only in sensor space)</li><li><tt>oat.first_level.report.first_level_cons_to_do;</tt> % plots only these contrasts and uses first one in list to determine max vox, time, freq</li><li><tt>oat.first_level.report.time_range;</tt> % to determine max vox, time, freq</li><li><tt>oat.first_level.report.freq_range;</tt> % to determine max vox, time, freq</li></ul></div><p>Open the web page report indicated in oat.results.report in a web browser (there will also be a link to this available in the Matlab output). This displays diagnostic plots.</p><div><ul><li>At the top of the file is a link to oat.results.logfile (a file containing the matlab output) - you should check this for any errors or unusual warnings.</li><li>Then there will be a list of reports for each OAT stage.</li><li>Click on the "First level (epoched)" link to bring up the first level reports.</li></ul></div><p>This brings up a list of sessions. Here we have only preprocessed one session. Click on the "Session 1 report" link to bring up the diagnostic plots for session 1 and take a look.</p><p>The settings in the current OAT will generate an image with the COPE and t-stats for all three contrasts from the sensor with the maximum statistic for contrast 2 (faces) from the planar gradiometers as seen below</p><p><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_stats_tc.png" alt=""> </p><pre class="codeinput">disp(oat.results.report.html_fname); <span class="comment">% show path to web page report</span>
 </pre><pre class="codeoutput">/Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_tf.oat/plots/report.html
-</pre><h2 id="9">GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS</h2><p>Regenerate the report after changing the settings to view the results from the magnetometers based on the maximal sensor for the faces-motorbikes contrast.</p><pre class="codeinput"><span class="comment">% Report settings</span>
+</pre><h2 id="8">GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS</h2><p>Regenerate the report after changing the settings to view the results from the magnetometers based on the maximal sensor for the faces-motorbikes contrast.</p><pre class="codeinput"><span class="comment">% Report settings</span>
 oat.first_level.report.modality_to_do=<span class="string">'MEGMAG'</span>;
 oat.first_level.report.first_level_cons_to_do = [2 1 3];
 oat.first_level.report.time_range = [-.2 .3];
@@ -257,7 +254,7 @@ reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag3
 reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag306mag.lay
 View first level report at:
 /Users/andrew/Software/Matlab/osl2.1/example_data/faces_singlesubject/sensorspace_tf.oat/plots/first_level/sess_session1_MEGMAG/report.html
-</pre><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_04.png" alt=""> <img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_05.png" alt=""> <img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_06.png" alt=""> <h2 id="10">RESULTS</h2><p>The results are stored in the oat structure and the can be loaded back into matlab using <tt>oat_load_results</tt>. This is useful for checking over results of the GLM or as the basis for further analyses.</p><pre class="codeinput">disp(<span class="string">'oat.results:'</span>);
+</pre><img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_04.png" alt=""> <img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_05.png" alt=""> <img vspace="5" hspace="5" src="osl_example_sensorspace_oat_tf_06.png" alt=""> <h2 id="9">RESULTS</h2><p>The results are stored in the oat structure and the can be loaded back into matlab using <tt>oat_load_results</tt>. This is useful for checking over results of the GLM or as the basis for further analyses.</p><pre class="codeinput">disp(<span class="string">'oat.results:'</span>);
 disp(oat.results);
 
 <span class="comment">% load first-level GLM result</span>
@@ -268,7 +265,7 @@ stats1=oat_load_results(oat,oat.first_level.results_fnames{1});
      logfile: '/Users/andrew/Software/Matlab/osl2.1/example_data/faces_sin...'
       report: [1x1 struct]
 
-</pre><h2 id="11">VISUALISE USING FIELDTRIP</h2><p>note that this produces an interactive figure, with which you can: * draw around a set of sensors * click in the drawn box to produce a plot of the time series * on the time series plot you can draw a time window * and click in the window to create a topoplot averaged over that time window (which is itself interactive....!)</p><pre class="codeinput">S2=[];
+</pre><h2 id="10">VISUALISE USING FIELDTRIP</h2><p>note that this produces an interactive figure, with which you can: * draw around a set of sensors * click in the drawn box to produce a plot of the time series * on the time series plot you can draw a time window * and click in the window to create a topoplot averaged over that time window (which is itself interactive....!)</p><pre class="codeinput">S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
 S2.modality=<span class="string">'MEGPLANAR'</span>;
@@ -306,12 +303,6 @@ reading layout from file /Users/andrew/Software/Matlab/osl2.1//layouts/neuromag3
 % * Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.
 % * eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.
 
-%% SETUP THE MATLAB PATHS
-% make sure that fieldtrip and spm are not in your matlab path
-
-setenv('OSLDIR','/Users/andrew/Software/Matlab/osl2.1/')
-addpath(genpath(getenv('OSLDIR')));
-osl_startup(osldir);
 
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 % This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.
