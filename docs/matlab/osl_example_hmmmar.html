@@ -7,7 +7,7 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>osl_example_hmmmar</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-20"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">HMM-Gaussian on hilbert envelopes</a></li><li><a href="#7">HMM-MAR on raw time series</a></li><li><a href="#14">Interrogating the results</a></li></ul></div><p>This example shows how to use the HMM-MAR to infer transient states that:</p><p>(i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency, (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes, (iii) are not only sensitive to power differences but also to phase coupling.</p><p>In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, using two source-reconstructed regions in the motor cortex (left and right). The task is a finger-tapping motor task, where subjects press a button volitionally. We will see whether, with no prior information of the task during training, the estimated HMM contains states that are temporally related to the task timing, and we will inspect if these states contain meaningful features. We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).</p><p>The script follows the paper Vidaurre et al. (2016)</p><pre class="codeinput"><span class="comment">% Directory of the data:</span>
+   <title>osl_example_hmmmar</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-20"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">HMM-Gaussian on hilbert envelopes</a></li><li><a href="#7">HMM-MAR on raw time series</a></li><li><a href="#14">Interrogating the results</a></li></ul></div><p>This example shows how to use the HMM-MAR to infer transient states that:</p><p>(i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency, (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes, (iii) are not only sensitive to power differences but also to phase coupling.</p><p>In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, using two source-reconstructed regions in the motor cortex (left and right), band-pass filtered between 1 and 45 Hz. The task is a finger-tapping motor task, where subjects press a button volitionally. We will see whether, with no prior information of the task during training, the estimated HMM contains states that are temporally related to the task timing, and we will inspect if these states contain meaningful features. We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).</p><p>The script follows the paper Vidaurre et al. (2016)</p><pre class="codeinput"><span class="comment">% Directory of the data:</span>
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>);
 <span class="comment">% Name for this HMM-MAR analysis:</span>
 hmmmar_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>,<span class="string">'hmmmar_demo.mat'</span>);
@@ -72,7 +72,14 @@ options.win = 10 * options.Fs; <span class="comment">% window length, related to
 <span class="keyword">else</span> <span class="comment">% load a precomputed results</span>
     load(hmmmar_name,<span class="string">'spectra_env'</span>)
 <span class="keyword">end</span>
-</pre><h2 id="7">HMM-MAR on raw time series</h2><p>We have estimated a HMM-Gaussian on the power time series, now we look at the raw data (which contains phase) following (Vidaurre et al. 2016).</p><p>One thing we must take care of when working on raw data in source-space is sign ambiguity. As a consequence of the nature of the source-reconstruction process, the sign of the time series are arbitrary. That means that, because different subjects might have different signs in different channels, the phase relations between regions can cancel across subjects, resulting in artefactual zero phase coupling. The HMM-MAR toolbox includes a set of functions to correct for sign ambiguity. The goal is to find a sign permutation for each subject that maximises sign cohesion of the lagged cross-channel correlations across subjects or trials. Note that, in part because data have been leakage corrected, it is not enough to look at just correlation across channels, and we need to look at lagged correlation (i.e. within a certain time window)</p><pre class="codeinput"><span class="comment">% options for sign flipping</span>
+
+<span class="comment">% We keep spectra_env for now, and will inspect it in comparison to the</span>
+<span class="comment">% HMM-MAR spectral estimation later on in the script.</span>
+</pre><h2 id="7">HMM-MAR on raw time series</h2><p>We have estimated a HMM-Gaussian on the power time series, now we look at the raw data (which contains phase) following (Vidaurre et al. 2016).</p><p>One thing we must take care of when working on raw data in source-space is sign ambiguity. As a consequence of the nature of the source-reconstruction process, the sign of the time series are arbitrary. That means that, because different subjects might have different signs in different channels, the phase relations between regions can cancel across subjects, resulting in artefactual zero phase coupling. The HMM-MAR toolbox includes a set of functions to correct for sign ambiguity. The goal is to find a sign permutation for each subject that maximises sign cohesion of the lagged cross-channel correlations across subjects or trials. Note that, in part because data have been leakage corrected, it is not enough to look at just correlation across channels, and we need to look at lagged correlation (i.e. within a certain time window)</p><pre class="codeinput"><span class="comment">% Let's look first at the (static) correlation with unflipped channels</span>
+disp(<span class="string">'Before sign correction'</span>)
+corr(X(:,1),X(:,2))
+
+<span class="comment">% options for sign flipping</span>
 options = struct();
 options.maxlag = 8; <span class="comment">% defining the window length for which the lagged correlation is computed</span>
 options.noruns = 100; <span class="comment">% number of reruns, considering that the process can get stuck in local minima</span>
@@ -82,6 +89,22 @@ options.verbose = 0; <span class="comment">% whether we want to show progress</s
 [flips,scorepath] = findflip(X,T,options);
 <span class="comment">% and permute the data according to this permutation</span>
 X = flipdata(X,T,flips);
+
+<span class="comment">% We can see that the (static) correlation has multiplied by 4 after sign correction</span>
+disp(<span class="string">'After sign correction'</span>)
+corr(X(:,1),X(:,2))
+</pre><pre class="">Before sign correction
+
+ans =
+
+    0.0072
+
+After sign correction
+
+ans =
+
+    0.0291
+
 </pre><p>Now we are set to run the HMM-MAR on the sign-corrected data. We first prepare the options</p><pre class="codeinput">options = struct();
 <span class="comment">% number of states: in general, the higher this number, the more "detailed" will be the segmentation.</span>
 <span class="comment">% (By running the model with different number of states, we could get some sense of "state hierarchy").</span>
@@ -142,7 +165,7 @@ options.win = 10 * options.Fs; <span class="comment">% window length, related to
 <span class="keyword">else</span>
     load(hmmmar_name)
 <span class="keyword">end</span>
-</pre><p>First we look at the state evoked probability, locked to the stimulus; the stimulus is saved in the variable onset, which contains a (Tx1) logical vector, with values set to 1 when the fingertapping action is effected.</p><pre class="codeinput">L = 8; <span class="comment">% length of the window around the stimulus (seconds)</span>
+</pre><p>First we look at the state evoked probability, locked to the stimulus. This corresponds to the probability of the states activation averaged across button-press events. We will refer to it as the "state evoked response".</p><p>The stimulus is saved in the variable onset, which contains a (Tx1) logical vector, with values set to 1 when the fingertapping action is effected.</p><pre class="codeinput">L = 8; <span class="comment">% length of the window around the stimulus (seconds)</span>
 window = Hz*L+1; <span class="comment">% length of the window (in time points)</span>
 
 <span class="comment">% "evoked state response" around the stimulus, for the HMM-Gaussian run</span>
@@ -175,7 +198,7 @@ plot((-halfwindow:halfwindow)/Hz,evokedGamma_env,<span class="string">'LineWidth
 hold <span class="string">on</span>; plot([0 0],[0.05 0.7],<span class="string">'k'</span>,<span class="string">'LineWidth'</span>,2); hold <span class="string">off</span>
 xlabel(<span class="string">'Time (s)'</span>,<span class="string">'FontSize'</span>,15)
 ylabel(<span class="string">'State probability'</span>,<span class="string">'FontSize'</span>,15)
-title(<span class="string">'HMM on envelope'</span>,<span class="string">'FontSize'</span>,17)
+title(<span class="string">'HMM-Gaussian on power'</span>,<span class="string">'FontSize'</span>,17)
 ylim([0.05 0.7])
 <span class="comment">% Evoked state response for the HMM-MAR</span>
 subplot(1,2,2)
@@ -185,7 +208,26 @@ xlabel(<span class="string">'Time (s)'</span>,<span class="string">'FontSize'</s
 ylabel(<span class="string">'State probability'</span>,<span class="string">'FontSize'</span>,15)
 title(<span class="string">'HMM-MAR on raw signals'</span>,<span class="string">'FontSize'</span>,17)
 ylim([0.05 0.7])
-</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_01.png" alt=""> <p>We now look inside the states to visualise their distinct spectral characteristics (power and coherence), for both the HMM-Gaussian and the HMM-MAR. These were estimated following methods: a state-wise multitaper (Vidaurre et al. 2016) for the HMM-Gaussian (by necessity), and the time-to-frequency mapping of the MAR parameters for the HMM-MAR. For comparison, we will also show the state-wise multitaper for the HMM-MAR.</p><p>We can see that the blue state (associated to the post-movement beta-rebound) is represented in for the HMM-Gaussian as a generalised increase in power and coherence. For the HMM-MAR, however, differences are more subtle; for example, we have less power in the very low frequencies for this state than for the other two states.</p><pre class="codeinput">colors = {<span class="string">'b'</span>,[0.2 0.7 0.2],<span class="string">'r'</span>};
+</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_01.png" alt=""> <p>We can also look at a section of the state time course around one of the events (i.e. before averaging). That gives us an idea of how quick are the states.</p><pre class="codeinput">figure(11);
+subplot(1,2,1)
+t = find(onset,1);
+trange = t-Hz*L/8:t+Hz*L/8;
+plot(trange/Hz,Gamma_env(trange,:),<span class="string">'LineWidth'</span>,2)
+xlabel(<span class="string">'Time (s)'</span>,<span class="string">'FontSize'</span>,15)
+ylabel(<span class="string">'State probability'</span>,<span class="string">'FontSize'</span>,15)
+title(<span class="string">'HMM-Gaussian on power'</span>,<span class="string">'FontSize'</span>,17)
+xlim([trange(1)/Hz trange(end)/Hz])
+ylim([-0.1 1.1])
+subplot(1,2,2)
+t = find(onset,1);
+trange = t-Hz*L/8:t+Hz*L/8;
+plot(trange/Hz,Gamma_raw(trange,:),<span class="string">'LineWidth'</span>,2)
+xlabel(<span class="string">'Time (s)'</span>,<span class="string">'FontSize'</span>,15)
+ylabel(<span class="string">'State probability'</span>,<span class="string">'FontSize'</span>,15)
+title(<span class="string">'HMM-MAR on raw signals'</span>,<span class="string">'FontSize'</span>,17)
+xlim([trange(1)/Hz trange(end)/Hz])
+ylim([-0.1 1.1])
+</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_02.png" alt=""> <p>We now look inside the states to visualise their distinct spectral characteristics (power and coherence), for both the HMM-Gaussian and the HMM-MAR. These were estimated following methods: a state-wise multitaper (Vidaurre et al. 2016) for the HMM-Gaussian (by necessity), and the time-to-frequency mapping of the MAR parameters for the HMM-MAR. For comparison, we will also show the state-wise multitaper for the HMM-MAR.</p><p>We can see that the blue state (associated to the post-movement beta-rebound) is represented in for the HMM-Gaussian as a generalised increase in power and coherence. For the HMM-MAR, however, differences are more subtle; for example, we have less power in the very low frequencies for this state than for the other two states.</p><pre class="codeinput">colors = {<span class="string">'b'</span>,[0.2 0.7 0.2],<span class="string">'r'</span>};
 <span class="comment">% State-wise multitaper (mt) spectra for the HMM on power envelopes</span>
 figure(2);clf(2)
 <span class="keyword">for</span> k=1:hmm_env.K
@@ -206,9 +248,9 @@ figure(2);clf(2)
     hold <span class="string">off</span>
 <span class="keyword">end</span>
 subplot(2,2,1)
-title(<span class="string">'Power Chan1, HMM-Gaussian'</span>,<span class="string">'FontSize'</span>,16)
+title(<span class="string">'Power left M1, HMM-Gaussian'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,4)
-title(<span class="string">'Power Chan2, HMM-Gaussian'</span>,<span class="string">'FontSize'</span>,16)
+title(<span class="string">'Power right M1, HMM-Gaussian'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,3)
 title(<span class="string">'Coherence, HMM-Gaussian'</span>,<span class="string">'FontSize'</span>,16)
 
@@ -233,9 +275,9 @@ figure(3);clf(3)
 <span class="keyword">end</span>
 set(gca,<span class="string">'FontSize'</span>,14)
 subplot(2,2,1)
-title(<span class="string">'Power Chan1, HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
+title(<span class="string">'Power left M1, HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,4)
-title(<span class="string">'Power Chan2, HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
+title(<span class="string">'Power right M1, HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,3)
 title(<span class="string">'Coherence, HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
 
@@ -260,12 +302,12 @@ figure(4);clf(4)
 <span class="keyword">end</span>
 set(gca,<span class="string">'FontSize'</span>,14)
 subplot(2,2,1)
-title(<span class="string">'Power Chan1, HMM-MAR (mt)'</span>,<span class="string">'FontSize'</span>,16)
+title(<span class="string">'Power left M1, HMM-MAR (mt)'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,4)
-title(<span class="string">'Power Chan2, HMM-MAR (mt)'</span>,<span class="string">'FontSize'</span>,16)
+title(<span class="string">'Power right M1, HMM-MAR (mt)'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,3)
 title(<span class="string">'Coherence, HMM-MAR (mt)'</span>,<span class="string">'FontSize'</span>,16)
-</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_02.png" alt=""> <img vspace="5" hspace="5" src="osl_example_hmmmar_03.png" alt=""> <img vspace="5" hspace="5" src="osl_example_hmmmar_04.png" alt=""> <p>Once we have looked at the state spectral information, we can perform an HMM-regularised time-frequency (TF) decomposition of the data. Standard TF decompositions are based on windows and thus suffer from the well-known sliding-window issues. Alternatively, we can combine the HMM state time courses and the state information to obtain a HMM estimation of the TF decomposition. This estimation will be much less noisier than the standard one. (Given the higher sensitivity of the HMM-MAR spectra, apparent in the previous block, we focus here just on the HMM-MAR results.)</p><pre class="codeinput"><span class="comment">% We obtain the TF decomposition for the HMM-MAR run</span>
+</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_03.png" alt=""> <img vspace="5" hspace="5" src="osl_example_hmmmar_04.png" alt=""> <img vspace="5" hspace="5" src="osl_example_hmmmar_05.png" alt=""> <p>Once we have looked at the state spectral information, we can perform an HMM-regularised time-frequency (TF) decomposition of the data. Standard TF decompositions are based on windows and thus suffer from the well-known sliding-window issues. Alternatively, we can combine the HMM state time courses and the state information to obtain a HMM estimation of the TF decomposition. This estimation will be much less noisier than the standard one. (Given the higher sensitivity of the HMM-MAR spectra, apparent in the previous block, we focus here just on the HMM-MAR results.)</p><pre class="codeinput"><span class="comment">% We obtain the TF decomposition for the HMM-MAR run</span>
 [psd_tf,coh_tf] = hmmtimefreq(spectra_raw,evokedGamma_raw,1);
 f = spectra_raw.state(1).f; <span class="comment">% frequency bins</span>
 indf = f&gt;4 &amp; f&lt;=30; <span class="comment">% we will focus on what's in between 4 and 30Hz</span>
@@ -277,19 +319,19 @@ l = max(max(max(abs(psd_tf(indf,:,1)))),max(max(abs(psd_tf(indf,:,1)))));
 imagesc((-halfwindow:halfwindow)/Hz,f,psd_tf(:,indf,1)',[-l l]);colorbar
 hold <span class="string">on</span>; plot([0 0],[4 30],<span class="string">'k'</span>); hold <span class="string">off</span>
 xlabel(<span class="string">'Time (s)'</span>,<span class="string">'FontSize'</span>,14); ylabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,14);
-title(<span class="string">'Power channel 1 : HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
+title(<span class="string">'Power left M1 : HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
 subplot(3,1,2)
 imagesc((-halfwindow:halfwindow)/Hz,f,psd_tf(:,indf,2)',[-l l]);colorbar
 hold <span class="string">on</span>; plot([0 0],[4 30],<span class="string">'k'</span>); hold <span class="string">off</span>
 xlabel(<span class="string">'Time (s)'</span>,<span class="string">'FontSize'</span>,14); ylabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,14);
-title(<span class="string">'Power channel 2 : HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
+title(<span class="string">'Power right M2 : HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
 subplot(3,1,3)
 l = max(max(abs(coh_tf(indf,:,1,2))));
 imagesc((-halfwindow:halfwindow)/Hz,f,coh_tf(:,indf,1,2)',[-l l]);colorbar
 hold <span class="string">on</span>; plot([0 0],[4 30],<span class="string">'k'</span>); hold <span class="string">off</span>
 xlabel(<span class="string">'Time (s)'</span>,<span class="string">'FontSize'</span>,14); ylabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,14);
 title(<span class="string">'Coherence : HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
-</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_05.png" alt=""> <p>Finally, we can look at the probability of transiting between states for the HMM-Gaussian and HMM-MAR</p><pre class="codeinput">P_env = hmm_env.P;
+</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_06.png" alt=""> <p>Finally, we can look at the probability of transiting between states for the HMM-Gaussian and HMM-MAR. That is, if we are e.g. in the blue state, what is the estimated probability of moving to the red state?</p><pre class="codeinput">P_env = hmm_env.P;
 <span class="comment">% We normalize, such that we focus on the between state transitions</span>
 <span class="keyword">for</span> k=1:3
     P_env(k,k) = 0;
@@ -333,7 +375,8 @@ P_raw =
 % (iii) are not only sensitive to power differences but also to phase coupling.
 %
 % In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, 
-% using two source-reconstructed regions in the motor cortex (left and right).
+% using two source-reconstructed regions in the motor cortex (left and right), 
+% band-pass filtered between 1 and 45 Hz.
 % The task is a finger-tapping motor task, where subjects press a button volitionally.
 % We will see whether, with no prior information of the task during training, 
 % the estimated HMM contains states that are temporally related to the task timing,
@@ -443,6 +486,9 @@ else % load a precomputed results
     load(hmmmar_name,'spectra_env')
 end
 
+% We keep spectra_env for now, and will inspect it in comparison to the
+% HMM-MAR spectral estimation later on in the script. 
+
 %% HMM-MAR on raw time series
 
 %%
@@ -460,6 +506,10 @@ end
 % Note that, in part because data have been leakage corrected, it is not enough to look at just correlation across channels,
 % and we need to look at lagged correlation (i.e. within a certain time window)
 
+% Let's look first at the (static) correlation with unflipped channels
+disp('Before sign correction')
+corr(X(:,1),X(:,2))
+
 % options for sign flipping
 options = struct();
 options.maxlag = 8; % defining the window length for which the lagged correlation is computed
@@ -470,6 +520,10 @@ options.verbose = 0; % whether we want to show progress
 [flips,scorepath] = findflip(X,T,options);
 % and permute the data according to this permutation
 X = flipdata(X,T,flips);
+
+% We can see that the (static) correlation has multiplied by 4 after sign correction 
+disp('After sign correction')
+corr(X(:,1),X(:,2))
 
 %% 
 % Now we are set to run the HMM-MAR on the sign-corrected data. We first prepare the options
@@ -557,8 +611,12 @@ else
 end
 
 %% 
-% First we look at the state evoked probability, locked to the stimulus;
-% the stimulus is saved in the variable onset, which contains a (Tx1)
+% First we look at the state evoked probability, locked to the stimulus.
+% This corresponds to the probability of the states activation averaged
+% across button-press events.
+% We will refer to it as the "state evoked response".
+%
+% The stimulus is saved in the variable onset, which contains a (Tx1)
 % logical vector, with values set to 1 when the fingertapping action is effected. 
 
 L = 8; % length of the window around the stimulus (seconds)
@@ -603,7 +661,7 @@ plot((-halfwindow:halfwindow)/Hz,evokedGamma_env,'LineWidth',2)
 hold on; plot([0 0],[0.05 0.7],'k','LineWidth',2); hold off
 xlabel('Time (s)','FontSize',15)
 ylabel('State probability','FontSize',15)
-title('HMM on envelope','FontSize',17)
+title('HMM-Gaussian on power','FontSize',17)
 ylim([0.05 0.7])
 % Evoked state response for the HMM-MAR
 subplot(1,2,2)
@@ -613,6 +671,31 @@ xlabel('Time (s)','FontSize',15)
 ylabel('State probability','FontSize',15)
 title('HMM-MAR on raw signals','FontSize',17)
 ylim([0.05 0.7])
+
+%% 
+% We can also look at a section of the state time course 
+% around one of the events (i.e. before averaging).
+% That gives us an idea of how quick are the states.
+
+figure(11);
+subplot(1,2,1)
+t = find(onset,1);
+trange = t-Hz*L/8:t+Hz*L/8;
+plot(trange/Hz,Gamma_env(trange,:),'LineWidth',2)
+xlabel('Time (s)','FontSize',15)
+ylabel('State probability','FontSize',15)
+title('HMM-Gaussian on power','FontSize',17)
+xlim([trange(1)/Hz trange(end)/Hz])
+ylim([-0.1 1.1])
+subplot(1,2,2)
+t = find(onset,1);
+trange = t-Hz*L/8:t+Hz*L/8;
+plot(trange/Hz,Gamma_raw(trange,:),'LineWidth',2)
+xlabel('Time (s)','FontSize',15)
+ylabel('State probability','FontSize',15)
+title('HMM-MAR on raw signals','FontSize',17)
+xlim([trange(1)/Hz trange(end)/Hz])
+ylim([-0.1 1.1])
 
 %% 
 % We now look inside the states to visualise their distinct spectral characteristics
@@ -648,9 +731,9 @@ for k=1:hmm_env.K
     hold off
 end
 subplot(2,2,1)
-title('Power Chan1, HMM-Gaussian','FontSize',16)
+title('Power left M1, HMM-Gaussian','FontSize',16)
 subplot(2,2,4)
-title('Power Chan2, HMM-Gaussian','FontSize',16)
+title('Power right M1, HMM-Gaussian','FontSize',16)
 subplot(2,2,3)
 title('Coherence, HMM-Gaussian','FontSize',16)
 
@@ -675,9 +758,9 @@ for k=1:hmm_env.K
 end
 set(gca,'FontSize',14)
 subplot(2,2,1)
-title('Power Chan1, HMM-MAR','FontSize',16)
+title('Power left M1, HMM-MAR','FontSize',16)
 subplot(2,2,4)
-title('Power Chan2, HMM-MAR','FontSize',16)
+title('Power right M1, HMM-MAR','FontSize',16)
 subplot(2,2,3)
 title('Coherence, HMM-MAR','FontSize',16)
 
@@ -702,9 +785,9 @@ for k=1:hmm_env.K
 end
 set(gca,'FontSize',14)
 subplot(2,2,1)
-title('Power Chan1, HMM-MAR (mt)','FontSize',16)
+title('Power left M1, HMM-MAR (mt)','FontSize',16)
 subplot(2,2,4)
-title('Power Chan2, HMM-MAR (mt)','FontSize',16)
+title('Power right M1, HMM-MAR (mt)','FontSize',16)
 subplot(2,2,3)
 title('Coherence, HMM-MAR (mt)','FontSize',16)
 
@@ -731,12 +814,12 @@ l = max(max(max(abs(psd_tf(indf,:,1)))),max(max(abs(psd_tf(indf,:,1)))));
 imagesc((-halfwindow:halfwindow)/Hz,f,psd_tf(:,indf,1)',[-l l]);colorbar
 hold on; plot([0 0],[4 30],'k'); hold off
 xlabel('Time (s)','FontSize',14); ylabel('Frequency (Hz)','FontSize',14);
-title('Power channel 1 : HMM-MAR','FontSize',16)
+title('Power left M1 : HMM-MAR','FontSize',16)
 subplot(3,1,2)
 imagesc((-halfwindow:halfwindow)/Hz,f,psd_tf(:,indf,2)',[-l l]);colorbar
 hold on; plot([0 0],[4 30],'k'); hold off
 xlabel('Time (s)','FontSize',14); ylabel('Frequency (Hz)','FontSize',14);
-title('Power channel 2 : HMM-MAR','FontSize',16)
+title('Power right M2 : HMM-MAR','FontSize',16)
 subplot(3,1,3)
 l = max(max(abs(coh_tf(indf,:,1,2))));
 imagesc((-halfwindow:halfwindow)/Hz,f,coh_tf(:,indf,1,2)',[-l l]);colorbar
@@ -747,7 +830,8 @@ title('Coherence : HMM-MAR','FontSize',16)
 
 %% 
 % Finally, we can look at the probability of transiting between states for the 
-% HMM-Gaussian and HMM-MAR
+% HMM-Gaussian and HMM-MAR. That is, if we are e.g. in the blue state, what is the
+% estimated probability of moving to the red state?
 
 P_env = hmm_env.P; 
 % We normalize, such that we focus on the between state transitions
@@ -772,5 +856,6 @@ P_raw
 % In light of the *very* different transition probabilities of the two different models, 
 % it is reasonable to expect that the states for the HMM-MAR and the HMM-Gaussian on power
 % are effectively capturing different (yet complementary) aspects of the data.
+
 ##### SOURCE END #####
 --></body></html>

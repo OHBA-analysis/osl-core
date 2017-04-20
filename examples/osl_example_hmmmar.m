@@ -6,7 +6,8 @@
 % (iii) are not only sensitive to power differences but also to phase coupling.
 %
 % In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, 
-% using two source-reconstructed regions in the motor cortex (left and right).
+% using two source-reconstructed regions in the motor cortex (left and right), 
+% band-pass filtered between 1 and 45 Hz.
 % The task is a finger-tapping motor task, where subjects press a button volitionally.
 % We will see whether, with no prior information of the task during training, 
 % the estimated HMM contains states that are temporally related to the task timing,
@@ -116,6 +117,9 @@ else % load a precomputed results
     load(hmmmar_name,'spectra_env')
 end
 
+% We keep spectra_env for now, and will inspect it in comparison to the
+% HMM-MAR spectral estimation later on in the script. 
+
 %% HMM-MAR on raw time series
 
 %%
@@ -133,6 +137,10 @@ end
 % Note that, in part because data have been leakage corrected, it is not enough to look at just correlation across channels,
 % and we need to look at lagged correlation (i.e. within a certain time window)
 
+% Let's look first at the (static) correlation with unflipped channels
+disp('Before sign correction')
+corr(X(:,1),X(:,2))
+
 % options for sign flipping
 options = struct();
 options.maxlag = 8; % defining the window length for which the lagged correlation is computed
@@ -143,6 +151,10 @@ options.verbose = 0; % whether we want to show progress
 [flips,scorepath] = findflip(X,T,options);
 % and permute the data according to this permutation
 X = flipdata(X,T,flips);
+
+% We can see that the (static) correlation has multiplied by 4 after sign correction 
+disp('After sign correction')
+corr(X(:,1),X(:,2))
 
 %% 
 % Now we are set to run the HMM-MAR on the sign-corrected data. We first prepare the options
@@ -230,8 +242,12 @@ else
 end
 
 %% 
-% First we look at the state evoked probability, locked to the stimulus;
-% the stimulus is saved in the variable onset, which contains a (Tx1)
+% First we look at the state evoked probability, locked to the stimulus.
+% This corresponds to the probability of the states activation averaged
+% across button-press events.
+% We will refer to it as the "state evoked response".
+%
+% The stimulus is saved in the variable onset, which contains a (Tx1)
 % logical vector, with values set to 1 when the fingertapping action is effected. 
 
 L = 8; % length of the window around the stimulus (seconds)
@@ -276,7 +292,7 @@ plot((-halfwindow:halfwindow)/Hz,evokedGamma_env,'LineWidth',2)
 hold on; plot([0 0],[0.05 0.7],'k','LineWidth',2); hold off
 xlabel('Time (s)','FontSize',15)
 ylabel('State probability','FontSize',15)
-title('HMM on envelope','FontSize',17)
+title('HMM-Gaussian on power','FontSize',17)
 ylim([0.05 0.7])
 % Evoked state response for the HMM-MAR
 subplot(1,2,2)
@@ -286,6 +302,31 @@ xlabel('Time (s)','FontSize',15)
 ylabel('State probability','FontSize',15)
 title('HMM-MAR on raw signals','FontSize',17)
 ylim([0.05 0.7])
+
+%% 
+% We can also look at a section of the state time course 
+% around one of the events (i.e. before averaging).
+% That gives us an idea of how quick are the states.
+
+figure(11);
+subplot(1,2,1)
+t = find(onset,1);
+trange = t-Hz*L/8:t+Hz*L/8;
+plot(trange/Hz,Gamma_env(trange,:),'LineWidth',2)
+xlabel('Time (s)','FontSize',15)
+ylabel('State probability','FontSize',15)
+title('HMM-Gaussian on power','FontSize',17)
+xlim([trange(1)/Hz trange(end)/Hz])
+ylim([-0.1 1.1])
+subplot(1,2,2)
+t = find(onset,1);
+trange = t-Hz*L/8:t+Hz*L/8;
+plot(trange/Hz,Gamma_raw(trange,:),'LineWidth',2)
+xlabel('Time (s)','FontSize',15)
+ylabel('State probability','FontSize',15)
+title('HMM-MAR on raw signals','FontSize',17)
+xlim([trange(1)/Hz trange(end)/Hz])
+ylim([-0.1 1.1])
 
 %% 
 % We now look inside the states to visualise their distinct spectral characteristics
@@ -321,9 +362,9 @@ for k=1:hmm_env.K
     hold off
 end
 subplot(2,2,1)
-title('Power Chan1, HMM-Gaussian','FontSize',16)
+title('Power left M1, HMM-Gaussian','FontSize',16)
 subplot(2,2,4)
-title('Power Chan2, HMM-Gaussian','FontSize',16)
+title('Power right M1, HMM-Gaussian','FontSize',16)
 subplot(2,2,3)
 title('Coherence, HMM-Gaussian','FontSize',16)
 
@@ -348,9 +389,9 @@ for k=1:hmm_env.K
 end
 set(gca,'FontSize',14)
 subplot(2,2,1)
-title('Power Chan1, HMM-MAR','FontSize',16)
+title('Power left M1, HMM-MAR','FontSize',16)
 subplot(2,2,4)
-title('Power Chan2, HMM-MAR','FontSize',16)
+title('Power right M1, HMM-MAR','FontSize',16)
 subplot(2,2,3)
 title('Coherence, HMM-MAR','FontSize',16)
 
@@ -375,9 +416,9 @@ for k=1:hmm_env.K
 end
 set(gca,'FontSize',14)
 subplot(2,2,1)
-title('Power Chan1, HMM-MAR (mt)','FontSize',16)
+title('Power left M1, HMM-MAR (mt)','FontSize',16)
 subplot(2,2,4)
-title('Power Chan2, HMM-MAR (mt)','FontSize',16)
+title('Power right M1, HMM-MAR (mt)','FontSize',16)
 subplot(2,2,3)
 title('Coherence, HMM-MAR (mt)','FontSize',16)
 
@@ -404,12 +445,12 @@ l = max(max(max(abs(psd_tf(indf,:,1)))),max(max(abs(psd_tf(indf,:,1)))));
 imagesc((-halfwindow:halfwindow)/Hz,f,psd_tf(:,indf,1)',[-l l]);colorbar
 hold on; plot([0 0],[4 30],'k'); hold off
 xlabel('Time (s)','FontSize',14); ylabel('Frequency (Hz)','FontSize',14);
-title('Power channel 1 : HMM-MAR','FontSize',16)
+title('Power left M1 : HMM-MAR','FontSize',16)
 subplot(3,1,2)
 imagesc((-halfwindow:halfwindow)/Hz,f,psd_tf(:,indf,2)',[-l l]);colorbar
 hold on; plot([0 0],[4 30],'k'); hold off
 xlabel('Time (s)','FontSize',14); ylabel('Frequency (Hz)','FontSize',14);
-title('Power channel 2 : HMM-MAR','FontSize',16)
+title('Power right M2 : HMM-MAR','FontSize',16)
 subplot(3,1,3)
 l = max(max(abs(coh_tf(indf,:,1,2))));
 imagesc((-halfwindow:halfwindow)/Hz,f,coh_tf(:,indf,1,2)',[-l l]);colorbar
@@ -420,7 +461,8 @@ title('Coherence : HMM-MAR','FontSize',16)
 
 %% 
 % Finally, we can look at the probability of transiting between states for the 
-% HMM-Gaussian and HMM-MAR
+% HMM-Gaussian and HMM-MAR. That is, if we are e.g. in the blue state, what is the
+% estimated probability of moving to the red state?
 
 P_env = hmm_env.P; 
 % We normalize, such that we focus on the between state transitions
