@@ -1,4 +1,5 @@
-%%
+%% Estimate a whole-brain HMM model with GLEAN
+
 % This example shows how to use the HMM to infer transient states 
 % in whole-brain resting state MEG data, such that the states reflect 
 % distinct, recurrent patterns of power
@@ -22,6 +23,8 @@
 %
 % 5.- Leakage correction: because of the artefactual high correlation between proximal regions,
 %   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets). 
+
+%% 
 
 % Directory of the data
 data_dir = fullfile(osldir,'example_data','glean_example');
@@ -81,7 +84,7 @@ settings.model.hmm.nstates = 8; % no. of states
 settings.model.hmm.nreps   = 1; % no. of repetitions (we will keep the best according to the free energy)
 
 %%
-% With everythig set, we can then proceed to run the analysis
+% With everything set, we can then proceed to run the analysis
 
 % Set up the GLEAN settings, data paths etc:
 GLEAN = glean.setup(glean_name,data,settings);
@@ -91,7 +94,8 @@ if do_analysis
     save(glean_name,'GLEAN')
 end
 
-%%
+%% Interrogating the results 
+
 % Load and interrogate the results 
 
 load(glean_name)
@@ -130,16 +134,22 @@ xlabel('States','FontSize',16)
 set(gca,'FontSize',16)
 xlim([0.5 8.5])
 
+%%
+
 % As a sanity check, it is interesting to look at the maximum fractional occupancy for every
 % subject. If this is high (say, >50%) for a given subject, 
 % that means that one single state is dominating the time series for that subject, 
 % which implies that the dynamics for that subject have not been well captured. 
+% Here, we observe that the maximum fractional occupancy never surpass 35%,
+% meaning that all states take 35% or less of the time per subject.
 figure
 bar(max(GLEAN.results.temporal_stats.FractionalOccupancy.stats,[],2),0.9,'FaceColor','m')
 ylabel('Max %Occupancy','FontSize',16)
 xlabel('States','FontSize',16)
 set(gca,'FontSize',16)
-xlim([0.5 8.5]) 
+xlim([0.5 12.5]) 
+
+%%
 
 % We show the mean life times, seeing the states ocurrences are indeed quite fast,
 % with visits usually in between 150 and 250 ms.
@@ -150,6 +160,8 @@ xlabel('States','FontSize',16)
 set(gca,'FontSize',16)
 xlim([0.5 8.5])
 
+%%
+
 % We can look at the interval times, which oscillate in between 1 and 2.5s,
 % with the exception of state 1, which is to be expected considering is an usual state.
 figure
@@ -158,6 +170,8 @@ ylabel('% Mean Interval Times (ms)','FontSize',16)
 xlabel('States','FontSize',16)
 set(gca,'FontSize',16)
 xlim([0.5 8.5])
+
+%%
 
 % Finally, we can look at the transition probability matrix between
 % states. We remove the diagonal because we want to focus on the
