@@ -1,6 +1,10 @@
-%% 
+%% GLEAN for HMM inference on power time series
+%
 % This example shows how to use the HMM to infer transient states 
-% in whole-brain resting state MEG data, such that the states reflect 
+% in whole-brain resting state MEG data.
+%
+%%
+% Here, states reflect 
 % distinct, recurrent patterns of power
 % and functional connectivity (in terms of power correlation).
 %

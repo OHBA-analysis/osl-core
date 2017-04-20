@@ -1,5 +1,10 @@
+%% HMM-MAR
+%
+% This example shows how to use the HMM-MAR to infer transient states
+% based on their precise spectral characteristics.
+%
 %%
-% This example shows how to use the HMM-MAR to infer transient states that:
+% For the HMM-MAR, these states:
 %
 % (i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency,
 % (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes,

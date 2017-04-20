@@ -1,13 +1,13 @@
 ---
 layout: matlab_wrapper
-title: osl_example_glean
+title: GLEAN for HMM inference on power time series
 resource: true
 categories: examples
 ---
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>osl_example_glean</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_glean.m"></head><body><div class="content"><h1></h1><!--introduction--><p>This example shows how to use the HMM to infer transient states in whole-brain resting state MEG data, such that the states reflect distinct, recurrent patterns of power and functional connectivity (in terms of power correlation).</p><p>For this, we will use GLEAN, a tool offering a wrap of functionalities on top of the HMM estimation. Internally, it uses the HMM-MAR toolbox (covered in the next practical) for the final estimation. GLEAN does a number of things for us before calling to the HMM-MAR:</p><p>1.- Bandpass-filtering: we would be discarding very slow and very fast frequencies,   although we also could use it to focus on a particular band of interest.</p><p>2.- Getting power time courses: using the Hilbert transform we will get rid of the phase,   information, producing time series that reflect only the changes on power.</p><p>3.- Subsampling: because power changes are slow, we can afford subsampling the data to reduce   the computational load without losing statistical power on the estimation.</p><p>4.- Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)   onto a number of time series, each corresponding to a different brain region (uses ROInets).</p><p>5.- Leakage correction: because of the artefactual high correlation between proximal regions,   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets).</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Estimate a whole-brain HMM model with GLEAN</a></li><li><a href="#8">Interrogating the results</a></li></ul></div><h2 id="1">Estimate a whole-brain HMM model with GLEAN</h2><p>We set the paths and data</p><pre class="codeinput"><span class="comment">% Directory of the data</span>
+   <title>GLEAN for HMM inference on power time series</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_glean.m"></head><body><div class="content"><h1>GLEAN for HMM inference on power time series</h1><!--introduction--><p>This example shows how to use the HMM to infer transient states in whole-brain resting state MEG data.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Estimate a whole-brain HMM model with GLEAN</a></li><li><a href="#9">Interrogating the results</a></li></ul></div><p>Here, states reflect distinct, recurrent patterns of power and functional connectivity (in terms of power correlation).</p><p>For this, we will use GLEAN, a tool offering a wrap of functionalities on top of the HMM estimation. Internally, it uses the HMM-MAR toolbox (covered in the next practical) for the final estimation. GLEAN does a number of things for us before calling to the HMM-MAR:</p><p>1.- Bandpass-filtering: we would be discarding very slow and very fast frequencies,   although we also could use it to focus on a particular band of interest.</p><p>2.- Getting power time courses: using the Hilbert transform we will get rid of the phase,   information, producing time series that reflect only the changes on power.</p><p>3.- Subsampling: because power changes are slow, we can afford subsampling the data to reduce   the computational load without losing statistical power on the estimation.</p><p>4.- Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)   onto a number of time series, each corresponding to a different brain region (uses ROInets).</p><p>5.- Leakage correction: because of the artefactual high correlation between proximal regions,   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets).</p><h2 id="2">Estimate a whole-brain HMM model with GLEAN</h2><p>We set the paths and data</p><pre class="codeinput"><span class="comment">% Directory of the data</span>
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>);
 <span class="comment">% Name for this GLEAN analysis</span>
 glean_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>,<span class="string">'glean_demo.mat'</span>);
@@ -52,7 +52,7 @@ GLEAN = glean.setup(glean_name,data,settings);
 Using default values for dir in GLEAN.subspace.settings
 Using default values for dir in GLEAN.model.settings
 Using default values for dir in GLEAN.results.settings
-</pre><h2 id="8">Interrogating the results</h2><pre class="codeinput"><span class="comment">% Load and interrogate the results</span>
+</pre><h2 id="9">Interrogating the results</h2><pre class="codeinput"><span class="comment">% Load and interrogate the results</span>
 
 load(glean_name)
 </pre><p>we first look at the basic temporal information: state time courses and life times</p><pre class="codeinput"><span class="comment">% show the entire state time courses</span>
@@ -137,9 +137,13 @@ Saving parcel group partial correlation map
 </pre><p>This results field contains the settings, as well as pointers to the spatial maps in each subspace (voxel/parcel) for each session and the group average. We can then use fslview to open the maps. Some well-known resting state networks include the Sensorimotor network (state 4), or the visual network (state 2)</p><pre class="codeinput">fslview(GLEAN.results.pcorr.parcel.sessionmaps{1},[])
 </pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-%% 
+%% GLEAN for HMM inference on power time series
+%
 % This example shows how to use the HMM to infer transient states 
-% in whole-brain resting state MEG data, such that the states reflect 
+% in whole-brain resting state MEG data.
+%
+%%
+% Here, states reflect 
 % distinct, recurrent patterns of power
 % and functional connectivity (in terms of power correlation).
 %
