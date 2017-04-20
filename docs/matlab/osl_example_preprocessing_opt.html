@@ -1,30 +1,35 @@
 ---
 layout: matlab_wrapper
-title: Introduction to automatic preprocessing in OSL using OPT
+title: Preproc - automatic processing
 resource: true
 categories: examples
 ---
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Introduction to automatic preprocessing in OSL using OPT</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-14"><meta name="DC.source" content="osl_example_preprocessing_opt.m"></head><body><div class="content"><h1>Introduction to automatic preprocessing in OSL using OPT</h1><!--introduction--><p>This is a TEMPLATE script for running the OHBA recommended preprocessing pipeline on Elekta-Neuromag data (a very similar pipeline will work on CTF data as well) using OPT. It works through the following steps:</p><p>You'll need to alter (at the very least) the settings in: datadir, fif_files, spm_files, structurals_files</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">SETUP THE MATLAB PATHS</a></li><li><a href="#2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</a></li><li><a href="#6">SETUP OPT</a></li><li><a href="#17">LOOK AT OPT SETTINGS</a></li><li><a href="#18">LOOK AT OPT SUB-SETTINGS</a></li><li><a href="#19">RUN OPT</a></li><li><a href="#20">RESULTS</a></li></ul></div><h2 id="1">SETUP THE MATLAB PATHS</h2><p>make sure that fieldtrip and spm are not in your matlab path</p><pre class="codeinput">osl_startup();
-</pre><pre class="codeoutput">Warning: Duplicate directory name:
-/Applications/MATLAB_R2016a.app/toolbox/stateflow/stateflow 
-</pre><h2 id="2">INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS</h2><p>directory where the data is:</p><pre class="codeinput">datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'preproc_example'</span>,<span class="string">'automatic_opt'</span>);
-</pre><p>Set up the list of subjects and their structural scans for the analysis</p><pre class="codeinput">clear <span class="string">raw_fif_files</span> <span class="string">input_files</span> <span class="string">spm_files</span> <span class="string">structural_files</span>;
-</pre><p>Specify a list of the existing raw fif files for subjects for input into Maxfilter. Note that here we only have 1 subject, but more generally there would be more than one, e.g.: raw_files{1}=[testdir '/fifs/sub1_face_sss']; raw_files{2}=[testdir '/fifs/sub2_face_sss']; etc... OR Specify a list of the input files to be converted into SPM Note that here we only have 1 subject, but more generally there would be more than one, e.g.: fif_files{1}=[testdir '/fifs/sub1_face_sss']; fif_files{2}=[testdir '/fifs/sub2_face_sss']; etc...</p><pre class="codeinput">raw_fif_files{1}=[datadir <span class="string">'/fifs/loc_S02.fif'</span>];
+   <title>Preproc - automatic processing</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-20"><meta name="DC.source" content="osl_example_preprocessing_opt.m"></head><body><div class="content"><h1>Preproc - automatic processing</h1><!--introduction--><p>This is an example for running the OHBA recommended preprocessing pipeline on Elekta-Neuromag data (a very similar pipeline will work on CTF data as well) using OPT (OSL's preproscessing tool). It works through basically the same steps as you would for the manual preprocessing (see <a href="http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html">manual practical</a> ), but this time it is all automatized.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">SET UP THE MATLAB PATHS, DIRECTORIES AND FILES</a></li><li><a href="#6">SETTING UP AN OPT ANALYSIS</a></li><li><a href="#10">HIGHPASS AND NOTCH FILTERING</a></li><li><a href="#11">DOWNSAMPLING</a></li><li><a href="#12">IDENTIFYING BAD SEGMENTS</a></li><li><a href="#13">AFRICA DENOISING</a></li><li><a href="#14">EPOCHING DATA</a></li><li><a href="#17">CHECK OPT SETTINGS</a></li><li><a href="#18">LOOK AT OPT SETTINGS AND SUBSETTINGS</a></li><li><a href="#27">RUNNING THE OPT ANALYSIS</a></li><li><a href="#28">VIEWING OPT RESULTS</a></li><li><a href="#38">EXERCISES</a></li></ul></div><p>This practical is also available as a template script in your osl example folder. For today's workshop we will copy and paste directly from the osl website. We will work with a single subject's data from a button press experiment. The data should be available in your installation already. Note that this contains the fif file: fifs/loc_S02_sss1.fif, which has already been SSS Maxfiltered and downsampled to 250 Hz, and which we will used for this analysis.</p><h2 id="2">SET UP THE MATLAB PATHS, DIRECTORIES AND FILES</h2><p>You should not need to run this if you have already done this previously. If MATLAB has trouble finding any osl functions, run:</p><pre class="codeinput">osl_startup;
+</pre><p><b>SPECIFY DIRECTORIES FOR THIS ANALYSIS</b></p><p>Set the data directory where the data is, this should be the correct path already:</p><pre class="codeinput">datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'preproc_example'</span>,<span class="string">'automatic_opt'</span>)
+</pre><p><b>SET UP THE LIST OF SUBJECTS</b></p><p>Specify a list of the existing raw fif files for subjects for input into Maxfilter. Note that here we only have 1 subject, but more generally there would be more than one, e.g.: raw_files{1}=[testdir '/fifs/sub1_face_sss']; raw_files{2}=[testdir '/fifs/sub2_face_sss']; etc... OR Specify a list of the input files to be converted into SPM SPM files (which will be created as output). It is important to make sure that the order of these lists is consistent across sessions.</p><pre class="codeinput">clear <span class="string">raw_fif_files</span> <span class="string">input_files</span> <span class="string">spm_files</span> <span class="string">structural_files</span>;
+
+raw_fif_files{1}=[datadir <span class="string">'/fifs/loc_S02.fif'</span>];
 input_files{1}=[datadir <span class="string">'/fifs/loc_S02_sss1.fif'</span>];
 spm_files{1}=[datadir <span class="string">'/spm_files/loc_S02'</span>];
-</pre><p>Setup a list of existing structural files, in the same order as spm_files and fif_files: Note that here we only have 1 subject, but more generally there would be more than one.</p><pre class="codeinput">structural_files{1}=[datadir <span class="string">'/structs/anat.nii'</span>]; <span class="comment">% leave empty if no .nii structural file available</span>
-</pre><h2 id="6">SETUP OPT</h2><pre class="codeinput">opt=[];
-</pre><p>required inputs</p><pre class="codeinput">opt.input_files=input_files;
+</pre><p><b>SET UP STRUCTURALS</b></p><p>Setup a list of existing structural files, in the same order as spm_files and fif_files: Note that here we only have 1 subject, but more generally there would be more than one. Here we do not use them, but for any source-reconstruction following OPT you would need them.</p><pre class="codeinput">structural_files{1}=[datadir <span class="string">'/structs/anat.nii'</span>]; <span class="comment">% leave empty if no structural available</span>
+</pre><h2 id="6">SETTING UP AN OPT ANALYSIS</h2><p>This sets up an OPT struct to pass to osl_check_opt, by setting the appropriate fields and values in the OPT struct. Note that some fields are mandatory while others are optional (and will be automatically set to their default values). The osl_check_opt.m function should be used to setup the settings for OPT. This function will check the settings, and will throw an error if any required inputs are missing, and will fill other settings that are not passed in with their default values. The OPT structure can then be passed to osl_run_opt to do an OPT analysis. On the Matlab command line type "help osl_check_opt" to see what the mandatory fields are. Note that you MUST specify:</p><p><i>opt.raw_fif_files</i>: A list of the existing raw fif files for subjects (need these if you want to do SSS Maxfiltering) OR</p><p><i>opt.input_files</i>: A list of the base input (e.g. fif) files for input into the SPM convert call</p><p>In any case you need:</p><p><i>opt.datatype</i>: Specifies the datatype; i.e. 'neuromag', 'ctf', 'eeg';</p><p>For more information, see <a href="https://sites.google.com/site/ohbaosl/preprocessing/opt-under-construction">https://sites.google.com/site/ohbaosl/preprocessing/opt-under-construction</a></p><pre class="codeinput">opt=[];
+</pre><p><b>Specify required inputs</b></p><p>List of input files and data type: In our case the input files come from above location and we use data acquired by the Elekta Neuromag system (same type as in manual preproc practical).</p><pre class="codeinput">opt.input_files=input_files;
 opt.datatype=<span class="string">'neuromag'</span>;
-</pre><p>optional inputs</p><pre class="codeinput">opt.dirname=[datadir <span class="string">'/practical_badseg_africa.opt'</span>]; <span class="comment">% directory opt settings and results will be stored</span>
-</pre><p>Maxfilter settings:</p><pre class="codeinput">opt.maxfilter.do=0; <span class="comment">% here we are going to skip the double maxfilter call as this has been run already for us</span>
-</pre><p>AFRICA settings In this tutorial, we will not use AFRICA as part of automatic preprocessing:</p><pre class="codeinput">opt.africa.do=0;
-</pre><p>highpass filter settings:</p><pre class="codeinput">opt.highpass.do=0;
-</pre><p>bad segments settings</p><pre class="codeinput">opt.bad_segments.do=0;
-</pre><p>Epoching settings Here the epochs are set to be from -1s to +2s relative to triggers in the MEG data.</p><pre class="codeinput">opt.epoch.do=1;
+</pre><p><b>Specify optional inputs</b></p><p>This has to be the name of the directory (full path) where the OPT will be stored, and is given a ".opt" extension. Note that each OPT directory is associated with an OPT run - if you rerun OPT with the same <i>opt.dirname</i> then this will overwrite an old directory, and the old OPT results will be lost. Hence, you should ensure that you change <i>opt.dirname</i> for a new analysis, if you want to avoid overwriting an old one!</p><pre class="codeinput">opt.dirname=[datadir <span class="string">'/practical_singlesubject.opt'</span>];
+</pre><p><b>Maxfilter settings:</b> Here we are going to skip the double maxfilter call as this has been run already for us</p><pre class="codeinput">opt.maxfilter.do=0;
+</pre><h2 id="10">HIGHPASS AND NOTCH FILTERING</h2><p>Here, we set both the highpass filter and the notch filter to attenuate slow drifts and 50 Hz line noise. This corresponds to our filtering part during the <a href="http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#23">manual preprocessing</a> , now OPT takes care of it.</p><pre class="codeinput">opt.highpass.do=1;
+<span class="comment">% Notch filter settings</span>
+opt.mains.do=1;
+</pre><h2 id="11">DOWNSAMPLING</h2><p>Now, while we do not do downsampling here, this is the template to modify to enable downsampling with the respective sampling frequency desired.</p><pre class="codeinput">opt.downsample.do=0;
+opt.downsample.freq=150;
+</pre><h2 id="12">IDENTIFYING BAD SEGMENTS</h2><p>This identifies bad segments in the continuous data (similar to using oslview in the manual practical, just automated). We turn this off for today's workshop. However, if you want to do an automated AFRICA denoising as part of OPT, we recommend this to be set to 1.</p><pre class="codeinput">opt.bad_segments.do=0;
+</pre><h2 id="13">AFRICA DENOISING</h2><p>In this tutorial, we will not use AFRICA as part of the automatic preprocessing: If you want to play around with it at a later stage, set .do to 1 and run everything again. Again, make sure to set <i>opt.dirname</i> to something different than before to not overwrite your non-AFRICA results.</p><pre class="codeinput">opt.africa.do=0;
+opt.africa.ident.artefact_chans    = {<span class="string">'ECG'</span>,<span class="string">'EOG'</span>};
+opt.africa.ident.mains_kurt_thresh = 0.5;
+</pre><h2 id="14">EPOCHING DATA</h2><p>Here the epochs are set to be from -1s to +2s relative to triggers in the MEG data.</p><pre class="codeinput">opt.epoch.do=1;
 opt.epoch.time_range = [-1 2]; <span class="comment">% epoch end in secs</span>
 opt.epoch.trialdef(1).conditionlabel = <span class="string">'StimLRespL'</span>;
 opt.epoch.trialdef(1).eventtype = <span class="string">'STI101_down'</span>;
@@ -50,341 +55,215 @@ opt.epoch.trialdef(7).eventvalue = 23;
 opt.epoch.trialdef(8).conditionlabel = <span class="string">'RespRRespR'</span>;
 opt.epoch.trialdef(8).eventtype = <span class="string">'STI101_down'</span>;
 opt.epoch.trialdef(8).eventvalue = 29;
-</pre><p>coreg settings</p><pre class="codeinput">opt.coreg.do=0; <span class="comment">% not doing coreg here - although normally you would if you want to do subsequent analyses in source space</span>
-</pre><p>outliers settings</p><pre class="codeinput">opt.outliers.do=1;
-</pre><p>Checking chosen settings</p><pre class="codeinput">opt=osl_check_opt(opt);
-</pre><pre class="codeoutput">Using opt.input_files as input
-Warning: opt.datatype is neuromag, Will assume that data has been maxfiltered
-and will set opt.africa.used_maxfilter=1 
-</pre><h2 id="17">LOOK AT OPT SETTINGS</h2><pre class="codeinput">disp(<span class="string">'opt settings:'</span>);
+</pre><p>Instead of identifying bad segments in the continuous data, we will rely on opt identifying bad trials in the epoched data using the opt.outliers settings. This is roughly equivalent to using osl_reject_visual during the <a href="http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#70">manual procedure</a> .</p><pre class="codeinput">opt.outliers.do=1;
+</pre><p>Coregistration settings: We're not doing coregistration here, but normally you would if you want to do subsequent analyses in source space. This requires structural scans.</p><pre class="codeinput">opt.coreg.do=0;
+</pre><h2 id="17">CHECK OPT SETTINGS</h2><p>Checking chosen settings: By calling osl_check_opt we will check the validity of the OPT parameters we have specified. Then, OPT will fill in any missing parameters with their default values for us.</p><pre class="codeinput">opt=osl_check_opt(opt);
+</pre><h2 id="18">LOOK AT OPT SETTINGS AND SUBSETTINGS</h2><p><b>DISPLAY OPT SETTINGS</b></p><p>This gives an overview about set parameters</p><pre class="codeinput">disp(<span class="string">'opt settings:'</span>);
 disp(opt);
-</pre><pre class="codeoutput">opt settings:
-           datatype: 'neuromag'
-      raw_fif_files: []
-        input_files: {1x1 cell}
-          spm_files: []
-    input_file_type: 'input_files'
-     sessions_to_do: 1
-            dirname: '/Applications/osl/example_data/preproc_example/autom...'
-         modalities: {2x1 cell}
-      cleanup_files: 1
-            convert: [1x1 struct]
-          maxfilter: [1x1 struct]
-         downsample: [1x1 struct]
-           highpass: [1x1 struct]
-              mains: [1x1 struct]
-       bad_segments: [1x1 struct]
-             africa: [1x1 struct]
-              epoch: [1x1 struct]
-           outliers: [1x1 struct]
-              coreg: [1x1 struct]
-       osl2_version: 'osl2.0.2'
-
-</pre><h2 id="18">LOOK AT OPT SUB-SETTINGS</h2><pre class="codeinput">disp(<span class="string">'opt.maxfilter settings:'</span>);
+</pre><p><b>LOOK AT OPT SUB-SETTINGS</b></p><p>The OPT structure contains a number of subfields containing the settings for the relevant stages of the pipeline. Note that each of these has a "do" flag (e.g. opt.downsample.do), which indicates whether that part of the pipeline should be run or not.</p><pre class="codeinput">disp(<span class="string">'opt.maxfilter settings:'</span>);
 disp(opt.maxfilter);
-
-disp(<span class="string">'opt.downsample settings:'</span>);
+</pre><pre class="codeinput">disp(<span class="string">'opt.downsample settings:'</span>);
 disp(opt.downsample);
-
-disp(<span class="string">'opt.africa settings:'</span>);
+</pre><pre class="codeinput">disp(<span class="string">'opt.africa settings:'</span>);
 disp(opt.africa);
-
-disp(<span class="string">'opt.highpass settings:'</span>);
+</pre><pre class="codeinput">disp(<span class="string">'opt.highpass settings:'</span>);
 disp(opt.highpass);
-
-disp(<span class="string">'opt.epoch settings:'</span>);
+</pre><pre class="codeinput">disp(<span class="string">'opt.epoch settings:'</span>);
 disp(opt.epoch);
-
-disp(<span class="string">'opt.outliers settings:'</span>);
+</pre><pre class="codeinput">disp(<span class="string">'opt.outliers settings:'</span>);
 disp(opt.outliers);
-
-disp(<span class="string">'opt.coreg settings:'</span>);
+</pre><pre class="codeinput">disp(<span class="string">'opt.coreg settings:'</span>);
 disp(opt.coreg);
-</pre><pre class="codeoutput">opt.maxfilter settings:
-                   remote_port: 0
-                            do: 0
-                        do_sss: 1
-    do_remove_badchans_pre_sss: 1
-          max_badchans_pre_sss: 10
-         movement_compensation: 1
-                trans_ref_file: []
-            temporal_extension: 0
-                   maxfilt_dir: '/neuro/bin/util'
-                    bad_epochs: {[]}
-                      cal_file: 0
-                      ctc_file: 0
+</pre><h2 id="27">RUNNING THE OPT ANALYSIS</h2><p>This will run the main OPT analysis:</p><pre class="codeinput">opt=osl_run_opt(opt);
+</pre><h2 id="28">VIEWING OPT RESULTS</h2><p>There is several ways to look how OPT has been run:</p><p><b>VIEWING OPT RESULTS IN MATLAB</b></p><p>Running the OPT analysis will create an OPT output directory (whose name is the name set in opt.dirname with a ".opt" suffix added). This contains all you need to access the results of the analysis. Note that you can load these into Matlab using the call:</p><pre class="codeinput">opt = osl_load_opt(opt.dirname);
 
-opt.downsample settings:
-      do: 1
-    freq: 250
-
-opt.africa settings:
-                todo: [1x1 struct]
-    precompute_topos: 1
-      used_maxfilter: 1
-               ident: [1x1 struct]
-
-opt.highpass settings:
-        do: 0
-    cutoff: 0.1000
-
-opt.epoch settings:
-              do: 1
-      time_range: [-1 2]
-    timing_delay: 0
-        trialdef: [1x8 struct]
-
-opt.outliers settings:
-                     do: 1
-    outlier_measure_fns: {'min'  'std'}
-             wthresh_ev: [2x1 double]
-           wthresh_chan: [2x1 double]
-
-opt.coreg settings:
-              do: 0
-    useheadshape: 1
-             mri: {''}
-       use_rhino: 1
-     forward_meg: 'Single Shell'
-       fid_label: [1x1 struct]
-
-</pre><h2 id="19">RUN OPT</h2><pre class="codeinput">opt=osl_run_opt(opt);
-
-<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%</span>
-</pre><pre class="codeoutput">Using opt.input_files as input
-Warning: Directory already exists. 
-Warning: Directory already exists. 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%  STARTING LOOP OVER SESSIONS  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%  RUNNING OPT ON SESS = 1  %%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%  Input file: /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif  %%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%  CONVERT INPUT DATA, SESS = 1  %%%%%%%%%%%%%%%%%%%%%%%
-
-SPM12: spm_eeg_convert_4osl (v6190)                21:43:47 - 14/04/2017
-========================================================================
-
-SPM12: spm_eeg_convert_4osl (v6190)                21:43:47 - 14/04/2017
-========================================================================
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif...
-	Range : 73000 ... 457999  =     73.000 ...   457.999 secs
-Ready.
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif...
-	Range : 73000 ... 457999  =     73.000 ...   457.999 secs
-Ready.
-Reading 73000 ... 457999  =     73.000 ...   457.999 secs... [done]
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif...
-	Range : 73000 ... 457999  =     73.000 ...   457.999 secs
-Ready.
-Warning: Could not obtain electrode locations automatically. 
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif...
-	Range : 73000 ... 457999  =     73.000 ...   457.999 secs
-Ready.
-Data type is missing or incorrect, assigning default.
-creating layout from cfg.grad
-creating layout for neuromag306 system
-Reading 73000 ... 82722  =     73.000 ...    82.722 secs... [done]
-Reading 82723 ... 92445  =     82.723 ...    92.445 secs... [done]
-Reading 92446 ... 102168  =     92.446 ...   102.168 secs... [done]
-Reading 102169 ... 111891  =    102.169 ...   111.891 secs... [done]
-Reading 111892 ... 121614  =    111.892 ...   121.614 secs... [done]
-Reading 121615 ... 131337  =    121.615 ...   131.337 secs... [done]
-Reading 131338 ... 141060  =    131.338 ...   141.060 secs... [done]
-Reading 141061 ... 150783  =    141.061 ...   150.783 secs... [done]
-Reading 150784 ... 160506  =    150.784 ...   160.506 secs... [done]
-Reading 160507 ... 170229  =    160.507 ...   170.229 secs... [done]
-Reading 170230 ... 179952  =    170.230 ...   179.952 secs... [done]
-Reading 179953 ... 189675  =    179.953 ...   189.675 secs... [done]
-Reading 189676 ... 199398  =    189.676 ...   199.398 secs... [done]
-Reading 199399 ... 209121  =    199.399 ...   209.121 secs... [done]
-Reading 209122 ... 218844  =    209.122 ...   218.844 secs... [done]
-Reading 218845 ... 228567  =    218.845 ...   228.567 secs... [done]
-Reading 228568 ... 238290  =    228.568 ...   238.290 secs... [done]
-Reading 238291 ... 248013  =    238.291 ...   248.013 secs... [done]
-Reading 248014 ... 257736  =    248.014 ...   257.736 secs... [done]
-Reading 257737 ... 267459  =    257.737 ...   267.459 secs... [done]
-Reading 267460 ... 277182  =    267.460 ...   277.182 secs... [done]
-Reading 277183 ... 286905  =    277.183 ...   286.905 secs... [done]
-Reading 286906 ... 296628  =    286.906 ...   296.628 secs... [done]
-Reading 296629 ... 306351  =    296.629 ...   306.351 secs... [done]
-Reading 306352 ... 316074  =    306.352 ...   316.074 secs... [done]
-Reading 316075 ... 325797  =    316.075 ...   325.797 secs... [done]
-Reading 325798 ... 335520  =    325.798 ...   335.520 secs... [done]
-Reading 335521 ... 345243  =    335.521 ...   345.243 secs... [done]
-Reading 345244 ... 354966  =    345.244 ...   354.966 secs... [done]
-Reading 354967 ... 364689  =    354.967 ...   364.689 secs... [done]
-Reading 364690 ... 374412  =    364.690 ...   374.412 secs... [done]
-Reading 374413 ... 384135  =    374.413 ...   384.135 secs... [done]
-Reading 384136 ... 393858  =    384.136 ...   393.858 secs... [done]
-Reading 393859 ... 403581  =    393.859 ...   403.581 secs... [done]
-Reading 403582 ... 413304  =    403.582 ...   413.304 secs... [done]
-Reading 413305 ... 423027  =    413.305 ...   423.027 secs... [done]
-Reading 423028 ... 432750  =    423.028 ...   432.750 secs... [done]
-Reading 432751 ... 442473  =    432.751 ...   442.473 secs... [done]
-Reading 442474 ... 452196  =    442.474 ...   452.196 secs... [done]
-Reading 452197 ... 457999  =    452.197 ...   457.999 secs... [done]
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif...
-	Range : 73000 ... 457999  =     73.000 ...   457.999 secs
-Ready.
-Warning: Could not obtain electrode locations automatically. 
-	306 MEG channel locations transformed
-Reading /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif ...
-Opening raw data file /Applications/osl/example_data/preproc_example/automatic_opt/fifs/loc_S02_sss1.fif...
-	Range : 73000 ... 457999  =     73.000 ...   457.999 secs
-Ready.
-Data type is missing or incorrect, assigning default.
-creating layout from cfg.grad
-creating layout for neuromag306 system
-%%%%%%%%%%%%%%%%%%%%%%%  DOWNSAMP, SESS = 1  %%%%%%%%%%%%%%%%%%%%%%%
-
-SPM12: spm_eeg_downsample (v6016)                  21:44:03 - 14/04/2017
-========================================================================
-%%%%%%%%%%%%%%%%%%%%%%%  PLOT SPECTOGRAMS, SESS = 1  %%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%  EPOCH, SESS = 1  %%%%%%%%%%%%%%%%%%%%%%%
-
-	SPM12: spm_eeg_definetrial (v6182)         21:44:36 - 14/04/2017
-	----------------------------------------------------------------
-
-SPM12: spm_eeg_epochs (v6183)                      21:44:36 - 14/04/2017
-========================================================================
-Data type is missing or incorrect, assigning default.
-%%%%%%%%%%%%%%%%%%%%%%%  BAD CHAN/EVENTS, SESS = 1  %%%%%%%%%%%%%%%%%%%%%%%
-
-SPM12: spm_eeg_copy (v5079)                        21:44:53 - 14/04/2017
-========================================================================
-Doing MEGMAG
-
-ans =
-
-    57    90
-
-Doing MEGPLANAR
-Already labelled bad chans=[57 90]
-
-ans =
-
-    57    90   271
-
-Bad chans=[57 90 271]
-Saving opt results for: session1
-To view OPT report, point your browser to &lt;a href="/Applications/osl/example_data/preproc_example/automatic_opt/practical_badseg_africa.opt/plots/report.html"&gt;/Applications/osl/example_data/preproc_example/automatic_opt/practical_badseg_africa.opt/plots/report.html&lt;/a&gt;
-</pre><h2 id="20">RESULTS</h2><pre class="codeinput">disp(<span class="string">'opt.results:'</span>);
+disp(<span class="string">'opt.results:'</span>);
 disp(opt.results);
-</pre><pre class="codeoutput">opt.results:
-                       plotsdir: '/Applications/osl/example_data/preproc_e...'
-                        logfile: '/Applications/osl/example_data/preproc_e...'
-                           date: '14-Apr-2017'
-                         fnames: {'session1'}
-                      spm_files: {1x1 cell}
-            spm_files_basenames: {'dspm_meg1'}
-              spm_files_epoched: {1x1 cell}
-    spm_files_epoched_basenames: {'Sedspm_meg1'}
-                       badchans: 3
-                   bad_segments: NaN
-                       rejected: 68
-                     autobadoff: NaN
-                     icsremoved: NaN
-               pre_sss_badchans: NaN
-                      ica_files: {[]}
-            spm_files_ica_input: {[]}
-                         report: [1x1 struct]
+</pre><p>In particular, the OPT object contains a sub-struct named results, (i.e. opt.results), containing:</p><div><ul><li>.logfile (a file containing the matlab output)</li><li>.report (a file corresponding to a web page report with diagnostic plots)</li><li>.spm_files (a list of SPM MEEG object files corresponding to the continuous data (before epoching), e.g. to pass into an OAT analysis)</li><li>.spm_files_epoched (a list of SPM MEEG object files corresponding to the epoched data, e.g. to pass into an OAT analysis)</li></ul></div><p>It is highly recommended that you always inspect both the opt.results.logfile and opt.results.report, to ensure that OPT has run successfully.</p><p><b>VIEWING OPT RESULTS BY CHECKING OPT REPORTS IN BROWSER</b></p><p>Open the web page report indicated in opt.results.report (and in the screen output of <i>osl_run_opt</i> ) in a web browser. This displays important diagnostic plots. At the top of the file is a link to opt.results.logfile (a file containing the matlab output) - check this for any errors or unusual warnings. Then there will be a list of session specific reports. Here we have only preprocessed one session. To view this open the file pointed to by</p><pre class="codeinput">opt.results.report.html_fname
+</pre><p>in your web browser. This brings up the diagnostic plots for session 1. There are a number of things to look out for:</p><p><b>Maxfilter:</b></p><p>Normally, the first thing shown would be the results of running SSS Maxfilter (and associated bad channel detection). Since we have not run that here there are no diagnostic plots to show for this.</p><p><b>Histogram of events corrected for button presses:</b></p><p>Shows you the number of triggers found for each event code - check that these correspond to the expected number of triggers in your experimental setup.</p><p><b>Africa</b></p><p>(not applicable here, unless <i>opt.africa.do=1</i>):</p><div><ul><li>Mains artefacts: This shows IC sensor maps (for both sensor types), spectra, and time courses detected as being due to 50 Hz mains noise by AFRICA - check that these have sensible frequency spectra with a peak at 50 Hz</li></ul></div><div><ul><li>EOG and ECG artefacts: IC sensor maps (for both sensor types), spectra, and time courses detected as being due to EOG or ECG artefacts by AFRICA. These have been found due to their IC time courses having high correlation with the corresponding EOG and ECG channels in the data - check that these have sensible time courses (at least for EOG) and topographies (for both EOG and ECG) [you will learn this by experience].</li></ul></div><div><ul><li>High Kurtosis artefacts: IC sensor maps (for both sensor types), spectra, and time courses detected as having very high kurtosis over time by AFRICA. Very high kurtosis is caused by having very "peaked" distributions, and are more likely to be due to non-neuronal artefacts - check that these have appropriately "bizarre" time courses and topographies.</li></ul></div><p><b>Outlier Detection:</b></p><p>Histograms and scatterplots before and after outlier detection. The scatterplots show the channels/trial number versus the metric (e.g. "std") as red crosses before rejection and green crosses after rejection. Channels/trials to be retained are indicated by green circles.</p><p><b>CHECKING OPT RESULTS BY LOOKING AT THE DATA</b></p><p>Last but not least you might want to look at your actual data to check whether OPT gives your good results: We will now load the M/EEG object created by OPT (analogous to our resulting D objects in the manual preproc practical).</p><pre class="codeinput">D=spm_eeg_load([osldir <span class="string">'/example_data/preproc_example/automatic_opt/practical_singlesubject.opt/Seffdspm_meg1.mat'</span>]);
 
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
+<span class="comment">% Then define some trials to look at:</span>
+good_stimresp_trls = [D.indtrial(<span class="string">'StimLRespL'</span>,<span class="string">'good'</span>) D.indtrial(<span class="string">'StimLRespR'</span>,<span class="string">'good'</span>)];
+
+<span class="comment">% Get the sensor indices for the two different MEG acquisition</span>
+<span class="comment">% modalities from the data:</span>
+planars = D.indchantype(<span class="string">'MEGPLANAR'</span>);
+magnetos = D.indchantype(<span class="string">'MEGMAG'</span>);
+</pre><p>Finally, as in the manual preprocessing practical, we are going to have a quick look at data quality by just doing some preliminary and rudimentary ERF analysis. We will use the loaded D object, all good stimulus response trials and average them to get an idea about the data quality after OPT.</p><pre class="codeinput">figure(<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 0.6 0.3]);
+subplot(1,3,1); <span class="comment">% plots gradiometer ERF image</span>
+imagesc(D.time,[],squeeze(mean(D([planars(:)],:,good_stimresp_trls),3)));
+xlabel(<span class="string">'Time (seconds)'</span>,<span class="string">'FontSize'</span>,20);
+ylabel(<span class="string">'Sensors'</span>,<span class="string">'FontSize'</span>,20);colorbar
+title(<span class="string">'ERF, planar gradiometers'</span>,<span class="string">'FontSize'</span>,20)
+set(gca,<span class="string">'FontSize'</span>,20)
+
+subplot(1,3,2);  <span class="comment">% plots magnetometer ERF image</span>
+imagesc(D.time,[],squeeze(mean(D([magnetos(:)],:,good_stimresp_trls),3)));
+xlabel(<span class="string">'Time (seconds)'</span>,<span class="string">'FontSize'</span>,20);
+ylabel(<span class="string">'Sensors'</span>,<span class="string">'FontSize'</span>,20);colorbar
+title(<span class="string">'ERF, magnetometers'</span>,<span class="string">'FontSize'</span>,20)
+set(gca,<span class="string">'FontSize'</span>,20)
+
+subplot(1,3,3); <span class="comment">% plots 1 chosen planar gradiometer time-course</span>
+plot(D.time,squeeze(mean(D(planars(179),:,good_stimresp_trls),3)));
+xlabel(<span class="string">'Time (seconds)'</span>,<span class="string">'FontSize'</span>,20);ylim([-15 10])
+set(gca,<span class="string">'FontSize'</span>,20)
+ylabel(D.units(planars(1)),<span class="string">'FontSize'</span>,20);
+title(<span class="string">'ERF at sensor 179'</span>,<span class="string">'FontSize'</span>,20)
+</pre><p>These ERFs should look reasonable, i.e. both the ERF across sensors as well as the single-sensor ERF should look sufficiently smooth, it should look like this:</p><p><img vspace="5" hspace="5" src="osl_example_preproc_opt_ERFs_CHECK.png" alt=""> </p><p>Together, the three above checks should give you a sufficiently good idea about your data quality. As a rule of thumb, always check your data, especially after running long chains of automated analyses like OPT. Once you are in source-space it will be even harder to tell whether your data has sufficient data quality or is contaminated by artefacts.</p><h2 id="38">EXERCISES</h2><p>Now that you have seen the wonders of automated preprocessing, why not take a look at the really bad data from the manual preprocessing practical? Open the corresponding script to identify its location and try to adapt the OPT template script described here to run the problematic data set via OPT. Keep in mind that this data was exceptionally bad, so expect to have to test and tweak your settings until you reach a satisfying output (if at all).</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-%% Introduction to automatic preprocessing in OSL using OPT
-% This is a TEMPLATE script for running the OHBA recommended preprocessing
+%% Preproc - automatic processing
+% This is an example for running the OHBA recommended preprocessing
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
-% CTF data as well) using OPT. It works through the following steps:
+% CTF data as well) using OPT (OSL's preproscessing tool). It works through
+% basically the same steps as you would for the manual preprocessing (see
+% <http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html
+% manual practical> ), but this time it is all automatized.
 %
-% You'll need to alter (at the very least) the settings in:
-% datadir, fif_files, spm_files, structurals_files
 
-%% SETUP THE MATLAB PATHS
-% make sure that fieldtrip and spm are not in your matlab path
+%%
+% This practical is also available as a template script in your osl example
+% folder. For today's workshop we will copy and paste directly from the osl
+% website. We will work with a single subject's data from a button press
+% experiment. The data should be available in your installation already.
+% Note that this contains the fif file: fifs/loc_S02_sss1.fif, which has
+% already been SSS Maxfiltered and downsampled to 250 Hz, and which we will
+% used for this analysis.
 
-osl_startup();
 
-%% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
-% directory where the data is:
-datadir = fullfile(osldir,'example_data','preproc_example','automatic_opt');
+%% SET UP THE MATLAB PATHS, DIRECTORIES AND FILES
+% You should not need to run this if you have already done this previously.
+% If MATLAB has trouble finding any osl functions, run:
+osl_startup;
+
+%%
+% *SPECIFY DIRECTORIES FOR THIS ANALYSIS*
+% 
+% Set the data directory where the
+% data is, this should be the correct path already:
+datadir = fullfile(osldir,'example_data','preproc_example','automatic_opt')
  
-%%
-% Set up the list of subjects and their structural scans for the analysis 
-clear raw_fif_files input_files spm_files structural_files;
-
-%%
+%% 
+% *SET UP THE LIST OF SUBJECTS*
+% 
 % Specify a list of the existing raw fif files for subjects for input into
-% Maxfilter.
-% Note that here we only have 1 subject, but more generally there would be
-% more than one, e.g.:
-% raw_files{1}=[testdir '/fifs/sub1_face_sss']; 
-% raw_files{2}=[testdir '/fifs/sub2_face_sss']; 
-% etc...
-% OR
-% Specify a list of the input files to be converted into SPM
-% Note that here we only have 1 subject, but more generally there would be
-% more than one, e.g.:
-% fif_files{1}=[testdir '/fifs/sub1_face_sss']; 
-% fif_files{2}=[testdir '/fifs/sub2_face_sss']; 
-% etc...
+% Maxfilter. Note that here we only have 1 subject, but more generally
+% there would be more than one, e.g.: raw_files{1}=[testdir
+% '/fifs/sub1_face_sss']; raw_files{2}=[testdir '/fifs/sub2_face_sss'];
+% etc... OR Specify a list of the input files to be converted into SPM SPM
+% files (which will be created as output). It is important to make sure
+% that the order of these lists is consistent across sessions.
+
+clear raw_fif_files input_files spm_files structural_files;
 
 raw_fif_files{1}=[datadir '/fifs/loc_S02.fif']; 
 input_files{1}=[datadir '/fifs/loc_S02_sss1.fif']; 
 spm_files{1}=[datadir '/spm_files/loc_S02']; 
 
 %%
-% Setup a list of existing structural files, in the same order as spm_files and fif_files:
-% Note that here we only have 1 subject, but more generally there would be
-% more than one.
-structural_files{1}=[datadir '/structs/anat.nii']; % leave empty if no .nii structural file available
+% *SET UP STRUCTURALS*
+% 
+% Setup a list of existing structural files, in the same
+% order as spm_files and fif_files: Note that here we only have 1 subject,
+% but more generally there would be more than one. Here we do not use them,
+% but for any source-reconstruction following OPT you would need them.
+structural_files{1}=[datadir '/structs/anat.nii']; % leave empty if no structural available
 
 
-%% SETUP OPT
+%% SETTING UP AN OPT ANALYSIS
+% This sets up an OPT struct to pass to osl_check_opt, by setting the
+% appropriate fields and values in the OPT struct. Note that some fields
+% are mandatory while others are optional (and will be automatically set to
+% their default values). The osl_check_opt.m function should be used to
+% setup the settings for OPT. This function will check the settings, and
+% will throw an error if any required inputs are missing, and will fill
+% other settings that are not passed in with their default values. The OPT
+% structure can then be passed to osl_run_opt to do an OPT analysis. On the
+% Matlab command line type "help osl_check_opt" to see what the mandatory
+% fields are. Note that you MUST specify:
+%
+% _opt.raw_fif_files_: A list of the existing raw fif files for subjects
+% (need these if you want to do SSS Maxfiltering) OR 
+%
+% _opt.input_files_: A list of the base input (e.g. fif) files for input into
+% the SPM convert call
+% 
+% In any case you need:
+% 
+% _opt.datatype_: Specifies the datatype; i.e. 'neuromag', 'ctf', 'eeg';
+% 
+% For more information, see
+% <https://sites.google.com/site/ohbaosl/preprocessing/opt-under-construction>
+ 
 opt=[];
 
 %%
-% required inputs
-
+% *Specify required inputs*
+% 
+% List of input files and data type: In our case the input files come from
+% above location and we use data acquired by the Elekta Neuromag system
+% (same type as in manual preproc practical).
+ 
 opt.input_files=input_files;
 opt.datatype='neuromag';
 
 %%
-% optional inputs
+% *Specify optional inputs*
+% 
+% This has to be the name of the directory (full path) where the OPT will be stored,
+% and is given a ".opt" extension. Note that each OPT directory is
+% associated with an OPT run - if you rerun OPT with the same _opt.dirname_ then
+% this will overwrite an old directory, and the old OPT results will be
+% lost. Hence, you should ensure that you change _opt.dirname_ for a new
+% analysis, if you want to avoid overwriting an old one!
 
-opt.dirname=[datadir '/practical_badseg_africa.opt']; % directory opt settings and results will be stored
-
-%%
-% Maxfilter settings:
-opt.maxfilter.do=0; % here we are going to skip the double maxfilter call as this has been run already for us
- 
-%%
-% AFRICA settings
-% In this tutorial, we will not use AFRICA as part of automatic
-% preprocessing:
-opt.africa.do=0;
+opt.dirname=[datadir '/practical_singlesubject.opt'];
 
 %%
-% highpass filter settings:
-opt.highpass.do=0;
+% *Maxfilter settings:* Here we are going to skip the double maxfilter call
+% as this has been run already for us
+opt.maxfilter.do=0; 
 
-%%
-% bad segments settings
+
+%% HIGHPASS AND NOTCH FILTERING
+% Here, we set both the highpass filter and the notch filter to attenuate
+% slow drifts and 50 Hz line noise. This corresponds to our filtering part
+% during the <http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#23 manual preprocessing> , now OPT takes care of it.
+opt.highpass.do=1;
+% Notch filter settings
+opt.mains.do=1;
+
+
+%% DOWNSAMPLING
+% 
+% Now, while we do not do downsampling here, this is the template to modify
+% to enable downsampling with the respective sampling frequency desired.
+opt.downsample.do=0;
+opt.downsample.freq=150;
+
+
+%% IDENTIFYING BAD SEGMENTS 
+% This identifies bad segments in the continuous
+% data (similar to using oslview in the manual practical, just automated).
+% We turn this off for today's workshop. However, if you want to do an
+% automated AFRICA denoising as part of OPT, we recommend this to be set to
+% 1.
 opt.bad_segments.do=0;
 
-%% 
-% Epoching settings
-% Here the epochs are set to be from -1s to +2s relative to triggers
-% in the MEG data.
+
+%% AFRICA DENOISING
+% In this tutorial, we will not use AFRICA as part of the automatic
+% preprocessing: If you want to play around with it at a later stage, set
+% .do to 1 and run everything again. Again, make sure to set _opt.dirname_ to something
+% different than before to not overwrite your non-AFRICA results.
+opt.africa.do=0;
+opt.africa.ident.artefact_chans    = {'ECG','EOG'};
+opt.africa.ident.mains_kurt_thresh = 0.5;
+
+
+%% EPOCHING DATA
+% Here the epochs are set to be from -1s to +2s relative to triggers in the
+% MEG data.
 opt.epoch.do=1;
 opt.epoch.time_range = [-1 2]; % epoch end in secs   
 opt.epoch.trialdef(1).conditionlabel = 'StimLRespL';
@@ -412,57 +291,225 @@ opt.epoch.trialdef(8).conditionlabel = 'RespRRespR';
 opt.epoch.trialdef(8).eventtype = 'STI101_down';
 opt.epoch.trialdef(8).eventvalue = 29;
 
-%%
-% coreg settings
-opt.coreg.do=0; % not doing coreg here - although normally you would if you want to do subsequent analyses in source space 
-
-%%
-% outliers settings
+%% 
+% Instead of identifying bad segments in the continuous data, we will rely
+% on opt identifying bad trials in the epoched data using the opt.outliers
+% settings. This is roughly equivalent to using osl_reject_visual during
+% the <http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#70 manual procedure> .
 opt.outliers.do=1;
 
+
 %%
-% Checking chosen settings
+% Coregistration settings: We're not doing coregistration here, but normally
+% you would if you want to do subsequent analyses in source space. This
+% requires structural scans.
+opt.coreg.do=0; 
+
+
+
+%% CHECK OPT SETTINGS
+% Checking chosen settings: By calling osl_check_opt we will check the
+% validity of the OPT parameters we have specified. Then, OPT will fill in any missing
+% parameters with their default values for us.
 
 opt=osl_check_opt(opt);
 
-%% LOOK AT OPT SETTINGS
+%% LOOK AT OPT SETTINGS AND SUBSETTINGS
+%%
+% *DISPLAY OPT SETTINGS*
+%
+% This gives an overview about set parameters
 
 disp('opt settings:');
 disp(opt);
 
 
-%% LOOK AT OPT SUB-SETTINGS
+%%
+% *LOOK AT OPT SUB-SETTINGS*
+% 
+% The OPT structure contains a number of subfields containing the settings
+% for the relevant stages of the pipeline. Note that each of these has a
+% "do" flag (e.g. opt.downsample.do), which indicates whether that part of
+% the pipeline should be run or not. 
 
 disp('opt.maxfilter settings:');
 disp(opt.maxfilter);
-
+%%
 disp('opt.downsample settings:');
 disp(opt.downsample);
-
+%%
 disp('opt.africa settings:');
 disp(opt.africa);
-
+%%
 disp('opt.highpass settings:');
 disp(opt.highpass);
-
+%%
 disp('opt.epoch settings:');
 disp(opt.epoch);
-
+%%
 disp('opt.outliers settings:');
 disp(opt.outliers);
-
+%%
 disp('opt.coreg settings:');
 disp(opt.coreg);
 
-%% RUN OPT
-
+%% RUNNING THE OPT ANALYSIS 
+% This will run the main OPT analysis:
 opt=osl_run_opt(opt);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%% RESULTS
+%% VIEWING OPT RESULTS 
+% 
+% There is several ways to look how OPT has been run:
+%%
+% *VIEWING OPT RESULTS IN MATLAB*
+% 
+% Running the OPT analysis will create an OPT output directory (whose name
+% is the name set in opt.dirname with a ".opt" suffix added). This contains
+% all you need to access the results of the analysis. Note that you can
+% load these into Matlab using the call:
+opt = osl_load_opt(opt.dirname);
 
 disp('opt.results:');
 disp(opt.results);
+
+%%
+% In particular, the OPT object contains a sub-struct named results, (i.e.
+% opt.results), containing:
+%
+% * .logfile (a file containing the matlab output) 
+% * .report (a file corresponding to a web page report with diagnostic plots) 
+% * .spm_files (a list of SPM MEEG object files corresponding to the continuous data (before epoching), e.g. to pass into an OAT analysis) 
+% * .spm_files_epoched (a list of SPM MEEG object files corresponding to the epoched data, e.g. to pass into an OAT analysis)
+% 
+% It is highly recommended that you always inspect both the
+% opt.results.logfile and opt.results.report, to ensure that OPT has run
+% successfully.
+
+
+%%
+% *VIEWING OPT RESULTS BY CHECKING OPT REPORTS IN BROWSER*
+%
+% Open the web page report indicated in opt.results.report (and in the screen output of _osl_run_opt_ ) in a web
+% browser. This displays important diagnostic plots. At the top of the file
+% is a link to opt.results.logfile (a file containing the matlab output) -
+% check this for any errors or unusual warnings. Then there will be a list
+% of session specific reports. Here we have only preprocessed one session.
+% To view this open the file pointed to by
+opt.results.report.html_fname
+
+%%
+% in your web browser. This brings up the diagnostic plots for session 1.
+% There are a number of things to look out for:
+%
+% *Maxfilter:*
+%
+% Normally, the first thing shown would be the results of
+% running SSS Maxfilter (and associated bad channel detection). Since we
+% have not run that here there are no diagnostic plots to show for this.
+%
+% *Histogram of events corrected for button presses:*
+% 
+% Shows you the number of triggers found for each event code - check that these correspond to the
+% expected number of triggers in your experimental setup. 
+%
+% *Africa*
+% 
+% (not applicable here, unless _opt.africa.do=1_):
+%
+% * Mains artefacts: This shows IC sensor maps (for both sensor types), spectra, and time
+% courses detected as being due to 50 Hz mains noise by AFRICA - check that
+% these have sensible frequency spectra with a peak at 50 Hz
+%
+% * EOG and ECG artefacts: IC sensor maps (for both sensor types), spectra, and time
+% courses detected as being due to EOG or ECG artefacts by AFRICA. These
+% have been found due to their IC time courses having high correlation with
+% the corresponding EOG and ECG channels in the data - check that these
+% have sensible time courses (at least for EOG) and topographies (for both
+% EOG and ECG) [you will learn this by experience]. 
+%
+% * High Kurtosis artefacts: IC sensor maps (for both sensor types), spectra, and time
+% courses detected as having very high kurtosis over time by AFRICA. Very
+% high kurtosis is caused by having very "peaked" distributions, and are
+% more likely to be due to non-neuronal artefacts - check that these have
+% appropriately "bizarre" time courses and topographies. 
+%
+% *Outlier Detection:*
+%
+% Histograms and scatterplots before and after outlier detection. The
+% scatterplots show the channels/trial number versus the metric (e.g.
+% "std") as red crosses before rejection and green crosses after rejection.
+% Channels/trials to be retained are indicated by green circles.
+
+
+%% 
+% *CHECKING OPT RESULTS BY LOOKING AT THE DATA*
+%
+% Last but not least you might want to look at your actual data to check
+% whether OPT gives your good results: We will now load the M/EEG object created by OPT (analogous to our
+% resulting D objects in the manual preproc practical).
+D=spm_eeg_load([osldir '/example_data/preproc_example/automatic_opt/practical_singlesubject.opt/Seffdspm_meg1.mat']);
+
+% Then define some trials to look at:
+good_stimresp_trls = [D.indtrial('StimLRespL','good') D.indtrial('StimLRespR','good')];
+
+% Get the sensor indices for the two different MEG acquisition
+% modalities from the data:
+planars = D.indchantype('MEGPLANAR');
+magnetos = D.indchantype('MEGMAG');
+
+%%
+% Finally, as in the manual preprocessing practical, we are going to have a
+% quick look at data quality by just doing some preliminary and rudimentary ERF
+% analysis. We will use the loaded D object, all good stimulus response
+% trials and average them to get an idea about the data quality after OPT.
+
+figure('units','normalized','outerposition',[0 0 0.6 0.3]); 
+subplot(1,3,1); % plots gradiometer ERF image
+imagesc(D.time,[],squeeze(mean(D([planars(:)],:,good_stimresp_trls),3)));
+xlabel('Time (seconds)','FontSize',20);
+ylabel('Sensors','FontSize',20);colorbar
+title('ERF, planar gradiometers','FontSize',20)
+set(gca,'FontSize',20)
+
+subplot(1,3,2);  % plots magnetometer ERF image
+imagesc(D.time,[],squeeze(mean(D([magnetos(:)],:,good_stimresp_trls),3))); 
+xlabel('Time (seconds)','FontSize',20);
+ylabel('Sensors','FontSize',20);colorbar
+title('ERF, magnetometers','FontSize',20)
+set(gca,'FontSize',20)
+
+subplot(1,3,3); % plots 1 chosen planar gradiometer time-course
+plot(D.time,squeeze(mean(D(planars(179),:,good_stimresp_trls),3)));
+xlabel('Time (seconds)','FontSize',20);ylim([-15 10])
+set(gca,'FontSize',20)
+ylabel(D.units(planars(1)),'FontSize',20);
+title('ERF at sensor 179','FontSize',20)
+
+%%
+% These ERFs should look reasonable, i.e. both the ERF across sensors as well as the single-sensor ERF should look sufficiently smooth, it should look like
+% this:
+
+%%
+% 
+% <<osl_example_preproc_opt_ERFs_CHECK.png>>
+% 
+
+%%
+% Together, the three above checks should give you a sufficiently good idea about
+% your data quality. As a rule of thumb, always check your data, especially
+% after running long chains of automated analyses like OPT. Once you are in
+% source-space it will be even harder to tell whether your data has
+% sufficient data quality or is contaminated by artefacts.
+
+
+%% EXERCISES
+% 
+% Now that you have seen the wonders of automated preprocessing, why not
+% take a look at the really bad data from the manual preprocessing
+% practical? Open the corresponding script to identify its location and try
+% to adapt the OPT template script described here to run the problematic data set via OPT. Keep in mind that
+% this data was exceptionally bad, so expect to have to test and tweak your settings until you
+% reach a satisfying output (if at all).
 
 ##### SOURCE END #####
 --></body></html>
