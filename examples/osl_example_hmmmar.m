@@ -227,7 +227,8 @@ else
     load(hmmmar_name)
 end
 
-%% First we look at the state evoked probability, locked to the stimulus;
+%% 
+% First we look at the state evoked probability, locked to the stimulus;
 % the stimulus is saved in the variable onset, which contains a (Tx1)
 % logical vector, with values set to 1 when the fingertapping action is effected. 
 
