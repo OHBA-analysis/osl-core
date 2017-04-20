@@ -7,7 +7,7 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>osl_example_hmmmar</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-20"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">HMM-Gaussian on hilbert envelopes</a></li><li><a href="#7">HMM-MAR on raw time series</a></li><li><a href="#13">Interrogating the results</a></li></ul></div><p>This example shows how to use the HMM-MAR to infer transient states that:</p><p>(i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency, (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes, (iii) are not only sensitive to power differences but also to phase coupling.</p><p>In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, using two source-reconstructed regions in the motor cortex (left and right). The task is a finger-tapping motor task, where subjects press a button volitionally. We will see whether, with no prior information of the task during training, the estimated HMM contains states that are temporally related to the task timing, and we will inspect if these states contain meaningful features. We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).</p><p>The script follows the paper Vidaurre et al. (2016)</p><pre class="codeinput"><span class="comment">% Directory of the data:</span>
+   <title>osl_example_hmmmar</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-20"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">HMM-Gaussian on hilbert envelopes</a></li><li><a href="#7">HMM-MAR on raw time series</a></li><li><a href="#14">Interrogating the results</a></li></ul></div><p>This example shows how to use the HMM-MAR to infer transient states that:</p><p>(i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency, (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes, (iii) are not only sensitive to power differences but also to phase coupling.</p><p>In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, using two source-reconstructed regions in the motor cortex (left and right). The task is a finger-tapping motor task, where subjects press a button volitionally. We will see whether, with no prior information of the task during training, the estimated HMM contains states that are temporally related to the task timing, and we will inspect if these states contain meaningful features. We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).</p><p>The script follows the paper Vidaurre et al. (2016)</p><pre class="codeinput"><span class="comment">% Directory of the data:</span>
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>);
 <span class="comment">% Name for this HMM-MAR analysis:</span>
 hmmmar_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>,<span class="string">'hmmmar_demo.mat'</span>);
@@ -16,7 +16,7 @@ Hz = 200;
 
 <span class="comment">% Set do_analysis=1 to re-run the analysis, otherwise use precomputed result</span>
 do_analysis = 0;
-</pre><h2 id="2">HMM-Gaussian on hilbert envelopes</h2><p>First we are running the HMM on the Hilbert envelopes (or power time series) using a Gaussian distribution as observation model. This is the method established in Baker et al. (2014), but applied in task and in two regions only.</p><p>We first need to load and prepare the data. Data, for any variety of the HMM, is usually provided in a matrix (time by regions) with all concatenated subjects. However, if data is too big, we can pass a cell (subjects by 1) where each elements contains the name of the file containing the data for one subject.</p><pre class="codeinput"><span class="comment">% Here, we are going to concatenate data into a single matrix.</span>
+</pre><h2 id="2">HMM-Gaussian on hilbert envelopes</h2><p>First we are running the HMM on the Hilbert envelopes (or power time series) using a Gaussian distribution as observation model. This is the method established in Baker et al. (2014), but applied in task and in two regions only.</p><p>We first need to load and prepare the data. Data, for any variety of the HMM, is usually provided in a matrix (time by regions) with all concatenated subjects. However, if data is too big, we can pass a cell (subjects by 1) where each elements contains the name of the file containing the data for one subject. Here, data is manageable, so we just pass it as a concatenated single matrix.</p><pre class="codeinput"><span class="comment">% Here, we are going to concatenate data into a single matrix.</span>
 <span class="comment">% We will also need to let the toolbox know the length of each subject's data (within this big matrix).</span>
 X = []; <span class="comment">% data, time by regions</span>
 T = []; <span class="comment">% length of trials, a vector containing how long is each session/trial/subject</span>
@@ -31,7 +31,7 @@ N = length(subjects);
     T = [T size(sourcedata,1)]; <span class="comment">% time length of this subject</span>
     X = [X; sourcedata]; <span class="comment">% concat subject</span>
 <span class="keyword">end</span>
-</pre><p>Prepare the HMM options, where we will configure it to use  and run the HMMMAR</p><pre class="codeinput">options = struct();
+</pre><p>Prepare the HMM options, which will be set to use the HMM-Gaussian on the power time series</p><pre class="codeinput">options = struct();
 <span class="comment">% number of states: in general, the higher this number, the more "detailed" will be the segmentation.</span>
 <span class="comment">% (By running the model with different number of states, we could get some sense of "state hierarchy").</span>
 options.K = 3;
@@ -65,16 +65,14 @@ options.tapers = [4 7]; <span class="comment">% internal multitaper parameter</s
 options.Fs = Hz; <span class="comment">% sampling frequency in Hertzs</span>
 options.win = 10 * options.Fs; <span class="comment">% window length, related to the level of detail of the estimation;</span>
 <span class="comment">% that is, if we increase the win parameter, we will obtain an estimation that is more detailed in the frequency scale</span>
-<span class="comment">% (i.e. contains more frequency bins between 1 and 40 Hertzs) at the expense of some robustness,.</span>
+<span class="comment">% (i.e. contains more frequency bins between 1 and 40 Hertzs) at the expense of some robustness.</span>
 
 <span class="keyword">if</span> do_analysis <span class="comment">% Estimate the spectra</span>
     spectra_env = hmmspectramt(X,T,Gamma_env,options);
 <span class="keyword">else</span> <span class="comment">% load a precomputed results</span>
     load(hmmmar_name,<span class="string">'spectra_env'</span>)
 <span class="keyword">end</span>
-</pre><h2 id="7">HMM-MAR on raw time series</h2><pre class="codeinput"><span class="comment">% We have estimated a HMM-Gaussian on the power time series,</span>
-<span class="comment">% now we look at the raw data (which contains phase) following (Vidaurre et al. 2016).</span>
-</pre><p>One thing we must take care of when working on raw data in source-space is sign ambiguity. As a consequence of the nature of the source-reconstruction process, the sign of the time series are arbitrary. That means that, because different subjects might have different signs in different channels, the phase relations between regions can cancel across subjects, resulting in artefactual zero phase coupling. The HMM-MAR toolbox includes a set of functions to correct for sign ambiguity. The goal is to find a sign permutation for each subject that maximises sign cohesion of the lagged cross-channel correlations across subjects or trials. Note that, in part because data have been leakage corrected, it is not enough to look at just correlation across channels, and we need to look at lagged correlation (i.e. within a certain time window)</p><pre class="codeinput"><span class="comment">% options for sign flipping</span>
+</pre><h2 id="7">HMM-MAR on raw time series</h2><p>We have estimated a HMM-Gaussian on the power time series, now we look at the raw data (which contains phase) following (Vidaurre et al. 2016).</p><p>One thing we must take care of when working on raw data in source-space is sign ambiguity. As a consequence of the nature of the source-reconstruction process, the sign of the time series are arbitrary. That means that, because different subjects might have different signs in different channels, the phase relations between regions can cancel across subjects, resulting in artefactual zero phase coupling. The HMM-MAR toolbox includes a set of functions to correct for sign ambiguity. The goal is to find a sign permutation for each subject that maximises sign cohesion of the lagged cross-channel correlations across subjects or trials. Note that, in part because data have been leakage corrected, it is not enough to look at just correlation across channels, and we need to look at lagged correlation (i.e. within a certain time window)</p><pre class="codeinput"><span class="comment">% options for sign flipping</span>
 options = struct();
 options.maxlag = 8; <span class="comment">% defining the window length for which the lagged correlation is computed</span>
 options.noruns = 100; <span class="comment">% number of reruns, considering that the process can get stuck in local minima</span>
@@ -138,7 +136,7 @@ options.win = 10 * options.Fs; <span class="comment">% window length, related to
 <span class="keyword">else</span> <span class="comment">% load a precomputed results</span>
     load(hmmmar_name,<span class="string">'spectra_raw_mt'</span>)
 <span class="keyword">end</span>
-</pre><h2 id="13">Interrogating the results</h2><p>Now we do some plotting of the HMM on power envelopes and HMM-MAR results. We reload the pre-computed results from a previous run, which would have taken a bit longer (10-20min)</p><pre class="codeinput"><span class="keyword">if</span> do_analysis
+</pre><h2 id="14">Interrogating the results</h2><p>Now we do some plotting of the HMM on power envelopes and HMM-MAR results. We reload the pre-computed results from a previous run, which would have taken a bit longer (10-20min).</p><pre class="codeinput"><span class="keyword">if</span> do_analysis
     save(hmmmar_name,<span class="string">'hmm_env'</span>,<span class="string">'Gamma_env'</span>,<span class="string">'spectra_env'</span>,<span class="keyword">...</span>
         <span class="string">'hmm_raw'</span>,<span class="string">'Gamma_raw'</span>,<span class="string">'spectra_raw'</span>,<span class="string">'spectra_raw_mt'</span>,<span class="string">'spectra_raw_mt'</span>)
 <span class="keyword">else</span>
@@ -169,16 +167,7 @@ t0_env = 0; t0_raw = 0; <span class="comment">% auxiliary variables</span>
 <span class="comment">% average across subjects to get a group estimation</span>
 evokedGamma_env = mean(evokedGamma_env,3);
 evokedGamma_raw = mean(evokedGamma_raw,3); <span class="comment">% average across subjects</span>
-
-<span class="comment">%</span>
-<span class="comment">% We plot the "state evoked response" for the HMM-Gaussian on power data and the HMM-MAR, side by side.</span>
-<span class="comment">% We can observe that the states lock to the stimulus (vertical black line)</span>
-<span class="comment">% much more strongly for the HMM-MAR than for the HMM-Gaussian, reflecting that</span>
-<span class="comment">% (i) phase difference makes a difference on the estimation and/or</span>
-<span class="comment">% (ii) differences in power between particular frequencies (only accessible with the HMM-MAR)</span>
-<span class="comment">% carry valuable information.</span>
-
-figure(1);
+</pre><p>We plot the "state evoked response" for the HMM-Gaussian on power data and the HMM-MAR, side by side. We can observe that the states lock to the stimulus (vertical black line) much more strongly for the HMM-MAR than for the HMM-Gaussian, reflecting that (i) phase difference makes a difference on the estimation and/or (ii) differences in power between particular frequencies (only accessible with the HMM-MAR) carry valuable information.</p><pre class="codeinput">figure(1);
 halfwindow = (window-1)/2;
 <span class="comment">% Evoked state response for the HMM on power envelopes</span>
 subplot(1,2,1)
@@ -334,7 +323,7 @@ P_raw =
     0.4116         0    0.5884
     0.5854    0.4146         0
 
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
+</pre><p>In light of the <b>very</b> different transition probabilities of the two different models, it is reasonable to expect that the states for the HMM-MAR and the HMM-Gaussian on power are effectively capturing different (yet complementary) aspects of the data.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %%
 % This example shows how to use the HMM-MAR to infer transient states that:
@@ -373,6 +362,7 @@ do_analysis = 0;
 % Data, for any variety of the HMM, is usually provided in a matrix (time by regions) with all concatenated subjects.
 % However, if data is too big, we can pass a cell (subjects by 1) where each elements contains
 % the name of the file containing the data for one subject. 
+% Here, data is manageable, so we just pass it as a concatenated single matrix. 
 
 % Here, we are going to concatenate data into a single matrix. 
 % We will also need to let the toolbox know the length of each subject's data (within this big matrix).
@@ -391,8 +381,8 @@ for j = subjects % iterate through subjects
 end
 
 %% 
-% Prepare the HMM options, where we will configure it to use  and run the HMMMAR
-    
+% Prepare the HMM options, which will be set to use the HMM-Gaussian on the power time series
+ 
 options = struct();
 % number of states: in general, the higher this number, the more "detailed" will be the segmentation.
 % (By running the model with different number of states, we could get some sense of "state hierarchy").
@@ -445,7 +435,7 @@ options.tapers = [4 7]; % internal multitaper parameter
 options.Fs = Hz; % sampling frequency in Hertzs
 options.win = 10 * options.Fs; % window length, related to the level of detail of the estimation;
 % that is, if we increase the win parameter, we will obtain an estimation that is more detailed in the frequency scale
-% (i.e. contains more frequency bins between 1 and 40 Hertzs) at the expense of some robustness,.
+% (i.e. contains more frequency bins between 1 and 40 Hertzs) at the expense of some robustness.
 
 if do_analysis % Estimate the spectra 
     spectra_env = hmmspectramt(X,T,Gamma_env,options);
@@ -455,9 +445,10 @@ end
 
 %% HMM-MAR on raw time series
 
+%%
 % We have estimated a HMM-Gaussian on the power time series, 
 % now we look at the raw data (which contains phase) following (Vidaurre et al. 2016).
-
+%
 %% 
 % One thing we must take care of when working on raw data in source-space is sign ambiguity.
 % As a consequence of the nature of the source-reconstruction process, the sign of the time series 
@@ -556,7 +547,7 @@ end
 
 %% Interrogating the results
 % Now we do some plotting of the HMM on power envelopes and HMM-MAR results.
-% We reload the pre-computed results from a previous run, which would have taken a bit longer (10-20min)
+% We reload the pre-computed results from a previous run, which would have taken a bit longer (10-20min).
 
 if do_analysis
     save(hmmmar_name,'hmm_env','Gamma_env','spectra_env',...
@@ -596,7 +587,7 @@ end
 evokedGamma_env = mean(evokedGamma_env,3); 
 evokedGamma_raw = mean(evokedGamma_raw,3); % average across subjects
  
-% 
+%% 
 % We plot the "state evoked response" for the HMM-Gaussian on power data and the HMM-MAR, side by side.
 % We can observe that the states lock to the stimulus (vertical black line)
 % much more strongly for the HMM-MAR than for the HMM-Gaussian, reflecting that
@@ -777,5 +768,9 @@ end
 disp('HMM-MAR Probability of transition from state i to state j')
 P_raw
 
+%%
+% In light of the *very* different transition probabilities of the two different models, 
+% it is reasonable to expect that the states for the HMM-MAR and the HMM-Gaussian on power
+% are effectively capturing different (yet complementary) aspects of the data.
 ##### SOURCE END #####
 --></body></html>
