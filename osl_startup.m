@@ -7,6 +7,10 @@ function osl_startup( osldir )
         osldir = fileparts(f);
     end
     
+    if ~exist(osldir,'dir')
+        error(sprintf('Specified OSL directory does not exist: %s',osldir));
+    end
+
     setenv('OSLDIR',osldir)
 
     % does no path-changing if running in deployed mode (gw '13).
@@ -52,16 +56,16 @@ function osl_startup( osldir )
     %% Copy changes to SPM code from osl
     filelist={};targetdir={};
 
-    filelist{end+1}='osl-core/spm-changes/bf_save.m';
+    filelist{end+1}='osl-core/spm-changes/private/bf_save.m';
     targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
-    filelist{end+1}='osl-core/spm-changes/bf_output_montage_osl.m';
+    filelist{end+1}='osl-core/spm-changes/private/bf_output_montage_osl.m';
     targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
-    filelist{end+1}='osl-core/spm-changes/bf_write_spmeeg_osl.m';
+    filelist{end+1}='osl-core/spm-changes/private/bf_write_spmeeg_osl.m';
     targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
-    filelist{end+1}='osl-core/spm-changes/bf_inverse_mne_adaptive.m';
+    filelist{end+1}='osl-core/spm-changes/private/bf_inverse_mne_adaptive.m';
     targetdir{end+1}='spm12/toolbox/spm-beamforming-toolbox';
 
     filelist{end+1}='osl-core/spm-changes/private/ft_read_event_4osl.m';
@@ -105,6 +109,9 @@ function osl_startup( osldir )
 
     filelist{end+1} ='osl-core/spm-changes/private/ft_getopt.c';
     targetdir{end+1}='spm12/external/fieldtrip/src/';
+
+    filelist{end+1} ='osl-core/spm-changes/private/ft_select_range.m';
+    targetdir{end+1}='spm12/external/fieldtrip/plotting/';
 
     for k=1:length(filelist),
         copyfile( fullfile(osldir,filelist{k}), fullfile(osldir,targetdir{k}), 'f' );

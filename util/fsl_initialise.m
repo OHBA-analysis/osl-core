@@ -16,7 +16,7 @@ function fsl_initialise(conf_file)
 	% If FSLDIR is already set and config file is empty, test FSL and return
 	% This means nothing will change for users who have already set up the 
 	% environment externally
-	if nargin == 0 && ~isempty(getenv('FSLDIR'))
+	if nargin == 0 && ~isempty(getenv('FSLDIR')) && ~isempty(strfind(getenv('PATH'),'fsl/bin'))
 		addpath(fullfile(getenv('FSLDIR'),'etc','matlab')); % Make sure FSL matlab functions are on the path
 
 		try

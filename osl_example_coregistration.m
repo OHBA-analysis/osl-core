@@ -3,7 +3,7 @@
 % This tutorial covers the registration of mri and meg datasets into a
 % common space to allow for analysis in sourcespace.
 %
-% This practical uses data from the face_singlesubject and glean_example
+% This practical uses data from the face_singlesubject and coreg_example
 % subfolders in the osl2.1/example_data directory. Please make sure these
 % are both present before starting.
 %
@@ -33,6 +33,12 @@
 %
 % Coregistration is performed in OSL using osl_headmodel.
 %
+% We will first run a standard coregistration using SPM. More information
+% about this can be found
+% here:
+%
+% <https://sites.google.com/site/ohbaosl/preprocessing/co-registration>
+%
 % This takes an option structure defining several key parameters:
 %
 % * S.D - spm object filename
@@ -41,9 +47,9 @@
 % headshape points to refine the alignment between the MRI and Polhemus
 % data
 %
-% The following example runs the coregstration on two datasets which are
+% The following example runs the coregistration on two datasets which are
 % required for the sourcespace OAT practical. While running, SPM will open
-% an window showing the alignment of the headshape points to the scalp.
+% a window showing the alignment of the headshape points to the scalp.
 
 % Set up data paths
 datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
@@ -78,7 +84,7 @@ D=osl_headmodel(S);
 %
 % The coregistration shows several types of information:
 %
-% * Green circles - MEG sensors
+% * Green circles - MEG sensors (from an Elekta System)
 % * Pink Diamonds - Fiducial locations (LPA, RPA and Nasion)
 % * Light Red Surfact - Scalp extraction
 % * Red Surface - Inner skull extraction
@@ -108,22 +114,87 @@ spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
 % number of headshape points covering the scalp and ridgid parts of the
 % face.
 
-datadir = fullfile(osldir,'example_data','roinets_example');
-spm_file=[datadir '/subject_1'];
+datadir = fullfile(osldir,'example_data','coreg_example');
+spm_file=[datadir '/dsubject1_reduced'];
 
 S = [];
 S.D = spm_file;
-S.mri = fullfile(osldir,'example_data','glean_example','structurals','struct.nii');
+S.mri = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon.nii');
 S.useheadshape = 1;
-S.use_rhino = 0;
+S.use_rhino = 1; % We now set the RHINO option to 1
 S.forward_meg = 'Single Shell';
 S.fid.label.nasion = 'Nasion';
 S.fid.label.lpa = 'LPA';
 S.fid.label.rpa = 'RPA';
 D=osl_headmodel(S);
 
+%% VISUALISING STRUCTURAL PREPROCESSING
+%
+% The first time RHINO coregistration is run the structural data will be
+% preprocessed using FSL tools. These perform a linear registration, brain
+% extraction and scalp extraction from the T1 scan.
+%
+% More information about RHINO can be found here:
+%
+% <https://sites.google.com/site/ohbaosl/preprocessing/rhino>
+%
+% We can visualise the extracted scalp surface and original MRI scan in fslview with the
+% following call.
+%
+% This will load the structural scan overlayed on the scalp extraction.
+% You can turn-off the strutural scan by double clicking on the picture of
+% the eye to the left of the label 'subject1_struct_canon.nii' in the
+% middle-bottom of the screen. Underneath, the scalp is the boundary between the white
+% (outside) and black (inside) regions.
+%
+% Try turning the structural scan on and off whilst exploring the
+% image. There is a good correspondance between the scalp on the MRI and
+% the extracted scalp image. Any deformations in the extracted scalp could 
+% be misleading when we align to our headshape points. In this case, the
+% structrual preprcessing has worked well.
+
+mri = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon.nii');
+scalp = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon_scalp.nii.gz');
+
+system(['fslview ' mri ' ' scalp ])
 
 
+%% VISUALISING THE RHINO COREGISTRATION
+%
+% We can visualise the full coregistration by calling rhino_display(D).
+%
+% This contains similar information to the SPM coreg.
+%
+% * Green Dots - MEG Sensors (from a CTF system including 4 Reference Coils)
+% * Magenta Diamonds - MRI Fiducial Locations
+% * Cyan Circles - MEG Fiducial Locations
+% * Beige Surface - Whole Head Scalp Extraction
+% * Pink Surface - Brain Extraction
+% * Small Blue-Red Dots - Headshape points colour coded by fit to the
+% scalp. Blue indicates a close fit and Red a bad fit. A large number of
+% Red headshape points indicates that the general fit might be bad.
+%
+% You can click and drag the image to explore the registration.
+%
+% Note the close correspondance between the headshape points and scalp
+% extraction. The inclusion of the whole head and nose gives us greater 
+% confidence in the quality of the coregistration. Compare the RHINO
+% surfaces with those from the SPM output.
+%
+% This coregistration has worked very well. If you notice any large disparities 
+% in future analyses, these should be manually corrected at this stage:
+% 
+% * Bad scalp extractions can be improved by tuning the FSL BET.
+% * Misleading or erroneous headshape points can be removed.
+% * Badly estimated Fiducial locations can be reestimated.
+%
+
+D = spm_eeg_load(S.D);
+rhino_display(D);
+
+
+%%
+% <<osl_example_coregistration_rhino.png>>
 
 
 

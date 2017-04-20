@@ -114,7 +114,7 @@ for subi=1:length(current_level.subjects_to_do),
                 
                 S=[];
                 
-                S.lower_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' lower_level.name '_mask'];
+                S.lower_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' lower_level.name '_mask.nii.gz'];
                 S.current_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' lower_level.name '_' current_level.name '_mask'];
                 
                 S.current_level=current_level;

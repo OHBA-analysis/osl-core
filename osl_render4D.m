@@ -26,9 +26,9 @@ function osl_render4D(nii,varargin)
     [inpath,infile] = fileparts(nii);
 
     arg = inputParser;
-    arg.addParameter('savedir',inpath); % Only compare 8-12Hz with data
-    arg.addParameter('interptype','trilinear'); % Array of center frequencies (for +-2Hz windows) e.g. [10 12] would expand to {[8 12],[10 14]}. Only valid if quick is false
-    arg.addParameter('visualise',true); % If empty, load data from file
+    arg.addParameter('savedir',inpath); 
+    arg.addParameter('interptype','trilinear'); 
+    arg.addParameter('visualise',true); 
     arg.parse(varargin{:});
 
     if ~isempty(arg.Results.savedir) && ~isdir(arg.Results.savedir)

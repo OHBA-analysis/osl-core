@@ -52,10 +52,10 @@ function osl_spinning_brain(fname,fig,duration)
 	end
 
 	for j = 1:n_frames
-
+		
 		for k = 1:length(ax)
 			current_view = get(ax(k),'View');
-			camorbit(ax(k),sign(current_view(2))*360/n_frames,0);
+			camorbit(ax(k),sign(current_view(2)+eps)*360/n_frames,0);
 		end
 
 		cdata = getframe(fig);

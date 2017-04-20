@@ -5,6 +5,10 @@
 % Work your way through the script cell by cell using the supplied dataset.
 % As well as following the instructions below, make sure that you read all
 % of the comments and understand each step as you go.
+%
+% This practical requires the first part of the osl_example_coregistration
+% practical to be run first. If you haven't run this before, please do so
+% before starting this session.
 
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
@@ -38,21 +42,6 @@ workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 
 spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
 spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
-
-% This bit changes the paths for the structural information to the correct
-% ones.
-
-% oldpath='/home/disk3/ajquinn/Projects/drugface/structurals/M10/';
-% newpath=[osldir '/example_data/faces_singlesubject/structurals/'];
-%
-% D_cont=spm_eeg_load(spm_files_continuous{1});
-% D_epoched=spm_eeg_load(spm_files_epoched{1});
-%
-% D_cont_new=osl_relink_Dinv(D_cont,oldpath,newpath);
-% D_epoched_new=osl_relink_Dinv(D_epoched,oldpath,newpath);
-%
-% D_cont_new.save;
-% D_epoched_new.save;
 
 %% SETUP THE OAT:
 %

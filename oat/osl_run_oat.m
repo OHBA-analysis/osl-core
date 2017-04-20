@@ -17,9 +17,9 @@ if(isempty(findstr(oat.source_recon.dirname, '.oat')))
     oat.source_recon.dirname=[oat.source_recon.dirname, '.oat'];
 end;
 
-warning off;
-mkdir(oat.source_recon.dirname);
-warning on;
+if ~exist(oat.source_recon.dirname,'dir')
+    mkdir(oat.source_recon.dirname);
+end
 
 % set results container
 oat.results=[];
