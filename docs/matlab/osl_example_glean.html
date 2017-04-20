@@ -7,32 +7,9 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>osl_example_glean</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-20"><meta name="DC.source" content="osl_example_glean.m"></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Estimate a whole-brain HMM model with GLEAN</a></li><li><a href="#8">Interrogating the results</a></li></ul></div><h2 id="1">Estimate a whole-brain HMM model with GLEAN</h2><pre class="codeinput"><span class="comment">% This example shows how to use the HMM to infer transient states</span>
-<span class="comment">% in whole-brain resting state MEG data, such that the states reflect</span>
-<span class="comment">% distinct, recurrent patterns of power</span>
-<span class="comment">% and functional connectivity (in terms of power correlation).</span>
-<span class="comment">% For this, we will use GLEAN, a tool offering a wrap of functionalities</span>
-<span class="comment">% and internally using the HMM-MAR toolbox (which will be covered in the next practical)</span>
-<span class="comment">% for the final estimation.</span>
-<span class="comment">% GLEAN does a number of things for us before calling to the HMM-MAR:</span>
-<span class="comment">%</span>
-<span class="comment">% 1.- Bandpass-filtering: we would be discarding very slow and very fast frequencies,</span>
-<span class="comment">%   although we also could use it to focus on a particular band of interest.</span>
-<span class="comment">%</span>
-<span class="comment">% 2.- Getting power time courses: using the Hilbert transform we will get rid of the phase,</span>
-<span class="comment">%   information, producing time series that reflect only the changes on power.</span>
-<span class="comment">%</span>
-<span class="comment">% 3.- Subsampling: because power changes are slow, we can afford subsampling the data to reduce</span>
-<span class="comment">%   the computational load without losing statistical power on the estimation.</span>
-<span class="comment">%</span>
-<span class="comment">% 4.- Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)</span>
-<span class="comment">%   onto a number of time series, each corresponding to a different brain region (uses ROInets).</span>
-<span class="comment">%</span>
-<span class="comment">% 5.- Leakage correction: because of the artefactual high correlation between proximal regions,</span>
-<span class="comment">%   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets).</span>
-</pre><pre class="codeinput"><span class="comment">% Directory of the data</span>
+   <title>osl_example_glean</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_glean.m"></head><body><div class="content"><h1></h1><!--introduction--><p>This example shows how to use the HMM to infer transient states in whole-brain resting state MEG data, such that the states reflect distinct, recurrent patterns of power and functional connectivity (in terms of power correlation).</p><p>For this, we will use GLEAN, a tool offering a wrap of functionalities on top of the HMM estimation. Internally, it uses the HMM-MAR toolbox (covered in the next practical) for the final estimation. GLEAN does a number of things for us before calling to the HMM-MAR:</p><p>1.- Bandpass-filtering: we would be discarding very slow and very fast frequencies,   although we also could use it to focus on a particular band of interest.</p><p>2.- Getting power time courses: using the Hilbert transform we will get rid of the phase,   information, producing time series that reflect only the changes on power.</p><p>3.- Subsampling: because power changes are slow, we can afford subsampling the data to reduce   the computational load without losing statistical power on the estimation.</p><p>4.- Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)   onto a number of time series, each corresponding to a different brain region (uses ROInets).</p><p>5.- Leakage correction: because of the artefactual high correlation between proximal regions,   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets).</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Estimate a whole-brain HMM model with GLEAN</a></li><li><a href="#8">Interrogating the results</a></li></ul></div><h2 id="1">Estimate a whole-brain HMM model with GLEAN</h2><p>We set the paths and data</p><pre class="codeinput"><span class="comment">% Directory of the data</span>
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>);
-<span class="comment">% Name for this GLEAN analysis:</span>
+<span class="comment">% Name for this GLEAN analysis</span>
 glean_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>,<span class="string">'glean_demo.mat'</span>);
 
 <span class="comment">% Set do_analysis=1 to re-run the analysis, otherwise use precomputed result</span>
@@ -80,54 +57,38 @@ Using default values for dir in GLEAN.results.settings
 load(glean_name)
 </pre><p>we first look at the basic temporal information: state time courses and life times</p><pre class="codeinput"><span class="comment">% show the entire state time courses</span>
 glean.plot_timecourse(GLEAN)
-</pre><img vspace="5" hspace="5" src="osl_example_glean_01.png" alt=""> <p>By zoom in to, for example, a time range between 6 and 6.5 seconds, it can be qualitatively noticed that the state visits are quite short, suggesting a quite fast time scale of network switching in the brain "at rest". We will look at it quantitatively below.</p><p>We next compute temporal properties related to the estimation This includes a calculation, per state, of: - the number of occurrences, or state visits. - the fractional occupancy: how much time is state is visited in proportion. - the mean life time: how much time, on average, the state visits last. - the mean interval length: how much time, on average, passes between two consecutive ocurrences of a state. - the entropy of the state time course</p><pre class="codeinput">settings = struct(<span class="string">'plot'</span>,0);
+</pre><img vspace="5" hspace="5" src="osl_example_glean_01.png" alt=""> <p>By zoom in to, for example, a time range between 6 and 6.5 seconds, it can be qualitatively noticed that the state visits are quite short, suggesting a quite fast time scale of network switching in the brain "at rest". We will look at it quantitatively below.</p><p>We next compute temporal properties related to the estimation. This includes a calculation, per state, of:</p><p>- the number of occurrences, or state visits.</p><p>- the fractional occupancy: how much time is state is visited in proportion.</p><p>- the mean life time: how much time, on average, the state visits last.</p><p>- the mean interval length: how much time, on average, passes between two consecutive ocurrences of a state.</p><p>- the entropy of the state time course</p><pre class="codeinput">settings = struct(<span class="string">'plot'</span>,0);
 GLEAN = glean.temporal_stats(GLEAN,settings);
-
-<span class="comment">% We show the fractional occupancy - states 3 and 8 are the most frequent,</span>
-<span class="comment">% whereas state 1 is the rarest.</span>
-figure
-bar(mean(GLEAN.results.temporal_stats.FractionalOccupancy.stats),0.9,<span class="string">'FaceColor'</span>,<span class="string">'r'</span>)
-ylabel(<span class="string">'%Occupancy'</span>,<span class="string">'FontSize'</span>,16)
-xlabel(<span class="string">'States'</span>,<span class="string">'FontSize'</span>,16)
-set(gca,<span class="string">'FontSize'</span>,16)
-xlim([0.5 8.5])
 </pre><pre class="">Computing statistics for Number of occurrences 
 Computing statistics for Fractional occupancy 
 Computing statistics for Mean life time 
 Computing statistics for Mean interval length 
 Computing statistics for Entropy 
-</pre><img vspace="5" hspace="5" src="osl_example_glean_02.png" alt=""> <pre class="codeinput"><span class="comment">% As a sanity check, it is interesting to look at the maximum fractional occupancy for every</span>
-<span class="comment">% subject. If this is high (say, &gt;50%) for a given subject,</span>
-<span class="comment">% that means that one single state is dominating the time series for that subject,</span>
-<span class="comment">% which implies that the dynamics for that subject have not been well captured.</span>
-<span class="comment">% Here, we observe that the maximum fractional occupancy never surpass 35%,</span>
-<span class="comment">% meaning that all states take 35% or less of the time per subject.</span>
-figure
+</pre><p>We show the fractional occupancy - states 3 and 8 are the most frequent, whereas state 1 is the rarest.</p><pre class="codeinput">figure
+bar(mean(GLEAN.results.temporal_stats.FractionalOccupancy.stats),0.9,<span class="string">'FaceColor'</span>,<span class="string">'r'</span>)
+ylabel(<span class="string">'%Occupancy'</span>,<span class="string">'FontSize'</span>,16)
+xlabel(<span class="string">'States'</span>,<span class="string">'FontSize'</span>,16)
+set(gca,<span class="string">'FontSize'</span>,16)
+xlim([0.5 8.5])
+</pre><img vspace="5" hspace="5" src="osl_example_glean_02.png" alt=""> <p>As a sanity check, it is interesting to look at the maximum fractional occupancy for every subject. If this is high (say, &gt;50%) for a given subject, that means that one single state is dominating the time series for that subject, which implies that the dynamics for that subject have not been well captured. Here, we observe that the maximum fractional occupancy never surpass 35%, meaning that all states take 35% or less of the time per subject.</p><pre class="codeinput">figure
 bar(max(GLEAN.results.temporal_stats.FractionalOccupancy.stats,[],2),0.9,<span class="string">'FaceColor'</span>,<span class="string">'m'</span>)
 ylabel(<span class="string">'Max %Occupancy'</span>,<span class="string">'FontSize'</span>,16)
 xlabel(<span class="string">'States'</span>,<span class="string">'FontSize'</span>,16)
 set(gca,<span class="string">'FontSize'</span>,16)
 xlim([0.5 12.5])
-</pre><img vspace="5" hspace="5" src="osl_example_glean_03.png" alt=""> <pre class="codeinput"><span class="comment">% We show the mean life times, seeing the states ocurrences are indeed quite fast,</span>
-<span class="comment">% with visits usually in between 150 and 250 ms.</span>
-figure
+</pre><img vspace="5" hspace="5" src="osl_example_glean_03.png" alt=""> <p>We show the mean life times, seeing the states ocurrences are indeed quite fast, with visits usually in between 150 and 250 ms.</p><pre class="codeinput">figure
 bar(mean(GLEAN.results.temporal_stats.MeanLifeTime.stats),0.9,<span class="string">'FaceColor'</span>,<span class="string">'b'</span>)
 ylabel(<span class="string">'% Mean Life Times (ms)'</span>,<span class="string">'FontSize'</span>,16)
 xlabel(<span class="string">'States'</span>,<span class="string">'FontSize'</span>,16)
 set(gca,<span class="string">'FontSize'</span>,16)
 xlim([0.5 8.5])
-</pre><img vspace="5" hspace="5" src="osl_example_glean_04.png" alt=""> <pre class="codeinput"><span class="comment">% We can look at the interval times, which oscillate in between 1 and 2.5s,</span>
-<span class="comment">% with the exception of state 1, which is to be expected considering is an usual state.</span>
-figure
+</pre><img vspace="5" hspace="5" src="osl_example_glean_04.png" alt=""> <p>We can look at the interval times, which oscillate in between 1 and 2.5s, with the exception of state 1, which is to be expected considering is an usual state.</p><pre class="codeinput">figure
 bar(mean(GLEAN.results.temporal_stats.MeanIntervalLength.stats),0.9,<span class="string">'FaceColor'</span>,<span class="string">'g'</span>)
 ylabel(<span class="string">'% Mean Interval Times (ms)'</span>,<span class="string">'FontSize'</span>,16)
 xlabel(<span class="string">'States'</span>,<span class="string">'FontSize'</span>,16)
 set(gca,<span class="string">'FontSize'</span>,16)
 xlim([0.5 8.5])
-</pre><img vspace="5" hspace="5" src="osl_example_glean_05.png" alt=""> <pre class="codeinput"><span class="comment">% Finally, we can look at the transition probability matrix between</span>
-<span class="comment">% states. We remove the diagonal because we want to focus on the</span>
-<span class="comment">% transitions</span>
-Psubject = glean.state_transitions(GLEAN);
+</pre><img vspace="5" hspace="5" src="osl_example_glean_05.png" alt=""> <p>Then, we can look at the transition probability matrix between states. We remove the diagonal because we want to focus on the transitions. From this matrix, it is clear that transitions are not random.</p><pre class="codeinput">Psubject = glean.state_transitions(GLEAN);
 Pgroup = zeros(8);
 <span class="keyword">for</span> j = 1:length(Psubject)
     Psubject{j}(eye(8)==1) = 0;
@@ -143,24 +104,10 @@ ylabel(<span class="string">'From state'</span>,<span class="string">'FontSize'<
 xlabel(<span class="string">'To state'</span>,<span class="string">'FontSize'</span>,16)
 title(<span class="string">'Transition Probability Matrix'</span>,<span class="string">'FontSize'</span>,18)
 set(gca,<span class="string">'FontSize'</span>,15)
-</pre><img vspace="5" hspace="5" src="osl_example_glean_06.png" alt=""> <p>Finally, after we have looked at the temporal information of the states, we will look at the spatial information, that is, we estimate the spatial maps for each state.</p><pre class="codeinput"><span class="comment">% In particular, the function "glean.pcorr" will create spatial maps for each state</span>
-<span class="comment">% by computing the partial correlation between each session's state time</span>
-<span class="comment">% courses and the envelope data at each voxel. These maps may be output</span>
-<span class="comment">% as .nii files (or alternatively as .mat files), and may be computed using</span>
-<span class="comment">% the voxelwise or parcelwise data:</span>
-
-settings            = [];
+</pre><img vspace="5" hspace="5" src="osl_example_glean_06.png" alt=""> <p>Finally, after we have looked at the temporal information of the states, we look at the spatial information, that is, we estimate the spatial maps for each state.</p><p>In particular, the function "glean.pcorr" will create spatial maps for each state by computing the partial correlation between each session's state time courses and the envelope data at each voxel. These maps may be output as .nii files (or alternatively as .mat files), and may be computed using the voxelwise or parcelwise data:</p><pre class="codeinput">settings            = [];
 settings.format     = <span class="string">'nii'</span>;
 settings.space      = {<span class="string">'parcel'</span>};
 GLEAN = glean.pcorr(GLEAN,settings);
-
-<span class="comment">% This results field contains the settings, as well as pointers to the spatial maps in</span>
-<span class="comment">% each subspace (voxel/parcel) for each session and the group average.</span>
-<span class="comment">% We can then use fslview to open the maps.</span>
-<span class="comment">% Some well-known resting state networks include the Sensorimotor network (state 4),</span>
-<span class="comment">% or the visual network (state 2)</span>
-
-fslview(GLEAN.results.pcorr.parcel.sessionmaps{1},[])
 </pre><pre class="">Saving parcel partial correlation maps for session 1
  
 Saving parcel partial correlation maps for session 2
@@ -187,17 +134,17 @@ Saving parcel partial correlation maps for session 12
  
 Saving parcel group partial correlation map
  
+</pre><p>This results field contains the settings, as well as pointers to the spatial maps in each subspace (voxel/parcel) for each session and the group average. We can then use fslview to open the maps. Some well-known resting state networks include the Sensorimotor network (state 4), or the visual network (state 2)</p><pre class="codeinput">fslview(GLEAN.results.pcorr.parcel.sessionmaps{1},[])
 </pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-%% Estimate a whole-brain HMM model with GLEAN
-
+%% 
 % This example shows how to use the HMM to infer transient states 
 % in whole-brain resting state MEG data, such that the states reflect 
 % distinct, recurrent patterns of power
 % and functional connectivity (in terms of power correlation).
-% For this, we will use GLEAN, a tool offering a wrap of functionalities 
-% and internally using the HMM-MAR toolbox (which will be covered in the next practical)
-% for the final estimation.
+%
+% For this, we will use GLEAN, a tool offering a wrap of functionalities on top of the HMM estimation.
+% Internally, it uses the HMM-MAR toolbox (covered in the next practical) for the final estimation.
 % GLEAN does a number of things for us before calling to the HMM-MAR:
 %
 % 1.- Bandpass-filtering: we would be discarding very slow and very fast frequencies, 
@@ -215,11 +162,14 @@ Saving parcel group partial correlation map
 % 5.- Leakage correction: because of the artefactual high correlation between proximal regions,
 %   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets). 
 
-%% 
+%% Estimate a whole-brain HMM model with GLEAN
+
+%%
+% We set the paths and data
 
 % Directory of the data
 data_dir = fullfile(osldir,'example_data','glean_example');
-% Name for this GLEAN analysis:
+% Name for this GLEAN analysis
 glean_name = fullfile(osldir,'example_data','glean_example','glean_demo.mat');
 
 % Set do_analysis=1 to re-run the analysis, otherwise use precomputed result
@@ -305,19 +255,26 @@ glean.plot_timecourse(GLEAN)
 % We will look at it quantitatively below.
 
 %%
-% We next compute temporal properties related to the estimation
+% We next compute temporal properties related to the estimation.
 % This includes a calculation, per state, of:
+%
 % - the number of occurrences, or state visits.
+%
 % - the fractional occupancy: how much time is state is visited in proportion.
+%
 % - the mean life time: how much time, on average, the state visits last. 
+%
 % - the mean interval length: how much time, on average, passes between two consecutive ocurrences of a state.
+%
 % - the entropy of the state time course
 
 settings = struct('plot',0);
 GLEAN = glean.temporal_stats(GLEAN,settings);
 
+%%
 % We show the fractional occupancy - states 3 and 8 are the most frequent,
 % whereas state 1 is the rarest. 
+
 figure
 bar(mean(GLEAN.results.temporal_stats.FractionalOccupancy.stats),0.9,'FaceColor','r')
 ylabel('%Occupancy','FontSize',16)
@@ -325,14 +282,14 @@ xlabel('States','FontSize',16)
 set(gca,'FontSize',16)
 xlim([0.5 8.5])
 
-%%
-
+%% 
 % As a sanity check, it is interesting to look at the maximum fractional occupancy for every
 % subject. If this is high (say, >50%) for a given subject, 
 % that means that one single state is dominating the time series for that subject, 
 % which implies that the dynamics for that subject have not been well captured. 
 % Here, we observe that the maximum fractional occupancy never surpass 35%,
 % meaning that all states take 35% or less of the time per subject.
+
 figure
 bar(max(GLEAN.results.temporal_stats.FractionalOccupancy.stats,[],2),0.9,'FaceColor','m')
 ylabel('Max %Occupancy','FontSize',16)
@@ -341,9 +298,9 @@ set(gca,'FontSize',16)
 xlim([0.5 12.5]) 
 
 %%
-
 % We show the mean life times, seeing the states ocurrences are indeed quite fast,
 % with visits usually in between 150 and 250 ms.
+
 figure
 bar(mean(GLEAN.results.temporal_stats.MeanLifeTime.stats),0.9,'FaceColor','b')
 ylabel('% Mean Life Times (ms)','FontSize',16)
@@ -352,9 +309,9 @@ set(gca,'FontSize',16)
 xlim([0.5 8.5])
 
 %%
-
 % We can look at the interval times, which oscillate in between 1 and 2.5s,
 % with the exception of state 1, which is to be expected considering is an usual state.
+
 figure
 bar(mean(GLEAN.results.temporal_stats.MeanIntervalLength.stats),0.9,'FaceColor','g')
 ylabel('% Mean Interval Times (ms)','FontSize',16)
@@ -363,10 +320,10 @@ set(gca,'FontSize',16)
 xlim([0.5 8.5])
 
 %%
-
-% Finally, we can look at the transition probability matrix between
+% Then, we can look at the transition probability matrix between
 % states. We remove the diagonal because we want to focus on the
-% transitions
+% transitions. From this matrix, it is clear that transitions are not random.
+
 Psubject = glean.state_transitions(GLEAN);
 Pgroup = zeros(8); 
 for j = 1:length(Psubject) 
@@ -387,9 +344,10 @@ set(gca,'FontSize',15)
 
 %%
 % Finally, after we have looked at the temporal information of the states,
-% we will look at the spatial information, that is, 
+% we look at the spatial information, that is, 
 % we estimate the spatial maps for each state.
 
+%%
 % In particular, the function "glean.pcorr" will create spatial maps for each state
 % by computing the partial correlation between each session's state time 
 % courses and the envelope data at each voxel. These maps may be output 
@@ -401,6 +359,7 @@ settings.format     = 'nii';
 settings.space      = {'parcel'};
 GLEAN = glean.pcorr(GLEAN,settings);
 
+%%
 % This results field contains the settings, as well as pointers to the spatial maps in 
 % each subspace (voxel/parcel) for each session and the group average.
 % We can then use fslview to open the maps.
