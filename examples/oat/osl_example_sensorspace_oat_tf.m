@@ -1,8 +1,18 @@
-%% Sensorspace TF Analysis with OAT
+%% OAT 2 - Sensorspace Time-Frequency Analysis
 %
 % In this practical we will work with a single subject's data from an
 % emotional faces task (data courtesy of Susie Murphy) and perform an
 % Time-Frequency analysis in sensor space.
+%
+% # Prepare data for OAT analysis
+% # Bandpass filter data and split into epochs
+% # Compute a first level GLM analysis with OAT
+% # Visualise results with FieldTrip
+% # Compute a topoplot averaged within a time-frequency window
+%
+% Please read each cell in turn before copying it's contents either directly 
+% into the MatLab console or your own blank script. By the end of this session 
+% you should have created your own template analysis script which can be applied to further analysis.
 %
 % You will need the following files from the example_data directory:
 %
@@ -29,20 +39,28 @@ workingdir = fullfile(osldir,'example_data','faces_singlesubject');
 %
 % Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:
 %
-% fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];
-% fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];
+% |fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];|
+%
+% |fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];|
+%
 % etc...
-% spm_files{1} = [workingdir '/sub1_face_sss.mat'];
-% spm_files{2} = [workingdir '/sub2_face_sss.mat'];
+%
+% |spm_files{1} = [workingdir '/sub1_face_sss.mat'];|
+%
+% |spm_files{2} = [workingdir '/sub2_face_sss.mat'];|
+%
 % etc...
+
+% clear old spm files
+clear spm_files_continuous spm_files_epoched
 
 spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
 spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 
 %% SETUP SENSOR SPACE SOURCE RECON
 % This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis.
-% In this example we define our input files (D_continuous and D_epoched) and conditions before setting a time frequency window from -200ms before stimulus onset to +400ms and 4 to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis
-% The oat.source_recon.dirname is where all the analysis will be stored. This includes all the intermediate steps, diagnostic plots and final results. Make sure this directory does not contain any other analyses that might be overwritten.
+% In this example we define our input files (|D_continuous| and |D_epoched|) and conditions before setting a time frequency window from -200ms before stimulus onset to +400ms and 4 to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis
+% The |oat.source_recon.dirname| is where all the analysis will be stored. This includes all the intermediate steps, diagnostic plots and final results.
 
 oat=[];
 oat.source_recon.D_epoched=spm_files_epoched; % this is passed in so that the bad trials and bad channels can be read out
@@ -61,15 +79,15 @@ oat.source_recon.dirname = [workingdir '/sensorspace_tf'];
 %
 % Note the following settings in particular:
 %
-% * oat.first_level.tf_method  - This indicates we are doing a TF analysis using hilbert or morlet transform (or is set to 'none' if doing a time-domain ERF analysis)
-% * oat.first_level.tf_freq_range  - This indicates the overall freq range. 
-% * oat.first_level.tf_num_freqs  - This indicates the number of freq bins to use within the overall freq range
-% * oat.first_level.tf_hilbert_freq_res - This indicates the bandwidth of the freq bins, if doing a hilbert transform
-% * oat.first_level.time_range  - This indicates the time range. NOTE that this needs to be smaller than oat.source_recon.time_range to remove edge effects
+% * |oat.first_level.tf_method|  - This indicates we are doing a TF analysis using hilbert or morlet transform (or is set to 'none' if doing a time-domain ERF analysis)
+% * |oat.first_level.tf_freq_range|  - This indicates the overall freq range. 
+% * |oat.first_level.tf_num_freqs|  - This indicates the number of freq bins to use within the overall freq range
+% * |oat.first_level.tf_hilbert_freq_res| - This indicates the bandwidth of the freq bins, if doing a hilbert transform
+% * |oat.first_level.time_range|  - This indicates the time range. NOTE that this needs to be smaller than oat.source_recon.time_range to remove edge effects
 % 
-% We have also set the baseline correction to be turned off for the third contrast, [-3 1 1 1] (this is often a good idea for differential contrasts, for which we do not need to do baseline correction):
+% We have also set the baseline correction to be turned off for the third contrast, |[-3 1 1 1]| (this is often a good idea for differential contrasts, for which we do not need to do baseline correction):
 %
-% * oat.first_level.bc=[1 1 0]
+% * |oat.first_level.bc=[1 1 0]|
 
 oat.first_level.tf_method='morlet'; % can be morlet or hilbert
 oat.first_level.tf_freq_range=[5 40]; % frequency range in Hz
@@ -78,7 +96,7 @@ oat.first_level.tf_num_freqs=14; % we are keeping this unusally low in the pract
 %oat.first_level.tf_hilbert_freq_res=8;
 
 % NOTE that you can also set HILBERT freq ranges explicitly, e.g.:
-% oat.first_level.tf_hilbert_freq_ranges=[[4 8];[8 12];[12 16];[16 20];[20 24];[24 30]]; % frequency range in Hz
+% |oat.first_level.tf_hilbert_freq_ranges=[[4 8];[8 12];[12 16];[16 20];[20 24];[24 30]];| % frequency range in Hz
 
 oat.first_level.post_tf_downsample_factor=4; % does downsampling after the TF decomposition
 
@@ -86,7 +104,7 @@ oat.first_level.bc=[1 1 0]; % specifies whether or not baseline correction is do
 
 %% SETUP THE FIRST LEVEL GLM
 % This cell defines the GLM parameters for the first level analysis. Critically this includes the design matrix (in Xsummary) and contrast matrix
-% Xsummary is a parsimonious description of the design matrix. It contains values Xsummary{reg,cond}, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix:
+% Xsummary is a parsimonious description of the design matrix. It contains values |Xsummary{reg,cond}|, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix:
 % Each contrast is a vector containing a weight per condition defining how the condition parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. Contrasts 1 and 2 describe positive correlations between each sensors activity and the presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each sensors activity is larger for faces than motorbikes.
 
 Xsummary={};
@@ -119,24 +137,34 @@ oat = osl_run_oat(oat);
 %% READ REPORT
 %
 % The OAT runs the GLM for every time point and frequency band across all
-% sensors and creates a useful summary of the results. You can access it 
-% by clicking the link in the console navigating a browser to the link in oat.results.report.html_fname
-% You can click through a log files from the analysis as well as range of diagnostic figures 
+% sensors and creates a useful summary of the results as well as range of diagnostic figures 
 % from the source recon and results from the first level.
 %
 % The report generates a summary of results based on the
 % information in oat.first_level.report. 
 %
-% * oat.first_level.report.modality_to_do % eg MEGPLANAR, MEGMAG (only in sensor space)
-% * oat.first_level.report.first_level_cons_to_do; % plots only these contrasts and uses first one in list to determine max vox, time, freq
-% * oat.first_level.report.time_range; % to determine max vox, time, freq
-% * oat.first_level.report.freq_range; % to determine max vox, time, freq
+% * |oat.first_level.report.modality_to_do| % eg MEGPLANAR, MEGMAG (only in sensor space)
+% * |oat.first_level.report.first_level_cons_to_do;| % plots only these contrasts and uses first one in list to determine max vox, time, freq
+% * |oat.first_level.report.time_range;| % to determine max vox, time, freq
+% * |oat.first_level.report.freq_range;| % to determine max vox, time, freq
+%
+% Open the web page report indicated in oat.results.report in a web browser 
+% (there will also be a link to this available in the Matlab output). This displays diagnostic plots. 
+%
+% * At the top of the file is a link to oat.results.logfile (a file containing the matlab output) - you should check this for any errors or unusual warnings.
+% * Then there will be a list of reports for each OAT stage. 
+% * Click on the "First level (epoched)" link to bring up the first level reports.
+%
+% This brings up a list of sessions. Here we have only preprocessed one session. 
+% Click on the "Session 1 report" link to bring up the diagnostic plots for session 1 and take a look.
 %
 % The settings in the current OAT will generate an image with the COPE and t-stats for
 % all three contrasts from the sensor with the maximum statistic for
 % contrast 2 (faces) from the planar gradiometers as seen below
 %
 % <<osl_example_sensorspace_oat_tf_stats_tc.png>> 
+
+disp(oat.results.report.html_fname); % show path to web page report
 
 
 %% GENERATE ALTERNATIVE REPORT OF TIME-FREQUENCY RESULTS
@@ -161,7 +189,7 @@ open(oat.results.report.html_fname);
 
 %% RESULTS
 %
-% The results are stored in the oat structure and the can be loaded back into matlab using oat_load_results. This is useful for checking over results of the GLM or as the basis for further analyses.
+% The results are stored in the oat structure and the can be loaded back into matlab using |oat_load_results|. This is useful for checking over results of the GLM or as the basis for further analyses.
 
 disp('oat.results:');
 disp(oat.results);
