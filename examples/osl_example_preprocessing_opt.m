@@ -2,9 +2,13 @@
 % This is an example for running the OHBA recommended preprocessing
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
 % CTF data as well) using OPT (OSL's preproscessing tool). It works through
-% basically the same steps as you would for the manual preprocessing (see
-% <https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html
-% manual practical> ), but this time it is all automated.
+% basically the same steps as you would for the manual preprocessing (see 
+% 
+% <html>
+% <a href="https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual" target="_blank">manual practical</a>
+% </html>
+%
+% ), but this time it is all automated.
 %
 
 %%
@@ -80,7 +84,10 @@ structural_files{1}=[datadir '/structs/anat.nii']; % leave empty if no structura
 % _opt.datatype_: Specifies the datatype; i.e. 'neuromag', 'ctf', 'eeg';
 % 
 % For more information, see
-% <https://sites.google.com/site/ohbaosl/preprocessing/opt-under-construction>
+%
+% <html>
+% <a href="https://sites.google.com/site/ohbaosl/preprocessing/opt-under-construction" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/opt-under-construction</a>
+% </html>
  
 %%
 % *Specify required inputs*

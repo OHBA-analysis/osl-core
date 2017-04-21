@@ -103,7 +103,9 @@ D = spm_eeg_load(spm_files{subnum});
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 </pre><p>Now load oslview. This data has some exceptionally bad artefacts in. Mark the epochs at around 325s, 380s and 600s as bad, as well as everything from 650 seconds to the end. Marking is done by right-clicking in the proximity of the event and click on 'Mark Event'. A first click (green dashed label) marks the begin of a bad period, another second click indicates the end (in red). This will mean that we are not using about half of the data. But with such bad artefacts this is the best we can do. We can still obtain good results with what remains. NB: Push the disk button to save to disk (no prefix will be added, same name is kept).</p><pre class="codeinput">D=oslview(D);
-</pre><h2 id="34">MANUAL AFRICA DENOISING</h2><p>In a next step we will run AFRICA denoising. AFRICA uses independent component analysis (ICA) to decompose sensor data into a set of maximally independent time courses. Using this framework, sources of interference such as eye-blinks, ECG artefacts and mains noise can be identified and removed from the data or at least attenuated. In this practical we will use manual artefact rejection by looking at the time courses and sensor topographies of each component and rejecting those that correlate with EOG and ECG measurements. The user interface displays the time course, power spectrum and sensor topography for each component. These components are sorted based on one of a number of metrics, which you can toggle using the dropdown menu. For more information about AFRICA and how to use it, please see the AFRICA wiki manual on <a href="https://sites.google.com/site/ohbaosl/preprocessing/africa">https://sites.google.com/site/ohbaosl/preprocessing/africa</a> .</p><p>Set new SPM M/EEG object filenames to be used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><h2 id="34">MANUAL AFRICA DENOISING</h2><p>In a next step we will run AFRICA denoising. AFRICA uses independent component analysis (ICA) to decompose sensor data into a set of maximally independent time courses. Using this framework, sources of interference such as eye-blinks, ECG artefacts and mains noise can be identified and removed from the data or at least attenuated. In this practical we will use manual artefact rejection by looking at the time courses and sensor topographies of each component and rejecting those that correlate with EOG and ECG measurements. The user interface displays the time course, power spectrum and sensor topography for each component. These components are sorted based on one of a number of metrics, which you can toggle using the dropdown menu. For more information about AFRICA and how to use it, please see the AFRICA wiki manual on</p><p>
+<a href="https://sites.google.com/site/ohbaosl/preprocessing/africa" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/africa</a>
+</p><p>Set new SPM M/EEG object filenames to be used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/dff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 </pre><p>Scroll through components using the cursor keys. Identify the two components that correlate with the EOG and ECG measurements and mark them for rejection using the red cross. NB: Just close the window when finished to save your results.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files)
@@ -604,7 +606,11 @@ D=oslview(D);
 % are sorted based on one of a number of metrics, which you can toggle
 % using the dropdown menu. For more information about AFRICA and how to use
 % it, please see the AFRICA wiki manual on
-% <https://sites.google.com/site/ohbaosl/preprocessing/africa> .
+%
+% <html>
+% <a href="https://sites.google.com/site/ohbaosl/preprocessing/africa" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/africa</a>
+% </html>
+%
 
 %%
 % Set new SPM M/EEG object filenames to be used in following steps

@@ -304,7 +304,11 @@ D=oslview(D);
 % are sorted based on one of a number of metrics, which you can toggle
 % using the dropdown menu. For more information about AFRICA and how to use
 % it, please see the AFRICA wiki manual on
-% <https://sites.google.com/site/ohbaosl/preprocessing/africa> .
+%
+% <html>
+% <a href="https://sites.google.com/site/ohbaosl/preprocessing/africa" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/africa</a>
+% </html>
+%
 
 %%
 % Set new SPM M/EEG object filenames to be used in following steps
