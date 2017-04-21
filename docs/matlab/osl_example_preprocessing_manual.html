@@ -7,10 +7,10 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Preproc - manual</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_preprocessing_manual.m"></head><body><div class="content"><h1>Preproc - manual</h1><!--introduction--><p>This an example for running a manual preprocessing pipeline in OSL. For today's workshop we will copy and paste directly from this practical on the website. You can also do the same with the Matlab script found under /osl-core/examples/osl_example_preprocessing_manual.m . We will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy). This is contained in the downloadable zip.file available online.</p><p>We will take an approach here which is run step-by-step and requires manual intervention. This will go through the following steps:</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">SET UP ANALYSIS</a></li><li><a href="#8">CONVERT FROM FIF TO AN SPM M/EEG OBJECT</a></li><li><a href="#10">THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION</a></li><li><a href="#23">FILTERING: HIGH-PASS AND NOTCH FILTERING</a></li><li><a href="#26">DOWNSAMPLING</a></li><li><a href="#32">REMOVING BAD TIME PERIODS USING OSLVIEW</a></li><li><a href="#35">MANUAL AFRICA DENOISING</a></li><li><a href="#52">EPOCHING OF DATA</a></li><li><a href="#70">VISUAL ARTEFACT REJECTION</a></li><li><a href="#72">EXAMINE AND VISUALISE CLEANED EPOCHED DATA</a></li><li><a href="#97">EXERCISES</a></li></ul></div><p>Note that this contains the fif file: fifs/sub1_face_sss.fif that has already been SSS Maxfiltered and downsampled to 250 Hz.</p><p>We will now run it through a manual preprocessing pipeline as outlined above.</p><h2 id="2">SET UP ANALYSIS</h2><p>The only thing you need to do is to go into your OSL directory (i.e. type <i>cd /somedirectory/osl-core</i> ) and then run the following.</p><pre class="codeinput">osl_startup;
+   <title>Preproc - manual</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_preprocessing_manual.m"></head><body><div class="content"><h1>Preproc - manual</h1><!--introduction--><p>This an example for running a manual preprocessing pipeline in OSL. For today's workshop we will copy and paste directly from this practical on the website. You can also do the same with the Matlab script found under /osl-core/examples/osl_example_preprocessing_manual.m . We will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy). This is contained in the downloadable zip.file available online.</p><p>We will take an approach here which is run step-by-step and requires manual intervention. This will go through the following steps:</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">SET UP ANALYSIS</a></li><li><a href="#8">CONVERT FROM FIF TO AN SPM M/EEG OBJECT</a></li><li><a href="#10">THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION</a></li><li><a href="#22">FILTERING: HIGH-PASS AND NOTCH FILTERING</a></li><li><a href="#25">DOWNSAMPLING</a></li><li><a href="#31">REMOVING BAD TIME PERIODS USING OSLVIEW</a></li><li><a href="#34">MANUAL AFRICA DENOISING</a></li><li><a href="#51">EPOCHING OF DATA</a></li><li><a href="#69">VISUAL ARTEFACT REJECTION</a></li><li><a href="#71">EXAMINE AND VISUALISE CLEANED EPOCHED DATA</a></li><li><a href="#96">EXERCISES</a></li></ul></div><p>Note that this contains the fif file: fifs/sub1_face_sss.fif that has already been SSS Maxfiltered and downsampled to 250 Hz.</p><p>We will now run it through a manual preprocessing pipeline as outlined above.</p><h2 id="2">SET UP ANALYSIS</h2><p>The only thing you need to do is to go into your OSL directory (i.e. type <i>cd /somedirectory/osl-core</i> ) and then run the following.</p><pre class="codeinput">osl_startup;
 </pre><p>This will not be necessary after you have done this once, i.e. no need to repeat during one of the follow-up practicals.</p><p><b>SPECIFY DIRECTORIES FOR THIS ANALYSIS</b></p><p>Datadir and working dir should now be be pointing to the right folder, where our example data are stored.</p><pre class="codeinput">datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'preproc_example'</span>,<span class="string">'manual'</span>);
 </pre><p>The working directory will be same as the data directory. This is where the analysis files will be stored in.</p><pre class="codeinput">workingdir=datadir;
-</pre><p>Specify a list of the fif files, structual files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one, e.g.:</p><pre class="codeinput"><span class="comment">%</span>
+</pre><p>Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one, e.g.:</p><pre class="codeinput"><span class="comment">%</span>
 <span class="comment">% fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];</span>
 <span class="comment">% fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];</span>
 <span class="comment">% etc...</span>
@@ -46,7 +46,7 @@ spm_files_basenames{1}=[<span class="string">'spm_meg1.mat'</span>];
     <span class="keyword">end</span>;
 <span class="keyword">end</span>;
 </pre><p>Note that this spm file is the output from the conversion:</p><pre class="codeinput">spm_files{1}
-</pre><h2 id="10">THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION</h2><p>This will display some summary information about the SPM M/EEG object. Note that at this stage in the pipeline the data is continuous (with only 1 "trial"), with 232,000 time points sampled at 250 Hz. We will epoch the data later.</p><pre class="codeinput"><span class="comment">% Set filenames used in following steps.</span>
+</pre><h2 id="10">THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION</h2><p>This will display some summary information about the SPM M/EEG object.</p><pre class="codeinput"><span class="comment">% Set filenames used in following steps.</span>
 <span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
@@ -55,14 +55,14 @@ spm_files_basenames{1}=[<span class="string">'spm_meg1.mat'</span>];
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 </pre><p>Have a look at the SPM object by typing 'D'. Note that this is continuous data, with 232000 time points at 250Hz. We will epoch the data later.</p><pre class="codeinput">D
-</pre><p>The above output gives you some basic information about the M/EEG object that has been loaded into workspace. Note that the data values themselves are memory-mapped from spm_meg1.dat and can be accessed by indexing the D object. E.g, D(1,2,3) returns the field strength in the first sensor at the second sample point during the third trial).</p><p>Here are some essential methods to be used with the D object, try them consecutively:</p><pre class="codeinput">D.ntrials
-</pre><pre class="codeinput">D.conditions
-</pre><pre class="codeinput">D.condlist
-</pre><pre class="codeinput">D.chanlabels
-</pre><pre class="codeinput">D.chantype
-</pre><p>Corresponding to above order, <i>ntrials</i> gives you the number of trials, <i>conditions</i> shows a list of condition labels per trial, <i>condlist</i> shows the list of conditions, <i>chanlabels</i> provides order and names of channels, and <i>chantype</i> about the type.</p><p>This will show the size of the data matrix:</p><pre class="codeinput">D.size
-</pre><p>Size is given in number of channels, samples and trials (respectively). The size of each dimension separately can be accessed by <i>D.nchannels</i>, <i>D.nsamples</i> and <i>D.ntrials</i>. Note that although the syntax of these commands is similar to those used for accessing the fields of a struct data type in Matlab what is actually happening here is that these commands evoke special functions called 'methods' and these methods collect and return the requested information from the internal data structure of the D object. The internal structure is not accessible directly when working with the object. This mechanism greatly enhances the robustness.</p><p>For the full list of methods performing operations with the object, type:</p><pre class="codeinput">methods(<span class="string">'meeg'</span>)
-</pre><p>For help on any method, type help <i>meeg/method_name_of_choice</i> to get help about a method. In terms of using above methods - you can use it in the way shown (e.g. <i>D.ntrials</i>) or in the way you normally use functions, i.e. <i>ntrials(D)</i> where D is an argument (might need additional arguments as well).</p><h2 id="23">FILTERING: HIGH-PASS AND NOTCH FILTERING</h2><p>Some artefacts are relatively easy to remove by filtering. Line noise is often filtered out by using an appropriate notch filter. Also, low frequency drifts can be removed by filtering. This is what we will do now.</p><p>First we perform some high-pass filtering to remove the worst of the trends in the data. SPM file names for input are already set, but we repeat this here so this code snippet can be used independent of the others. The filtered data set will get the prefix 'f' preceding the file name. Set filenames used in following steps and filter.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><p>The above output gives you some basic information about the M/EEG object that has been loaded into workspace. Note that the data values themselves are memory-mapped from spm_meg1.dat and can be accessed by indexing the D object. E.g, D(1,2,3) returns the field strength in the first sensor at the second sample point during the third trial).</p><p>Here are some essential methods to be used with the D object, try them consecutively:</p><pre class="codeinput">D.ntrials <span class="comment">% gives you the number of trials</span>
+</pre><pre class="codeinput">D.conditions <span class="comment">% shows a list of condition labels per trial</span>
+</pre><pre class="codeinput">D.condlist <span class="comment">% shows the list of unique conditions</span>
+</pre><pre class="codeinput">D.chanlabels <span class="comment">% order and names of channels</span>
+</pre><pre class="codeinput">D.chantype <span class="comment">% type of channel</span>
+</pre><p>This will show the size of the data matrix:</p><pre class="codeinput">D.size
+</pre><p>Size is given in number of channels, samples and trials (respectively). The size of each dimension separately can be accessed by <i>D.nchannels</i>, <i>D.nsamples</i> and <i>D.ntrials</i>. Note that although the syntax of these commands is similar to those used for accessing the fields of a struct data type in Matlab D is actually an object and uses functions called 'methods' to return the requested information from the internal data structure of the D object. The internal structure is not accessible directly when working with the object.</p><p>For the full list of methods performing operations with the object, type:</p><pre class="codeinput">methods(<span class="string">'meeg'</span>)
+</pre><p>For help on any method, type help <i>meeg/method_name_of_choice</i> to get help about a method. In terms of using above methods - you can use it in the way shown (e.g. <i>D.ntrials</i>) or in the way you normally use functions, i.e. <i>ntrials(D)</i> where D is an argument (might need additional arguments as well).</p><h2 id="22">FILTERING: HIGH-PASS AND NOTCH FILTERING</h2><p>Some artefacts are relatively easy to remove by filtering. Line noise is often filtered out by using an appropriate notch filter. Also, low frequency drifts can be removed by filtering. This is what we will do now.</p><p>First we perform some high-pass filtering to remove the slow trends in the data. SPM file names for input are already set, but we repeat this here so this code snippet can be used independent of the others. The filtered data set will get the prefix 'f' preceding the file name. Set filenames used in following steps and filter.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -80,7 +80,7 @@ S2.D=[spm_files{1}];
 S2.band=<span class="string">'stop'</span>;
 S2.freq=[48 52]; <span class="comment">% This defines the notch filter frequency range, i.e. around 50Hz.</span>
 D=spm_eeg_filter(S2);
-</pre><h2 id="26">DOWNSAMPLING</h2><p>This data has already been downsampled to 250 Hz when the Maxfilter was run on it. But we will now do further downsampling as this helps to speed things up even more, and we do not need information at high frequency in this particular analysis. [Note that doing downsampling here is particularly necessary if movement compensation has been used when running Maxfilter, as this stops you from doing downsampling as part of the Maxfilter call.] Also, as a rule of thumb, always filter first (especially low-pass, not done in this practical), before down sampling to avoid any aliasing issues (<a href="https://en.wikipedia.org/wiki/Nyquist_frequency#Aliasing">https://en.wikipedia.org/wiki/Nyquist_frequency#Aliasing</a>).</p><p>Set filenames used in following steps. Since we did both a highpass and a stopband (aka notch) filter, the prefix here needs to be 'ff'.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><h2 id="25">DOWNSAMPLING</h2><p>This data has already been downsampled to 250 Hz when the Maxfilter was run on it. But we will now do further downsampling as this helps to speed things up even more, and we do not need information at high frequency in this particular analysis. [Note that doing downsampling here is particularly necessary if movement compensation has been used when running Maxfilter, as this stops you from doing downsampling as part of the Maxfilter call.] Also, as a rule of thumb, always filter first (especially low-pass, not done in this practical), before downsampling to avoid any aliasing issues (<a href="https://en.wikipedia.org/wiki/Nyquist_frequency#Aliasing">https://en.wikipedia.org/wiki/Nyquist_frequency#Aliasing</a>).</p><p>Set filenames used in following steps. Since we did both a highpass and a stopband (aka notch) filter, the prefix here needs to be 'ff'.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/ff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 </pre><p>Regarding the output, by default, the downsampled data set will get the prefix 'd' (preceding any other prefixes acquired before). This does the downsampling:</p><pre class="codeinput">S=[];
@@ -95,7 +95,7 @@ D=spm_eeg_filter(S2);
 </pre><p>This loads in the SPM M/EEG object:</p><pre class="codeinput">subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 </pre><p>Let's have a look at the SPM object. Note that it is continuous data, with 139200 time points at 150Hz. We will epoch the data later.</p><pre class="codeinput">D
-</pre><h2 id="32">REMOVING BAD TIME PERIODS USING OSLVIEW</h2><p>Note that there are some large artefacts. We will use the oslview functionality to remove the bad epochs ( see <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a> to get more detailed information about how to use OSLview).</p><p>Load in the filtered data (prefix 'f'):</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><h2 id="31">REMOVING BAD TIME PERIODS USING OSLVIEW</h2><p>Note that there are some large artefacts. We will use the oslview functionality to remove the bad epochs ( see <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a> to get more detailed information about how to use OSLview).</p><p>Load in the filtered data (prefix 'f'):</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/dff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -103,7 +103,7 @@ D = spm_eeg_load(spm_files{subnum});
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 </pre><p>Now load oslview. This data has some exceptionally bad artefacts in. Mark the epochs at around 325s, 380s and 600s as bad, as well as everything from 650 seconds to the end. Marking is done by right-clicking in the proximity of the event and click on 'Mark Event'. A first click (green dashed label) marks the begin of a bad period, another second click indicates the end (in red). This will mean that we are not using about half of the data. But with such bad artefacts this is the best we can do. We can still obtain good results with what remains. NB: Push the disk button to save to disk (no prefix will be added, same name is kept).</p><pre class="codeinput">D=oslview(D);
-</pre><h2 id="35">MANUAL AFRICA DENOISING</h2><p>In a next step we will run AFRICA denoising. AFRICA uses independent component analysis (ICA) to decompose sensor data into a set of maximally independent time courses. Using this framework, sources of interference such as eye-blinks, ECG artefacts and mains noise can be identified and removed from the data or at least attenuated. In this practical we will use manual artefact rejection by looking at the time courses and sensor topographies of each component and rejecting those that correlate with EOG and ECG measurements. The user interface displays the time course, power spectrum and sensor topography for each component. These components are sorted based on one of a number of metrics, which you can toggle using the dropdown menu. For more information about AFRICA and how to use it, please see the AFRICA wiki manual on <a href="https://sites.google.com/site/ohbaosl/preprocessing/africa">https://sites.google.com/site/ohbaosl/preprocessing/africa</a> .</p><p>Set new SPM M/EEG object filenames to be used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><h2 id="34">MANUAL AFRICA DENOISING</h2><p>In a next step we will run AFRICA denoising. AFRICA uses independent component analysis (ICA) to decompose sensor data into a set of maximally independent time courses. Using this framework, sources of interference such as eye-blinks, ECG artefacts and mains noise can be identified and removed from the data or at least attenuated. In this practical we will use manual artefact rejection by looking at the time courses and sensor topographies of each component and rejecting those that correlate with EOG and ECG measurements. The user interface displays the time course, power spectrum and sensor topography for each component. These components are sorted based on one of a number of metrics, which you can toggle using the dropdown menu. For more information about AFRICA and how to use it, please see the AFRICA wiki manual on <a href="https://sites.google.com/site/ohbaosl/preprocessing/africa">https://sites.google.com/site/ohbaosl/preprocessing/africa</a> .</p><p>Set new SPM M/EEG object filenames to be used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/dff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 </pre><p>Scroll through components using the cursor keys. Identify the two components that correlate with the EOG and ECG measurements and mark them for rejection using the red cross. NB: Just close the window when finished to save your results.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files)
@@ -126,7 +126,7 @@ D = spm_eeg_load(spm_files{subnum});
 </pre><p>We load in the SPM M/EEG object that we have used for AFRICA denoising</p><pre class="codeinput">subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 </pre><p>Now, when looking at the loaded D object you will notice that now there is something called online montage available.</p><pre class="codeinput">D
-</pre><p>These online montages are linear combinations of the original sensor data (= montage 0) that can be used to basically represent any linear operation. This can be very convenient since it avoids amassing data without need. Here, for example, our first online montage has been generated by AFRICA and represents the data after having removed both the most important ECG and EOG components.</p><p>This will get you the name of te first online montage:</p><pre class="codeinput">D.montage(<span class="string">'getname'</span>,1)
+</pre><p>These online montages are linear combinations of the original sensor data (= montage 0) that can be used to basically represent any linear operation. This can be very convenient since it avoids amassing data without need. Here, for example, our first online montage has been generated by AFRICA and represents the data after having removed both the most important ECG and EOG components.</p><p>This will get you the name of the first online montage:</p><pre class="codeinput">D.montage(<span class="string">'getname'</span>,1)
 </pre><p>Now we can switch to any montage we want. D_raw switches to the original, raw data while D_africe switches to the AFRICA denoised data. Have a look at the output to see the difference.</p><pre class="codeinput">D_raw=D.montage(<span class="string">'switch'</span>,0)
 </pre><pre class="codeinput">D_africa=D.montage(<span class="string">'switch'</span>,1)
 </pre><p>Keep in mind that just switching ( as in typing <i>D.montage('switch',0)</i> ) is not enough, you need to assign the switched montage a variable. It will switch, but there will be no new object with the online montage applied. So always use it in the way shown above. Examine the content of each object by just typing <i>D_raw</i> and <i>D_africa</i> .</p><p>Now we plot some data to have a look at the differences between raw and denoised data.</p><pre class="codeinput">figure;
@@ -145,7 +145,7 @@ plot(D_africa.time(1:10000),D_africa(306,1:10000),<span class="string">'r'</span
 xlim([10 20]);
 xlabel(<span class="string">'Time (s)'</span>);
 legend({<span class="string">'Raw'</span> <span class="string">'AFRICA'</span>});
-</pre><p>You should see something like this:</p><p><img vspace="5" hspace="5" src="osl_example_preproc_HEARTBEAT_DENOISING.png" alt=""> </p><p>The first part of this figure plots the ECG channel included in the recording as reference (channel 308). In the second part we plot the two different variants of the same data set, the first  shows the raw time series, and the second shows AFRICA run on it and cleaned (EOG / ECG attenuated). You can see that there is some commonalities between the ECG and some part of the raw, uncleaned time-series in the data (at least in that channel, 306), but that this is gone in the AFRICA denoised version. That means that AFRICA has removed most of the ECG contaminated parts in the signal. This is clearly superior to filtering, for example you should see one bump that looks a bit like a heart beat component, but it is not in the ECG channel. After AFRICA denoising this downward deflection is still there, which is desirable, since it is not ECG. Filtering would just have removed all these bumps equally, including any neuronal signal in that frequency range.</p><h2 id="52">EPOCHING OF DATA</h2><p>Now we will do some preliminary epoching for the purpose of finding outliers. This is not the final epoching. Instead this sets up the epoch definitions, and performs a temporary epoching for the purpose of doing semi-automated outlier trial rejection (before running the fully automated OAT).</p><p>The epoch definitions and the continuous data will be kept and passed into OAT. This is so that things like temporal filtering (which is dones as part of OAT) can be done on the continuous data, before the data is epoched inside OAT. Note that this will also remove those trials that overlap with the bad epochs identified using OSLview.</p><p>Here the epochs are set to be from -1000ms to +2000ms relative to the triggers in the MEG data. We also specify the trigger values for each of the 4 epoch types of interest (motorcycle images, neutral faces, fearful faces, happy faces). To repeat, the codes used on the trigger channel for this experiment were:</p><pre>1 = Neutral face
+</pre><p>You should see something like this:</p><p><img vspace="5" hspace="5" src="osl_example_preproc_HEARTBEAT_DENOISING.png" alt=""> </p><p>The first part of this figure plots the ECG channel included in the recording as reference (channel 308). In the second part we plot the two different variants of the same data set, the first  shows the raw time series, and the second shows AFRICA run on it and cleaned (EOG / ECG attenuated). You can see that there is some commonalities between the ECG and some part of the raw, uncleaned time-series in the data (at least in that channel, 306), but that this is gone in the AFRICA denoised version. That means that AFRICA has removed most of the ECG contaminated parts in the signal. This is clearly superior to filtering, for example you should see one bump that looks a bit like a heart beat component, but it is not in the ECG channel. After AFRICA denoising this downward deflection is still there, which is desirable, since it is not ECG. Filtering would just have removed all these bumps equally, including any neuronal signal in that frequency range.</p><h2 id="51">EPOCHING OF DATA</h2><p>Now we will do some preliminary epoching for the purpose of finding outliers. This is not the final epoching. Instead this sets up the epoch definitions, and performs a temporary epoching for the purpose of doing semi-automated outlier trial rejection (before running the fully automated OAT).</p><p>The epoch definitions and the continuous data will be kept and passed into OAT. This is so that things like temporal filtering (which is dones as part of OAT) can be done on the continuous data, before the data is epoched inside OAT. Note that this will also remove those trials that overlap with the bad epochs identified using OSLview.</p><p>Here the epochs are set to be from -1000ms to +2000ms relative to the triggers in the MEG data. We also specify the trigger values for each of the 4 epoch types of interest (motorcycle images, neutral faces, fearful faces, happy faces). To repeat, the codes used on the trigger channel for this experiment were:</p><pre>1 = Neutral face
 2 = Happy face
 3 = Fearful face
 4 = Motorbike
@@ -209,7 +209,7 @@ D = spm_eeg_load(spm_files{subnum});
 </pre><p>Display a list of trial types:</p><pre class="codeinput">D.condlist
 </pre><p>Display time points (in seconds) per trial:</p><pre class="codeinput">D.time
 </pre><p>The command below helps to identify trials of a certain type using the indtrial function. E.g.:</p><pre class="codeinput">motorbike_trls = indtrial(D,<span class="string">'Motorbike'</span>)
-</pre><p>It displays all trials for the motorbike condition in the data (regardless of whether they contain good or bad data segments).</p><p>Identify channels of certain types using the meegchannels function. E.g. identify the channel indices for the planar gradiometers and for the magnetometers (what you have available may depend on the actual MEG device) (Note that you can use 'MEGMAG' to get the magnetometers, and D.chantype gives you a list of all channel types by index).</p><pre class="codeinput">planars = D.indchantype(<span class="string">'MEGPLANAR'</span>)
+</pre><p>It displays all trials for the motorbike condition in the data (regardless of whether they contain good or bad data segments).</p><p>Identify channels of certain types using the indchantypes function. E.g. identify the channel indices for the planar gradiometers and for the magnetometers (what you have available may depend on the actual MEG device). Note that you can use 'MEGMAG' to get the magnetometers, and D.chantype gives you a list of all channel types by index.</p><pre class="codeinput">planars = D.indchantype(<span class="string">'MEGPLANAR'</span>)
 </pre><pre class="codeinput">magnetos = D.indchantype(<span class="string">'MEGMAG'</span>)
 </pre><p>We can access the actual MEG data using the syntax: D(channels, samples, trials). E.g. plot a figure showing all the trials for the motorbike condition in the 135th MEGPLANAR channel. Note that the squeeze function is needed to remove single dimensions for passing to the plot function, and D.time is used to return the time points relative to the trigger events (t=0 is time of stimulus onset) in seconds.</p><pre class="codeinput">figure(<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 0.5 0.4]);
 subplot(1,2,1); <span class="comment">% this plots all single trials</span>
@@ -225,7 +225,7 @@ xlabel(<span class="string">'Time (seconds)'</span>);
 ylabel(<span class="string">'Magnetic field gradient (fT/mm)'</span>,<span class="string">'FontSize'</span>,20);
 set(gca,<span class="string">'FontSize'</span>,20)
 title(<span class="string">'Raw event-related field, average'</span>,<span class="string">'FontSize'</span>,20)
-</pre><p>You should see something like this:</p><p><img vspace="5" hspace="5" src="osl_example_preproc_ERF_NOISY_ST_AVG.png" alt=""> </p><p>As you will notice, the ERF, both single trials and the average obtained are actually not usable at all. However, we should bear in mind that this data is averaging over all data including data already marked as bad (using oslview). As well as excluding these already marked as bad noisy data segments, we can do even better by next performing outlier rejection on the now epoched data, and exclude any bad trials or channels (see below).</p><h2 id="70">VISUAL ARTEFACT REJECTION</h2><p>Now we will run a Fieldtrip interactive tool.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><p>You should see something like this:</p><p><img vspace="5" hspace="5" src="osl_example_preproc_ERF_NOISY_ST_AVG.png" alt=""> </p><p>As you will notice, the ERF, both single trials and the average obtained are actually not usable at all. However, we should bear in mind that this data is averaging over all data including data already marked as bad (using oslview). As well as excluding these already marked as bad noisy data segments, we can do even better by next performing outlier rejection on the now epoched data, and exclude any bad trials or channels (see below).</p><h2 id="69">VISUAL ARTEFACT REJECTION</h2><p>Now we will run a Fieldtrip interactive tool.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/edff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -235,7 +235,7 @@ title(<span class="string">'Raw event-related field, average'</span>,<span class
     S2.time_range=[-0.2 0.4];
     D2=osl_rejectvisual(S2);
 <span class="keyword">end</span>;
-</pre><p>Pass over the first interactive figure as it is the EOG channel - so just press the "quit" button. This will bring up another interactive figure which will show the magnetometers. You can choose the metric to display - it is best to stick to the default, which is variance. This metric is then displayed for the different trials (bottom left), the different channels (top right), and for the combination of the two (top left). You need to use this information to identify those trials and channels with high variance and remove them.</p><div><ol><li>Remove the worst channel (with highest variance) by drawing a box around it in the top right plot with the mouse.</li><li>Now remove the trials with high variance by drawing a box around them in the bottom left plot.</li><li>Repeat this until you are happy that there are no more outliers.</li><li>Press "quit" and repeat the process for the gradiometers. Please note that this operation does not create a new file or new prefix.</li></ol></div><h2 id="72">EXAMINE AND VISUALISE CLEANED EPOCHED DATA</h2><p>We can now repeat the average over all the motorbike trials with the bad trials removed to get a much cleaner ERF.</p><p>Set new SPM M/EEG object filenames to be used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><p>Pass over the first interactive figure as it is the EOG channel - so just press the "quit" button. This will bring up another interactive figure which will show the magnetometers. You can choose the metric to display - it is best to stick to the default, which is variance. This metric is then displayed for the different trials (bottom left), the different channels (top right), and for the combination of the two (top left). You need to use this information to identify those trials and channels with high variance and remove them.</p><div><ol><li>Remove the worst channel (with highest variance) by drawing a box around it in the top right plot with the mouse.</li><li>Now remove the trials with high variance by drawing a box around them in the bottom left plot.</li><li>Repeat this until you are happy that there are no more outliers.</li><li>Press "quit" and repeat the process for the gradiometers. Please note that this operation does not create a new file or new prefix.</li></ol></div><h2 id="71">EXAMINE AND VISUALISE CLEANED EPOCHED DATA</h2><p>We can now repeat the average over all the motorbike trials with the bad trials removed to get a much cleaner ERF.</p><p>Set new SPM M/EEG object filenames to be used in following steps</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/edff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 </pre><p>This loads in our data, the SPM M/EEG object</p><pre class="codeinput">subnum = 1;
@@ -296,7 +296,7 @@ sensors_topoplot(D,topo,{<span class="string">'MEGPLANAR'</span> <span class="st
 </pre><p>They should look like this:</p><p><img vspace="5" hspace="5" src="osl_example_preproc_TOPO_CLEANED_AVG_ALL_SENSORS.png" alt=""> </p><p>Now we do the same procedures for the AFRICA denoised online montage:</p><pre class="codeinput">figure(<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 0.4 0.4]);
 topo2=squeeze(mean(D_africa(:,188,good_motorbike_trls),3));
 sensors_topoplot(D_africa,topo2,{<span class="string">'MEGPLANAR'</span> <span class="string">'MEGMAG'</span>},1);
-</pre><p>They should look like this. Have a look at how different these topographies look. Do you have an idea why now everything looks much more similar than before?</p><p><img vspace="5" hspace="5" src="osl_example_preproc_TOPO_CLEANED_AVG_ALL_SENSORS_AFRICA.png" alt=""> </p><h2 id="97">EXERCISES</h2><p>If you want to play around with the data and the cleaning approaches presented here, have a look at what happens when you remove more independent components during AFRICA. Also you can have a look at the interaction of oslview and AFRICA. For example, if you do not cut out the bad segments during oslview rejection, can you still get decent ERFs in the end? How many independent components would you need to remove to get some ERFs and are they still comparable to the ones generated earlier? Also, keep in mind that the data used here was meant to demonstrate the effect of artefacts in the data. Have a look at the other data sets presented during the following practical and see whether you can get similar success with even cleaner data, following the pipeline demonstrate in this practical here.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
+</pre><p>They should look like this. Have a look at how different these topographies look. Do you have an idea why now everything looks much more similar than before?</p><p><img vspace="5" hspace="5" src="osl_example_preproc_TOPO_CLEANED_AVG_ALL_SENSORS_AFRICA.png" alt=""> </p><h2 id="96">EXERCISES</h2><p>If you want to play around with the data and the cleaning approaches presented here, have a look at what happens when you remove more independent components during AFRICA. Also you can have a look at the interaction of oslview and AFRICA. For example, if you do not cut out the bad segments during oslview rejection, can you still get decent ERFs in the end? How many independent components would you need to remove to get some ERFs and are they still comparable to the ones generated earlier? Also, keep in mind that the data used here was meant to demonstrate the effect of artefacts in the data. Have a look at the other data sets presented during the following practical and see whether you can get similar success with even cleaner data, following the pipeline demonstrate in this practical here.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Preproc - manual 
 % This an example for running a manual preprocessing pipeline in OSL. For today's workshop we will copy and paste directly from this practical
@@ -340,7 +340,7 @@ datadir = fullfile(osldir,'example_data','preproc_example','manual');
 workingdir=datadir; 
 
 %%
-% Specify a list of the fif files, structual files (not applicable for this
+% Specify a list of the fif files, structural files (not applicable for this
 % practical) and SPM files (which will be created). It is important to make
 % sure that the order of these lists is consistent across sessions. Note
 % that here we only have 1 subject, but more generally there would be more
@@ -405,9 +405,6 @@ spm_files{1}
 
 %% THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION
 % This will display some summary information about the SPM M/EEG object.
-% Note that at this stage in the pipeline the data is continuous (with only
-% 1 "trial"), with 232,000 time points sampled at 250 Hz. We will epoch the
-% data later.
 
 % Set filenames used in following steps.
 for subnum = 1:length(spm_files), % iterates over subjects
@@ -433,19 +430,15 @@ D
 
 %%
 % Here are some essential methods to be used with the D object, try them consecutively: 
-D.ntrials
+D.ntrials % gives you the number of trials
 %%
-D.conditions
+D.conditions % shows a list of condition labels per trial
 %%
-D.condlist
+D.condlist % shows the list of unique conditions
 %%
-D.chanlabels
+D.chanlabels % order and names of channels
 %%
-D.chantype
-
-%%
-% Corresponding to above order, _ntrials_ gives you the number of trials, _conditions_ shows a list
-% of condition labels per trial, _condlist_ shows the list of conditions, _chanlabels_ provides order and names of channels, and _chantype_ about the type.   
+D.chantype % type of channel
 
 %%
 % This will show the size of the data matrix:
@@ -455,11 +448,10 @@ D.size
 % The size of each dimension separately can be accessed by _D.nchannels_,
 % _D.nsamples_ and _D.ntrials_. Note that although the syntax of these commands
 % is similar to those used for accessing the fields of a struct data type
-% in Matlab what is actually happening here is that these commands evoke
-% special functions called 'methods' and these methods collect and return
+% in Matlab D is actually an object and uses functions called 'methods' to return
 % the requested information from the internal data structure of the D
 % object. The internal structure is not accessible directly when working
-% with the object. This mechanism greatly enhances the robustness.
+% with the object. 
 
 %%
 % For the full list of methods performing operations with the object, type:
@@ -481,8 +473,7 @@ methods('meeg')
 % now.
 
 %%
-% First we perform some high-pass filtering to remove the worst of the
-% trends in the data. SPM file names for input are already set, but we
+% First we perform some high-pass filtering to remove the slow trends in the data. SPM file names for input are already set, but we
 % repeat this here so this code snippet can be used independent of the others. The
 % filtered data set will get the prefix 'f' preceding the file name. Set
 % filenames used in following steps and filter.
@@ -525,7 +516,7 @@ D=spm_eeg_filter(S2);
 % particularly necessary if movement compensation has been used when
 % running Maxfilter, as this stops you from doing downsampling as part of
 % the Maxfilter call.] Also, as a rule of thumb, always filter first
-% (especially low-pass, not done in this practical), before down sampling
+% (especially low-pass, not done in this practical), before downsampling
 % to avoid any aliasing issues
 % (<https://en.wikipedia.org/wiki/Nyquist_frequency#Aliasing>).
 
@@ -692,7 +683,7 @@ D
 % most important ECG and EOG components.
 
 %%
-% This will get you the name of te first online montage:
+% This will get you the name of the first online montage:
 D.montage('getname',1)
 
 
@@ -890,11 +881,11 @@ motorbike_trls = indtrial(D,'Motorbike')
 
 
 %%
-% Identify channels of certain types using the meegchannels function. E.g.
+% Identify channels of certain types using the indchantypes function. E.g.
 % identify the channel indices for the planar gradiometers and for the
 % magnetometers (what you have available may depend on the actual MEG
-% device) (Note that you can use 'MEGMAG' to get the magnetometers, and
-% D.chantype gives you a list of all channel types by index).
+% device). Note that you can use 'MEGMAG' to get the magnetometers, and
+% D.chantype gives you a list of all channel types by index.
 % 
 planars = D.indchantype('MEGPLANAR')
 %%

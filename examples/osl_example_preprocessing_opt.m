@@ -3,8 +3,8 @@
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
 % CTF data as well) using OPT (OSL's preproscessing tool). It works through
 % basically the same steps as you would for the manual preprocessing (see
-% <http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html
-% manual practical> ), but this time it is all automatized.
+% <https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html
+% manual practical> ), but this time it is all automated.
 %
 
 %%
@@ -34,9 +34,10 @@ datadir = fullfile(osldir,'example_data','preproc_example','automatic_opt')
 % 
 % Specify a list of the existing raw fif files for subjects for input into
 % Maxfilter. Note that here we only have 1 subject, but more generally
-% there would be more than one, e.g.: raw_files{1}=[testdir
-% '/fifs/sub1_face_sss']; raw_files{2}=[testdir '/fifs/sub2_face_sss'];
-% etc... OR Specify a list of the input files to be converted into SPM SPM
+% there would be more than one, e.g.: 
+% raw_files{1}=[testdir '/fifs/sub1_face_sss']; 
+% raw_files{2}=[testdir '/fifs/sub2_face_sss'];
+% etc... OR Specify a list of the input files to be converted into SPM
 % files (which will be created as output). It is important to make sure
 % that the order of these lists is consistent across sessions.
 
@@ -74,22 +75,20 @@ structural_files{1}=[datadir '/structs/anat.nii']; % leave empty if no structura
 % _opt.input_files_: A list of the base input (e.g. fif) files for input into
 % the SPM convert call
 % 
-% In any case you need:
+% In either case you need:
 % 
 % _opt.datatype_: Specifies the datatype; i.e. 'neuromag', 'ctf', 'eeg';
 % 
 % For more information, see
 % <https://sites.google.com/site/ohbaosl/preprocessing/opt-under-construction>
  
-opt=[];
-
 %%
 % *Specify required inputs*
 % 
-% List of input files and data type: In our case the input files come from
-% above location and we use data acquired by the Elekta Neuromag system
+% List of input files and data type: In our case the input files were already setup above in the variable _input_files_, and we are using data acquired by the Elekta Neuromag system
 % (same type as in manual preproc practical).
  
+opt=[];
 opt.input_files=input_files;
 opt.datatype='neuromag';
 
@@ -114,7 +113,7 @@ opt.maxfilter.do=0;
 %% HIGHPASS AND NOTCH FILTERING
 % Here, we set both the highpass filter and the notch filter to attenuate
 % slow drifts and 50 Hz line noise. This corresponds to our filtering part
-% during the <http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#23 manual preprocessing> , now OPT takes care of it.
+% during the <https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#23 manual preprocessing>; now OPT takes care of it.
 opt.highpass.do=1;
 % Notch filter settings
 opt.mains.do=1;
@@ -122,19 +121,20 @@ opt.mains.do=1;
 
 %% DOWNSAMPLING
 % 
-% Now, while we do not do downsampling here, this is the template to modify
+% This is the part to modify
 % to enable downsampling with the respective sampling frequency desired.
-opt.downsample.do=0;
+% Now we downsampel to 150Hz.
+opt.downsample.do=1;
 opt.downsample.freq=150;
 
 
 %% IDENTIFYING BAD SEGMENTS 
 % This identifies bad segments in the continuous
 % data (similar to using oslview in the manual practical, just automated).
-% We turn this off for today's workshop. However, if you want to do an
-% automated AFRICA denoising as part of OPT, we recommend this to be set to
+% This might be particularly important if you want to do an
+% automated AFRICA denoising as part of OPT afterwards, so we recommend this to be set to
 % 1.
-opt.bad_segments.do=0;
+opt.bad_segments.do=1;
 
 
 %% AFRICA DENOISING
@@ -148,7 +148,7 @@ opt.africa.ident.mains_kurt_thresh = 0.5;
 
 
 %% EPOCHING DATA
-% Here the epochs are set to be from -1s to +2s relative to triggers in the
+% Here the epochs are set to be from -1s to +2s relative to the stimulus onset in the
 % MEG data.
 opt.epoch.do=1;
 opt.epoch.time_range = [-1 2]; % epoch end in secs   
@@ -179,9 +179,9 @@ opt.epoch.trialdef(8).eventvalue = 29;
 
 %% 
 % Instead of identifying bad segments in the continuous data, we will rely
-% on opt identifying bad trials in the epoched data using the opt.outliers
+% on opt to identify bad trials in the epoched data using the opt.outliers
 % settings. This is roughly equivalent to using osl_reject_visual during
-% the <http://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#70 manual procedure> .
+% the <https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#70 manual procedure> .
 opt.outliers.do=1;
 
 
@@ -204,7 +204,7 @@ opt=osl_check_opt(opt);
 %%
 % *DISPLAY OPT SETTINGS*
 %
-% This gives an overview about set parameters
+% This gives an overview of the set parameters
 
 disp('opt settings:');
 disp(opt);
@@ -298,6 +298,13 @@ opt.results.report.html_fname
 % Shows you the number of triggers found for each event code - check that these correspond to the
 % expected number of triggers in your experimental setup. 
 %
+% *Bad segments:*
+% 
+% Shows you the histograms and scatterplots before and after bad segment detection. The
+% scatterplots show the channels/trial number versus the metric (e.g.
+% "std" for standard deviation) as red crosses before rejection and green crosses after rejection.
+% Channels/trials to be retained are indicated by green circles.
+%
 % *Africa*
 % 
 % (not applicable here, unless _opt.africa.do=1_):
@@ -336,7 +343,10 @@ opt.results.report.html_fname
 D=spm_eeg_load([osldir '/example_data/preproc_example/automatic_opt/practical_singlesubject.opt/Seffdspm_meg1.mat']);
 
 % Then define some trials to look at:
-good_stimresp_trls = [D.indtrial('StimLRespL','good') D.indtrial('StimLRespR','good')];
+%good_stimresp_trls = [D.indtrial('StimLRespL','good') D.indtrial('StimLRespR','good')];
+allconds=D.condlist;
+good_stimresp_trls = [D.indtrial(conds(5:8),'good')]; % takes button press conditions
+
 
 % Get the sensor indices for the two different MEG acquisition
 % modalities from the data:
@@ -365,15 +375,16 @@ title('ERF, magnetometers','FontSize',20)
 set(gca,'FontSize',20)
 
 subplot(1,3,3); % plots 1 chosen planar gradiometer time-course
-plot(D.time,squeeze(mean(D(planars(179),:,good_stimresp_trls),3)));
+plot(D.time,squeeze(mean(D(planars(135),:,good_stimresp_trls),3)));
 xlabel('Time (seconds)','FontSize',20);ylim([-15 10])
 set(gca,'FontSize',20)
 ylabel(D.units(planars(1)),'FontSize',20);
-title('ERF at sensor 179','FontSize',20)
+title('ERF at sensor 135','FontSize',20)
 
 %%
-% These ERFs should look reasonable, i.e. both the ERF across sensors as well as the single-sensor ERF should look sufficiently smooth, it should look like
-% this:
+% These ERFs should look reasonable, i.e. both the ERF across sensors as
+% well as the single-sensor ERF should look sufficiently smooth, you should
+% basically see a candidate 'Bereitschaftspotential'!
 
 %%
 % 

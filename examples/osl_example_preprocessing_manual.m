@@ -40,7 +40,7 @@ datadir = fullfile(osldir,'example_data','preproc_example','manual');
 workingdir=datadir; 
 
 %%
-% Specify a list of the fif files, structual files (not applicable for this
+% Specify a list of the fif files, structural files (not applicable for this
 % practical) and SPM files (which will be created). It is important to make
 % sure that the order of these lists is consistent across sessions. Note
 % that here we only have 1 subject, but more generally there would be more
@@ -105,9 +105,6 @@ spm_files{1}
 
 %% THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION
 % This will display some summary information about the SPM M/EEG object.
-% Note that at this stage in the pipeline the data is continuous (with only
-% 1 "trial"), with 232,000 time points sampled at 250 Hz. We will epoch the
-% data later.
 
 % Set filenames used in following steps.
 for subnum = 1:length(spm_files), % iterates over subjects
@@ -133,19 +130,15 @@ D
 
 %%
 % Here are some essential methods to be used with the D object, try them consecutively: 
-D.ntrials
+D.ntrials % gives you the number of trials
 %%
-D.conditions
+D.conditions % shows a list of condition labels per trial
 %%
-D.condlist
+D.condlist % shows the list of unique conditions
 %%
-D.chanlabels
+D.chanlabels % order and names of channels
 %%
-D.chantype
-
-%%
-% Corresponding to above order, _ntrials_ gives you the number of trials, _conditions_ shows a list
-% of condition labels per trial, _condlist_ shows the list of conditions, _chanlabels_ provides order and names of channels, and _chantype_ about the type.   
+D.chantype % type of channel
 
 %%
 % This will show the size of the data matrix:
@@ -155,11 +148,10 @@ D.size
 % The size of each dimension separately can be accessed by _D.nchannels_,
 % _D.nsamples_ and _D.ntrials_. Note that although the syntax of these commands
 % is similar to those used for accessing the fields of a struct data type
-% in Matlab what is actually happening here is that these commands evoke
-% special functions called 'methods' and these methods collect and return
+% in Matlab D is actually an object and uses functions called 'methods' to return
 % the requested information from the internal data structure of the D
 % object. The internal structure is not accessible directly when working
-% with the object. This mechanism greatly enhances the robustness.
+% with the object. 
 
 %%
 % For the full list of methods performing operations with the object, type:
@@ -181,8 +173,7 @@ methods('meeg')
 % now.
 
 %%
-% First we perform some high-pass filtering to remove the worst of the
-% trends in the data. SPM file names for input are already set, but we
+% First we perform some high-pass filtering to remove the slow trends in the data. SPM file names for input are already set, but we
 % repeat this here so this code snippet can be used independent of the others. The
 % filtered data set will get the prefix 'f' preceding the file name. Set
 % filenames used in following steps and filter.
@@ -225,7 +216,7 @@ D=spm_eeg_filter(S2);
 % particularly necessary if movement compensation has been used when
 % running Maxfilter, as this stops you from doing downsampling as part of
 % the Maxfilter call.] Also, as a rule of thumb, always filter first
-% (especially low-pass, not done in this practical), before down sampling
+% (especially low-pass, not done in this practical), before downsampling
 % to avoid any aliasing issues
 % (<https://en.wikipedia.org/wiki/Nyquist_frequency#Aliasing>).
 
@@ -392,7 +383,7 @@ D
 % most important ECG and EOG components.
 
 %%
-% This will get you the name of te first online montage:
+% This will get you the name of the first online montage:
 D.montage('getname',1)
 
 
@@ -590,11 +581,11 @@ motorbike_trls = indtrial(D,'Motorbike')
 
 
 %%
-% Identify channels of certain types using the meegchannels function. E.g.
+% Identify channels of certain types using the indchantypes function. E.g.
 % identify the channel indices for the planar gradiometers and for the
 % magnetometers (what you have available may depend on the actual MEG
-% device) (Note that you can use 'MEGMAG' to get the magnetometers, and
-% D.chantype gives you a list of all channel types by index).
+% device). Note that you can use 'MEGMAG' to get the magnetometers, and
+% D.chantype gives you a list of all channel types by index.
 % 
 planars = D.indchantype('MEGPLANAR')
 %%
