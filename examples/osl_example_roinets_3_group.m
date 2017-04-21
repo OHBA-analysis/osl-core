@@ -196,6 +196,11 @@ set(h_patch,'EdgeColor','r')
 % produced using the |osl_spinning_brain()| function. Specify an output file name, and 
 % a video file with one rotation will be generated. You can then add this file to a 
 % presentation, and set it to play automatically and loop playback.
+%
+% <html>
+% <video vspace="5" hspace="5" src="osl_example_roinets_3_group_movie.mp4" alt="" autoplay loop> 
+% </html>
+
 osl_spinning_brain('example.mp4')
 
 %%
