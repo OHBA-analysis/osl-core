@@ -1,4 +1,5 @@
 function [ results_fnames first_level_results ] = oat_run_first_level_epoched( oat )
+t017-04-21 15:59:03
 
 % [ results_fnames ] = oat_run_first_level_epoched( oat )
 %
@@ -563,7 +564,17 @@ for subi_todo=1:length(first_level.sessions_to_do),
         if is_sensor_space == 1
             tf_settings.tf_calc_amplitude = 1;
         else
-            tf_settings.tf_calc_amplitude=0; % we will calc the amplitude after applying recon weights
+            % This is broken, the spm-object conversion below (D_tf =
+            % osl_change_spm_eeg_data( Sc ); % line 638) drops the imaginary part of
+            % the TF information. This is as clone sliently preserves the
+            % input data-type and doesn't give a warning.
+            %
+            % Going to change this to output the amplitude, if we want to
+            % do this afte the weights we will need a workaround for the
+            % data copy and to uncomment the amplitude computation on line
+            % 828
+            %tf_settings.tf_calc_amplitude=0; % we will calc the amplitude after applying recon weights
+            tf_settings.tf_calc_amplitude=1; % we will calc the amplitude now
         end
         if nfreqs>1,
             tf_settings.tf_hilbert_do_bandpass_for_single_freq = 1;
@@ -815,6 +826,12 @@ for subi_todo=1:length(first_level.sessions_to_do),
             S2.index=first_level_results.mask_indices_in_source_recon(indind);
 
             [dat_tf S2] = osl_get_recon_timecourse( S2 );
+
+            % Place-holder amplitude computation - see lines 566
+%             if tf_settings.tf_calc_amplitude == 0
+%                 % Calculate power now
+%                 dat_tf = (sqrt(dat_tf.*conj(dat_tf)));
+%             end
 
             % dat_tf needs to trials x time:
             dat_tf=permute(dat_tf,[3 2 1]);
