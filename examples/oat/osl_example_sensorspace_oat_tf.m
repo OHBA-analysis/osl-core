@@ -19,12 +19,6 @@
 % * Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.
 % * eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.
 
-%% SETUP THE MATLAB PATHS
-% make sure that fieldtrip and spm are not in your matlab path
-
-setenv('OSLDIR','/Users/andrew/Software/Matlab/osl2.1/')
-addpath(genpath(getenv('OSLDIR')));
-osl_startup(osldir);
 
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 % This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.
@@ -59,7 +53,8 @@ spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 
 %% SETUP SENSOR SPACE SOURCE RECON
 % This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis.
-% In this example we define our input files (|D_continuous| and |D_epoched|) and conditions before setting a time frequency window from -200ms before stimulus onset to +400ms and 4 to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis
+% In this example we define our input files (|D_continuous| and
+% |D_epoched|) and conditions before setting a time frequency window from -200ms before stimulus onset to 400ms after and from 4Hz to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis.
 % The |oat.source_recon.dirname| is where all the analysis will be stored. This includes all the intermediate steps, diagnostic plots and final results.
 
 oat=[];
@@ -103,9 +98,15 @@ oat.first_level.post_tf_downsample_factor=4; % does downsampling after the TF de
 oat.first_level.bc=[1 1 0]; % specifies whether or not baseline correction is done for the different contrasts
 
 %% SETUP THE FIRST LEVEL GLM
-% This cell defines the GLM parameters for the first level analysis. Critically this includes the design matrix (in Xsummary) and contrast matrix
+% This cell defines the GLM parameters for the first level analysis.
+% Critically this includes the design matrix (in Xsummary) and contrast matrix.
 % Xsummary is a parsimonious description of the design matrix. It contains values |Xsummary{reg,cond}|, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix:
-% Each contrast is a vector containing a weight per condition defining how the condition parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. Contrasts 1 and 2 describe positive correlations between each sensors activity and the presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each sensors activity is larger for faces than motorbikes.
+% 
+% Each contrast is a vector containing a weight per condition defining how the condition 
+% parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. 
+% Contrasts 1 and 2 describe positive correlations between each sensors activity and the 
+% presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each 
+% sensors activity is larger for faces than motorbikes.
 
 Xsummary={};
 Xsummary{1}=[1 0 0 0];Xsummary{2}=[0 1 0 0];Xsummary{3}=[0 0 1 0];Xsummary{4}=[0 0 0 1];
@@ -143,13 +144,13 @@ oat = osl_run_oat(oat);
 % The report generates a summary of results based on the
 % information in oat.first_level.report. 
 %
-% * |oat.first_level.report.modality_to_do| % eg MEGPLANAR, MEGMAG (only in sensor space)
-% * |oat.first_level.report.first_level_cons_to_do;| % plots only these contrasts and uses first one in list to determine max vox, time, freq
-% * |oat.first_level.report.time_range;| % to determine max vox, time, freq
-% * |oat.first_level.report.freq_range;| % to determine max vox, time, freq
+% * |oat.first_level.report.modality_to_do| - e.g. MEGPLANAR, MEGMAG (only in sensor space)
+% * |oat.first_level.report.first_level_cons_to_do;| - plots only these contrasts and uses first one in list to determine max vox, time, freq
+% * |oat.first_level.report.time_range;| - to determine max vox, time, freq
+% * |oat.first_level.report.freq_range;| - to determine max vox, time, freq
 %
-% Open the web page report indicated in oat.results.report in a web browser 
-% (there will also be a link to this available in the Matlab output). This displays diagnostic plots. 
+% Open the report indicated in oat.results.report in a web browser 
+% (there will also be a link to this available in the Matlab output). This displays the diagnostic plots. 
 %
 % * At the top of the file is a link to oat.results.logfile (a file containing the matlab output) - you should check this for any errors or unusual warnings.
 % * Then there will be a list of reports for each OAT stage. 
@@ -198,6 +199,16 @@ disp(oat.results);
 stats1=oat_load_results(oat,oat.first_level.results_fnames{1});
 
 %% VISUALISE USING FIELDTRIP
+%
+% A lot of the visualisations work using functions from fieldtrip. These
+% offer a wide range of visualisation options and are high customisable.
+% Here we will use an OSL function which plots an OAT result in a fieldtrip
+% multiplot.
+%
+% We will plot the T-stat time-frequency results for the faces contrast
+% across all the Planar Gradiometers by defining the following options and
+% calling |oat_stats_multiplotTFR|.
+%
 % note that this produces an interactive figure, with which you can:
 % * draw around a set of sensors
 % * click in the drawn box to produce a plot of the time series
@@ -216,4 +227,19 @@ S2.view_cope=0;
 
 % calculate t-stat using contrast of absolute value of parameter estimates
 [cfg, data]=osl_stats_multiplotTFR(S2);
+title([oat.first_level.contrast_name{S2.first_level_contrast}]);
+
+%% CREATE A TOPOPLOT AVERAGED WITHIN A TF WINDOW
+%
+% We often want to focus our visualisations on specific points in time or
+% frequency rather than looking at the everything at once.
+%
+% The following code calls creates a topoplot from the same results as the
+% previous section, but now averages the results over 130 to 160 ms, and 8 to 12 Hz.
+%
+
+cfg.xlim        = [0.13 0.16]; % time window in secs
+cfg.ylim        = [8 12]; % freq window in Hz
+cfg.interactive = 'no';
+figure; ft_topoplotTFR(cfg,data);
 title([oat.first_level.contrast_name{S2.first_level_contrast}]);
