@@ -719,7 +719,7 @@ D_raw.badtrials
 % Now we identify the motorbike image trials. Note that _indtrial_
 % includes good AND bad trials, so bad trials need to be excluded.
 % _'good'_ finds the trials that are not bad.
-good_motorbike_trls = D_raw.indtrial('Motorbike'),'good')
+good_motorbike_trls = D_raw.indtrial('Motorbike','good');
 
 %%
 % As before after AFRICA, we will make use of the online montages. Note that
