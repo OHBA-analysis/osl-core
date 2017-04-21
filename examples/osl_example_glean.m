@@ -20,6 +20,7 @@
 %
 % 3.- Subsampling: because power changes are slow, we can afford subsampling the data to reduce
 %   the computational load without losing statistical power on the estimation. 
+%   Also, downsampling will enhance the estimates of functional connectivity.
 %
 % 4.- Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)
 %   onto a number of time series, each corresponding to a different brain region (uses ROInets).
