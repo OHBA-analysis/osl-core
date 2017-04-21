@@ -40,7 +40,6 @@ ch = chindex(strcmp(D.chantype,chantype));
 
 ch=chaninds(ch);
 
-
 S(:)=0;
 for i = 1:length(ch)
   if cut_badsegments
@@ -58,8 +57,7 @@ S=S/length(ch);
 if Sin.do_plot    
     imagesc(T,F,S); colorbar
     set(gca,'ydir','normal');
-    xlabel('time (s)');
-    ylabel('frequency (Hz)');
+    plot4paper('time (s)','frequency (Hz)');
 end
 
 if 0
