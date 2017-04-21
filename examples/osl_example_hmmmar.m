@@ -1,4 +1,4 @@
-%% HMM-MAR
+%% HMM - raw task data
 %
 % This example shows how to use the HMM-MAR to infer transient states
 % based on their precise spectral characteristics.

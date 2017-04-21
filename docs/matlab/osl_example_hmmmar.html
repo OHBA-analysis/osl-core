@@ -1,13 +1,13 @@
 ---
 layout: matlab_wrapper
-title: HMM-MAR
+title: HMM - raw task data
 resource: true
 categories: examples
 ---
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>HMM-MAR</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h1>HMM-MAR</h1><!--introduction--><p>This example shows how to use the HMM-MAR to infer transient states based on their precise spectral characteristics.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">HMM-Gaussian on hilbert envelopes</a></li><li><a href="#7">HMM-MAR on raw time series</a></li><li><a href="#14">Interrogating the results</a></li></ul></div><p>For the HMM-MAR, these states:</p><p>(i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency, (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes, (iii) are not only sensitive to power differences but also to phase coupling.</p><p>In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, using two source-reconstructed regions in the motor cortex (left and right), band-pass filtered between 1 and 45 Hz. The task is a finger-tapping motor task, where subjects press a button volitionally. We will see whether, with no prior information of the task during training, the estimated HMM contains states that are temporally related to the task timing, and we will inspect if these states contain meaningful features. We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).</p><p>The script follows the paper Vidaurre et al. (2016)</p><pre class="codeinput"><span class="comment">% Directory of the data:</span>
+   <title>HMM - raw task data</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h1>HMM - raw task data</h1><!--introduction--><p>This example shows how to use the HMM-MAR to infer transient states based on their precise spectral characteristics.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">HMM-Gaussian on hilbert envelopes</a></li><li><a href="#7">HMM-MAR on raw time series</a></li><li><a href="#14">Interrogating the results</a></li></ul></div><p>For the HMM-MAR, these states:</p><p>(i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency, (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes, (iii) are not only sensitive to power differences but also to phase coupling.</p><p>In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, using two source-reconstructed regions in the motor cortex (left and right), band-pass filtered between 1 and 45 Hz. The task is a finger-tapping motor task, where subjects press a button volitionally. We will see whether, with no prior information of the task during training, the estimated HMM contains states that are temporally related to the task timing, and we will inspect if these states contain meaningful features. We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).</p><p>The script follows the paper Vidaurre et al. (2016)</p><pre class="codeinput"><span class="comment">% Directory of the data:</span>
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>);
 <span class="comment">% Name for this HMM-MAR analysis:</span>
 hmmmar_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>,<span class="string">'hmmmar_demo.mat'</span>);
@@ -367,7 +367,7 @@ P_raw =
 
 </pre><p>In light of the <b>very</b> different transition probabilities of the two different models, it is reasonable to expect that the states for the HMM-MAR and the HMM-Gaussian on power are effectively capturing different (yet complementary) aspects of the data.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-%% HMM-MAR
+%% HMM - raw task data
 %
 % This example shows how to use the HMM-MAR to infer transient states
 % based on their precise spectral characteristics.

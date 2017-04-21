@@ -1,4 +1,4 @@
-%% GLEAN for HMM inference on power time series
+%% HMM - enveloped rest data
 %
 % This example shows how to use the HMM to infer transient states 
 % in whole-brain resting state MEG data.
