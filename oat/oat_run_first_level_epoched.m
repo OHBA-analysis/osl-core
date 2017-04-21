@@ -1,5 +1,4 @@
 function [ results_fnames first_level_results ] = oat_run_first_level_epoched( oat )
-t017-04-21 15:59:03
 
 % [ results_fnames ] = oat_run_first_level_epoched( oat )
 %
