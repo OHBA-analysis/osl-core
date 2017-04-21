@@ -14,7 +14,8 @@ spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_wit
 
 %%
 % In general, an SPM MEEG object may have multiple online montages corresponding to 
-% sensor space, source space, parcellated data, and orthogonalized data. When an MEEG
+% sensor space, source space, parcellated data, and orthogonalized data (refer to the
+% Preprocessing tutorial for more information about online montages). When an MEEG
 % object is passed to ROInets, the active montage must be in source space i.e. 
 % with the same number of channels as there are voxels in the parcellation. 
 % You can print a list of the montages stored in the MEEG object using the |has_montage()|
