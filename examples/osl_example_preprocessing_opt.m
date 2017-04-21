@@ -2,13 +2,7 @@
 % This is an example for running the OHBA recommended preprocessing
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
 % CTF data as well) using OPT (OSL's preproscessing tool). It works through
-% basically the same steps as you would for the manual preprocessing (see 
-% 
-% <html>
-% <a href="https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual" target="_blank">manual practical</a>
-% </html>
-%
-% ), but this time it is all automated.
+% basically the same steps as you would for the manual preprocessing, but this time it is all automated.
 %
 
 %%
@@ -120,7 +114,7 @@ opt.maxfilter.do=0;
 %% HIGHPASS AND NOTCH FILTERING
 % Here, we set both the highpass filter and the notch filter to attenuate
 % slow drifts and 50 Hz line noise. This corresponds to our filtering part
-% during the <https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#23 manual preprocessing>; now OPT takes care of it.
+% during the manual preprocessing; now OPT takes care of it.
 opt.highpass.do=1;
 % Notch filter settings
 opt.mains.do=1;
@@ -188,7 +182,7 @@ opt.epoch.trialdef(8).eventvalue = 29;
 % Instead of identifying bad segments in the continuous data, we will rely
 % on opt to identify bad trials in the epoched data using the opt.outliers
 % settings. This is roughly equivalent to using osl_reject_visual during
-% the <https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#70 manual procedure> .
+% the manual procedure.
 opt.outliers.do=1;
 
 

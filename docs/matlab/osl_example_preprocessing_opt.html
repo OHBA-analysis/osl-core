@@ -7,9 +7,7 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Preproc - opt</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_preprocessing_opt.m"></head><body><div class="content"><h1>Preproc - opt</h1><!--introduction--><p>This is an example for running the OHBA recommended preprocessing pipeline on Elekta-Neuromag data (a very similar pipeline will work on CTF data as well) using OPT (OSL's preproscessing tool). It works through basically the same steps as you would for the manual preprocessing (see</p><p>
-<a href="https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual" target="_blank">manual practical</a>
-</p><p>), but this time it is all automated.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">SET UP THE MATLAB PATHS, DIRECTORIES AND FILES</a></li><li><a href="#6">SETTING UP AN OPT ANALYSIS</a></li><li><a href="#10">HIGHPASS AND NOTCH FILTERING</a></li><li><a href="#11">DOWNSAMPLING</a></li><li><a href="#12">IDENTIFYING BAD SEGMENTS</a></li><li><a href="#13">AFRICA DENOISING</a></li><li><a href="#14">EPOCHING DATA</a></li><li><a href="#17">CHECK OPT SETTINGS</a></li><li><a href="#18">LOOK AT OPT SETTINGS AND SUBSETTINGS</a></li><li><a href="#27">RUNNING THE OPT ANALYSIS</a></li><li><a href="#28">VIEWING OPT RESULTS</a></li><li><a href="#38">EXERCISES</a></li></ul></div><p>This practical is also available as a template script in your osl example folder. For today's workshop we will copy and paste directly from the osl website. We will work with a single subject's data from a button press experiment. The data should be available in your installation already. Note that this contains the fif file: fifs/loc_S02_sss1.fif, which has already been SSS Maxfiltered and downsampled to 250 Hz, and which we will used for this analysis.</p><h2 id="2">SET UP THE MATLAB PATHS, DIRECTORIES AND FILES</h2><p>You should not need to run this if you have already done this previously. If MATLAB has trouble finding any osl functions, run:</p><pre class="codeinput">osl_startup;
+   <title>Preproc - opt</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_preprocessing_opt.m"></head><body><div class="content"><h1>Preproc - opt</h1><!--introduction--><p>This is an example for running the OHBA recommended preprocessing pipeline on Elekta-Neuromag data (a very similar pipeline will work on CTF data as well) using OPT (OSL's preproscessing tool). It works through basically the same steps as you would for the manual preprocessing, but this time it is all automated.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">SET UP THE MATLAB PATHS, DIRECTORIES AND FILES</a></li><li><a href="#6">SETTING UP AN OPT ANALYSIS</a></li><li><a href="#10">HIGHPASS AND NOTCH FILTERING</a></li><li><a href="#11">DOWNSAMPLING</a></li><li><a href="#12">IDENTIFYING BAD SEGMENTS</a></li><li><a href="#13">AFRICA DENOISING</a></li><li><a href="#14">EPOCHING DATA</a></li><li><a href="#17">CHECK OPT SETTINGS</a></li><li><a href="#18">LOOK AT OPT SETTINGS AND SUBSETTINGS</a></li><li><a href="#27">RUNNING THE OPT ANALYSIS</a></li><li><a href="#28">VIEWING OPT RESULTS</a></li><li><a href="#38">EXERCISES</a></li></ul></div><p>This practical is also available as a template script in your osl example folder. For today's workshop we will copy and paste directly from the osl website. We will work with a single subject's data from a button press experiment. The data should be available in your installation already. Note that this contains the fif file: fifs/loc_S02_sss1.fif, which has already been SSS Maxfiltered and downsampled to 250 Hz, and which we will used for this analysis.</p><h2 id="2">SET UP THE MATLAB PATHS, DIRECTORIES AND FILES</h2><p>You should not need to run this if you have already done this previously. If MATLAB has trouble finding any osl functions, run:</p><pre class="codeinput">osl_startup;
 </pre><p><b>SPECIFY DIRECTORIES FOR THIS ANALYSIS</b></p><p>Set the data directory where the data is, this should be the correct path already:</p><pre class="codeinput">datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'preproc_example'</span>,<span class="string">'automatic_opt'</span>)
 </pre><p><b>SET UP THE LIST OF SUBJECTS</b></p><p>Specify a list of the existing raw fif files for subjects for input into Maxfilter. Note that here we only have 1 subject, but more generally there would be more than one, e.g.: raw_files{1}=[testdir '/fifs/sub1_face_sss']; raw_files{2}=[testdir '/fifs/sub2_face_sss']; etc... OR Specify a list of the input files to be converted into SPM files (which will be created as output). It is important to make sure that the order of these lists is consistent across sessions.</p><pre class="codeinput">clear <span class="string">raw_fif_files</span> <span class="string">input_files</span> <span class="string">spm_files</span> <span class="string">structural_files</span>;
 
@@ -24,7 +22,7 @@ opt.input_files=input_files;
 opt.datatype=<span class="string">'neuromag'</span>;
 </pre><p><b>Specify optional inputs</b></p><p>This has to be the name of the directory (full path) where the OPT will be stored, and is given a ".opt" extension. Note that each OPT directory is associated with an OPT run - if you rerun OPT with the same <i>opt.dirname</i> then this will overwrite an old directory, and the old OPT results will be lost. Hence, you should ensure that you change <i>opt.dirname</i> for a new analysis, if you want to avoid overwriting an old one!</p><pre class="codeinput">opt.dirname=[datadir <span class="string">'/practical_singlesubject.opt'</span>];
 </pre><p><b>Maxfilter settings:</b> Here we are going to skip the double maxfilter call as this has been run already for us</p><pre class="codeinput">opt.maxfilter.do=0;
-</pre><h2 id="10">HIGHPASS AND NOTCH FILTERING</h2><p>Here, we set both the highpass filter and the notch filter to attenuate slow drifts and 50 Hz line noise. This corresponds to our filtering part during the <a href="https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#23">manual preprocessing</a>; now OPT takes care of it.</p><pre class="codeinput">opt.highpass.do=1;
+</pre><h2 id="10">HIGHPASS AND NOTCH FILTERING</h2><p>Here, we set both the highpass filter and the notch filter to attenuate slow drifts and 50 Hz line noise. This corresponds to our filtering part during the manual preprocessing; now OPT takes care of it.</p><pre class="codeinput">opt.highpass.do=1;
 <span class="comment">% Notch filter settings</span>
 opt.mains.do=1;
 </pre><h2 id="11">DOWNSAMPLING</h2><p>This is the part to modify to enable downsampling with the respective sampling frequency desired. Now we downsampel to 150Hz.</p><pre class="codeinput">opt.downsample.do=1;
@@ -59,7 +57,7 @@ opt.epoch.trialdef(7).eventvalue = 23;
 opt.epoch.trialdef(8).conditionlabel = <span class="string">'RespRRespR'</span>;
 opt.epoch.trialdef(8).eventtype = <span class="string">'STI101_down'</span>;
 opt.epoch.trialdef(8).eventvalue = 29;
-</pre><p>Instead of identifying bad segments in the continuous data, we will rely on opt to identify bad trials in the epoched data using the opt.outliers settings. This is roughly equivalent to using osl_reject_visual during the <a href="https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#70">manual procedure</a> .</p><pre class="codeinput">opt.outliers.do=1;
+</pre><p>Instead of identifying bad segments in the continuous data, we will rely on opt to identify bad trials in the epoched data using the opt.outliers settings. This is roughly equivalent to using osl_reject_visual during the manual procedure.</p><pre class="codeinput">opt.outliers.do=1;
 </pre><p>Coregistration settings: We're not doing coregistration here, but normally you would if you want to do subsequent analyses in source space. This requires structural scans.</p><pre class="codeinput">opt.coreg.do=0;
 </pre><h2 id="17">CHECK OPT SETTINGS</h2><p>Checking chosen settings: By calling osl_check_opt we will check the validity of the OPT parameters we have specified. Then, OPT will fill in any missing parameters with their default values for us.</p><pre class="codeinput">opt=osl_check_opt(opt);
 </pre><h2 id="18">LOOK AT OPT SETTINGS AND SUBSETTINGS</h2><p><b>DISPLAY OPT SETTINGS</b></p><p>This gives an overview of the set parameters</p><pre class="codeinput">disp(<span class="string">'opt settings:'</span>);
@@ -123,13 +121,7 @@ title(<span class="string">'ERF at sensor 135'</span>,<span class="string">'Font
 % This is an example for running the OHBA recommended preprocessing
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
 % CTF data as well) using OPT (OSL's preproscessing tool). It works through
-% basically the same steps as you would for the manual preprocessing (see 
-% 
-% <html>
-% <a href="https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual" target="_blank">manual practical</a>
-% </html>
-%
-% ), but this time it is all automated.
+% basically the same steps as you would for the manual preprocessing, but this time it is all automated.
 %
 
 %%
@@ -241,7 +233,7 @@ opt.maxfilter.do=0;
 %% HIGHPASS AND NOTCH FILTERING
 % Here, we set both the highpass filter and the notch filter to attenuate
 % slow drifts and 50 Hz line noise. This corresponds to our filtering part
-% during the <https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#23 manual preprocessing>; now OPT takes care of it.
+% during the manual preprocessing; now OPT takes care of it.
 opt.highpass.do=1;
 % Notch filter settings
 opt.mains.do=1;
@@ -309,7 +301,7 @@ opt.epoch.trialdef(8).eventvalue = 29;
 % Instead of identifying bad segments in the continuous data, we will rely
 % on opt to identify bad trials in the epoched data using the opt.outliers
 % settings. This is roughly equivalent to using osl_reject_visual during
-% the <https://ohba-analysis.github.io/osl-core/matlab/osl_example_preprocessing_manual.html#70 manual procedure> .
+% the manual procedure.
 opt.outliers.do=1;
 
 

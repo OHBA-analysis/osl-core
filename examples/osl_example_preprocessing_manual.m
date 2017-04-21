@@ -264,9 +264,13 @@ D
 
 %%  REMOVING BAD TIME PERIODS USING OSLVIEW
 % Note that there are some large artefacts. We will use the oslview
-% functionality to remove the bad epochs ( see
-% <https://sites.google.com/site/ohbaosl/preprocessing/oslview> to get more
-% detailed information about how to use OSLview).
+% functionality to remove the bad epochs. Fore more details on oslview,
+% see: 
+%
+% <html>
+% <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a>
+% </html>
+%
 
 %%
 % Load in the filtered data (prefix 'f'):

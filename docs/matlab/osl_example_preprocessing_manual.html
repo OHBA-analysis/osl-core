@@ -95,7 +95,9 @@ D=spm_eeg_filter(S2);
 </pre><p>This loads in the SPM M/EEG object:</p><pre class="codeinput">subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 </pre><p>Let's have a look at the SPM object. Note that it is continuous data, with 139200 time points at 150Hz. We will epoch the data later.</p><pre class="codeinput">D
-</pre><h2 id="31">REMOVING BAD TIME PERIODS USING OSLVIEW</h2><p>Note that there are some large artefacts. We will use the oslview functionality to remove the bad epochs ( see <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a> to get more detailed information about how to use OSLview).</p><p>Load in the filtered data (prefix 'f'):</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><h2 id="31">REMOVING BAD TIME PERIODS USING OSLVIEW</h2><p>Note that there are some large artefacts. We will use the oslview functionality to remove the bad epochs. Fore more details on oslview, see:</p><p>
+<a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a>
+</p><p>Load in the filtered data (prefix 'f'):</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/dff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -566,9 +568,13 @@ D
 
 %%  REMOVING BAD TIME PERIODS USING OSLVIEW
 % Note that there are some large artefacts. We will use the oslview
-% functionality to remove the bad epochs ( see
-% <https://sites.google.com/site/ohbaosl/preprocessing/oslview> to get more
-% detailed information about how to use OSLview).
+% functionality to remove the bad epochs. Fore more details on oslview,
+% see: 
+%
+% <html>
+% <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a>
+% </html>
+%
 
 %%
 % Load in the filtered data (prefix 'f'):
