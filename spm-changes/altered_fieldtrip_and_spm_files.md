@@ -77,3 +77,10 @@ i.e. corresponds to the `S.fixoxfordneuromag` flag passed into `spm_eeg_convert_
 **Solution:** copy local copy to the SPM12 directory
 
 	osl2.0/spm12/@meeg/subsref.mm
+
+#### gca, gcf fieldtrip bug
+
+**Problem:** topoplot_common, ft_select_range and ft_singleplotER still thiink gca and gcf will return a double
+
+**Solution:** copy local copy to the SPM12/fieldtrip directory
+
