@@ -7,7 +7,7 @@ function osl_publish(filename,evalCode,stylesheet,maxOutputLines)
 	% - stylesheet - specify which formatting to apply (default=github pages formatting, set to '' for default matlab formatting)
 	%
 	% OUTPUT - output html will be written in osl2/docs/matlab
-	% 
+	%
 	% To complete publishing, add files via Git and push to GitHub
 	%
 	% PUBLISHING WORKFLOW
@@ -18,18 +18,21 @@ function osl_publish(filename,evalCode,stylesheet,maxOutputLines)
 	%
 	%
 	% Romesh Abeysuriya 2017
-	
-	if nargin < 3 || isempty(stylesheet) 
-		stylesheet = fullfile(osldir,'osl-core','docs','mxdom2simplehtml_jekyll.xsl');
+
+    if nargin < 4 || isempty(maxOutputLines)
         maxOutputLines=Inf;
     end
-	
-	if nargin < 2 || isempty(evalCode) 
+
+	if nargin < 3 || isempty(stylesheet)
+		stylesheet = fullfile(osldir,'osl-core','docs','mxdom2simplehtml_jekyll.xsl');
+    end
+
+	if nargin < 2 || isempty(evalCode)
 		evalCode = true;
 	end
-		
+
 	output_html = publish(filename,'evalCode',evalCode,'stylesheet',stylesheet,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'),'maxOutputLines',maxOutputLines);
-    
+
     %   To check locally, with standard MATLAB html formatting
     %	output_html = publish(filename,'evalCode',evalCode,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'),'maxOutputLines',maxOutputLines);
 
