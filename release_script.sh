@@ -6,7 +6,7 @@
 WORKINGDIR=$HOME/Desktop/osl-release
 
 # Specify OSL version which also names this release
-OSLDISTVERSION=2.1.0 
+OSLDISTVERSION=2.2.0 
 
 retrieve_repo () {
 	# If no release tag is provided, use master branch
