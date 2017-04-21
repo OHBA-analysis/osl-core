@@ -14,7 +14,8 @@ spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_wit
 
 %%
 % In general, an SPM MEEG object may have multiple online montages corresponding to 
-% sensor space, source space, parcellated data, and orthogonalized data. When an MEEG
+% sensor space, source space, parcellated data, and orthogonalized data (refer to the
+% Preprocessing tutorial for more information about online montages). When an MEEG
 % object is passed to ROInets, the active montage must be in source space i.e. 
 % with the same number of channels as there are voxels in the parcellation. 
 % You can print a list of the montages stored in the MEEG object using the |has_montage()|
@@ -44,6 +45,9 @@ size(spatial_basis)
 fslview(spatial_basis_file)
 
 %%
+%
+% <<osl_example_roinets_2_manual_fsl1.png>>
+%
 % You can also get information about the parcellation by loading it into an OSL Parcellation 
 % object. The resolution is 8 and n_parcels confirms there are 38 brain regions. 
 % n_voxels corresponds to the number of voxels in the template mask - here 3559 agrees 
@@ -85,6 +89,7 @@ has_montage(D)
 % |savenii()| method of the parcellation object to automatically map the vector of parcel power 
 % values onto the 8mm standard mask, and save it to disk. You can then open the resulting file
 % using fslview.
+
 ts = D(:,:,:);
 ts = ft_preproc_bandpassfilter(ts, D.fsample, [8 12], 4, 'but','twopass','no');
 parcel_power = sum(abs(ts),2)/size(ts,2)/(D.time(end)-D.time(1));
@@ -92,6 +97,9 @@ p.plot_activation(parcel_power);
 p.fslview(parcel_power);
 
 %%
+%
+% <<osl_example_roinets_2_manual_fsl2.png>>
+%
 % This could be compared to power distribution computed using the original voxel data
 % without any parcellation.
 D = D.montage('switch',2);

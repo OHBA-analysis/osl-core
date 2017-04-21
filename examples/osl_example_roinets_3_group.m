@@ -1,6 +1,6 @@
 %% ROInets 3 - Group network connectivity analysis
 %
-% This example uses shows how to analyze connectivity at the group level.
+% This example uses shows how to analyze static connectivity at the group level.
 %
 %%
 % Here we will perform a standard connectivity analysis using ROInets.
@@ -91,8 +91,8 @@ d.correlationMats{1}
 %%
 % The correlation matrices are produced for each subject, and can be averaged over to 
 % obtain group-average connectivity profiles. Due to the orthogonalization, there is
-% no raw correlation between brain regions (as expected). Note that the correlations along
-% the diagonal are suppressed by adding NaNs, to improve clarity of the plots
+% no raw correlation between brain regions (as expected). Note that in the second plot, 
+% the correlations along the diagonal are suppressed by adding NaNs to improve clarity.
 
 figure
 imagesc(mean(d.correlationMats{1}.correlation,3))
@@ -196,15 +196,23 @@ set(h_patch,'EdgeColor','r')
 % produced using the |osl_spinning_brain()| function. Specify an output file name, and 
 % a video file with one rotation will be generated. You can then add this file to a 
 % presentation, and set it to play automatically and loop playback.
+%
+% <html>
+% <video vspace="5" hspace="5" src="osl_example_roinets_3_group_movie.mp4" alt="" autoplay loop> 
+% </html>
+
 osl_spinning_brain('example.mp4')
 
 %%
 % Try opening this video file and setting your video player (e.g. Quicktime) to loop the video.
 %
 % Another option for displaying connectivity is to display components of the connectivity
-% as an activation map. For example, performing an eigenvalue decomposition of the 
-% connectivity matrix, and then rendering spatial maps of each of the states.
-% This functionality is also provided by the Parcellation object.
+% as an activation map. For example, you can perform an eigenvalue decomposition of the 
+% connectivity matrix to extract the dominant spatial patterns of activation. Each eigenvector
+% represents a spatial pattern, and the entire connectivity matrix can be written as a sum 
+% of these patterns, weighted by the eigenvalue. Thus the eigenvectors associated with the 
+% largest eigenvalues correspond to dominant spatial patterns. You can render these on the 
+% brain using the Parcellation object.
 [a,b] = eig(mean(d.correlationMats{1}.envCorrelation,3));
 p.plot_activation(a(:,1));
 

@@ -1,9 +1,8 @@
-%% Introduction to manual preprocessing in OSL
-% The script for the practical is osl_example_preprocessing_manual.m which
-% can be found in the osl directory. You will need to open this file in a
-% Matlab editor (e.g. type open osl_example_preprocessing_manual from the
-% Matlab command window, once osl has been started up). In this
-% practical/template script we will work with a single subject's data from
+%% Preproc - manual 
+% This an example for running a manual preprocessing pipeline in OSL. For today's workshop we will copy and paste directly from this practical
+% on the website. You can also do the same with the Matlab script found
+% under /osl-core/examples/osl_example_preprocessing_manual.m .
+% We will work with a single subject's data from
 % an emotional faces task (data courtesy of Susie Murphy). This is
 % contained in the downloadable zip.file available online.
 % 
@@ -12,20 +11,12 @@
 % 
 
 %%
-% Each section corresponds to a one or more cells in the accompanying Matlab
-% script. As mentioned above, this should be run cell-by-cell by clicking
-% "Run Section" or "Run and Advance" in the run part of the Matlab editor.
-% Some sections will require user input to continue.
 % 
-% In this practical/template script we will work with a single subject's
-% data from an emotional faces task (data courtesy of Susie Murphy). This
-% is contained in the downloadable zip.file available online.
-%
 % Note that this contains the fif file: fifs/sub1_face_sss.fif that has
 % already been SSS Maxfiltered and downsampled to 250 Hz.
 % 
-% We will take this fif file and run it through a manual preprocessing
-% pipeline as described above.
+% We will now run it through a manual preprocessing
+% pipeline as outlined above.
 
 
 
@@ -49,15 +40,16 @@ datadir = fullfile(osldir,'example_data','preproc_example','manual');
 workingdir=datadir; 
 
 %%
-% Specify a list of the fif files, structual files (not applicable for this
+% Specify a list of the fif files, structural files (not applicable for this
 % practical) and SPM files (which will be created). It is important to make
 % sure that the order of these lists is consistent across sessions. Note
 % that here we only have 1 subject, but more generally there would be more
 % than one, e.g.:
 
 %
-% fif_files{1}=[testdir '/fifs/sub1_face_sss.fif']; fif_files{2}=[testdir
-% '/fifs/sub2_face_sss.fif']; etc...
+% fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];
+% fif_files{2}=[testdir '/fifs/sub2_face_sss.fif']; 
+% etc...
 
 %%
 clear fif_files spm_files_basenames;
@@ -66,7 +58,7 @@ fif_files{1}=[datadir '/fifs/sub1_face_sss.fif'];
 
 spm_files_basenames{1}=['spm_meg1.mat'];
 
-%% CONVERT FROM FIF TO AN SPM MEEG OBJECT
+%% CONVERT FROM FIF TO AN SPM M/EEG OBJECT
 % The fif file that we are working with is sub1_face_sss.fif. This has
 % already been max-filtered for you and downsampled to 250Hz.
 % 
@@ -74,16 +66,16 @@ spm_files_basenames{1}=['spm_meg1.mat'];
 % for each code on the trigger channel. The codes used on the trigger
 % channel for this experiment were:
 %
-%  1 = Neutral face 
-%  2 = Happy face
-%  3 = Fearful face
-%  4 = Motorbike
-%  18 = Introduction screen
-%  11 = Break between blocks
-%  19 = Midway break
-%  12 =   Green fixation cross (response trials)
-%  13 = Red fixation cross (following green on response trials)
-%  14 = Red fixation cross (non-response trials)
+%  1  =  Neutral face 
+%  2  =  Happy face
+%  3  =  Fearful face
+%  4  =  Motorbike
+%  18 =  Introduction screen
+%  11 =  Break between blocks
+%  19 =  Midway break
+%  12 =  Green fixation cross (response trials)
+%  13 =  Red fixation cross (following green on response trials)
+%  14 =  Red fixation cross (non-response trials)
 %
 % For example, there should be 120 motorbike trials, and 80 of each of the
 % face conditions. Check that the histogram plot corresponds to these
@@ -113,16 +105,13 @@ spm_files{1}
 
 %% THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION
 % This will display some summary information about the SPM M/EEG object.
-% Note that at this stage in the pipeline the data is continuous (with only
-% 1 "trial"), with 232,000 time points sampled at 250 Hz. We will epoch the
-% data later.
 
 % Set filenames used in following steps.
 for subnum = 1:length(spm_files), % iterates over subjects
     spm_files{subnum}=[workingdir '/' spm_files_basenames{subnum}];
 end
 
-% load in the SPM MEEG object
+% load in the SPM M/EEG object
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 
@@ -141,19 +130,15 @@ D
 
 %%
 % Here are some essential methods to be used with the D object, try them consecutively: 
-D.ntrials
+D.ntrials % gives you the number of trials
 %%
-D.conditions
+D.conditions % shows a list of condition labels per trial
 %%
-D.condlist
+D.condlist % shows the list of unique conditions
 %%
-D.chanlabels
+D.chanlabels % order and names of channels
 %%
-D.chantype
-
-%%
-% Corresponding to above order, _ntrials_ gives you the number of trials, _conditions_ shows a list
-% of condition labels per trial, _condlist_ shows the list of conditions, _chanlabels_ provides order and names of channels, and _chantype_ about the type.   
+D.chantype % type of channel
 
 %%
 % This will show the size of the data matrix:
@@ -163,11 +148,10 @@ D.size
 % The size of each dimension separately can be accessed by _D.nchannels_,
 % _D.nsamples_ and _D.ntrials_. Note that although the syntax of these commands
 % is similar to those used for accessing the fields of a struct data type
-% in Matlab what is actually happening here is that these commands evoke
-% special functions called 'methods' and these methods collect and return
+% in Matlab D is actually an object and uses functions called 'methods' to return
 % the requested information from the internal data structure of the D
 % object. The internal structure is not accessible directly when working
-% with the object. This mechanism greatly enhances the robustness.
+% with the object. 
 
 %%
 % For the full list of methods performing operations with the object, type:
@@ -183,15 +167,14 @@ methods('meeg')
 
 
 %% FILTERING: HIGH-PASS AND NOTCH FILTERING
-% Some artefacts are relatively easy to come by by filtering. Line noise is
+% Some artefacts are relatively easy to remove by filtering. Line noise is
 % often filtered out by using an appropriate notch filter. Also, low
 % frequency drifts can be removed by filtering. This is what we will do
 % now.
 
 %%
-% First we perform some high-pass filtering to remove the worst of the
-% trends in the data. SPM file names for input are already set, but we
-% repeat this here so this cell can be used independent of the others. The
+% First we perform some high-pass filtering to remove the slow trends in the data. SPM file names for input are already set, but we
+% repeat this here so this code snippet can be used independent of the others. The
 % filtered data set will get the prefix 'f' preceding the file name. Set
 % filenames used in following steps and filter.
 
@@ -233,7 +216,7 @@ D=spm_eeg_filter(S2);
 % particularly necessary if movement compensation has been used when
 % running Maxfilter, as this stops you from doing downsampling as part of
 % the Maxfilter call.] Also, as a rule of thumb, always filter first
-% (especially low-pass, not done in this practical), before down sampling
+% (especially low-pass, not done in this practical), before downsampling
 % to avoid any aliasing issues
 % (<https://en.wikipedia.org/wiki/Nyquist_frequency#Aliasing>).
 
@@ -258,7 +241,7 @@ end
 
 
 %% 
-% *LOAD THE DOWNSAMPLED SPM MEEG OBJECT*
+% *LOAD THE DOWNSAMPLED SPM M/EEG OBJECT*
 %
 % Set filenames used in following
 % steps. Again, to load the latest data set, we need the prefixes ffd (2x
@@ -268,7 +251,7 @@ for subnum = 1:length(spm_files), % iterates over subjects
 end
 
 %%
-% This loads in the SPM MEEG object:
+% This loads in the SPM M/EEG object:
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 
@@ -281,9 +264,13 @@ D
 
 %%  REMOVING BAD TIME PERIODS USING OSLVIEW
 % Note that there are some large artefacts. We will use the oslview
-% functionality to remove the bad epochs ( see
-% <https://sites.google.com/site/ohbaosl/preprocessing/oslview> to get more
-% detailed information about how to use OSLview).
+% functionality to remove the bad epochs. Fore more details on oslview,
+% see: 
+%
+% <html>
+% <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a>
+% </html>
+%
 
 %%
 % Load in the filtered data (prefix 'f'):
@@ -291,12 +278,12 @@ for subnum = 1:length(spm_files), % iterates over subjects
     spm_files{subnum}=[workingdir '/dff' spm_files_basenames{subnum}];
 end
 
-% load in the SPM MEEG object
+% load in the SPM M/EEG object
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 
 %% 
-% Now load oslview. This data has some bad artefacts in. Mark the epochs at
+% Now load oslview. This data has some exceptionally bad artefacts in. Mark the epochs at
 % around 325s, 380s and 600s as bad, as well as everything from 650 seconds
 % to the end. Marking is done by right-clicking in the proximity of the
 % event and click on 'Mark Event'. A first click (green dashed label) marks
@@ -321,10 +308,14 @@ D=oslview(D);
 % are sorted based on one of a number of metrics, which you can toggle
 % using the dropdown menu. For more information about AFRICA and how to use
 % it, please see the AFRICA wiki manual on
-% <https://sites.google.com/site/ohbaosl/preprocessing/africa> .
+%
+% <html>
+% <a href="https://sites.google.com/site/ohbaosl/preprocessing/africa" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/africa</a>
+% </html>
+%
 
 %%
-% Set new SPM MEEG object filenames to be used in following steps
+% Set new SPM M/EEG object filenames to be used in following steps
 for subnum = 1:length(spm_files), % iterates over subjects
     spm_files{subnum}=[workingdir '/dff' spm_files_basenames{subnum}];
 end
@@ -400,7 +391,7 @@ D
 % most important ECG and EOG components.
 
 %%
-% This will get you the name of te first online montage:
+% This will get you the name of the first online montage:
 D.montage('getname',1)
 
 
@@ -598,11 +589,11 @@ motorbike_trls = indtrial(D,'Motorbike')
 
 
 %%
-% Identify channels of certain types using the meegchannels function. E.g.
+% Identify channels of certain types using the indchantypes function. E.g.
 % identify the channel indices for the planar gradiometers and for the
 % magnetometers (what you have available may depend on the actual MEG
-% device) (Note that you can use 'MEGMAG' to get the magnetometers, and
-% D.chantype gives you a list of all channel types by index).
+% device). Note that you can use 'MEGMAG' to get the magnetometers, and
+% D.chantype gives you a list of all channel types by index.
 % 
 planars = D.indchantype('MEGPLANAR')
 %%
@@ -614,7 +605,7 @@ magnetos = D.indchantype('MEGMAG')
 % condition in the 135th MEGPLANAR channel. Note that the squeeze function
 % is needed to remove single dimensions for passing to the plot function,
 % and D.time is used to return the time points relative to the trigger
-% events (t=0) in seconds.
+% events (t=0 is time of stimulus onset) in seconds.
 
 figure('units','normalized','outerposition',[0 0 0.5 0.4]);
 subplot(1,2,1); % this plots all single trials
@@ -692,7 +683,7 @@ end;
 % trials removed to get a much cleaner ERF.
 
 %%
-% Set new SPM MEEG object filenames to be used in following steps
+% Set new SPM M/EEG object filenames to be used in following steps
 for subnum = 1:length(spm_files), % iterates over subjects
     spm_files{subnum}=[workingdir '/edff' spm_files_basenames{subnum}];
 end
@@ -722,13 +713,13 @@ D_raw.badtrials
 
 %%
 % Depending on how strict you were with the visual artefact rejection, you
-% should have quite some rejected trials and possibly channels.
+% should have quite a lot of rejected trials and possibly some rejected channels.
 
 %%
-% Nowe we identify the motorbike image trials. Note that _indtrial_
+% Now we identify the motorbike image trials. Note that _indtrial_
 % includes good AND bad trials, so bad trials need to be excluded.
-% _Setdiff_ finds the trials that are not bad.
-good_motorbike_trls = setdiff(D_raw.indtrial('Motorbike'),D.badtrials)
+% _'good'_ finds the trials that are not bad.
+good_motorbike_trls = D_raw.indtrial('Motorbike'),'good')
 
 %%
 % As before after AFRICA, we will make use of the online montages. Note that

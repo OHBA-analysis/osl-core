@@ -5,8 +5,9 @@
 %%
 % Spatial leakage in the beamformer results in correlations between adjacent/nearby voxels being
 % introduced, that are not the result of correlations in neural activity. As an approximation, this
-% can be corrected for by removing all zero-lag correlations. This does not eliminate correlations 
-% in the amplitude envelope, which still provides a meaningful measure of functional connectivity.
+% can be corrected for by removing all zero-lag correlations. Note that this does not eliminate correlations
+% in the amplitude envelopes (although it does decrease them somewhat). By doing this, the remaining
+% correlation is assumed to reflect genuine functional connectivity. 
 % 
 % To demonstrate orthogonalization in practice, this example illustrates the use of the low-level
 % |ROInets| function |remove_source_leakage()| which implements the core orthogonalization algorithms.

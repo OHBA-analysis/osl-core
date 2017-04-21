@@ -323,7 +323,7 @@ for subi=1:length(opt.sessions_to_do),
                     D=spm_eeg_load(spm_file);
                     chans=D.indchantype('MEEG');
                     D = D.badchannels(1:size(chans),0);
-                    save(D);
+                    D.save;
 
                     Smf.autobad_off=1;
                     if opt.maxfilter.remote_port ~= 0
@@ -425,7 +425,7 @@ for subi=1:length(opt.sessions_to_do),
             end;
 
             D=set_bad(D,BadEpochs2);
-            save(D);
+            D.save;
 
             S2=[];
             S2.outlier_measure_fns={'std'};
@@ -641,7 +641,7 @@ for subi=1:length(opt.sessions_to_do),
 
             end;
 
-            save(D_continuous);
+            D_continuous.save;
 
             S2=[];
             S2.outlier_measure_fns=S.outlier_measure_fns;
@@ -674,7 +674,7 @@ for subi=1:length(opt.sessions_to_do),
                 end;
                 report=osl_report_set_figs(report,[S.outlier_measure_fns{ss} '_chans_with_bad_epochs_tc'],fig_handles,['DATA: ' S.outlier_measure_fns{ss} ' over chans']);
                 report=osl_report_print_figs(report);
-            end;
+            end
         end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
@@ -690,6 +690,7 @@ for subi=1:length(opt.sessions_to_do),
             S.D=D_continuous; 
             S.chantype=opt.modalities{mm};
             S.do_plot=false;
+            S.cut_badsegments=true;
             [spect,F,T]=osl_plotspectrogram(S);
 
             %do plot
@@ -982,7 +983,7 @@ if(0)
 
         chans=D.indchantype('MEEG');
         D = D.badchannels(1:size(chans),0);
-        save(D);
+        D.save;
     end
 end
 
