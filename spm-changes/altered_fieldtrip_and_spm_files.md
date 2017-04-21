@@ -80,7 +80,7 @@ i.e. corresponds to the `S.fixoxfordneuromag` flag passed into `spm_eeg_convert_
 
 #### gca, gcf fieldtrip bug
 
-**Problem:** topoplot_common, ft_select_range and ft_singleplotER still thiink gca and gcf will return a double
+**Problem:** topoplot_common, ft_select_range, ft_singleplotER, ft_singleplotTFR still thiink gca and gcf will return a double
 
 **Solution:** copy local copy to the SPM12/fieldtrip directory
 

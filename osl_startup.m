@@ -122,6 +122,9 @@ function osl_startup( osldir )
     filelist{end+1} ='osl-core/spm-changes/private/ft_singleplotER.m';
     targetdir{end+1}='spm12/external/fieldtrip/';
 
+    filelist{end+1} ='osl-core/spm-changes/private/ft_singleplotTFR.m';
+    targetdir{end+1}='spm12/external/fieldtrip/';
+
     for k=1:length(filelist),
         copyfile( fullfile(osldir,filelist{k}), fullfile(osldir,targetdir{k}), 'f' );
     end
