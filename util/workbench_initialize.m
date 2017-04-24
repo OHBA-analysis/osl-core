@@ -21,7 +21,7 @@ function workbench_initialize(conf_file)
 	else % Read conf file
 		f = fopen(conf_file,'r');
 		fgetl(f); % Skip header
-		workbenchdir = fgetl(f); workbenchdir = regexp(workbenchdir,'.*= *','split'); workbenchdir = workbenchdir{2};
+		workbenchdir = fgetl(f); workbenchdir = regexp(workbenchdir,'.*= *','split'); workbenchdir = strtrim(workbenchdir{2});
 		fclose(f);
 	end
 
