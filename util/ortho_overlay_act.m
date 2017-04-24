@@ -23,6 +23,10 @@ try, tmp=S.title; catch, S.title=''; end;
 try, tmp=S.add_colorbar; catch, S.add_colorbar=1; end;
 try, tmp=S.gridstep; catch, S.gridstep=2; end;
 
+if ~isfield(S,'interp')
+    S.interp = 'sinc';
+end
+
 fname=S.fname;
 can_delete_fname=0;
 
@@ -46,7 +50,7 @@ if mni_res~=S.gridstep,
     [pth name ext]=fileparts(fname);
     new_fname=[pth '/' name '_' num2str(S.gridstep) 'mm' '.' ext];
     
-    tmp = osl_resample_nii(fname, new_fname, S.gridstep, 'sinc');
+    tmp = osl_resample_nii(fname, new_fname, S.gridstep, S.interp,[osldir 'std_masks/MNI152_T1_' num2str(S.gridstep) 'mm_brain_mask.nii.gz' ],0);
     
     if can_delete_fname,
         runcmd(['rm -f ' fname]);

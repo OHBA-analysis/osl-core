@@ -229,6 +229,12 @@ else
             fig_title{coni}=[fig_title{coni} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
             set(fig_handle(coni),'Position',[1 1 1300 450]);
             S2.fname=[statsdir '/cope' num2str(con) '_' num2str(resamp_gridstep) 'mm'];
+
+            % Use appropriate interpolation for summary image, default is
+            % 'sinc'
+            if oat.first_level.parcellation.do == 1
+                S2.interp = 'nearestneighbour';
+            end
             ortho_overlay_act( S2 );
 
         end;
