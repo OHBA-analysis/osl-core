@@ -58,7 +58,7 @@ D = ROInets.get_node_tcs(D,p_ft.parcelflag(true),'PCA');
 % average of voxels. This can be performed using |osl_resample_meeg()|.
 
 D = D.montage('switch',2)
-D = osl_resample_meeg(D,'ft_8mm_brain_mask.nii.gz','MNI152_T1_8mm_brain_mask.nii')
+D = osl_resample_meeg(D,'ft_8mm_brain_mask.nii.gz','MNI152_T1_8mm_brain_mask.nii.gz')
 
 %%
 % A new online montage will be written corresponding to the new coordinates.
