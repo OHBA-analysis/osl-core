@@ -115,7 +115,9 @@ if D.ntrials == 1 % can just pass in the MEEG object
     good_samples = ~all(badsamples(D,':',':',':')); % all checks if any channels are bad then ignore those samples
     % Get time-coursess
     nodedata = ROInets.get_node_tcs(voxeldata(:,good_samples), parcellation, S.method);
-    nodedata = ROInets.remove_source_leakage(nodedata, S.orthogonalisation);
+    if ~strcmp(S.orthogonalisation,'none')
+        nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
+    end
 
     data = zeros(size(nodedata,1),length(good_samples));
     data(:,good_samples) = nodedata;
@@ -126,8 +128,9 @@ elseif isa(D,'meeg') % work with D object in get_node_tcs
     %good_samples = find(~all(badsamples(D,':',':',':')));
     nodedata = ROInets.get_node_tcs(D,parcellation,S.method);
     nodedata = reshape(nodedata(:,:,:),size(nodedata,1),[]);
-    nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
-    data = zeros(size(nodedata,1),size(nodedata,2));
+    if ~strcmp(S.orthogonalisation,'none')
+        nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
+    end
     data = nodedata;
     data = reshape(data,size(data,1),size(D,2),size(D,3));
 
@@ -146,7 +149,9 @@ else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG d
             try
                 voxeldata = D(:,:,idx);
                 nodedata(:,:,idx) = ROInets.get_node_tcs(voxeldata, parcellation, S.method,0);
-                nodedata(:,:,idx) = ROInets.remove_source_leakage(nodedata(:,:,idx), S.orthogonalisation,0);
+                if ~strcmp(S.orthogonalisation,'none')
+                    nodedata(:,:,idx) = ROInets.remove_source_leakage(nodedata(:,:,idx), S.orthogonalisation,0);
+                end
             catch,
                 % This trial is probably low rank, ignore it
                 good_samples(:,:,idx) = 0;
