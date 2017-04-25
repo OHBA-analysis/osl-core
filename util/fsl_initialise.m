@@ -43,9 +43,9 @@ function fsl_initialise(conf_file)
 	else % Read conf file
 		f = fopen(conf_file,'r');
 		fgetl(f); % Skip header
-		fsldir = fgetl(f); fsldir = regexp(fsldir,'.*= *','split'); fsldir = fsldir{2};
-		bindir = fgetl(f); bindir = regexp(bindir,'.*= *','split'); bindir = bindir{2};
-		libdir = fgetl(f); libdir = regexp(libdir,'.*= *','split'); libdir = libdir{2};
+		fsldir = fgetl(f); fsldir = regexp(fsldir,'.*= *','split'); fsldir = strtrim(fsldir{2});
+		bindir = fgetl(f); bindir = regexp(bindir,'.*= *','split'); bindir = strtrim(bindir{2});
+		libdir = fgetl(f); libdir = regexp(libdir,'.*= *','split'); libdir = strtrim(libdir{2});
 		fclose(f);
 	end
 

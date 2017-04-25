@@ -527,8 +527,8 @@ for i = 1:m
     x = p(:,neighbors(2:end, i));
     p_bar = 1/k * sum(x,2);
     
-    P = (x - repmat(p_bar,1,k)) * transpose(x - repmat(p_bar,1,k)); %spd matrix P
-    %P = 2*cov(x);
+    %P = (x - repmat(p_bar,1,k)) * transpose(x - repmat(p_bar,1,k)); %spd matrix P
+    P = cov(x.');
     
     [V,D] = eig(P);
     

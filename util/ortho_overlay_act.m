@@ -50,7 +50,7 @@ if mni_res~=S.gridstep,
     [pth name ext]=fileparts(fname);
     new_fname=[pth '/' name '_' num2str(S.gridstep) 'mm' '.' ext];
     
-    tmp = osl_resample_nii(fname, new_fname, S.gridstep, S.interp,[osldir 'std_masks/MNI152_T1_' num2str(S.gridstep) 'mm_brain_mask.nii.gz' ],0);
+    tmp = osl_resample_nii(fname, new_fname, S.gridstep, S.interp,[osldir '/std_masks/MNI152_T1_' num2str(S.gridstep) 'mm_brain_mask.nii.gz' ],0);
     
     if can_delete_fname,
         runcmd(['rm -f ' fname]);
