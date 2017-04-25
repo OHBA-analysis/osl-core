@@ -133,7 +133,7 @@ oat.first_level.parcellation.method            = <span class="string">'spatialBa
 oat = osl_check_oat(oat);
 
 <span class="comment">% Rerun the first level OAT.</span>
-oat.to_do=[1 1 0 0];
+oat.to_do=[0 1 0 0];
 oat = osl_run_oat(oat);
 </pre><h2 id="13">VIEW THE RESULTS IN THE OAT REPORT</h2><p>As with the other analyses, take a look at the first level summary report. Alongside the first level design matrix, this contains the COPE and t-stat estimates across the whole time-frequency decomposition from the peak ROI. The results are uniform within each parcel in the whole brain orthoplots and indicate the largest responses around 116ms after stimulus onset are in visual cortex for all three contrasts.</p><pre class="codeinput">disp(oat.results.report.html_fname);
 </pre><h2 id="14">SOURCE ROI TIME-FREQUENCY PLOT</h2><p>As with the voxel example able, we can interrogate the OAT to extract the time-frequency plots from specific contrasts.</p><p>This time the results come from the parcel containing the requested voxel.</p><pre class="codeinput">mni_coord=[4,-82,-8]; <span class="comment">% Visual Cortex Voxel</span>
