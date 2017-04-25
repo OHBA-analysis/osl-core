@@ -7,7 +7,7 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>Preproc - manual</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-24"><meta name="DC.source" content="osl_example_preprocessing_manual.m"></head><body><div class="content"><h1>Preproc - manual</h1><!--introduction--><p>This an example for running a manual preprocessing pipeline in OSL. For today's workshop we will copy and paste directly from this practical on the website. You can also do the same with the Matlab script found under /osl-core/examples/osl_example_preprocessing_manual.m . We will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy). This is contained in the downloadable zip.file available online.</p><p>We will take an approach here which is run step-by-step and requires manual intervention. This will go through the following steps:</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">SET UP ANALYSIS</a></li><li><a href="#8">CONVERT FROM FIF TO AN SPM M/EEG OBJECT</a></li><li><a href="#10">THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION</a></li><li><a href="#22">FILTERING: HIGH-PASS AND NOTCH FILTERING</a></li><li><a href="#25">DOWNSAMPLING</a></li><li><a href="#31">REMOVING BAD TIME PERIODS USING OSLVIEW</a></li><li><a href="#34">MANUAL AFRICA DENOISING</a></li><li><a href="#51">EPOCHING OF DATA</a></li><li><a href="#69">VISUAL ARTEFACT REJECTION</a></li><li><a href="#71">EXAMINE AND VISUALISE CLEANED EPOCHED DATA</a></li><li><a href="#96">EXERCISES</a></li></ul></div><p>Note that this contains the fif file: fifs/sub1_face_sss.fif that has already been SSS Maxfiltered and downsampled to 250 Hz.</p><p>We will now run it through a manual preprocessing pipeline as outlined above.</p><h2 id="2">SET UP ANALYSIS</h2><p>The only thing you need to do is to go into your OSL directory (i.e. type <i>cd /somedirectory/osl-core</i> ) and then run the following.</p><pre class="codeinput">osl_startup;
+   <title>Preproc - manual</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-25"><meta name="DC.source" content="osl_example_preprocessing_manual.m"></head><body><div class="content"><h1>Preproc - manual</h1><!--introduction--><p>This an example for running a manual preprocessing pipeline in OSL. For today's workshop we will copy and paste directly from this practical on the website. You can also do the same with the Matlab script found under /osl-core/examples/osl_example_preprocessing_manual.m . We will work with a single subject's data from an emotional faces task (data courtesy of Susie Murphy). This is contained in the downloadable zip.file available online.</p><p>We will take an approach here which is run step-by-step and requires manual intervention. This will go through the following steps:</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">SET UP ANALYSIS</a></li><li><a href="#8">CONVERT FROM FIF TO AN SPM M/EEG OBJECT</a></li><li><a href="#10">THE SPM M/EEG OBJECT - LOADING AND BASIC INFORMATION</a></li><li><a href="#22">FILTERING: HIGH-PASS AND NOTCH FILTERING</a></li><li><a href="#25">DOWNSAMPLING</a></li><li><a href="#31">REMOVING BAD TIME PERIODS USING OSLVIEW</a></li><li><a href="#34">MANUAL AFRICA DENOISING</a></li><li><a href="#51">EPOCHING OF DATA</a></li><li><a href="#69">VISUAL ARTEFACT REJECTION</a></li><li><a href="#71">EXAMINE AND VISUALISE CLEANED EPOCHED DATA</a></li><li><a href="#96">EXERCISES</a></li></ul></div><p>Note that this contains the fif file: fifs/sub1_face_sss.fif that has already been SSS Maxfiltered and downsampled to 250 Hz.</p><p>We will now run it through a manual preprocessing pipeline as outlined above.</p><h2 id="2">SET UP ANALYSIS</h2><p>The only thing you need to do is to go into your OSL directory (i.e. type <i>cd /somedirectory/osl-core</i> ) and then run the following.</p><pre class="codeinput">osl_startup;
 </pre><p>This will not be necessary after you have done this once, i.e. no need to repeat during one of the follow-up practicals.</p><p><b>SPECIFY DIRECTORIES FOR THIS ANALYSIS</b></p><p>Datadir and working dir should now be be pointing to the right folder, where our example data are stored.</p><pre class="codeinput">datadir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'preproc_example'</span>,<span class="string">'manual'</span>);
 </pre><p>The working directory will be same as the data directory. This is where the analysis files will be stored in.</p><pre class="codeinput">workingdir=datadir;
 </pre><p>Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one, e.g.:</p><pre class="codeinput"><span class="comment">%</span>
@@ -23,12 +23,16 @@ spm_files_basenames{1}=[<span class="string">'spm_meg1.mat'</span>];
 2  =  Happy face
 3  =  Fearful face
 4  =  Motorbike
-18 =  Introduction screen
 11 =  Break between blocks
-19 =  Midway break
 12 =  Green fixation cross (response trials)
 13 =  Red fixation cross (following green on response trials)
-14 =  Red fixation cross (non-response trials)</pre><p>For example, there should be 120 motorbike trials, and 80 of each of the face conditions. Check that the histogram plot corresponds to these trials numbers.</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(fif_files), <span class="comment">% iterates over subjects</span>
+14 =  Red fixation cross (non-response trials)
+19 =  Midway break
+33 =  Introduction screen</pre><pre class="codeinput"><span class="comment">%</span>
+<span class="comment">% For example, there should be 120 motorbike trials, and 80 of each of the</span>
+<span class="comment">% face conditions. Check that the histogram plot corresponds to these</span>
+<span class="comment">% trials numbers.</span>
+<span class="keyword">for</span> subnum = 1:length(fif_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -56,7 +60,7 @@ subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 </pre><p>Have a look at the SPM object by typing 'D'. Note that this is continuous data, with 232000 time points at 250Hz. We will epoch the data later.</p><pre class="codeinput">D
 </pre><p>The above output gives you some basic information about the M/EEG object that has been loaded into workspace. Note that the data values themselves are memory-mapped from spm_meg1.dat and can be accessed by indexing the D object. E.g, D(1,2,3) returns the field strength in the first sensor at the second sample point during the third trial).</p><p>Here are some essential methods to be used with the D object, try them consecutively:</p><pre class="codeinput">D.ntrials <span class="comment">% gives you the number of trials</span>
-</pre><pre class="codeinput">D.conditions <span class="comment">% shows a list of condition labels per trial</span>
+</pre><pre class="codeinput">D.conditions <span class="comment">% shows a list of condition labels per trial, this should be 'undefined' in continuous data</span>
 </pre><pre class="codeinput">D.condlist <span class="comment">% shows the list of unique conditions</span>
 </pre><pre class="codeinput">D.chanlabels <span class="comment">% order and names of channels</span>
 </pre><pre class="codeinput">D.chantype <span class="comment">% type of channel</span>
@@ -149,16 +153,16 @@ plot(D_africa.time(1:10000),D_africa(306,1:10000),<span class="string">'r'</span
 xlim([10 20]);
 xlabel(<span class="string">'Time (s)'</span>);
 legend({<span class="string">'Raw'</span> <span class="string">'AFRICA'</span>});
-</pre><p>You should see something like this:</p><p><img vspace="5" hspace="5" src="osl_example_preproc_HEARTBEAT_DENOISING.png" alt=""> </p><p>The first part of this figure plots the ECG channel included in the recording as reference (channel 308). In the second part we plot the two different variants of the same data set, the first  shows the raw time series, and the second shows AFRICA run on it and cleaned (EOG / ECG attenuated). You can see that there is some commonalities between the ECG and some part of the raw, uncleaned time-series in the data (at least in that channel, 306), but that this is gone in the AFRICA denoised version. That means that AFRICA has removed most of the ECG contaminated parts in the signal. This is clearly superior to filtering, for example you should see one bump that looks a bit like a heart beat component, but it is not in the ECG channel. After AFRICA denoising this downward deflection is still there, which is desirable, since it is not ECG. Filtering would just have removed all these bumps equally, including any neuronal signal in that frequency range.</p><h2 id="51">EPOCHING OF DATA</h2><p>Now we will do some preliminary epoching for the purpose of finding outliers. This is not the final epoching. Instead this sets up the epoch definitions, and performs a temporary epoching for the purpose of doing semi-automated outlier trial rejection (before running the fully automated OAT).</p><p>The epoch definitions and the continuous data will be kept and passed into OAT. This is so that things like temporal filtering (which is dones as part of OAT) can be done on the continuous data, before the data is epoched inside OAT. Note that this will also remove those trials that overlap with the bad epochs identified using OSLview.</p><p>Here the epochs are set to be from -1000ms to +2000ms relative to the triggers in the MEG data. We also specify the trigger values for each of the 4 epoch types of interest (motorcycle images, neutral faces, fearful faces, happy faces). To repeat, the codes used on the trigger channel for this experiment were:</p><pre>1 = Neutral face
-2 = Happy face
-3 = Fearful face
-4 = Motorbike
-18 = Introduction screen
-11 = Break between blocks
-19 = Midway break
-12 =   Green fixation cross (response trials)
-13 = Red fixation cross (following green on response trials)
-14 = Red fixation cross (non-response trials)</pre><p>Note that we are only interested in the first 4 event codes listed here for today's workshop.</p><p>As before, here we set filenames used for the following step. Prefix is now 'dff'. The next part does the actual epoching:</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
+</pre><p>You should see something like this:</p><p><img vspace="5" hspace="5" src="osl_example_preproc_HEARTBEAT_DENOISING.png" alt=""> </p><p>The first part of this figure plots the ECG channel included in the recording as reference (channel 308). In the second part we plot the two different variants of the same data set, the first  shows the raw time series, and the second shows AFRICA run on it and cleaned (EOG / ECG attenuated). You can see that there is some commonalities between the ECG and some part of the raw, uncleaned time-series in the data (at least in that channel, 306), but that this is gone in the AFRICA denoised version. That means that AFRICA has removed most of the ECG contaminated parts in the signal. This is clearly superior to filtering, for example you should see one bump that looks a bit like a heart beat component, but it is not in the ECG channel. After AFRICA denoising this downward deflection is still there, which is desirable, since it is not ECG. Filtering would just have removed all these bumps equally, including any neuronal signal in that frequency range.</p><h2 id="51">EPOCHING OF DATA</h2><p>Now we will do some preliminary epoching for the purpose of finding outliers. This is not the final epoching. Instead this sets up the epoch definitions, and performs a temporary epoching for the purpose of doing semi-automated outlier trial rejection (before running the fully automated OAT).</p><p>The epoch definitions and the continuous data will be kept and passed into OAT. This is so that things like temporal filtering (which is dones as part of OAT) can be done on the continuous data, before the data is epoched inside OAT. Note that this will also remove those trials that overlap with the bad epochs identified using OSLview.</p><p>Here the epochs are set to be from -1000ms to +2000ms relative to the triggers in the MEG data. We also specify the trigger values for each of the 4 epoch types of interest (motorcycle images, neutral faces, fearful faces, happy faces). To repeat, the codes used on the trigger channel for this experiment were:</p><pre>1  =  Neutral face
+2  =  Happy face
+3  =  Fearful face
+4  =  Motorbike
+11 =  Break between blocks
+12 =  Green fixation cross (response trials)
+13 =  Red fixation cross (following green on response trials)
+14 =  Red fixation cross (non-response trials)
+19 =  Midway break
+33 =  Introduction screen</pre><p>Note that we are only interested in the first 4 event codes listed here for today's workshop.</p><p>As before, here we set filenames used for the following step. Prefix is now 'dff'. The next part does the actual epoching:</p><pre class="codeinput"><span class="keyword">for</span> subnum = 1:length(spm_files), <span class="comment">% iterates over subjects</span>
     spm_files{subnum}=[workingdir <span class="string">'/dff'</span> spm_files_basenames{subnum}];
 <span class="keyword">end</span>
 
@@ -374,12 +378,13 @@ spm_files_basenames{1}=['spm_meg1.mat'];
 %  2  =  Happy face
 %  3  =  Fearful face
 %  4  =  Motorbike
-%  18 =  Introduction screen
 %  11 =  Break between blocks
-%  19 =  Midway break
 %  12 =  Green fixation cross (response trials)
 %  13 =  Red fixation cross (following green on response trials)
 %  14 =  Red fixation cross (non-response trials)
+%  19 =  Midway break
+%  33 =  Introduction screen
+
 %
 % For example, there should be 120 motorbike trials, and 80 of each of the
 % face conditions. Check that the histogram plot corresponds to these
@@ -436,7 +441,7 @@ D
 % Here are some essential methods to be used with the D object, try them consecutively: 
 D.ntrials % gives you the number of trials
 %%
-D.conditions % shows a list of condition labels per trial
+D.conditions % shows a list of condition labels per trial, this should be 'undefined' in continuous data
 %%
 D.condlist % shows the list of unique conditions
 %%
@@ -780,16 +785,16 @@ legend({'Raw' 'AFRICA'});
 % experiment were:
 %
 %
-%  1 = Neutral face 
-%  2 = Happy face
-%  3 = Fearful face
-%  4 = Motorbike
-%  18 = Introduction screen
-%  11 = Break between blocks
-%  19 = Midway break
-%  12 =   Green fixation cross (response trials)
-%  13 = Red fixation cross (following green on response trials)
-%  14 = Red fixation cross (non-response trials)
+%  1  =  Neutral face 
+%  2  =  Happy face
+%  3  =  Fearful face
+%  4  =  Motorbike
+%  11 =  Break between blocks
+%  12 =  Green fixation cross (response trials)
+%  13 =  Red fixation cross (following green on response trials)
+%  14 =  Red fixation cross (non-response trials)
+%  19 =  Midway break
+%  33 =  Introduction screen
 % 
 % Note that we are only interested in the first 4 event codes listed here
 % for today's workshop.

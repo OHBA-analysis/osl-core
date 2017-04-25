@@ -346,7 +346,7 @@ D=spm_eeg_load([osldir '/example_data/preproc_example/automatic_opt/practical_si
 % Then define some trials to look at:
 %good_stimresp_trls = [D.indtrial('StimLRespL','good') D.indtrial('StimLRespR','good')];
 allconds=D.condlist;
-good_stimresp_trls = [D.indtrial(conds(5:8),'good')]; % takes button press conditions
+good_stimresp_trls = [D.indtrial(allconds(5:8),'good')]; % takes button press conditions
 
 
 % Get the sensor indices for the two different MEG acquisition

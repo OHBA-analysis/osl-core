@@ -70,12 +70,13 @@ spm_files_basenames{1}=['spm_meg1.mat'];
 %  2  =  Happy face
 %  3  =  Fearful face
 %  4  =  Motorbike
-%  18 =  Introduction screen
 %  11 =  Break between blocks
-%  19 =  Midway break
 %  12 =  Green fixation cross (response trials)
 %  13 =  Red fixation cross (following green on response trials)
 %  14 =  Red fixation cross (non-response trials)
+%  19 =  Midway break
+%  33 =  Introduction screen
+
 %
 % For example, there should be 120 motorbike trials, and 80 of each of the
 % face conditions. Check that the histogram plot corresponds to these
@@ -132,7 +133,7 @@ D
 % Here are some essential methods to be used with the D object, try them consecutively: 
 D.ntrials % gives you the number of trials
 %%
-D.conditions % shows a list of condition labels per trial
+D.conditions % shows a list of condition labels per trial, this should be 'undefined' in continuous data
 %%
 D.condlist % shows the list of unique conditions
 %%
@@ -476,16 +477,16 @@ legend({'Raw' 'AFRICA'});
 % experiment were:
 %
 %
-%  1 = Neutral face 
-%  2 = Happy face
-%  3 = Fearful face
-%  4 = Motorbike
-%  18 = Introduction screen
-%  11 = Break between blocks
-%  19 = Midway break
-%  12 =   Green fixation cross (response trials)
-%  13 = Red fixation cross (following green on response trials)
-%  14 = Red fixation cross (non-response trials)
+%  1  =  Neutral face 
+%  2  =  Happy face
+%  3  =  Fearful face
+%  4  =  Motorbike
+%  11 =  Break between blocks
+%  12 =  Green fixation cross (response trials)
+%  13 =  Red fixation cross (following green on response trials)
+%  14 =  Red fixation cross (non-response trials)
+%  19 =  Midway break
+%  33 =  Introduction screen
 % 
 % Note that we are only interested in the first 4 event codes listed here
 % for today's workshop.
