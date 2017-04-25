@@ -1,6 +1,6 @@
 %% HMM - enveloped rest data
 %
-% This example shows how to use the HMM to infer transient states 
+% This example shows how to use the HMM with Gaussian observations to infer transient states 
 % in whole-brain resting state MEG data.
 %
 %%
@@ -12,21 +12,26 @@
 % Internally, it uses the HMM-MAR toolbox (covered in the next practical) for the final estimation.
 % GLEAN does a number of things for us before calling to the HMM-MAR:
 %
-% 1.- Bandpass-filtering: we would be discarding very slow and very fast frequencies, 
+% 1. Bandpass-filtering: we would be discarding very slow and very fast frequencies, 
 %   although we also could use it to focus on a particular band of interest. 
 %
-% 2.- Getting power time courses: using the Hilbert transform we will get rid of the phase,
+% 2. Getting power time courses: using the Hilbert transform we will get rid of the phase,
 %   information, producing time series that reflect only the changes on power. 
 %
-% 3.- Subsampling: because power changes are slow, we can afford subsampling the data to reduce
+% 3. Subsampling: because power changes are slow, we can afford downsampling the data to reduce
 %   the computational load without losing statistical power on the estimation. 
 %   Also, downsampling will enhance the estimates of functional connectivity.
 %
-% 4.- Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)
+% 4. Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)
 %   onto a number of time series, each corresponding to a different brain region (uses ROInets).
 %
-% 5.- Leakage correction: because of the artefactual high correlation between proximal regions,
+% 5. Leakage correction: because of the artefactual high correlation between proximal regions,
 %   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets). 
+%
+% Note that, although GLEAN leans on the HMM-MAR toolbox, and uses the
+% hmmmar() function, the model that it estimates for the states is *not* a MAR model, 
+% but a Gaussian model. That is, even though is called HMM-MAR, the toolbox can 
+% actually be used to estimate other models.
 
 %% Estimate a whole-brain HMM model with GLEAN
 
@@ -65,11 +70,11 @@ settings = struct;
 
 %%
 % Envelope settings: related to how to obtain the power time series from the data
-% and applying subsampling 
+% and applying downsampling 
 
 settings.envelope.overwrite = 0;
 settings.envelope.log       = 0;
-settings.envelope.fsample   = 20; % we will get the data subsampled to this frequency
+settings.envelope.fsample   = 20; % we will get the data downsampled to this frequency
 settings.envelope.mask      = fullfile(data_dir,'MNI152_T1_8mm_brain.nii.gz');
 
 %% 
@@ -115,7 +120,7 @@ load(glean_name)
 glean.plot_timecourse(GLEAN)
 
 %%
-% By zoom in to, for example, a time range between 6 and 6.5 seconds,
+% By zoom in to, for example, a time range between 6 and 6.5 seconds (please do),
 % it can be qualitatively noticed that the state visits are quite short, suggesting
 % a quite fast time scale of network switching in the brain "at rest".
 % We will look at it quantitatively below.
@@ -159,7 +164,7 @@ xlim([0.5 8.5])
 figure
 bar(max(GLEAN.results.temporal_stats.FractionalOccupancy.stats,[],2),0.9,'FaceColor','m')
 ylabel('Max %Occupancy','FontSize',16)
-xlabel('States','FontSize',16)
+xlabel('Subjects','FontSize',16)
 set(gca,'FontSize',16)
 xlim([0.5 12.5]) 
 
@@ -175,8 +180,10 @@ set(gca,'FontSize',16)
 xlim([0.5 8.5])
 
 %%
-% We can look at the interval times, which oscillate in between 1 and 2.5s,
-% with the exception of state 1, which is to be expected considering is an usual state.
+% We can look at the interval times, which oscillate in between 1 and 2.5s
+% with the exception of state 1.
+% The highest interval times of state 1 is
+% to be expected considering that this state appears much less frequently than the others.
 
 figure
 bar(mean(GLEAN.results.temporal_stats.MeanIntervalLength.stats),0.9,'FaceColor','g')
