@@ -1,4 +1,4 @@
-%% OAT 4 - GROUP ANALYSIS
+%% OAT 4 - Group Analysis
 %
 % This practical will work with a group-level OAT analysis run across 40
 % participants in the faces-motorbikes task we looked at in single subject
