@@ -7,16 +7,16 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>OAT 4 - Group Analysis</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-26"><meta name="DC.source" content="osl_example_group_oat.m"></head><body><div class="content"><h1>OAT 4 - Group Analysis</h1><!--introduction--><p>This practical will work with a group-level OAT analysis run across 40 participants in the faces-motorbikes task we looked at in single subject practical sessions.</p><p>Work your way through the script cell by cell using the supplied dataset. As well as following the instructions below, make sure that you read all of the comments (indicated by %), as these explain what each step is doing. Note that you can run a cell (marked by %%) using the ?Cell? drop down menu on the Matlab GUI.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">LOAD PRE-RUN GROUP OAT</a></li><li><a href="#2">EXAMINE THE LOWER LEVEL ANALYSES</a></li><li><a href="#3">SUBJECT LEVEL OPTIONS</a></li><li><a href="#4">SETUP GROUP-LEVEL OPTIONS</a></li><li><a href="#5">CHECK OAT</a></li><li><a href="#6">CREATE A STATS REPORT</a></li><li><a href="#7">VIEW GROUP LEVEL STATS REPORT</a></li><li><a href="#8">OUTPUT GROUP'S NIFTII FILES</a></li><li><a href="#9">VIEW NIFTII RESULTS IN FSLVIEW</a></li><li><a href="#10">INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE</a></li><li><a href="#11">INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK</a></li></ul></div><h2 id="1">LOAD PRE-RUN GROUP OAT</h2><p>A group analysis needs the source_recon, first_level and subject_level analyses to be completed for each participant and the group_level to be run across all the lower level results.</p><p>This takes quite a while to run for a 40 subject dataset, so to save time for this tutorial we have provided an completed OAT analysis which we can load in and explore.</p><p>This section loads the  OAT analysis for which the first 3 stages (source recon, first-level GLM, subject-level averaging) have already been run. Note that the 1st level contrasts that have been run are: S2.contrast{1}=[3 0 0 0]'; % motorbikes S2.contrast{2}=[0 1 1 1]'; % faces S2.contrast{3}=[-3 1 1 1]'; % faces-motorbikes</p><pre class="codeinput"><span class="comment">% the directory containing the group OAT</span>
+   <title>OAT 4 - Group Analysis</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-26"><meta name="DC.source" content="osl_example_group_oat.m"></head><body><div class="content"><h1>OAT 4 - Group Analysis</h1><!--introduction--><p>This practical will work with a group-level OAT analysis run across 40 participants in the faces-motorbikes task we looked at in the single subject practical sessions.</p><p>Work your way through the script cell by cell using the supplied dataset. As well as following the instructions below, make sure that you read all of the comments (indicated by %), as these explain what each step is doing. Note that you can run a cell (marked by %%) using the Cell drop down menu on the Matlab GUI.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">LOAD PRE-RUN GROUP OAT</a></li><li><a href="#2">EXAMINE THE LOWER LEVEL ANALYSES</a></li><li><a href="#3">SUBJECT LEVEL OPTIONS</a></li><li><a href="#4">SETUP GROUP-LEVEL OPTIONS</a></li><li><a href="#5">CHECK OAT</a></li><li><a href="#6">CREATE A STATS REPORT</a></li><li><a href="#7">VIEW GROUP LEVEL STATS REPORT</a></li><li><a href="#8">OUTPUT GROUP'S NIFTII FILES</a></li><li><a href="#9">VIEW NIFTII RESULTS IN FSLVIEW</a></li><li><a href="#10">INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE</a></li><li><a href="#11">INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK</a></li></ul></div><h2 id="1">LOAD PRE-RUN GROUP OAT</h2><p>A group analysis needs the source_recon, first_level and subject_level analyses to be completed for each participant and the group_level to be run across all the lower level results.</p><p>This takes quite a while to run for a 40 subject dataset, so to save time for this tutorial we have provided a completed OAT analysis which we can load in and explore.</p><p>This section loads the  OAT analysis for which the first 3 stages (source recon, first-level GLM, subject-level averaging) have already been run. Note that the 1st level contrasts that have been run are:</p><div><ul><li>S2.contrast{1}=[3 0 0 0]'; % motorbikes</li><li>S2.contrast{2}=[0 1 1 1]'; % faces</li><li>S2.contrast{3}=[-3 1 1 1]'; % faces-motorbikes</li></ul></div><pre class="codeinput"><span class="comment">% the directory containing the group OAT</span>
 workingdir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_group'</span>);
 
 <span class="comment">% Load in the previous OAT</span>
-oat = osl_load_oat([osldir <span class="string">'example_data/faces_group/sourcespace'</span>], <span class="string">'wholebrain_first_level'</span>,<span class="string">'sub_level'</span>,<span class="string">'group_level'</span>);
-</pre><h2 id="2">EXAMINE THE LOWER LEVEL ANALYSES</h2><p>Take a look at the options for the source-recon and first-level analyses. These are very similar to the parameters we chose for the single subject ERF beamformer tutorial</p><p>Take a moment to familiarise yourself with the options. In particular, look at the first level GLM settings and which contrasts have been run.</p><pre class="codeinput">disp(oat.source_recon);
+oat = osl_load_oat([osldir <span class="string">'/example_data/faces_group/sourcespace'</span>], <span class="string">'wholebrain_first_level'</span>,<span class="string">'sub_level'</span>,<span class="string">'group_level'</span>);
+</pre><h2 id="2">EXAMINE THE LOWER LEVEL ANALYSES</h2><p>Take a look at the options for the source-recon and first-level analyses. These are very similar to the parameters we chose for the single subject ERF beamformer tutorial</p><p>Take a moment to familiarise yourself with the options. In particular, look at the first level GLM settings and which contrasts have been run. This can be found in <tt>oat.first_level.contrast</tt> and <tt>oat.first_level.contrast_name</tt>.</p><pre class="codeinput">disp(oat.source_recon);
 disp(oat.first_level);
-</pre><h2 id="3">SUBJECT LEVEL OPTIONS</h2><p>The subject level allows for fixed-effects combination of different datasets recorded from a single participant. To clarify some terminology:</p><div><ul><li>session - a session at the <tt>source_recon</tt> or <tt>first_level</tt> is a single dataset acquired at a single point in time</li><li>subject - a single participant who has contributed one or more sessions to the analysis.</li></ul></div><p>If we have a design in which one subject has contributed several sessions, we can combine the COPEs from each session to get a subject level estimate. This subject level estimate is then passed into the group_level analysis.</p><p>There are some extra options for computing laterality contrasts at the subject level. This is useful if you was to compare a response or effect in the left or right hemisphere.</p><p>The key parameter in the subject level is <tt>oat.subject_level.session_index_list</tt>. This is a cell array with a cell containing the indices of all the first_level sessions contributed by that subject.</p><p>In our case, each subject contributed a single session so this indexing is a simple one-to-one matching between the <tt>first_level</tt> and <tt>subject_level</tt></p><pre class="codeinput">disp(oat.subject_level);
+</pre><h2 id="3">SUBJECT LEVEL OPTIONS</h2><p>The subject level allows for a fixed-effects combination of different datasets recorded from a single participant. To clarify some terminology:</p><div><ul><li>session - a session at the <tt>source_recon</tt> or <tt>first_level</tt> is a single dataset acquired from a single run in the scanner.</li><li>subject - a single participant who has contributed one or more sessions to the analysis.</li></ul></div><p>If we have a design in which one subject has contributed several sessions, we can combine the COPEs from each session to get a subject level estimate. This subject level estimate is then passed into the group_level analysis.</p><p>The key parameter in the subject level is <tt>oat.subject_level.session_index_list</tt>. This is a cell array with a cell containing the indices of all the first_level sessions contributed by that subject.</p><p>There are some extra options for computing laterality contrasts at the subject level. This is useful if you was to compare a response or effect between the left and right hemispheres. For instance, is the response to a tactile stimulation on the hand larger in the ipsi or contra lateral hemisphere?</p><p>In our case, each subject contributed a single session so this indexing is a simple one-to-one matching between the <tt>first_level</tt> and <tt>subject_level</tt></p><pre class="codeinput">disp(oat.subject_level);
 disp(oat.subject_level.session_index_list);
-</pre><h2 id="4">SETUP GROUP-LEVEL OPTIONS</h2><p>This section defines the parameters for the group_level in the OAT analysis. Note that we do not actually run this analyses here, but these options define the analysis as it was run</p><p>The group design matrix is defined as a single vector of ones, this calculates a group average across all participants. Finally the first and group level contrasts to run for the report are set up. IN this case we are running first level contrast 3 (faces &gt; motorbikes) and group level contrast 1 (grand mean).</p><pre class="codeinput">oat.group_level.name=<span class="string">'group_level'</span>;
+</pre><h2 id="4">SETUP GROUP-LEVEL OPTIONS</h2><p>This section defines the parameters for the group_level in the OAT analysis.</p><p>The group design matrix is defined as a single vector of ones, this calculates a group average across all participants. Finally the first-level and group-level contrasts to run for the report are set up. In this case we are running first level contrast 3 (faces &gt; motorbikes) and group level contrast 1 (grand mean).</p><pre class="codeinput">oat.group_level.name=<span class="string">'group_level'</span>;
 oat.group_level.subjects_to_do=[1:42];
 
 <span class="comment">% Spatial and temporal averaging options</span>
@@ -46,9 +46,14 @@ oat.group_level.report.first_level_cons_to_do=[2,1,3]; <span class="comment">% p
 oat.group_level.report.group_level_cons_to_do=[1]; <span class="comment">% purely used to determine which contrasts are shown in the report, the first one in list determines the contrast used to find the vox, time, freq with the max stat</span>
 oat.group_level.report.show_lower_level_copes=0;
 oat.group_level.report.show_lower_level_cope_maps=0;
-</pre><h2 id="5">CHECK OAT</h2><p>The OAT structure that we have created should be passed to osl_run_oat to perform the pipeline as defined. However the OAT structure should also contain oat.to_do which is a list of binary values indicating which stages of the OAT to run.</p><p>As the OAT analysis we loaded at the start of this practical has already completed we do not need to run the oat here.</p><pre class="codeinput">oat.to_do=[0 0 0 1]; <span class="comment">% run group-level stage only</span>
+</pre><h2 id="5">CHECK OAT</h2><p>The OAT structure that we have created should be passed to osl_run_oat to perform the pipeline as defined. However the OAT structure should also contain oat.to_do which is a list of binary values indicating which stages of the OAT to run.</p><p>The OAT analysis we loaded at the start of this practical has already been run for you (due to long computation time), so we do not need actually re-run the OAT here. In practice, we would call <tt>osl_run_oat</tt> after <tt>osl_check_oat</tt> to run the analysis.</p><pre class="codeinput">oat.to_do=[0 0 0 1]; <span class="comment">% run group-level stage only</span>
 
-oat = osl_check_oat(oat);
+oat = osl_check_oat( oat );
+
+do_analysis = false;
+<span class="keyword">if</span> do_analysis
+	oat = osl_run_oat( oat );
+<span class="keyword">end</span>
 </pre><h2 id="6">CREATE A STATS REPORT</h2><p>We will  create a stats report (without rerunning OAT), where we look for the maximum stat for a different first level contrast (specified by S.first_level_con), within the time range S.time_range:</p><pre class="codeinput">oat.results.plotsdir =fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_group'</span>,<span class="string">'sourcespace.oat'</span>,<span class="string">'plots'</span>);
 
 oat.group_level.report.time_range=[0.07 0.13];
@@ -56,14 +61,14 @@ oat.group_level.report.first_level_cons_to_do=[2,1,3]; <span class="comment">% p
 oat.group_level.report.group_level_cons_to_do=[1]; <span class="comment">% we want to isolate the group average response</span>
 oat.group_level.report.show_lower_level_cope_maps=0; <span class="comment">%</span>
 report = oat_group_level_stats_report(oat,oat.group_level.results_fnames);
-</pre><h2 id="7">VIEW GROUP LEVEL STATS REPORT</h2><p>Click the link to open the stats report after the previous cell has completed.</p><p>The report shows a range of plots which are useful for checking the analysis has run properly and summarising the key results.</p><p>On first page we see:</p><p><b>Group-level design matrix</b> - This is the GLM design matrix from our analysis</p><p><b>Average lower level STDCOPEs</b> - These show the variance of the COPE estimate averaged over time for each subject for each contrast. If any subject has an extremely high or low variance it might indicate that their are an outlier and we should double check their lower level results. Perhaps they have very few good trials in one condition or their coregistration has gone wrong.</p><p><b>Stats for GC1</b> - These are the group average COPEs and t-stats for the lower level contrasts.</p><p><b>Lower level COPES</b> - These show the COPES for each individual subject for each lower-level contrast. The thick line indicates the group mean. Again it is good to check these to identify any outliers.</p><div><ul><li>Lower-level STDCOPES* - These are the lower-level COPEs (as we saw above) from the maximal time-point in the faces contrast.</li></ul></div><p>There are no apparent outliers in our diagnostic plots so we can click the links at the top of the page to explore the results in more detail. Click the link to open the results for the faces contrast.</p><p>Here we see the group level COPE and t-stats across the brain for the faces contrast. The time-point is chosen by the maximum response in the faces condition. There is a clear occipital response around 100ms after stimulus onset. Explore the results from the other contrasts before moving on to the next cell.</p><p><img vspace="5" hspace="5" src="osl_example_group_oat_maxt_smap_c2_gc1.png" alt=""> </p><h2 id="8">OUTPUT GROUP'S NIFTII FILES</h2><p>As with the single subject analyses we can output nifti files containig the group-level results across the whole brain and the whole experimental epoch.</p><p>This section saves out a nifti volume containing the results from first_level contrast 3 (faces &gt; motorbikes) across the whole group</p><pre class="codeinput">S2=[];
+</pre><h2 id="7">VIEW GROUP LEVEL STATS REPORT</h2><p>Click the link to open the stats report after the previous cell has completed.</p><p>The report shows a range of plots which are useful for checking the analysis has run properly and summarising the key results.</p><p>On first page we see:</p><p><b>Group-level design matrix</b> - This is the GLM design matrix from our analysis</p><p><b>Average lower level STDCOPEs</b> - These show the variance of the COPE estimate averaged over time for each subject for each contrast. If any subject has an extremely high or low variance it might indicate that their are an outlier and we should double check their lower level results. Perhaps they have very few good trials in one condition or their coregistration has gone wrong.</p><p><b>Stats for GC1</b> - These are the group average COPEs and t-stats for the lower level contrasts.</p><p><b>Lower level COPES</b> - These show the COPES for each individual subject for each lower-level contrast. The thick line indicates the group mean. Again it is good to check these to identify any outlier subject.</p><p><b>Lower-level STDCOPES</b> - These are the lower-level COPEs (as we saw above) from the maximal time-point in the faces contrast.</p><p>There are no apparent outliers in our diagnostic plots so we can click the links at the top of the page to explore the group results for each of the lower level contrasts in more detail.</p><p>Click the link to open the results for the faces contrast.</p><p>Here we see the group level COPE and t-stats across the brain for the faces contrast. The time-point is chosen by the maximum response in the faces condition. There is a clear occipital response around 100ms after stimulus onset. Explore the results from the other contrasts before moving on to the next cell.</p><p><img vspace="5" hspace="5" src="osl_example_group_oat_maxt_smap_c2_gc1.png" alt=""> </p><h2 id="8">OUTPUT GROUP'S NIFTII FILES</h2><p>As with the single subject analyses we can output nifti files containing the group-level results across the whole brain and the whole experimental epoch.</p><p>This section saves out a nifti volume containing the results from first_level contrast 3 (faces &gt; motorbikes) across the whole group</p><pre class="codeinput">S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.group_level.results_fnames;
 S2.first_level_contrasts=[3,2,1]; <span class="comment">% list of first level contrasts to output</span>
 S2.group_level_contrasts=[1]; <span class="comment">% we want to isolate the group average response</span>
 S2.resamp_gridstep=8;
 [statsdir,times]=oat_save_nii_stats(S2);
-</pre><h2 id="9">VIEW NIFTII RESULTS IN FSLVIEW</h2><p>Run the code below to open FSLVIEW with the group-level results for the faces-motorbikes contrast along with a structural image and a mask of the right hemisphere fusiform cortex.</p><p>Once FSLVIEW is open, explore the volume to find the green Fusiform Mask. This is brain region which is closely associated with the processing of visual information and is particularly specialised for processing faces.</p><p>Make sure the <tt>tstat3_gc1_8mm</tt> volume is highlighted by clicking on it in the white box at the bottom of the FSLVIEW window.</p><p>Change the Volume in the bottom left to 52, this corresponds to 100ms after stimulus onset. We can see a very strong response in primary visual cortex in the medial part of the occipital lobes.</p><p>Now change the Volume to 63, this corresponds to ~150ms after stimulus onset. The primary visual response has finised and now the region highlighted by the Green fusiform mask has a much stronger response.</p><pre class="codeinput"><span class="comment">% display the times associated with each volume in the nifti output.</span>
+</pre><h2 id="9">VIEW NIFTII RESULTS IN FSLVIEW</h2><p>Run the code below to open FSLVIEW with the group-level results for the faces-motorbikes contrast along with a structural image and a mask of the right hemisphere fusiform cortex.</p><p>Once FSLVIEW is open, explore the volume to find the green Fusiform Mask. This is brain region which is closely associated with the processing of visual information and is particularly specialised for processing faces.</p><p>Make sure the <tt>tstat3_gc1_8mm</tt> volume is highlighted by clicking on it in the white box at the bottom of the FSLVIEW window.</p><p>Change the Volume in the bottom left to 52, this corresponds to 100ms after stimulus onset. We can see a very strong response in primary visual cortex in the medial part of the occipital lobes.</p><p>Now change the Volume to 63, this corresponds to ~150ms after stimulus onset. The primary visual response has finished and now the region highlighted by the Green fusiform mask has a much stronger response.</p><pre class="codeinput"><span class="comment">% display the times associated with each volume in the nifti output.</span>
 disp(times)
 
 <span class="comment">% Find the paths to the relevant results</span>
@@ -104,13 +109,13 @@ S2.group_level_cons_to_do = [1];
 %% OAT 4 - Group Analysis
 %
 % This practical will work with a group-level OAT analysis run across 40
-% participants in the faces-motorbikes task we looked at in single subject
+% participants in the faces-motorbikes task we looked at in the single subject
 % practical sessions.
 % 
 % Work your way through the script cell by cell using the supplied dataset.
 % As well as following the instructions below, make sure that you read all
 % of the comments (indicated by %), as these explain what each step is
-% doing. Note that you can run a cell (marked by %%) using the ?Cell? drop
+% doing. Note that you can run a cell (marked by %%) using the Cell drop
 % down menu on the Matlab GUI.    
 %
 
@@ -121,22 +126,23 @@ S2.group_level_cons_to_do = [1];
 % run across all the lower level results.
 %
 % This takes quite a while to run for a 40 subject dataset, so to save time
-% for this tutorial we have provided an completed OAT analysis which we can load in and
+% for this tutorial we have provided a completed OAT analysis which we can load in and
 % explore.
 %
 % This section loads the  OAT analysis for which the first 3 stages (source recon,
 % first-level GLM, subject-level averaging) have already been run.
 % Note that the 1st level contrasts that have been run are:
-% S2.contrast{1}=[3 0 0 0]'; % motorbikes
-% S2.contrast{2}=[0 1 1 1]'; % faces
-% S2.contrast{3}=[-3 1 1 1]'; % faces-motorbikes
+%
+% * S2.contrast{1}=[3 0 0 0]'; % motorbikes
+% * S2.contrast{2}=[0 1 1 1]'; % faces
+% * S2.contrast{3}=[-3 1 1 1]'; % faces-motorbikes
 %
 
 % the directory containing the group OAT
 workingdir = fullfile(osldir,'example_data','faces_group');
 
 % Load in the previous OAT
-oat = osl_load_oat([osldir 'example_data/faces_group/sourcespace'], 'wholebrain_first_level','sub_level','group_level'); 
+oat = osl_load_oat([osldir '/example_data/faces_group/sourcespace'], 'wholebrain_first_level','sub_level','group_level'); 
 
 %% EXAMINE THE LOWER LEVEL ANALYSES
 %
@@ -146,17 +152,19 @@ oat = osl_load_oat([osldir 'example_data/faces_group/sourcespace'], 'wholebrain_
 %
 % Take a moment to familiarise yourself with the options. In particular,
 % look at the first level GLM settings and which contrasts have been run.
+% This can be found in |oat.first_level.contrast| and
+% |oat.first_level.contrast_name|.
 
 disp(oat.source_recon);
 disp(oat.first_level);
 
 %% SUBJECT LEVEL OPTIONS
 %
-% The subject level allows for fixed-effects combination of different
+% The subject level allows for a fixed-effects combination of different
 % datasets recorded from a single participant. To clarify some terminology:
 %
 % * session - a session at the |source_recon| or |first_level| is a single
-% dataset acquired at a single point in time
+% dataset acquired from a single run in the scanner.
 % * subject - a single participant who has contributed one or more sessions
 % to the analysis.
 %
@@ -165,14 +173,16 @@ disp(oat.first_level);
 % level estimate. This subject level estimate is then passed into the
 % group_level analysis.
 %
-% There are some extra options for computing laterality contrasts at the
-% subject level. This is useful if you was to compare a response or effect
-% in the left or right hemisphere.
-%
 % The key parameter in the subject level is
 % |oat.subject_level.session_index_list|. This is a cell array with a cell
 % containing the indices of all the first_level sessions contributed by
 % that subject.
+%
+% There are some extra options for computing laterality contrasts at the
+% subject level. This is useful if you was to compare a response or effect
+% between the left and right hemispheres. For instance, is the response to
+% a tactile stimulation on the hand larger in the ipsi or contra lateral
+% hemisphere?
 %
 % In our case, each subject contributed a single session so this indexing
 % is a simple one-to-one matching between the |first_level| and
@@ -184,12 +194,10 @@ disp(oat.subject_level.session_index_list);
 %% SETUP GROUP-LEVEL OPTIONS
 %
 % This section defines the parameters for the group_level in the OAT analysis.
-% Note that we do not actually run this analyses here, but these options
-% define the analysis as it was run
 %
 % The group design matrix is defined as a single vector of ones, this
-% calculates a group average across all participants. Finally the first and
-% group level contrasts to run for the report are set up. IN this case we are
+% calculates a group average across all participants. Finally the first-level and
+% group-level contrasts to run for the report are set up. In this case we are
 % running first level contrast 3 (faces > motorbikes) and group level contrast
 % 1 (grand mean).
 
@@ -231,13 +239,19 @@ oat.group_level.report.show_lower_level_cope_maps=0;
 % contain oat.to_do which is a list of binary values indicating which stages of
 % the OAT to run.
 %
-% As the OAT analysis we loaded at the start of this practical has already
-% completed we do not need to run the oat here.
+% The OAT analysis we loaded at the start of this practical has already been 
+% run for you (due to long computation time), so we do not need actually re-run 
+% the OAT here. In practice, we would call
+% |osl_run_oat| after |osl_check_oat| to run the analysis.
 
 oat.to_do=[0 0 0 1]; % run group-level stage only
 
-oat = osl_check_oat(oat);
+oat = osl_check_oat( oat );
 
+do_analysis = false;
+if do_analysis
+	oat = osl_run_oat( oat );
+end
 
 %% CREATE A STATS REPORT
 %
@@ -278,13 +292,15 @@ report = oat_group_level_stats_report(oat,oat.group_level.results_fnames);
 %
 % *Lower level COPES* - These show the COPES for each individual subject
 % for each lower-level contrast. The thick line indicates the group mean. 
-% Again it is good to check these to identify any outliers.
+% Again it is good to check these to identify any outlier subject.
 %
-% * Lower-level STDCOPES* - These are the lower-level COPEs (as we saw
+% *Lower-level STDCOPES* - These are the lower-level COPEs (as we saw
 % above) from the maximal time-point in the faces contrast.
 %
-% There are no apparent outliers in our diagnostic plots so we can click
-% the links at the top of the page to explore the results in more detail.
+% There are no apparent outliers in our diagnostic plots so we can click the 
+% links at the top of the page to explore the group results for each of the 
+% lower level contrasts in more detail. 
+% 
 % Click the link to open the results for the faces contrast.
 %
 % Here we see the group level COPE and t-stats across the brain for the
@@ -298,7 +314,7 @@ report = oat_group_level_stats_report(oat,oat.group_level.results_fnames);
 
 %% OUTPUT GROUP'S NIFTII FILES
 %
-% As with the single subject analyses we can output nifti files containig
+% As with the single subject analyses we can output nifti files containing
 % the group-level results across the whole brain and the whole experimental
 % epoch.
 %
@@ -331,7 +347,7 @@ S2.resamp_gridstep=8;
 % cortex in the medial part of the occipital lobes.
 %
 % Now change the Volume to 63, this corresponds to ~150ms after stimulus
-% onset. The primary visual response has finised and now the region
+% onset. The primary visual response has finished and now the region
 % highlighted by the Green fusiform mask has a much stronger response.
 %
 
