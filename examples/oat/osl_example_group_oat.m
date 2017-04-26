@@ -237,7 +237,7 @@ disp(times)
 
 % Find the paths to the relevant results
 tstat = fullfile( oat.source_recon.dirname,'wholebrain_first_level_sub_level_group_level_dir','tstat3_gc1_8mm.nii.gz' );
-fusiform = fullfile(osldir,'example_data','faces_groupdata2','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
+fusiform = fullfile(osldir,'example_data','faces_group','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 
 % Display the results in FSLVIEW
 fslview( {fusiform; tstat}, [0 5;10 15], {'Green';'Red-Yellow'} );
@@ -271,7 +271,7 @@ oat_plot_vox_stats(S2);
 % FSLVIEW in a previous section.
 
 % load OAT analysis for which the first 4 stages have already been run
-oatdir=[osldir 'example_data/faces_groupdata2/sourcespace.oat'];
+oatdir=[osldir 'example_data/faces_group/sourcespace.oat'];
 oat = osl_load_oat(oatdir,'wholebrain_first_level','sub_level','group_level'); 
 
 % Spatially average the results over an ROI
