@@ -198,8 +198,8 @@ if(Sin.stats.level==1),
     
 elseif(Sin.stats.level==2)     
     
-    for gconi=1:length(group_level_contrasts),        
-        gcon=group_level_contrasts(gconi);
+    for gconi=1:length(Sin.group_level_contrasts),
+        gcon=Sin.group_level_contrasts(gconi);
         fname_postfix=['_gc' num2str(gcon)];        
         fnamet=output_files(Sin,options,time_indices,gcon,fname_postfix,use_parcels,nii_parcel_settings);        
     end;  
