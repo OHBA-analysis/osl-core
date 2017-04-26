@@ -7,7 +7,7 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>OAT 4 - Group Analysis</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-26"><meta name="DC.source" content="osl_example_group_oat.m"></head><body><div class="content"><h1>OAT 4 - Group Analysis</h1><!--introduction--><p>This practical will work with a group-level OAT analysis run across 40 participants in the faces-motorbikes task we looked at in single subject practical sessions.</p><p>Work your way through the script cell by cell using the supplied dataset. As well as following the instructions below, make sure that you read all of the comments (indicated by %), as these explain what each step is doing. Note that you can run a cell (marked by %%) using the ?Cell? drop down menu on the Matlab GUI.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">LOAD PRE-RUN GROUP OAT</a></li><li><a href="#2">EXAMINE THE LOWER LEVEL ANALYSES</a></li><li><a href="#3">SUBJECT LEVEL OPTIONS</a></li><li><a href="#4">SETUP GROUP-LEVEL OPTIONS</a></li><li><a href="#5">CHECK OAT</a></li><li><a href="#6">CREATE A STATS REPORT</a></li><li><a href="#7">VIEW GROUP LEVEL STATS REPORT</a></li><li><a href="#8">OUTPUT GROUP'S NIFTII FILES</a></li><li><a href="#9">VIEW NIFTII RESULTS IN FSLVIEW</a></li><li><a href="#10">Investigating locations of interest using an MNI coordinate</a></li><li><a href="#11">Investigating regions of interest using an MNI mask</a></li></ul></div><h2 id="1">LOAD PRE-RUN GROUP OAT</h2><p>A group analysis needs the source_recon, first_level and subject_level analyses to be completed for each participant and the group_level to be run across all the lower level results.</p><p>This takes quite a while to run for a 40 subject dataset, so to save time for this tutorial we have provided an completed OAT analysis which we can load in and explore.</p><p>This section loads the  OAT analysis for which the first 3 stages (source recon, first-level GLM, subject-level averaging) have already been run. Note that the 1st level contrasts that have been run are: S2.contrast{1}=[3 0 0 0]'; % motorbikes S2.contrast{2}=[0 1 1 1]'; % faces S2.contrast{3}=[-3 1 1 1]'; % faces-motorbikes</p><pre class="codeinput"><span class="comment">% the directory containing the group OAT</span>
+   <title>OAT 4 - Group Analysis</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-26"><meta name="DC.source" content="osl_example_group_oat.m"></head><body><div class="content"><h1>OAT 4 - Group Analysis</h1><!--introduction--><p>This practical will work with a group-level OAT analysis run across 40 participants in the faces-motorbikes task we looked at in single subject practical sessions.</p><p>Work your way through the script cell by cell using the supplied dataset. As well as following the instructions below, make sure that you read all of the comments (indicated by %), as these explain what each step is doing. Note that you can run a cell (marked by %%) using the ?Cell? drop down menu on the Matlab GUI.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">LOAD PRE-RUN GROUP OAT</a></li><li><a href="#2">EXAMINE THE LOWER LEVEL ANALYSES</a></li><li><a href="#3">SUBJECT LEVEL OPTIONS</a></li><li><a href="#4">SETUP GROUP-LEVEL OPTIONS</a></li><li><a href="#5">CHECK OAT</a></li><li><a href="#6">CREATE A STATS REPORT</a></li><li><a href="#7">VIEW GROUP LEVEL STATS REPORT</a></li><li><a href="#8">OUTPUT GROUP'S NIFTII FILES</a></li><li><a href="#9">VIEW NIFTII RESULTS IN FSLVIEW</a></li><li><a href="#10">INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE</a></li><li><a href="#11">INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK</a></li></ul></div><h2 id="1">LOAD PRE-RUN GROUP OAT</h2><p>A group analysis needs the source_recon, first_level and subject_level analyses to be completed for each participant and the group_level to be run across all the lower level results.</p><p>This takes quite a while to run for a 40 subject dataset, so to save time for this tutorial we have provided an completed OAT analysis which we can load in and explore.</p><p>This section loads the  OAT analysis for which the first 3 stages (source recon, first-level GLM, subject-level averaging) have already been run. Note that the 1st level contrasts that have been run are: S2.contrast{1}=[3 0 0 0]'; % motorbikes S2.contrast{2}=[0 1 1 1]'; % faces S2.contrast{3}=[-3 1 1 1]'; % faces-motorbikes</p><pre class="codeinput"><span class="comment">% the directory containing the group OAT</span>
 workingdir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'faces_group'</span>);
 
 <span class="comment">% Load in the previous OAT</span>
@@ -72,7 +72,7 @@ fusiform = fullfile(osldir,<span class="string">'example_data'</span>,<span clas
 
 <span class="comment">% Display the results in FSLVIEW</span>
 fslview( {fusiform; tstat}, [0 5;10 15], {<span class="string">'Green'</span>;<span class="string">'Red-Yellow'</span>} );
-</pre><h2 id="10">Investigating locations of interest using an MNI coordinate</h2><p>We can isolate the results from a specific voxel using <tt>oat_plot_vox_stats</tt>. Here we will look at the group results for all three lower level contrasts in the visual cortex.</p><p>Try changing the co-ordinate to 32,-64,-18. What differences do you notice</p><pre class="codeinput">mni_coord=[4,-82,-8];
+</pre><h2 id="10">INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE</h2><p>We can isolate the results from a specific voxel using <tt>oat_plot_vox_stats</tt>. Here we will look at the group results for all three lower level contrasts in the visual cortex.</p><p>Try changing the co-ordinate to 32,-64,-18. What differences do you notice</p><pre class="codeinput">mni_coord=[4,-82,-8];
 
 S2=[];
 S2.oat=oat;
@@ -81,7 +81,7 @@ S2.vox_coord=mni_coord;
 S2.first_level_cons_to_do = [2,1,3];
 S2.group_level_cons_to_do = [1];
 oat_plot_vox_stats(S2);
-</pre><h2 id="11">Investigating regions of interest using an MNI mask</h2><p>In this section we will interrogate the wholebrain OAT (run above) using an ROI mask. This will provide the results averaged across all voxels in the defined mask.</p><p>We will use the right hemisphere Fusiform Cortex mask which we used in FSLVIEW in a previous section.</p><pre class="codeinput"><span class="comment">% load OAT analysis for which the first 4 stages have already been run</span>
+</pre><h2 id="11">INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK</h2><p>In this section we will interrogate the wholebrain OAT (run above) using an ROI mask. This will provide the results averaged across all voxels in the defined mask.</p><p>We will use the right hemisphere Fusiform Cortex mask which we used in FSLVIEW in a previous section.</p><pre class="codeinput"><span class="comment">% load OAT analysis for which the first 4 stages have already been run</span>
 oatdir=[osldir <span class="string">'example_data/faces_groupdata2/sourcespace.oat'</span>];
 oat = osl_load_oat(oatdir,<span class="string">'wholebrain_first_level'</span>,<span class="string">'sub_level'</span>,<span class="string">'group_level'</span>);
 
@@ -345,7 +345,7 @@ fusiform = fullfile(osldir,'example_data','faces_groupdata2','structurals','Righ
 % Display the results in FSLVIEW
 fslview( {fusiform; tstat}, [0 5;10 15], {'Green';'Red-Yellow'} );
 
-%% Investigating locations of interest using an MNI coordinate
+%% INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE
 %
 % We can isolate the results from a specific voxel using
 % |oat_plot_vox_stats|. Here we will look at the group results for all
@@ -364,7 +364,7 @@ S2.first_level_cons_to_do = [2,1,3];
 S2.group_level_cons_to_do = [1];
 oat_plot_vox_stats(S2);
 
-%% Investigating regions of interest using an MNI mask
+%% INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK
 %
 % In this section we will interrogate the wholebrain OAT (run above) using 
 % an ROI mask. This will provide the results averaged across all voxels in

@@ -242,7 +242,7 @@ fusiform = fullfile(osldir,'example_data','faces_groupdata2','structurals','Righ
 % Display the results in FSLVIEW
 fslview( {fusiform; tstat}, [0 5;10 15], {'Green';'Red-Yellow'} );
 
-%% Investigating locations of interest using an MNI coordinate
+%% INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE
 %
 % We can isolate the results from a specific voxel using
 % |oat_plot_vox_stats|. Here we will look at the group results for all
@@ -261,7 +261,7 @@ S2.first_level_cons_to_do = [2,1,3];
 S2.group_level_cons_to_do = [1];
 oat_plot_vox_stats(S2);
 
-%% Investigating regions of interest using an MNI mask
+%% INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK
 %
 % In this section we will interrogate the wholebrain OAT (run above) using 
 % an ROI mask. This will provide the results averaged across all voxels in
