@@ -109,8 +109,6 @@ oat.group_level.group_varcope_time_smooth_std=100;
 oat.group_level.group_varcope_spatial_smooth_fwhm=100; % smooths the variance of the group copes. It is recommended to do this.
 
 % Set up design matrix and contrasts
-oat.group_level.group_design_matrix='';
-oat.group_level=rmfield(oat.group_level,'group_design_matrix');
 oat.group_level.group_design_matrix=ones(1,length(oat.group_level.subjects_to_do));
 oat.group_level.group_contrast=[];   
 oat.group_level.group_contrast{1}=[1]';  
