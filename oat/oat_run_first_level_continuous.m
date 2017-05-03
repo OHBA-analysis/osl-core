@@ -75,8 +75,22 @@ for subi_todo=1:length(first_level.sessions_to_do),
     % get D and update path in case OAT dir has been moved
     D = oat_get_sensordata( source_recon_results );
     
+    D.fullfile
+    % Make sure we don't stamp on the source recon
+    S = [];
+    S.D = D;
+    tmp = char(D.fullfile);
+    S.outfile = [tmp(1:end-4) '_firstlevel'];
+    D = spm_eeg_copy(S);
+    D.fullfile
+
     %% setup things that are common to all sessions
-    if(subi_todo==1),
+    %if(subi_todo==1),
+    % This loop has been commented out as some later operations change array
+    % sizes further down the analysis path, for instance
+    % first_level_results.cope has 204 channels rather than 305 after grads
+    % have been combined. This then breaks subsequent iterations which will
+    % have the orginial number of channels. There is probably a better fix. AQ
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% set up mask indices from mask/coords
@@ -281,7 +295,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
 
         first_level_results.pseudo_zstat_var = zeros([Nvoxels_out,1],'single');
 
-    end; % end of if(sub==1)
+    %end; % end of if(sub==1)
 
     disp(['Reconstruct time courses and computing stats for dataset ' source_recon_results.fname]);    
 
