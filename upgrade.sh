@@ -4,7 +4,7 @@
 retrieve_repo () {
 	# If no release tag is provided, use master branch
 	REPONAME=$1
-	curl -L https://github.com/OHBA-analysis/$REPONAME/tarball/master --output $REPONAME.tar.gz
+	curl -L -k https://github.com/OHBA-analysis/$REPONAME/tarball/master --output $REPONAME.tar.gz
 	echo $REPONAME = `tar -tf $REPONAME.tar.gz | grep -o '^[^/]\+' | sort -u | rev | cut -d'-' -f1 | rev` >> version.txt
 	rm -rf ../$REPONAME
 	mkdir ./$REPONAME 
