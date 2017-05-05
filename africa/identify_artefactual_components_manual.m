@@ -65,7 +65,6 @@ else
     S.ident.artefact_chans = [];
 end
 
-
 if isfield(S.ident,'do_cardiac') && S.ident.do_cardiac
     if isfield(S.ident,'artefact_chans') && any(strcmpi(S.ident.artefact_chans,'ECG'))
         do_cardiac_autocorrelation = 0;

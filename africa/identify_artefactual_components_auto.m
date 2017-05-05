@@ -17,7 +17,7 @@
 %   - bad_components: A list of the components identified as bad.
 % HL+MWW 2013
 
-function [bad_components, fig_handles, fig_names, fig_titles] = identify_artefactual_components_auto(S)
+function [bad_components, fig_handles, fig_names, fig_titles] = identify_artefactual_components_auto(D,S)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set-Up
