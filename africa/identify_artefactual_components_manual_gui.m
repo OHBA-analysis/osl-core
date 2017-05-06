@@ -30,12 +30,20 @@ current_comp     = sorted_comps(current_comp_ind);
 
 
 % Create plotting windows
-tICWindow    = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
-specWindow   = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
-metricWindow = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
-covWindow    = axes('parent',MainFig, 'units', 'pixels','DrawMode','fast');
+tICWindow    = axes('parent',MainFig, 'units','pixels');
+specWindow   = axes('parent',MainFig, 'units','pixels');
+metricWindow = axes('parent',MainFig, 'units','pixels');
+covWindow    = axes('parent',MainFig, 'units', 'pixels');
 topoWindow = [];
 
+% If topos not precomputed, then compute them now
+if isempty(topos)
+    topos = [];
+    modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
+    for m = 1:numel(modalities)
+        topos = [topos component_topoplot(D,sm,modalities(m))];
+    end
+end
 
 for m = 1:size(topos,2)
     topoWindow(m) = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
