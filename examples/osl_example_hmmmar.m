@@ -1,13 +1,21 @@
 %% HMM - raw task data
 %
 % This example shows how to use the HMM-MAR to infer transient states
-% based on their precise spectral characteristics.
+% based on their precise spectral characteristics,  in comparison with
+% using the HMM-Gaussian, for which the states are based on gross power changes. 
 %
 %%
-% For the HMM-MAR, these states:
+% For the HMM-MAR, these states are based on autoregressive models, 
+% i.e. linear functions that predict each time point as a function
+% of its previous data points. Remember that, as opposed to that, the HMM-Gaussian 
+% just uses the mean and the covariance of the data, without looking
+% to any historical relationships in the data.
+% Thus, the states of the HMM-MAR:
 %
 % (i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency,
+%
 % (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes,
+%
 % (iii) are not only sensitive to power differences but also to phase coupling.
 %
 % In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, 
@@ -106,6 +114,9 @@ end
 % In brief, this basically weights the data with the state time course for each state, 
 % such that segments of the data where a given state has a higher probability of being active will 
 % contribute more to the final spectral estimation.
+% Although not done here, we could get intervals of confidence
+% by setting options.p > 0 (for example options.p=0.01 for a 99%
+% interval of confidence).
 
 % We set the options for the spectral estimation:
 options = struct();
@@ -200,6 +211,9 @@ end
 % To access those, we need to Fourier-transform these MAR parameters, 
 % which are defined in the temporal domain, into the spectral domain.
 % This way, we will have, for each state, estimates of power, coherence, phase relations, etc. 
+% As with the Multitaper estimation, we could get intervals of confidence
+% by setting options.p > 0 (for example options.p=0.01 for a 99%
+% interval of confidence).
 
 % We set the options to get the spectral estimation from the MAR parameters
 options = struct();
@@ -340,6 +354,8 @@ ylim([-0.1 1.1])
 % a state-wise multitaper (Vidaurre et al. 2016) for the HMM-Gaussian (by necessity), 
 % and the time-to-frequency mapping of the MAR parameters for the HMM-MAR.
 % For comparison, we will also show the state-wise multitaper for the HMM-MAR.
+% As we said, we could look at intervals of confidence as well, although we
+% are not doint it here.
 %
 % We can see that the blue state (associated to the post-movement beta-rebound)
 % is represented in for the HMM-Gaussian as a generalised increase in power and coherence.
@@ -367,11 +383,14 @@ for k=1:hmm_env.K
     hold off
 end
 subplot(2,2,1)
-title('Power left M1, HMM-Gaussian','FontSize',16)
+ylabel('Power left M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-Gaussian (multitaper)','FontSize',16)
 subplot(2,2,4)
-title('Power right M1, HMM-Gaussian','FontSize',16)
+ylabel('Power right M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-Gaussian (multitaper)','FontSize',16)
 subplot(2,2,3)
-title('Coherence, HMM-Gaussian','FontSize',16)
+ylabel('Coherence','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-Gaussian (multitaper)','FontSize',16)
 
 % MAR-based spectra for the HMM-MAR
 figure(3);clf(3)  
@@ -394,11 +413,14 @@ for k=1:hmm_env.K
 end
 set(gca,'FontSize',14)
 subplot(2,2,1)
-title('Power left M1, HMM-MAR','FontSize',16)
+ylabel('Power left M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (MAR spectra)','FontSize',16)
 subplot(2,2,4)
-title('Power right M1, HMM-MAR','FontSize',16)
+ylabel('Power right M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (MAR spectra)','FontSize',16)
 subplot(2,2,3)
-title('Coherence, HMM-MAR','FontSize',16)
+ylabel('Coherence','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (MAR spectra)','FontSize',16)
 
 % State-wise multitaper spectra for HMM-MAR
 figure(4);clf(4)  
@@ -421,11 +443,14 @@ for k=1:hmm_env.K
 end
 set(gca,'FontSize',14)
 subplot(2,2,1)
-title('Power left M1, HMM-MAR (mt)','FontSize',16)
+ylabel('Power left M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (multitaper)','FontSize',16)
 subplot(2,2,4)
-title('Power right M1, HMM-MAR (mt)','FontSize',16)
+ylabel('Power right M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (multitaper)','FontSize',16)
 subplot(2,2,3)
-title('Coherence, HMM-MAR (mt)','FontSize',16)
+xlabel('Coherence','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (multitaper)','FontSize',16)
 
 
 
@@ -469,15 +494,6 @@ title('Coherence : HMM-MAR','FontSize',16)
 % HMM-Gaussian and HMM-MAR. That is, if we are e.g. in the blue state, what is the
 % estimated probability of moving to the red state?
 
-P_env = hmm_env.P; 
-% We normalize, such that we focus on the between state transitions
-for k=1:3
-    P_env(k,k) = 0;
-    P_env(k,:) = P_env(k,:) / sum(P_env(k,:));
-end
-disp('HMM-Gaussian Probability of transition from state i to state j')
-P_env
-
 
 P_raw = hmm_raw.P; 
 % We normalize, such that we focus on the between state transitions
@@ -487,6 +503,20 @@ for k=1:3
 end
 disp('HMM-MAR Probability of transition from state i to state j')
 P_raw
+
+%%
+% (For example, the probability of transitioning from state 1 to state 2 is
+% 0.3007).
+
+P_env = hmm_env.P; 
+% We normalize, such that we focus on the between state transitions
+for k=1:3
+    P_env(k,k) = 0;
+    P_env(k,:) = P_env(k,:) / sum(P_env(k,:));
+end
+disp('HMM-Gaussian Probability of transition from state i to state j')
+P_env
+
 
 %%
 % In light of the *very* different transition probabilities of the two different models, 

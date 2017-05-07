@@ -7,7 +7,7 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>HMM - enveloped rest data</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_glean.m"></head><body><div class="content"><h1>HMM - enveloped rest data</h1><!--introduction--><p>This example shows how to use the HMM to infer transient states in whole-brain resting state MEG data.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Estimate a whole-brain HMM model with GLEAN</a></li><li><a href="#9">Interrogating the results</a></li></ul></div><p>Here, states reflect distinct, recurrent patterns of power and functional connectivity (in terms of power correlation).</p><p>For this, we will use GLEAN, a tool offering a wrap of functionalities on top of the HMM estimation. Internally, it uses the HMM-MAR toolbox (covered in the next practical) for the final estimation. GLEAN does a number of things for us before calling to the HMM-MAR:</p><p>1.- Bandpass-filtering: we would be discarding very slow and very fast frequencies,   although we also could use it to focus on a particular band of interest.</p><p>2.- Getting power time courses: using the Hilbert transform we will get rid of the phase,   information, producing time series that reflect only the changes on power.</p><p>3.- Subsampling: because power changes are slow, we can afford subsampling the data to reduce   the computational load without losing statistical power on the estimation.   Also, downsampling will enhance the estimates of functional connectivity.</p><p>4.- Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)   onto a number of time series, each corresponding to a different brain region (uses ROInets).</p><p>5.- Leakage correction: because of the artefactual high correlation between proximal regions,   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets).</p><h2 id="2">Estimate a whole-brain HMM model with GLEAN</h2><p>We set the paths and data</p><pre class="codeinput"><span class="comment">% Directory of the data</span>
+   <title>HMM - enveloped rest data</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-25"><meta name="DC.source" content="osl_example_glean.m"></head><body><div class="content"><h1>HMM - enveloped rest data</h1><!--introduction--><p>This example shows how to use the HMM with Gaussian observations to infer transient states in whole-brain resting state MEG data.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Estimate a whole-brain HMM model with GLEAN</a></li><li><a href="#9">Interrogating the results</a></li></ul></div><p>Here, states reflect distinct, recurrent patterns of power and functional connectivity (in terms of power correlation).</p><p>For this, we will use GLEAN, a tool offering a wrap of functionalities on top of the HMM estimation. Internally, it uses the HMM-MAR toolbox (covered in the next practical) for the final estimation. GLEAN does a number of things for us before calling to the HMM-MAR:</p><p>1. Bandpass-filtering: we would be discarding very slow and very fast frequencies,   although we also could use it to focus on a particular band of interest.</p><p>2. Getting power time courses: using the Hilbert transform we will get rid of the phase,   information, producing time series that reflect only the changes on power.</p><p>3. Subsampling: because power changes are slow, we can afford downsampling the data to reduce   the computational load without losing statistical power on the estimation.   Also, downsampling will enhance the estimates of functional connectivity.</p><p>4. Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)   onto a number of time series, each corresponding to a different brain region (uses ROInets).</p><p>5. Leakage correction: because of the artefactual high correlation between proximal regions,   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets).</p><p>Note that, although GLEAN leans on the HMM-MAR toolbox, and uses the hmmmar() function, the model that it estimates for the states is <b>not</b> a MAR model, but a Gaussian model. That is, even though is called HMM-MAR, the toolbox can actually be used to estimate other models.</p><h2 id="2">Estimate a whole-brain HMM model with GLEAN</h2><p>We set the paths and data</p><pre class="codeinput"><span class="comment">% Directory of the data</span>
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>);
 <span class="comment">% Name for this GLEAN analysis</span>
 glean_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'glean_example'</span>,<span class="string">'glean_demo.mat'</span>);
@@ -29,9 +29,9 @@ data = {<span class="string">'/data/s01_rest1.mat'</span>,<span class="string">'
         <span class="string">'/data/s05_rest2.mat'</span>,<span class="string">'/data/s06_rest1.mat'</span>,<span class="string">'/data/s06_rest2.mat'</span>};
 data = fullfile(data_dir,data);
 </pre><p>Now we configure GLEAN toolbox to work on our data. This is done basically by setting a Matlab struct with all the options. This struct is layed out at different levels, each referring to one of the aforementioned processing and training steps.</p><pre class="codeinput">settings = struct;
-</pre><p>Envelope settings: related to how to obtain the power time series from the data and applying subsampling</p><pre class="codeinput">settings.envelope.overwrite = 0;
+</pre><p>Envelope settings: related to how to obtain the power time series from the data and applying downsampling</p><pre class="codeinput">settings.envelope.overwrite = 0;
 settings.envelope.log       = 0;
-settings.envelope.fsample   = 20; <span class="comment">% we will get the data subsampled to this frequency</span>
+settings.envelope.fsample   = 20; <span class="comment">% we will get the data downsampled to this frequency</span>
 settings.envelope.mask      = fullfile(data_dir,<span class="string">'MNI152_T1_8mm_brain.nii.gz'</span>);
 </pre><p>Subspace settings: these options refer to the parcellation applied to the data and also includes the setting for leakage correction</p><pre class="codeinput">settings.subspace.overwrite                         = 0;
 settings.subspace.normalisation                     = <span class="string">'none'</span>; <span class="comment">% whether we will normalise the data (mean 0, std 1)</span>
@@ -57,7 +57,7 @@ Using default values for dir in GLEAN.results.settings
 load(glean_name)
 </pre><p>we first look at the basic temporal information: state time courses and life times</p><pre class="codeinput"><span class="comment">% show the entire state time courses</span>
 glean.plot_timecourse(GLEAN)
-</pre><img vspace="5" hspace="5" src="osl_example_glean_01.png" alt=""> <p>By zoom in to, for example, a time range between 6 and 6.5 seconds, it can be qualitatively noticed that the state visits are quite short, suggesting a quite fast time scale of network switching in the brain "at rest". We will look at it quantitatively below.</p><p>We next compute temporal properties related to the estimation. This includes a calculation, per state, of:</p><p>- the number of occurrences, or state visits.</p><p>- the fractional occupancy: how much time is state is visited in proportion.</p><p>- the mean life time: how much time, on average, the state visits last.</p><p>- the mean interval length: how much time, on average, passes between two consecutive ocurrences of a state.</p><p>- the entropy of the state time course</p><pre class="codeinput">settings = struct(<span class="string">'plot'</span>,0);
+</pre><img vspace="5" hspace="5" src="osl_example_glean_01.png" alt=""> <p>By zoom in to, for example, a time range between 6 and 6.5 seconds (please do), it can be qualitatively noticed that the state visits are quite short, suggesting a quite fast time scale of network switching in the brain "at rest". We will look at it quantitatively below.</p><p>We next compute temporal properties related to the estimation. This includes a calculation, per state, of:</p><p>- the number of occurrences, or state visits.</p><p>- the fractional occupancy: how much time is state is visited in proportion.</p><p>- the mean life time: how much time, on average, the state visits last.</p><p>- the mean interval length: how much time, on average, passes between two consecutive ocurrences of a state.</p><p>- the entropy of the state time course</p><pre class="codeinput">settings = struct(<span class="string">'plot'</span>,0);
 GLEAN = glean.temporal_stats(GLEAN,settings);
 </pre><pre class="">Computing statistics for Number of occurrences 
 Computing statistics for Fractional occupancy 
@@ -73,7 +73,7 @@ xlim([0.5 8.5])
 </pre><img vspace="5" hspace="5" src="osl_example_glean_02.png" alt=""> <p>As a sanity check, it is interesting to look at the maximum fractional occupancy for every subject. If this is high (say, &gt;50%) for a given subject, that means that one single state is dominating the time series for that subject, which implies that the dynamics for that subject have not been well captured. Here, we observe that the maximum fractional occupancy never surpass 35%, meaning that all states take 35% or less of the time per subject.</p><pre class="codeinput">figure
 bar(max(GLEAN.results.temporal_stats.FractionalOccupancy.stats,[],2),0.9,<span class="string">'FaceColor'</span>,<span class="string">'m'</span>)
 ylabel(<span class="string">'Max %Occupancy'</span>,<span class="string">'FontSize'</span>,16)
-xlabel(<span class="string">'States'</span>,<span class="string">'FontSize'</span>,16)
+xlabel(<span class="string">'Subjects'</span>,<span class="string">'FontSize'</span>,16)
 set(gca,<span class="string">'FontSize'</span>,16)
 xlim([0.5 12.5])
 </pre><img vspace="5" hspace="5" src="osl_example_glean_03.png" alt=""> <p>We show the mean life times, seeing the states ocurrences are indeed quite fast, with visits usually in between 150 and 250 ms.</p><pre class="codeinput">figure
@@ -82,7 +82,7 @@ ylabel(<span class="string">'% Mean Life Times (ms)'</span>,<span class="string"
 xlabel(<span class="string">'States'</span>,<span class="string">'FontSize'</span>,16)
 set(gca,<span class="string">'FontSize'</span>,16)
 xlim([0.5 8.5])
-</pre><img vspace="5" hspace="5" src="osl_example_glean_04.png" alt=""> <p>We can look at the interval times, which oscillate in between 1 and 2.5s, with the exception of state 1, which is to be expected considering is an usual state.</p><pre class="codeinput">figure
+</pre><img vspace="5" hspace="5" src="osl_example_glean_04.png" alt=""> <p>We can look at the interval times, which oscillate in between 1 and 2.5s with the exception of state 1. The highest interval times of state 1 is to be expected considering that this state appears much less frequently than the others.</p><pre class="codeinput">figure
 bar(mean(GLEAN.results.temporal_stats.MeanIntervalLength.stats),0.9,<span class="string">'FaceColor'</span>,<span class="string">'g'</span>)
 ylabel(<span class="string">'% Mean Interval Times (ms)'</span>,<span class="string">'FontSize'</span>,16)
 xlabel(<span class="string">'States'</span>,<span class="string">'FontSize'</span>,16)
@@ -139,7 +139,7 @@ Saving parcel group partial correlation map
 ##### SOURCE BEGIN #####
 %% HMM - enveloped rest data
 %
-% This example shows how to use the HMM to infer transient states 
+% This example shows how to use the HMM with Gaussian observations to infer transient states 
 % in whole-brain resting state MEG data.
 %
 %%
@@ -151,21 +151,26 @@ Saving parcel group partial correlation map
 % Internally, it uses the HMM-MAR toolbox (covered in the next practical) for the final estimation.
 % GLEAN does a number of things for us before calling to the HMM-MAR:
 %
-% 1.- Bandpass-filtering: we would be discarding very slow and very fast frequencies, 
+% 1. Bandpass-filtering: we would be discarding very slow and very fast frequencies, 
 %   although we also could use it to focus on a particular band of interest. 
 %
-% 2.- Getting power time courses: using the Hilbert transform we will get rid of the phase,
+% 2. Getting power time courses: using the Hilbert transform we will get rid of the phase,
 %   information, producing time series that reflect only the changes on power. 
 %
-% 3.- Subsampling: because power changes are slow, we can afford subsampling the data to reduce
+% 3. Subsampling: because power changes are slow, we can afford downsampling the data to reduce
 %   the computational load without losing statistical power on the estimation. 
 %   Also, downsampling will enhance the estimates of functional connectivity.
 %
-% 4.- Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)
+% 4. Applying a parcellation: mapping the data (deployed on a regular grid of 3D points)
 %   onto a number of time series, each corresponding to a different brain region (uses ROInets).
 %
-% 5.- Leakage correction: because of the artefactual high correlation between proximal regions,
+% 5. Leakage correction: because of the artefactual high correlation between proximal regions,
 %   we orthogonalise the data such that the remaining connectivity is genuine (uses ROInets). 
+%
+% Note that, although GLEAN leans on the HMM-MAR toolbox, and uses the
+% hmmmar() function, the model that it estimates for the states is *not* a MAR model, 
+% but a Gaussian model. That is, even though is called HMM-MAR, the toolbox can 
+% actually be used to estimate other models.
 
 %% Estimate a whole-brain HMM model with GLEAN
 
@@ -204,11 +209,11 @@ settings = struct;
 
 %%
 % Envelope settings: related to how to obtain the power time series from the data
-% and applying subsampling 
+% and applying downsampling 
 
 settings.envelope.overwrite = 0;
 settings.envelope.log       = 0;
-settings.envelope.fsample   = 20; % we will get the data subsampled to this frequency
+settings.envelope.fsample   = 20; % we will get the data downsampled to this frequency
 settings.envelope.mask      = fullfile(data_dir,'MNI152_T1_8mm_brain.nii.gz');
 
 %% 
@@ -254,7 +259,7 @@ load(glean_name)
 glean.plot_timecourse(GLEAN)
 
 %%
-% By zoom in to, for example, a time range between 6 and 6.5 seconds,
+% By zoom in to, for example, a time range between 6 and 6.5 seconds (please do),
 % it can be qualitatively noticed that the state visits are quite short, suggesting
 % a quite fast time scale of network switching in the brain "at rest".
 % We will look at it quantitatively below.
@@ -298,7 +303,7 @@ xlim([0.5 8.5])
 figure
 bar(max(GLEAN.results.temporal_stats.FractionalOccupancy.stats,[],2),0.9,'FaceColor','m')
 ylabel('Max %Occupancy','FontSize',16)
-xlabel('States','FontSize',16)
+xlabel('Subjects','FontSize',16)
 set(gca,'FontSize',16)
 xlim([0.5 12.5]) 
 
@@ -314,8 +319,10 @@ set(gca,'FontSize',16)
 xlim([0.5 8.5])
 
 %%
-% We can look at the interval times, which oscillate in between 1 and 2.5s,
-% with the exception of state 1, which is to be expected considering is an usual state.
+% We can look at the interval times, which oscillate in between 1 and 2.5s
+% with the exception of state 1.
+% The highest interval times of state 1 is
+% to be expected considering that this state appears much less frequently than the others.
 
 figure
 bar(mean(GLEAN.results.temporal_stats.MeanIntervalLength.stats),0.9,'FaceColor','g')

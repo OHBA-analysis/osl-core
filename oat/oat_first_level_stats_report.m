@@ -123,7 +123,7 @@ if is_sensor_space,
         con=first_level_cons_to_do(coni);
         S2.first_level_contrast=con;
 
-        if(nfreqs>1),
+        if(nfreqs>1) && (ntpts>1),
 
             [cfg, dat, fig_handle_tmp]=oat_stats_multiplotTFR(S2);
 
@@ -142,7 +142,7 @@ if is_sensor_space,
             title([oat.first_level.report.modality_to_do]);
 
 
-        else
+        elseif ntpts>1 && nfreqs==1
             S2.do_plots=1;
 
             fig_name{(2*coni)-1}=['cope_at_max_multiplot_c' num2str(con)];
@@ -150,6 +150,30 @@ if is_sensor_space,
             fig_title{(2*coni)-1}=[fig_title{1} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
 
             [cfg, dat, fig_handle((2*coni)-1)]=oat_stats_multiplotER(S2);
+            view([90 90])
+
+            fig_handle(2*coni)=sfigure;
+            fig_name{2*coni}=['cope_at_max_topo_c' num2str(con)];
+            fig_title{2*coni}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} ']'];
+            fig_title{2*coni}=[fig_title{2*coni} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
+
+            cfg.xlim        = [first_level_results.times(time_ind_max) first_level_results.times(time_ind_max)];
+            cfg.ylim        = 'maxmin';
+            cfg.zlim        = 'maxmin';
+            cfg.interactive = 'no';
+            cfg.colorbar    = 'yes';
+
+            ft_topoplotTFR(cfg,dat{1});axis tight;
+            title([oat.first_level.report.modality_to_do]);
+            
+        elseif ntpts==1 && nfreqs>1
+            S2.do_plots=1;
+
+            fig_name{(2*coni)-1}=['cope_at_max_multiplot_c' num2str(con)];
+            fig_title{(2*coni)-1}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} ']'];
+            fig_title{(2*coni)-1}=[fig_title{1} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
+
+            [cfg, dat, fig_handle((2*coni)-1)]=oat_stats_multiplotSpec(S2);
             view([90 90])
 
             fig_handle(2*coni)=sfigure;

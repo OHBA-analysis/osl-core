@@ -75,8 +75,22 @@ for subi_todo=1:length(first_level.sessions_to_do),
     % get D and update path in case OAT dir has been moved
     D = oat_get_sensordata( source_recon_results );
     
+    D.fullfile
+    % Make sure we don't stamp on the source recon
+    S = [];
+    S.D = D;
+    tmp = char(D.fullfile);
+    S.outfile = [tmp(1:end-4) '_firstlevel'];
+    D = spm_eeg_copy(S);
+    D.fullfile
+
     %% setup things that are common to all sessions
-    if(subi_todo==1),
+    %if(subi_todo==1),
+    % This loop has been commented out as some later operations change array
+    % sizes further down the analysis path, for instance
+    % first_level_results.cope has 204 channels rather than 305 after grads
+    % have been combined. This then breaks subsequent iterations which will
+    % have the orginial number of channels. There is probably a better fix. AQ
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% set up mask indices from mask/coords
@@ -246,7 +260,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
         
         tf_time_indices_into_D_times = false(1,numel(out.tf_times));
         for i=1:size(first_level.time_range,1)
-             tf_time_indices_into_D_times(( out.tf_times >= first_level.time_range(i,1) ) & ( out.tf_times <= first_level.time_range(i,2) )) = true;
+             tf_time_indices_into_D_times(( out.tf_times >= first_level.time_range(i,1) ) & ( out.tf_times < first_level.time_range(i,2) )) = true;
         end
         %tf_time_indices_into_D_times=find(tf_time_indices_into_D_times);
         tf_out_times=out.tf_times(tf_time_indices_into_D_times);        
@@ -281,7 +295,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
 
         first_level_results.pseudo_zstat_var = zeros([Nvoxels_out,1],'single');
 
-    end; % end of if(sub==1)
+    %end; % end of if(sub==1)
 
     disp(['Reconstruct time courses and computing stats for dataset ' source_recon_results.fname]);    
 
@@ -328,13 +342,35 @@ for subi_todo=1:length(first_level.sessions_to_do),
             first_level.design_matrix=ones(1,length(D_time_indices));
         end;
     end;
+    
+    if strcmp(first_level.design_matrix,'avg')
+        disp('Using single constant regressor as design matrix');
+        
+        if post_tf_ds_factor~=1
+            first_level.design_matrix = ones(1,numel(tf_out_times));       
+        else
+            first_level.design_matrix = ones(1,length(D.time));
+            % first_level.design_matrix should have same ntpts as D_time
+            if(size(first_level.design_matrix,2)~=length(D.time)),
+                error(['Design matrix dimensions [npes x ntpts] = ' num2str(size(first_level.design_matrix)) ' do not match the data: ntpts=' num2str(length(D_time_indices))]); 
+            end;
+        end
+        processed_design_matrix = first_level.design_matrix;
+    else
+        
+        % first_level.design_matrix should have same ntpts as D_time
+        if(size(first_level.design_matrix,2)~=length(D.time)),
+            error(['Design matrix dimensions [npes x ntpts] = ' num2str(size(first_level.design_matrix)) ' do not match the data: ntpts=' num2str(length(D_time_indices))]); 
+        end;
+        processed_design_matrix=first_level.design_matrix(:,D_time_indices);    
+        
+        % temporally downsample to mimic what happens to data 
+        if post_tf_ds_factor~=1,
+            processed_design_matrix = osl_spm_resample(processed_design_matrix,post_tf_ds_factor);  
+        end;
+    end
 
     disp(['Design matrix dimensions [npes x ntps] = ' num2str(size(first_level.design_matrix))]);
-
-    % first_level.design_matrix should have same ntpts as D_time
-    if(size(first_level.design_matrix,2)~=length(D.time)),
-        error(['Design matrix dimensions [npes x ntpts] = ' num2str(size(first_level.design_matrix)) ' do not match the data: ntpts=' num2str(length(D_time_indices))]); 
-    end;
 
     if(length(oat.first_level.bc)~=length(oat.first_level.contrast)),
         error('first_level.bc and first_level.contrasts need to be the same length');
@@ -342,13 +378,6 @@ for subi_todo=1:length(first_level.sessions_to_do),
     
     if(length(oat.first_level.contrast_name)~=length(oat.first_level.contrast))
         error('oat.first_level.contrast and oat.first_level.contrast_name need to be same length');
-    end;
-
-    processed_design_matrix=first_level.design_matrix(:,D_time_indices);    
-        
-    % temporally downsample to mimic what happens to data 
-    if post_tf_ds_factor~=1,
-        processed_design_matrix = osl_spm_resample(processed_design_matrix,post_tf_ds_factor);        
     end;
     
     % apply moving average to design matrix
@@ -365,13 +394,8 @@ for subi_todo=1:length(first_level.sessions_to_do),
         processed_design_matrix2(pp,:)=processed_design_matrix(pp,tf_time_indices_into_D_times);
     end;   
     processed_design_matrix=processed_design_matrix2;
-     
-    % temporally downsample to mimic what happens to data 
-    if post_movingaverage_ds_factor~=1,
-        processed_design_matrix = osl_spm_resample(processed_design_matrix,post_movingaverage_ds_factor);        
-    end;
     
-    ['Design matrix dimensions [npes x ntpts] = ' num2str(size(processed_design_matrix))]
+    disp(['Design matrix dimensions [npes x ntpts] = ' num2str(size(processed_design_matrix))]);
         
     % contrasts                                  
     contrast_list=first_level.contrast;
@@ -495,8 +519,14 @@ for subi_todo=1:length(first_level.sessions_to_do),
     % add back in Class channel:        
     classchanind=find(strcmp(D.chanlabels,'Class'));
     classchanind_tf=find(strcmp(D_tf.chanlabels,'Class'));
-    D_tf(classchanind_tf,:,1)=D(classchanind,D_time_indices(tf_time_indices_into_D_times),1);
-
+    if D_tf.nfrequencies==1
+        D_tf(classchanind_tf,:,1)=D(classchanind,D_time_indices(tf_time_indices_into_D_times),1);
+    else
+        for ff = 1:D_tf.nfrequencies
+            D_tf(classchanind_tf,ff,:,1)=permute(D(classchanind,D_time_indices(tf_time_indices_into_D_times),1),[1 3 2]);
+        end
+    end
+    
     clear sensor_data_tf;
         
     %%%%%%%%%%%%%%%%
@@ -624,10 +654,13 @@ for subi_todo=1:length(first_level.sessions_to_do),
 
         S2.index=first_level_results.mask_indices_in_source_recon(indind);     
 
-        [dat_tf S2] = osl_get_recon_timecourse( S2 );
-
-        % dat_tf needs to trials x time:
-        dat_tf=permute(dat_tf,[2 1 3]);
+        if source_recon_results.is_sensor_space==1
+            dat_tf = permute(S2.D(indind,:,:,1),[3 2 1 4]);
+        else
+            [dat_tf S2] = osl_get_recon_timecourse( S2 );
+            % dat_tf needs to trials x time:
+            dat_tf=permute(dat_tf,[2 1 3]);
+        end
         
         first_level_results.pseudo_zstat_var(indind)=var(dat_tf(:,1));
 

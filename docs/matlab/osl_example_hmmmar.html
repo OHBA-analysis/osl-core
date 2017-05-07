@@ -7,7 +7,7 @@ categories: examples
 
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <title>HMM - raw task data</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-21"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h1>HMM - raw task data</h1><!--introduction--><p>This example shows how to use the HMM-MAR to infer transient states based on their precise spectral characteristics.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">HMM-Gaussian on hilbert envelopes</a></li><li><a href="#7">HMM-MAR on raw time series</a></li><li><a href="#14">Interrogating the results</a></li></ul></div><p>For the HMM-MAR, these states:</p><p>(i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency, (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes, (iii) are not only sensitive to power differences but also to phase coupling.</p><p>In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, using two source-reconstructed regions in the motor cortex (left and right), band-pass filtered between 1 and 45 Hz. The task is a finger-tapping motor task, where subjects press a button volitionally. We will see whether, with no prior information of the task during training, the estimated HMM contains states that are temporally related to the task timing, and we will inspect if these states contain meaningful features. We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).</p><p>The script follows the paper Vidaurre et al. (2016)</p><pre class="codeinput"><span class="comment">% Directory of the data:</span>
+   <title>HMM - raw task data</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-04-25"><meta name="DC.source" content="osl_example_hmmmar.m"></head><body><div class="content"><h1>HMM - raw task data</h1><!--introduction--><p>This example shows how to use the HMM-MAR to infer transient states based on their precise spectral characteristics,  in comparison with using the HMM-Gaussian, for which the states are based on gross power changes.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">HMM-Gaussian on hilbert envelopes</a></li><li><a href="#7">HMM-MAR on raw time series</a></li><li><a href="#14">Interrogating the results</a></li></ul></div><p>For the HMM-MAR, these states are based on autoregressive models, i.e. linear functions that predict each time point as a function of its previous data points. Remember that, as opposed to that, the HMM-Gaussian just uses the mean and the covariance of the data, without looking to any historical relationships in the data. Thus, the states of the HMM-MAR:</p><p>(i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency,</p><p>(ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes,</p><p>(iii) are not only sensitive to power differences but also to phase coupling.</p><p>In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, using two source-reconstructed regions in the motor cortex (left and right), band-pass filtered between 1 and 45 Hz. The task is a finger-tapping motor task, where subjects press a button volitionally. We will see whether, with no prior information of the task during training, the estimated HMM contains states that are temporally related to the task timing, and we will inspect if these states contain meaningful features. We will compare the HMM-MAR estimation with the estimation of an HMM on the power time series (Baker et al, 2014).</p><p>The script follows the paper Vidaurre et al. (2016)</p><pre class="codeinput"><span class="comment">% Directory of the data:</span>
 data_dir = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>);
 <span class="comment">% Name for this HMM-MAR analysis:</span>
 hmmmar_name = fullfile(osldir,<span class="string">'example_data'</span>,<span class="string">'hmmmar_example'</span>,<span class="string">'hmmmar_demo.mat'</span>);
@@ -58,7 +58,7 @@ options.verbose = 1;
 <span class="keyword">else</span> <span class="comment">% load a precomputed run</span>
     load(hmmmar_name,<span class="string">'hmm_env'</span>,<span class="string">'Gamma_env'</span>)
 <span class="keyword">end</span>
-</pre><p>Now that we have the HMM model, we shall compute the spectral information of the states (power, coherence, etc). In the case of the HMM-MAR, as we will see below, the MAR parameters themselves contain this spectral information. Here, because we are using a Gaussian distribution on wideband power, we don't know what is happening in the frequency domain when each state is active, above and beyond gross changes in wideband power. For example, in our current HMM estimation there is no information about phase coupling. Hence, we need to estimate this frequency information (including phase coupling), looking back at the data and using the state time courses we inferred. For this, we will be using a weighted version (state-wise) of the multitaper, proposed in (Vidaurre et al. 2016). In brief, this basically weights the data with the state time course for each state, such that segments of the data where a given state has a higher probability of being active will contribute more to the final spectral estimation.</p><pre class="codeinput"><span class="comment">% We set the options for the spectral estimation:</span>
+</pre><p>Now that we have the HMM model, we shall compute the spectral information of the states (power, coherence, etc). In the case of the HMM-MAR, as we will see below, the MAR parameters themselves contain this spectral information. Here, because we are using a Gaussian distribution on wideband power, we don't know what is happening in the frequency domain when each state is active, above and beyond gross changes in wideband power. For example, in our current HMM estimation there is no information about phase coupling. Hence, we need to estimate this frequency information (including phase coupling), looking back at the data and using the state time courses we inferred. For this, we will be using a weighted version (state-wise) of the multitaper, proposed in (Vidaurre et al. 2016). In brief, this basically weights the data with the state time course for each state, such that segments of the data where a given state has a higher probability of being active will contribute more to the final spectral estimation. Although not done here, we could get intervals of confidence by setting options.p &gt; 0 (for example options.p=0.01 for a 99% interval of confidence).</p><pre class="codeinput"><span class="comment">% We set the options for the spectral estimation:</span>
 options = struct();
 options.fpass = [1 40]; <span class="comment">% frequency range we want to look at, in this case between 1 and 40 Hertzs.</span>
 options.tapers = [4 7]; <span class="comment">% internal multitaper parameter</span>
@@ -131,7 +131,7 @@ options.verbose = 1;
 <span class="keyword">else</span> <span class="comment">% load a precomputed run</span>
     load(hmmmar_name,<span class="string">'hmm_raw'</span>,<span class="string">'Gamma_raw'</span>)
 <span class="keyword">end</span>
-</pre><p>As opposed to the HMM-Gaussian run on power, the state MAR parameters contain the spectral information of the states. To access those, we need to Fourier-transform these MAR parameters, which are defined in the temporal domain, into the spectral domain. This way, we will have, for each state, estimates of power, coherence, phase relations, etc.</p><pre class="codeinput"><span class="comment">% We set the options to get the spectral estimation from the MAR parameters</span>
+</pre><p>As opposed to the HMM-Gaussian run on power, the state MAR parameters contain the spectral information of the states. To access those, we need to Fourier-transform these MAR parameters, which are defined in the temporal domain, into the spectral domain. This way, we will have, for each state, estimates of power, coherence, phase relations, etc. As with the Multitaper estimation, we could get intervals of confidence by setting options.p &gt; 0 (for example options.p=0.01 for a 99% interval of confidence).</p><pre class="codeinput"><span class="comment">% We set the options to get the spectral estimation from the MAR parameters</span>
 options = struct();
 options.fpass = [1 40]; <span class="comment">% frequency range we want to look at</span>
 options.Nf = 100; <span class="comment">% number of frequency bins</span>
@@ -227,7 +227,7 @@ ylabel(<span class="string">'State probability'</span>,<span class="string">'Fon
 title(<span class="string">'HMM-MAR on raw signals'</span>,<span class="string">'FontSize'</span>,17)
 xlim([trange(1)/Hz trange(end)/Hz])
 ylim([-0.1 1.1])
-</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_02.png" alt=""> <p>We now look inside the states to visualise their distinct spectral characteristics (power and coherence), for both the HMM-Gaussian and the HMM-MAR. These were estimated following methods: a state-wise multitaper (Vidaurre et al. 2016) for the HMM-Gaussian (by necessity), and the time-to-frequency mapping of the MAR parameters for the HMM-MAR. For comparison, we will also show the state-wise multitaper for the HMM-MAR.</p><p>We can see that the blue state (associated to the post-movement beta-rebound) is represented in for the HMM-Gaussian as a generalised increase in power and coherence. For the HMM-MAR, however, differences are more subtle; for example, we have less power in the very low frequencies for this state than for the other two states.</p><pre class="codeinput">colors = {<span class="string">'b'</span>,[0.2 0.7 0.2],<span class="string">'r'</span>};
+</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_02.png" alt=""> <p>We now look inside the states to visualise their distinct spectral characteristics (power and coherence), for both the HMM-Gaussian and the HMM-MAR. These were estimated following methods: a state-wise multitaper (Vidaurre et al. 2016) for the HMM-Gaussian (by necessity), and the time-to-frequency mapping of the MAR parameters for the HMM-MAR. For comparison, we will also show the state-wise multitaper for the HMM-MAR. As we said, we could look at intervals of confidence as well, although we are not doint it here.</p><p>We can see that the blue state (associated to the post-movement beta-rebound) is represented in for the HMM-Gaussian as a generalised increase in power and coherence. For the HMM-MAR, however, differences are more subtle; for example, we have less power in the very low frequencies for this state than for the other two states.</p><pre class="codeinput">colors = {<span class="string">'b'</span>,[0.2 0.7 0.2],<span class="string">'r'</span>};
 <span class="comment">% State-wise multitaper (mt) spectra for the HMM on power envelopes</span>
 figure(2);clf(2)
 <span class="keyword">for</span> k=1:hmm_env.K
@@ -248,11 +248,14 @@ figure(2);clf(2)
     hold <span class="string">off</span>
 <span class="keyword">end</span>
 subplot(2,2,1)
-title(<span class="string">'Power left M1, HMM-Gaussian'</span>,<span class="string">'FontSize'</span>,16)
+ylabel(<span class="string">'Power left M1'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-Gaussian (multitaper)'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,4)
-title(<span class="string">'Power right M1, HMM-Gaussian'</span>,<span class="string">'FontSize'</span>,16)
+ylabel(<span class="string">'Power right M1'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-Gaussian (multitaper)'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,3)
-title(<span class="string">'Coherence, HMM-Gaussian'</span>,<span class="string">'FontSize'</span>,16)
+ylabel(<span class="string">'Coherence'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-Gaussian (multitaper)'</span>,<span class="string">'FontSize'</span>,16)
 
 <span class="comment">% MAR-based spectra for the HMM-MAR</span>
 figure(3);clf(3)
@@ -275,11 +278,14 @@ figure(3);clf(3)
 <span class="keyword">end</span>
 set(gca,<span class="string">'FontSize'</span>,14)
 subplot(2,2,1)
-title(<span class="string">'Power left M1, HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
+ylabel(<span class="string">'Power left M1'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-MAR (MAR spectra)'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,4)
-title(<span class="string">'Power right M1, HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
+ylabel(<span class="string">'Power right M1'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-MAR (MAR spectra)'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,3)
-title(<span class="string">'Coherence, HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
+ylabel(<span class="string">'Coherence'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-MAR (MAR spectra)'</span>,<span class="string">'FontSize'</span>,16)
 
 <span class="comment">% State-wise multitaper spectra for HMM-MAR</span>
 figure(4);clf(4)
@@ -302,11 +308,14 @@ figure(4);clf(4)
 <span class="keyword">end</span>
 set(gca,<span class="string">'FontSize'</span>,14)
 subplot(2,2,1)
-title(<span class="string">'Power left M1, HMM-MAR (mt)'</span>,<span class="string">'FontSize'</span>,16)
+ylabel(<span class="string">'Power left M1'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-MAR (multitaper)'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,4)
-title(<span class="string">'Power right M1, HMM-MAR (mt)'</span>,<span class="string">'FontSize'</span>,16)
+ylabel(<span class="string">'Power right M1'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-MAR (multitaper)'</span>,<span class="string">'FontSize'</span>,16)
 subplot(2,2,3)
-title(<span class="string">'Coherence, HMM-MAR (mt)'</span>,<span class="string">'FontSize'</span>,16)
+xlabel(<span class="string">'Coherence'</span>,<span class="string">'FontSize'</span>,16); xlabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,16);
+title(<span class="string">'HMM-MAR (multitaper)'</span>,<span class="string">'FontSize'</span>,16)
 </pre><img vspace="5" hspace="5" src="osl_example_hmmmar_03.png" alt=""> <img vspace="5" hspace="5" src="osl_example_hmmmar_04.png" alt=""> <img vspace="5" hspace="5" src="osl_example_hmmmar_05.png" alt=""> <p>Once we have looked at the state spectral information, we can perform an HMM-regularised time-frequency (TF) decomposition of the data. Standard TF decompositions are based on windows and thus suffer from the well-known sliding-window issues. Alternatively, we can combine the HMM state time courses and the state information to obtain a HMM estimation of the TF decomposition. This estimation will be much less noisier than the standard one. (Given the higher sensitivity of the HMM-MAR spectra, apparent in the previous block, we focus here just on the HMM-MAR results.)</p><pre class="codeinput"><span class="comment">% We obtain the TF decomposition for the HMM-MAR run</span>
 [psd_tf,coh_tf] = hmmtimefreq(spectra_raw,evokedGamma_raw,1);
 f = spectra_raw.state(1).f; <span class="comment">% frequency bins</span>
@@ -331,17 +340,7 @@ imagesc((-halfwindow:halfwindow)/Hz,f,coh_tf(:,indf,1,2)',[-l l]);colorbar
 hold <span class="string">on</span>; plot([0 0],[4 30],<span class="string">'k'</span>); hold <span class="string">off</span>
 xlabel(<span class="string">'Time (s)'</span>,<span class="string">'FontSize'</span>,14); ylabel(<span class="string">'Frequency (Hz)'</span>,<span class="string">'FontSize'</span>,14);
 title(<span class="string">'Coherence : HMM-MAR'</span>,<span class="string">'FontSize'</span>,16)
-</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_06.png" alt=""> <p>Finally, we can look at the probability of transiting between states for the HMM-Gaussian and HMM-MAR. That is, if we are e.g. in the blue state, what is the estimated probability of moving to the red state?</p><pre class="codeinput">P_env = hmm_env.P;
-<span class="comment">% We normalize, such that we focus on the between state transitions</span>
-<span class="keyword">for</span> k=1:3
-    P_env(k,k) = 0;
-    P_env(k,:) = P_env(k,:) / sum(P_env(k,:));
-<span class="keyword">end</span>
-disp(<span class="string">'HMM-Gaussian Probability of transition from state i to state j'</span>)
-P_env
-
-
-P_raw = hmm_raw.P;
+</pre><img vspace="5" hspace="5" src="osl_example_hmmmar_06.png" alt=""> <p>Finally, we can look at the probability of transiting between states for the HMM-Gaussian and HMM-MAR. That is, if we are e.g. in the blue state, what is the estimated probability of moving to the red state?</p><pre class="codeinput">P_raw = hmm_raw.P;
 <span class="comment">% We normalize, such that we focus on the between state transitions</span>
 <span class="keyword">for</span> k=1:3
     P_raw(k,k) = 0;
@@ -349,6 +348,22 @@ P_raw = hmm_raw.P;
 <span class="keyword">end</span>
 disp(<span class="string">'HMM-MAR Probability of transition from state i to state j'</span>)
 P_raw
+</pre><pre class="">HMM-MAR Probability of transition from state i to state j
+
+P_raw =
+
+         0    0.3007    0.6993
+    0.4116         0    0.5884
+    0.5854    0.4146         0
+
+</pre><p>(For example, the probability of transitioning from state 1 to state 2 is 0.3007).</p><pre class="codeinput">P_env = hmm_env.P;
+<span class="comment">% We normalize, such that we focus on the between state transitions</span>
+<span class="keyword">for</span> k=1:3
+    P_env(k,k) = 0;
+    P_env(k,:) = P_env(k,:) / sum(P_env(k,:));
+<span class="keyword">end</span>
+disp(<span class="string">'HMM-Gaussian Probability of transition from state i to state j'</span>)
+P_env
 </pre><pre class="">HMM-Gaussian Probability of transition from state i to state j
 
 P_env =
@@ -357,26 +372,26 @@ P_env =
     0.3422         0    0.6578
     0.0000    1.0000         0
 
-HMM-MAR Probability of transition from state i to state j
-
-P_raw =
-
-         0    0.3007    0.6993
-    0.4116         0    0.5884
-    0.5854    0.4146         0
-
 </pre><p>In light of the <b>very</b> different transition probabilities of the two different models, it is reasonable to expect that the states for the HMM-MAR and the HMM-Gaussian on power are effectively capturing different (yet complementary) aspects of the data.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% HMM - raw task data
 %
 % This example shows how to use the HMM-MAR to infer transient states
-% based on their precise spectral characteristics.
+% based on their precise spectral characteristics,  in comparison with
+% using the HMM-Gaussian, for which the states are based on gross power changes. 
 %
 %%
-% For the HMM-MAR, these states:
+% For the HMM-MAR, these states are based on autoregressive models, 
+% i.e. linear functions that predict each time point as a function
+% of its previous data points. Remember that, as opposed to that, the HMM-Gaussian 
+% just uses the mean and the covariance of the data, without looking
+% to any historical relationships in the data.
+% Thus, the states of the HMM-MAR:
 %
 % (i) are spectrally defined, i.e. the characteristics of interest are defined as a function of frequency,
+%
 % (ii) are based on the raw time series, i.e. we do not need to bandpass filter or compute power envelopes,
+%
 % (iii) are not only sensitive to power differences but also to phase coupling.
 %
 % In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, 
@@ -475,6 +490,9 @@ end
 % In brief, this basically weights the data with the state time course for each state, 
 % such that segments of the data where a given state has a higher probability of being active will 
 % contribute more to the final spectral estimation.
+% Although not done here, we could get intervals of confidence
+% by setting options.p > 0 (for example options.p=0.01 for a 99%
+% interval of confidence).
 
 % We set the options for the spectral estimation:
 options = struct();
@@ -569,6 +587,9 @@ end
 % To access those, we need to Fourier-transform these MAR parameters, 
 % which are defined in the temporal domain, into the spectral domain.
 % This way, we will have, for each state, estimates of power, coherence, phase relations, etc. 
+% As with the Multitaper estimation, we could get intervals of confidence
+% by setting options.p > 0 (for example options.p=0.01 for a 99%
+% interval of confidence).
 
 % We set the options to get the spectral estimation from the MAR parameters
 options = struct();
@@ -709,6 +730,8 @@ ylim([-0.1 1.1])
 % a state-wise multitaper (Vidaurre et al. 2016) for the HMM-Gaussian (by necessity), 
 % and the time-to-frequency mapping of the MAR parameters for the HMM-MAR.
 % For comparison, we will also show the state-wise multitaper for the HMM-MAR.
+% As we said, we could look at intervals of confidence as well, although we
+% are not doint it here.
 %
 % We can see that the blue state (associated to the post-movement beta-rebound)
 % is represented in for the HMM-Gaussian as a generalised increase in power and coherence.
@@ -736,11 +759,14 @@ for k=1:hmm_env.K
     hold off
 end
 subplot(2,2,1)
-title('Power left M1, HMM-Gaussian','FontSize',16)
+ylabel('Power left M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-Gaussian (multitaper)','FontSize',16)
 subplot(2,2,4)
-title('Power right M1, HMM-Gaussian','FontSize',16)
+ylabel('Power right M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-Gaussian (multitaper)','FontSize',16)
 subplot(2,2,3)
-title('Coherence, HMM-Gaussian','FontSize',16)
+ylabel('Coherence','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-Gaussian (multitaper)','FontSize',16)
 
 % MAR-based spectra for the HMM-MAR
 figure(3);clf(3)  
@@ -763,11 +789,14 @@ for k=1:hmm_env.K
 end
 set(gca,'FontSize',14)
 subplot(2,2,1)
-title('Power left M1, HMM-MAR','FontSize',16)
+ylabel('Power left M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (MAR spectra)','FontSize',16)
 subplot(2,2,4)
-title('Power right M1, HMM-MAR','FontSize',16)
+ylabel('Power right M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (MAR spectra)','FontSize',16)
 subplot(2,2,3)
-title('Coherence, HMM-MAR','FontSize',16)
+ylabel('Coherence','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (MAR spectra)','FontSize',16)
 
 % State-wise multitaper spectra for HMM-MAR
 figure(4);clf(4)  
@@ -790,11 +819,14 @@ for k=1:hmm_env.K
 end
 set(gca,'FontSize',14)
 subplot(2,2,1)
-title('Power left M1, HMM-MAR (mt)','FontSize',16)
+ylabel('Power left M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (multitaper)','FontSize',16)
 subplot(2,2,4)
-title('Power right M1, HMM-MAR (mt)','FontSize',16)
+ylabel('Power right M1','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (multitaper)','FontSize',16)
 subplot(2,2,3)
-title('Coherence, HMM-MAR (mt)','FontSize',16)
+xlabel('Coherence','FontSize',16); xlabel('Frequency (Hz)','FontSize',16);
+title('HMM-MAR (multitaper)','FontSize',16)
 
 
 
@@ -838,15 +870,6 @@ title('Coherence : HMM-MAR','FontSize',16)
 % HMM-Gaussian and HMM-MAR. That is, if we are e.g. in the blue state, what is the
 % estimated probability of moving to the red state?
 
-P_env = hmm_env.P; 
-% We normalize, such that we focus on the between state transitions
-for k=1:3
-    P_env(k,k) = 0;
-    P_env(k,:) = P_env(k,:) / sum(P_env(k,:));
-end
-disp('HMM-Gaussian Probability of transition from state i to state j')
-P_env
-
 
 P_raw = hmm_raw.P; 
 % We normalize, such that we focus on the between state transitions
@@ -856,6 +879,20 @@ for k=1:3
 end
 disp('HMM-MAR Probability of transition from state i to state j')
 P_raw
+
+%%
+% (For example, the probability of transitioning from state 1 to state 2 is
+% 0.3007).
+
+P_env = hmm_env.P; 
+% We normalize, such that we focus on the between state transitions
+for k=1:3
+    P_env(k,k) = 0;
+    P_env(k,:) = P_env(k,:) / sum(P_env(k,:));
+end
+disp('HMM-Gaussian Probability of transition from state i to state j')
+P_env
+
 
 %%
 % In light of the *very* different transition probabilities of the two different models, 

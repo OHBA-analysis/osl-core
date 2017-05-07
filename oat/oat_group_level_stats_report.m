@@ -378,6 +378,7 @@ else
             S2.stats=group_level_results;
             %S2.stats_fname=oat.first_level.results_fnames{1};
             S2.first_level_contrasts=[con]; % list of first level contrasts to output
+            S2.group_level_contrasts = oat.group_level.report.group_level_cons_to_do;
             resamp_gridstep=2;
             S2.resamp_gridstep=resamp_gridstep;%oat.source_recon.gridstep;
             S2.freq_bin=freq_ind_max;        

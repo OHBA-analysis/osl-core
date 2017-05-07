@@ -201,7 +201,11 @@ set(h_patch,'EdgeColor','r')
 % <video vspace="5" hspace="5" src="osl_example_roinets_3_group_movie.mp4" alt="" autoplay loop> 
 % </html>
 
-osl_spinning_brain('example.gif')
+try
+    osl_spinning_brain('example.mp4')
+catch
+    osl_spinning_brain('example.gif')
+end
 
 %%
 % Try opening this video file and setting your video player (e.g. Quicktime) to loop the video.
