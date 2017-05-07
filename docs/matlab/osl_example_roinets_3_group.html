@@ -138,7 +138,7 @@ set(gca,<span class="string">'ALim'</span>,[0.95 0.95+1e-5]) <span class="commen
 </pre><img vspace="5" hspace="5" src="osl_example_roinets_3_group_11.png" style="width:560px;height:420px;" alt=""> <p>You can manually set the colour of the lines as well, if you want all of the lines to be the same colour</p><pre class="codeinput">set(h_patch,<span class="string">'EdgeColor'</span>,<span class="string">'r'</span>)
 </pre><img vspace="5" hspace="5" src="osl_example_roinets_3_group_12.png" style="width:560px;height:420px;" alt=""> <p>For presenting results, we often show a rotating animation of the network. This can be produced using the <tt>osl_spinning_brain()</tt> function. Specify an output file name, and a video file with one rotation will be generated. You can then add this file to a presentation, and set it to play automatically and loop playback.</p><p>
 <video vspace="5" hspace="5" src="osl_example_roinets_3_group_movie.mp4" alt="" autoplay loop>
-</p><pre class="codeinput">osl_spinning_brain(<span class="string">'example.mp4'</span>)
+</p><pre class="codeinput">osl_spinning_brain(<span class="string">'example.gif'</span>)
 </pre><p>Try opening this video file and setting your video player (e.g. Quicktime) to loop the video.</p><p>Another option for displaying connectivity is to display components of the connectivity as an activation map. For example, you can perform an eigenvalue decomposition of the connectivity matrix to extract the dominant spatial patterns of activation. Each eigenvector represents a spatial pattern, and the entire connectivity matrix can be written as a sum of these patterns, weighted by the eigenvalue. Thus the eigenvectors associated with the largest eigenvalues correspond to dominant spatial patterns. You can render these on the brain using the Parcellation object.</p><pre class="codeinput">[a,b] = eig(mean(d.correlationMats{1}.envCorrelation,3));
 p.plot_activation(a(:,1));
 </pre><pre class="codeoutput">Warning - parcellation is being binarized
@@ -153,7 +153,7 @@ colorbar
 title(<span class="string">'alpha-beta significant differences'</span>)
 </pre><img vspace="5" hspace="5" src="osl_example_roinets_3_group_15.png" style="width:560px;height:420px;" alt=""> <p>Don't forget to correct for multiple-comparisons! As the size of the data set increases (more subjects, more bands), other approaches for examining group level differences such as permutation testing could be used.</p>
 
-</pre><h2 id="38">EXERCISES</h2><p>Try different frequency bands here as well, to see which yield the strongest group effects.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+</pre><h2 id="38">EXERCISES</h2><p>Try different frequency bands here as well, to see which yield the strongest group effects. Plot envelope correlations in theta, alpha, beta, gamma. Also, plot the network at a lower threshold, e.g. the 90th percentile instead of the 95th and mak these plots for both envelope correlations and partial envelope correlations.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% ROInets 3 - Group network connectivity analysis
 %

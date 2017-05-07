@@ -14,7 +14,7 @@
 %
 % First, we generate a synthetic signal and plot it
 Fs       = 100; %Hz
-duration = 60; %s
+duration = 36000; %s
 time     = 0:1.0/Fs:duration;
 nSamples = length(time);
 b        = fir1(1024, 0.5);
@@ -41,8 +41,9 @@ corr(data')
 %%
 % The |remove_source_leakage()| function takes in the data matrix, as well as the orthogonalization
 % method. To apply symmetric orthogonalization, we can simply call:
-data_orthog = ROInets.remove_source_leakage(data, 'symmetric');
-
+tic
+data_orthog = ROInets.remove_source_leakage(data, 'closest');
+toc
 %%
 % Now, the channels have no static zero-lag correlation
 corr(data_orthog')
@@ -68,7 +69,7 @@ std(data_orthog_closest')
 % original signals
 
 %% EXERCISES
-% 1. Have a closer look at the outcome of the orthogonalisation procedures
+% 1. Have a closer look at the outcome of the orthogonalisation procedures,
 % using simple superimposed plotting or compute correlations between the
 % different orthogonalization. 
 %
