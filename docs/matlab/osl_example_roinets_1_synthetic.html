@@ -68,8 +68,15 @@ ans =
 ans =
 
     0.0205    0.0216    0.0204
-
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+    
+    
+    
+</pre><h2 id="38">EXERCISES</h2><p>1. Have a closer look at the outcome of the orthogonalisation procedures
+ using simple superimposed plotting or compute correlations between the different orthogonalization.</p><p>2. Also, try to model a situation where one parcel gets a lot of signal from another one (due to a bad parcellation, for example). This can be modeled
+ by increasing the correlation between e.g. parcel 1 and 3 as defined by the matrix multiplied in variable C (i.e. change both values of 0.6 to 0.9, for example). Check the outcome of the orthogonalization. Have a look at how
+ much the orthogonalization changes the original signal (by simply plotting over each other or by calculating the correlation coefficient). What happens with the similarity between the original and the 'closest' orthogonalisation if there is this elevated mixing of signals in comparison to
+ the example in the practical?</p><p>3. Why would someone want to use 'symmetric' over 'closest' orthogonalization if it matches the original time-series so much better in terms of amplitude? Increase the dimensionality and/ or length of fthe time courses? and compare runtimes. Also, check how these two time-series
+ compare (correlation or simple visual inspection).</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% ROInets 1 - Introduction to orthogonalization
 %
