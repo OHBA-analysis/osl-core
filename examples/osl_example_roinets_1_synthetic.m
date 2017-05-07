@@ -61,3 +61,31 @@ data_orthog_closest = ROInets.remove_source_leakage(data, 'closest');
 corr(data_orthog_closest')
 std(data_orthog_closest')
 
+%%
+% The 'closest' orthogonalization method also results in orthogonal signals, but iteratively 
+% rotates and scales the basis vectors to best preserve the original signals. As a result, 
+% the orthogonalized signals are still uncorrelated, but their amplitudes much better match the
+% original signals
+
+%% EXERCISES
+% 1. Have a closer look at the outcome of the orthogonalisation procedures
+% using simple superimposed plotting or compute correlations between the
+% different orthogonalization. 
+%
+% 2. Also, try to model a situation where one parcel gets a lot of signal from
+% another one (due to a bad parcellation, for example). This can be modeled
+% by increasing the correlation between e.g. parcel 1 and 3 as defined by
+% the matrix multiplied in variable C (i.e. change both values of 0.6 to 0.9, for
+% example). Check the outcome of the orthogonalization. Have a look at how
+% much the orthogonalization changes the original signal (by simply
+% plotting over each other or by calculating the correlation coefficient).
+% What happens with the similarity between the original and the 'closest'
+% orthogonalisation if there is this elevated mixing of signals in comparison to
+% the example in the practical?
+% 
+% 3. Why would someone want to use 'symmetric' over 'closest' orthogonalization
+% if it matches the original time-series so much better in terms of
+% amplitude? Increase the dimensionality and/ or length of fthe time
+% courses? and compare runtimes. Also, check how these two time-series
+% compare (correlation or simple visual inspection).
+

@@ -210,7 +210,7 @@ colorbar
 title('Envelope correlation after leakage correction and downsampling to 10Hz')
 
 figure
-imagesc(corr(resample(Hen_lc',1,D.fsample))+diag(nan(38,1)))
+imagesc(corr(resample(Hen_lc',1,D.fsample*10))+diag(nan(38,1)))
 axis square
 colorbar
 title('Envelope correlation after leakage correction and downsampling to 1Hz')
@@ -225,3 +225,16 @@ title('Envelope correlation after leakage correction and downsampling to 1Hz')
 % A procedure for quantitatively estimating the optimal sampling rate is provided in
 % Luckhoo et al. (2012). As a point of comparison, we would typically use a sampling 
 % rate of 1Hz for resting state recordings around 500s in length. 
+
+%% EXERCISES
+% Try out different subjects to get an idea of the subject variability here
+% with respect to the outcome in connectivity. You can also try to
+% see how the choice of frequency bands affects the resulting connectivity.
+%
+% With regard to the dowsampling step before correlation, try even lower
+% sampling rates (e.g. replace  'resample(Hen_lc',1,D.fsample)' by
+% 'resample(Hen_lc',1,D.fsample*10)' to set the sample rate to 0.1 Hz).
+% What do you see? What would this mean for this dataset in terms of used
+% samples that go into the correlation? Does it makes sense?
+
+

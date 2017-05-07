@@ -201,7 +201,7 @@ set(h_patch,'EdgeColor','r')
 % <video vspace="5" hspace="5" src="osl_example_roinets_3_group_movie.mp4" alt="" autoplay loop> 
 % </html>
 
-osl_spinning_brain('example.mp4')
+osl_spinning_brain('example.gif')
 
 %%
 % Try opening this video file and setting your video player (e.g. Quicktime) to loop the video.
@@ -234,3 +234,8 @@ title('alpha-beta significant differences')
 % Don't forget to correct for multiple-comparisons! As the size of the data set increases
 % (more subjects, more bands), other approaches for examining group level differences such as 
 % permutation testing could be used. 
+
+
+%% EXERCISES
+% Try different frequency bands here as well, to see which yield the strongest group effects. 
+
