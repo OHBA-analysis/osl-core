@@ -1,4 +1,4 @@
-function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin)
+function [D,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin)
     % AfRICA - ArteFact Rejection using Independent Component Analysis
     % performs ICA denoising of MEG data using either semi-manual or automated
     % identification artefact components.
@@ -29,6 +29,7 @@ function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin
     %
     % S.precompute_topos   - pre-compute and save IC spatial map topos after ica is computed for use in ident
     %
+    % Romesh Abeysuriya 2017
     % Written by Henry Luckhoo and Adam Baker
 
     % note: Behaviour of osl_africa has changed as from 03/29/17. The idea is to
@@ -46,12 +47,13 @@ function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin
     arg.addParameter('modality','MEG'); 
     arg.addParameter('montagename','AFRICA denoised data'); 
     arg.addParameter('do_plots',false); 
-    arg.addParameter('precompute_topos',false);
-    arg.addParameter('do_ica',true); 
-    arg.addParameter('do_indent',true); 
+    arg.addParameter('precompute_topos',true);
+    arg.addParameter('do_ica',~isfield(D,'ica')); % By default, use existing ICA plus topos
+    arg.addParameter('do_ident',true); 
     arg.addParameter('do_remove',true); 
     arg.addParameter('artefact_channels',{}); 
     arg.addParameter('ident_func',@identify_artefactual_components_manual);
+    arg.addParameter('ident_params',struct); % Extra parameters for ident_func
     arg.addParameter('used_maxfilter',false);
     arg.addParameter('ica_params',struct); % ICA parameters passed to run_sensorspace_ica
     arg.parse(varargin{:});
@@ -68,36 +70,38 @@ function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin
 
         if S.precompute_topos
             topos = [];
-            sm = S.ica_res.sm;
             modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
             for m = 1:numel(modalities)
                 disp(['Precomputing sensor topographies for modality ' modalities{m}]);
-                topos = [topos component_topoplot(D,sm,modalities(m))];
+                topos = [topos component_topoplot(D,D.ica.sm,modalities(m))];
             end
             D.ica.topos   = topos;
+        else
+            D.ica.topos = []; % Compute in identify_artefactual_components_manual_gui.m
         end
+
+        D.save(); % Consider taking this out - but ICA is so time consuming it might be worth it
     else
         assert(isfield(D,'ica'),'No precomputed results - D.ica is missing')
+        fprintf('Using existing ICA decomposition\n')
     end
 
-    % Identify bad components
-    if S.do_indent
+    % Identify bad components, store them together with metrics in the D object
+    if S.do_ident
         if(S.do_plots)
-            [bad_components, fig_handles, fig_names, fig_titles] = feval(S.ident.func,D,S);
+            [D.ica.bad_components, D.ica.metrics, fig_handles, fig_names, fig_titles] = feval(S.ident_func,D,S.ident_params);
         else
-            bad_components = feval(S.ident.func,D,S);
+            [D.ica.bad_components, D.ica.metrics ]= feval(S.ident_func,D,S.ident_params);
         end
-        D.ica.bad_components = bad_components;
+    else
+        fprintf('Using existing bad_components\n')
     end
 
     % Remove bad components
     %%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS FROM THE DATA %%%%%%%%%%%%%%%%%%%%
     if S.do_remove
-        D = remove_bad_components(S);
-
+        D = remove_bad_components(D,S);
     end
-
-
 
 end % MAIN FUNCTION
 
@@ -213,147 +217,65 @@ function D = perform_sensorspace_ica(D,S)
     end
 
     D.ica = struct;
-    D.ica.ica_params = ica_params;
+    D.ica.params = ica_params;
     D.ica.chan_inds = chan_inds;
     D.ica.sm = bsxfun(@times,sm,norm_vec);
+    D.ica.topos = []; % Store topos later
+    D.ica.metrics = []; % Store artefact metrics later
+    D.ica.bad_components = []; % With new components, no bad components selected yet 
 
     % The commands below expand D.ica.sm out
     % Need to use D.ica.sm(chan_inds,:) elsewhere but that's what's expcted by a bunch of other things
     sm_full              = zeros(D.nchannels, size(sm,2));
-    sm_full(chan_inds,:) = sm; % So this is mapped onto all of the data w
-    D.ica.sm = bsxfun(@times,sm,norm_vec);
+    sm_full(chan_inds,:) = D.ica.sm; % So this is mapped onto all of the data w
+    D.ica.sm = sm_full;
 
     % Reconstruct the IC timecourses with
     % tc = D(chan_inds,:,:)'*pinv(D.ica.sm)'
     %    or 
-    % tc = D(chan_inds,:,:)'*pinv(D.ica.sm(chan_inds,:))'
-    
-    return
-
-    %%%%%%%%%%%%%%%%%%% ESTIMATE MISSING CHANNELS AND EPOCHS %%%%%%%%%%%%%%%%%%
-
-    sm_full              = zeros(D.nchannels, size(sm,2));
-    sm_full(chan_inds,:) = D.ica.sm; % So this is mapped onto all of the data w
-
-    bad_timepoints = all(badsamples(D,':',':',':'));
-    bad_timepoints = reshape(bad_timepoints,1,D.nsamples*D.ntrials);
-
-    if ~isempty(indchantype(D,chantype,'BAD'))
-        subdata = D(indchantype(D,chantype,'BAD'),:,:); % These are all the channels with bad data
-        subdata = reshape(subdata,size(subdata,1),[]); % Remove trial structure:
-        % Learn the mapping from data to tra coefficients, and then use it to infer the channel 
-        % coefficients based on the good data in the channel
-        sm_full(indchantype(D,chantype,'BAD'),:) = subdata(:,~bad_timepoints)*pinv(ica_res.tc); % 
-    end
-
-    subdata = D(chan_inds,:,:);
-    subdata = reshape(subdata,size(subdata,1),[]);
-    subdata = subdata(:,bad_timepoints); % why is subdat aempty?
-    tc_full = zeros(ica_res.ica_params.num_ics,D.ntrials*D.nsamples);
-    tc_full(:,~bad_timepoints) = ica_res.tc;
-    tc_full(:,bad_timepoints)  = (subdata'*pinv(sm_full(chan_inds,:)'))';
-
-    ica_res.sm = sm_full;
-    ica_res.tc = tc_full;
+    % tc = D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))'
 end
 
 
-function res = remove_bad_components(S)
-    %%%%%%%%%%%%%%%%%%%%%%%% LOAD AND PREPARE MEG DATA %%%%%%%%%%%%%%%%%%%%%%%%
+function D = remove_bad_components(D,S)
+    % Take in a D object with D.ica.bad_components
+    % Make a new montage with the components in D.ica.bad_components removed
 
-    D = spm_eeg_load(S.D);
-    D=D.montage('switch',0);
+    D = D.montage('switch',0);
 
     if strcmp(S.modality,'EEG')
         chantype = 'EEG';
         modality = 'EEG';
-        use_montage = 1;
     else
         chantype = {'MEG','MEGANY'};
         modality = 'MEG';
-        use_montage = 1;
     end
 
     % Good channels:
     chan_inds = indchantype(D,chantype, 'GOOD');
 
     badchannels    = D.badchannels;
-    bad_components = unique(S.ica_res.bad_components);
+    bad_components = unique(D.ica.bad_components);
     megdata        = D(chan_inds,:,:);
     megdata        = reshape(megdata,size(megdata,1),[]);
 
     %%%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS USING MONTAGE %%%%%%%%%%%%%%%%%%%
 
-    sm = S.ica_res.sm;
-    tc = S.ica_res.tc;
+    sm = D.ica.sm;
+    tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
 
     tra = eye(D.nchannels);
+    dat_inv = pinv_plus(megdata', D.ica.params.num_ics);
+    tra(chan_inds,chan_inds) = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(chan_inds,bad_components)'))';
+    labels = D.chanlabels;
 
-    if use_montage
-        dat_inv = pinv_plus(megdata', S.ica_res.ica_params.num_ics);
-        tra(chan_inds,chan_inds) = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(chan_inds,bad_components)'))';
-        
-        % Set up montage with full channel list:
-        montage             =  [];
-        montage.tra         =  tra;
-        montage.labelnew    =  D.chanlabels;
-        montage.labelorg    =  D.chanlabels;
-        
-        % Exclude channels that are not MEEG:
-        xchans = setdiff(1:D.nchannels,indchantype(D,chantype));
-        montage.tra(xchans,:)    = [];
-        montage.tra(:,xchans)    = [];
-        montage.labelorg(xchans) = [];
-        montage.labelnew(xchans) = [];
-        
-        [~,indx] = ismember(montage.labelnew,D.sensors(modality).label);
-        
-        tmp = struct(D);
-        montage.channels = tmp.channels(indx);
-        
-        montage.name = S.montagename;
-        
-        % this is adding a montage for the raw data
-        
-        nMontages=D.montage('getnumber');
-       
-        Dclean = D.montage('add', montage);
-        
-        % at the moment, we do still write out another, identical file with
-        % only the clean data. This might be changed in the future.
-        Dclean = Dclean.montage('switch', nMontages + 1);
-        Dclean.save;
-        
-        S_montage                =  [];
-        S_montage.D              =  D; %fullfile(D.path,D.fname);
-        S_montage.montage        =  montage;
-        S_montage.keepothers     =  true;
-        S_montage.updatehistory  =  1;
-        
-        Dmontaged = osl_montage(S_montage);
-        %
-        %     % rename montaged file
-        S_copy         = [];
-        S_copy.D       = Dmontaged;
-        S_copy.outfile = fullfile(D.path, ['A' D.fname]);
-        Dclean = spm_eeg_copy(S_copy);
-        %
-        Dmontaged.delete;
-        %end
-        
-    else
-        error('Not supported');
-        [dir,nam,~] = fileparts(fullfile(D.path,D.fname));
-        fname_out = [dir '/A' nam '.dat'];
-        meg_dat_clean = megdata-(sm(chan_inds,bad_components)*tc(bad_components,:));
-        
-        Dclean=clone(D,fname_out,size(D));
-        Dclean(chan_inds,:) = meg_dat_clean;   % changed by DM
-        Dclean.save;
-    end
-
-
-    res = fullfile(Dclean.path, Dclean.fname);
+    xchans = setdiff(1:D.nchannels,indchantype(D,chantype));
+    tra(xchans,:)    = [];
+    % tra(:,xchans)    = [];
+    labels(xchans) = [];
+   
+    D = add_montage(D,tra,S.montagename,labels)
+   
 end
 
 

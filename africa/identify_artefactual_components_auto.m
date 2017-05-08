@@ -17,7 +17,7 @@
 %   - bad_components: A list of the components identified as bad.
 % HL+MWW 2013
 
-function [bad_components, fig_handles, fig_names, fig_titles] = identify_artefactual_components_auto(D,S)
+function [bad_components, metrics,fig_handles, fig_names, fig_titles] = identify_artefactual_components_auto(D,S)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set-Up
@@ -27,7 +27,7 @@ else
     do_plots=1;
 end
 
-if ~isfield(S,'ident'); 
+if ~isfield(S,'ident_params'); 
     error('Need to specify ident func variables');
 end
 

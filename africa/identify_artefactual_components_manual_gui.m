@@ -20,6 +20,11 @@ FONTSIZE     = 14;
 
 %bad_components = ismember(1:size(tc,1),bad_components);
 
+% % Precompute tc spectra - use zeros
+% tc_zeros = tc;
+% tc_zeros(~isfinite(tc)) = 0;
+% [component_P,component_f] = pwelch(tc_zeros.',1024,512,1024,D.fsample);
+
 metric_names = fieldnames(metrics);
 current_metric = 1;
 
@@ -46,7 +51,7 @@ if isempty(topos)
 end
 
 for m = 1:size(topos,2)
-    topoWindow(m) = axes('parent',MainFig, 'units','pixels', 'DrawMode','fast');
+    topoWindow(m) = axes('parent',MainFig, 'units','pixels');
 end
 
 % icons
@@ -158,7 +163,8 @@ uiwait(MainFig)
         
         % metrics dropdown menu layout
         set(uitools.metrics,'position',[Layout.metricWindow.position(1) Layout.metricWindow.Y(2) Layout.metricWindow.position(3) Layout.MenuHeight])
-        
+        linkaxes([tICWindow,covWindow],'x');
+
     end
 
 
@@ -179,6 +185,7 @@ uiwait(MainFig)
         
         % Redraw topo window
         for m = 1:length(topoWindow)
+
             % clear axis contents
             cla(topoWindow(m));            
             struct2handle(topos(current_comp,m).children,topoWindow(m)); 
@@ -197,7 +204,14 @@ uiwait(MainFig)
         
         % Redraw spectrum window
         axes(specWindow); 
+        
+        % plot(component_f,component_P(:,current_comp));
+        % set(specWindow,'YScale','log','XLim',[0 D.fsample/2])
+        % ylabel('Power spectral density')
+        % xlabel('Frequency (Hz)');
+        
         pwelch(tc(current_comp,~isnan(tc(current_comp,:))),1024,512,1024,D.fsample);
+        
         set(findobj(specWindow,'type','line'),'color', thistcplotcolor,'linewidth',2);
         title(specWindow,'')
         tidyAxes(specWindow, FONTSIZE);
@@ -243,9 +257,9 @@ uiwait(MainFig)
         h_badbars       = barh(barInd,badbars);
         h_currentbar    = barh(barInd,currentbar);
         
-        set(h_goodbars,  'FaceColor', goodcolor,    'EdgeColor', 'none');
-        set(h_badbars,   'FaceColor', badcolor,     'EdgeColor', 'none');        
-        set(h_currentbar,'FaceColor', currentcolor, 'EdgeColor', 'none');
+        set(h_goodbars,  'FaceColor', goodcolor,    'EdgeColor', 'none','HitTest','off');
+        set(h_badbars,   'FaceColor', badcolor,     'EdgeColor', 'none','HitTest','off');        
+        set(h_currentbar,'FaceColor', currentcolor, 'EdgeColor', 'none','HitTest','off');
         
         tidyAxes(metricWindow)
         set(metricWindow,'ytick',find(ismember(sorted_comps,current_comp)),'yticklabel','>')
@@ -253,8 +267,7 @@ uiwait(MainFig)
         set(metricWindow,'fontweight','bold','fontsize',16)
         axis(metricWindow,'tight')
         set(metricWindow,'ydir','reverse')      
-        
-        linkaxes([tICWindow,covWindow],'x');
+        set(metricWindow,'ButtonDownFcn',@mouse_select_component)
 
         drawnow
 
@@ -269,6 +282,13 @@ uiwait(MainFig)
         
     end
 
+
+    function mouse_select_component(a,b,c)
+        C = get(a,'CurrentPoint');
+        current_comp_ind = round(C(1,2));
+        current_comp = sorted_comps(current_comp_ind);
+        redraw
+    end
 
 
     
@@ -374,7 +394,7 @@ end
 
 %% Really lazy hard coding of icons:
 function [icon_good,icon_bad,icon_zoom] = load_icons
-clc
+
 
 cdata = [
      0     0     0     0     0     0     0     0     0     0     0     1     1     1     1     1
