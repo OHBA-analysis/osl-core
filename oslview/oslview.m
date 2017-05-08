@@ -583,7 +583,7 @@ pointer_wait;
   
         if any(strcmp(drawmode,{'bc','both'}))
           
-          Dsig_inds = 1:10:D.nsamples; Dsig_inds(t_bad(Dsig_inds)) = [];
+          Dsig_inds = 1:20:D.nsamples; Dsig_inds(t_bad(Dsig_inds)) = [];
           Dsig = std(D(:,Dsig_inds,:),[],2);
           offsets = 3*iqr(D(:,Dsig_inds,:),2);
           offsets(offsets==0) = eps;
@@ -593,14 +593,14 @@ pointer_wait;
           offsets = cumsum(offsets);
           
           
-          stat_inds = 1:D.nsamples; stat_inds = stat_inds(1:10:end);
+          stat_inds = 1:D.nsamples; stat_inds = stat_inds(1:20:end);
           tmp = std(D(chan_inds(~ch_bad),stat_inds,1));
           PanWindowData = interp1(linspace(0,1,length(tmp)),tmp,linspace(0,1,D.nsamples));          
           
         end
         
         if any(strcmp(drawmode,{'be','both'}))
-            stat_inds = 1:D.nsamples; stat_inds = stat_inds(~t_bad); stat_inds = stat_inds(1:10:end);
+            stat_inds = 1:D.nsamples; stat_inds = stat_inds(~t_bad); stat_inds = stat_inds(1:20:end);
             SideWindowData = stat(D(chan_inds,stat_inds,1),[],2);   
             SideWindowData = SideWindowData./max(SideWindowData(~ch_bad));
         end
