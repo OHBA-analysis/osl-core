@@ -39,6 +39,12 @@ offsets        = [];
 tmp_line       = [];
 yzoom          = [0 1];
 BadEpochs      = {};  
+chanbar = []; % Handles to bars in sidebar
+chansig = []; % Handle to line plots in main window
+badevents_line = [];
+badevents_patch = [];
+PanWindow_line = [];
+PanWindow_box = [];
 get_bad;
 
 
@@ -202,19 +208,14 @@ pointer_wait;
     
     ylim_mainwindow = diff(get_ylims).*yzoom + min(get_ylims);
     
-    % MainWindow
-    cla(MainWindow)
-    hold(MainWindow,'on');
-    
     % Plot channel signals within current range
+
     chandata = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
-    chansig = plot(MainWindow,t(xs),chandata);
-    
-    % Add channel label as tag and callback
+
     for ch = 1:length(chansig)
-      set(chansig(ch),'tag',chan_labels{chan_inds(ch)},'ButtonDownFcn',@line_click);
+      set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'tag',chan_labels{chan_inds(ch)},'ButtonDownFcn',@line_click);
     end
-    
+
     % Set plot limits
     set(MainWindow,'xlim',[t(xs(1)) t(xs(end))])   
     set(MainWindow,'ylim',ylim_mainwindow)
@@ -228,12 +229,10 @@ pointer_wait;
     
     set(chansig(ch_bad),'linestyle','--','linewidth',1);
  
-    
-    % Draw bad events
-    redraw_BadEvents(MainWindow,2,'--');
-    
     redraw_PanWindow
-    
+
+    redraw_BadEvents;
+
     
   end
 
@@ -243,20 +242,14 @@ pointer_wait;
     PanWindowData_plot = PanWindowData;
     PanWindowData_plot(get_bad_inds) = NaN;
     
-    plot(PanWindow,t,PanWindowData_plot)
+    set(PanWindow_line,'XData',t,'YData',PanWindowData_plot);
+
     axis(PanWindow,'tight')
     ylim = get(PanWindow,'ylim');
-    %ylim = minmax(PanWindowData_plot);
-    % Add the movable pan box
+
     box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
     box_y = [ylim(1) ylim(1) ylim(2) ylim(2)];
-    PanBox = patch(box_x,box_y,'r','parent',PanWindow,'facealpha',0.3);
-
-    
-    % Draw bad events
-    redraw_BadEvents(PanWindow,1,'-');
-    
-    set(PanWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[]);
+    set(PanWindow_box,'XData',box_x,'YData',box_y);    
 
   end
 
@@ -268,18 +261,7 @@ pointer_wait;
 
   function redraw_SideWindow
     % Read offsets for the bar positions from elsewhere as well
-    ch_bad = get_bad_channels;
-
-    if length(get(SideWindow,'Children')) == Nchannels % Reuse existing handles
-      chanbar = get(SideWindow,'Children');
-    else % Make new handles
-      cla(SideWindow)
-      hold(SideWindow,'on')
-      for ch = 1:Nchannels
-         chanbar(ch) = patch(SideWindow,zeros(1,4),zeros(1,4),'k','ButtonDownFcn',@line_click,'uicontextmenu',ContextMenuM.Menu);  
-      end
-    end
-    
+    ch_bad = get_bad_channels;    
     SideWindowData_plot = SideWindowData;
     SideWindowData_plot(ch_bad) = NaN;
     
@@ -301,17 +283,42 @@ pointer_wait;
   end
 
 
-  function redraw_BadEvents(ax,lw,ls)
+  function redraw_BadEvents
     yl = get_ylims;
-    if ~isempty(BadEpochs)
-      for b = 1:numel(BadEpochs)
-        line([BadEpochs{b}(1) BadEpochs{b}(1)],yl,'linewidth',lw,'linestyle',ls,'color',[0.1 0.8 0.1],'parent',ax,'YLimInclude','off','HitTest','off')
-        if numel(BadEpochs{b}) == 2
-          line([BadEpochs{b}(2) BadEpochs{b}(2)],yl,'linewidth',lw,'linestyle',ls,'color','r','parent',ax,'YLimInclude','off','HitTest','off')
-          patch([BadEpochs{b}(1) BadEpochs{b}(2) BadEpochs{b}(2) BadEpochs{b}(1)],[yl(1) yl(1) yl(2) yl(2)],'k','parent',ax,'YLimInclude','off','LineStyle','none','FaceAlpha',0.1,'HitTest','off')
-        end
+    green_x = NaN;
+    green_y = NaN;
+    red_x = NaN;
+    red_y = NaN;
+    patch_x = [];
+    patch_y = [];
+
+    for j = 1:length(BadEpochs)
+      green_x = [green_x BadEpochs{j}(1) BadEpochs{j}(1) NaN];
+      green_y = [green_y yl NaN];
+      if numel(BadEpochs{j}) == 2
+        red_x = [red_x BadEpochs{j}(2) BadEpochs{j}(2) NaN];
+        red_y = [red_y yl NaN];
+        patch_x(:,end+1) = [BadEpochs{j}(1);BadEpochs{j}(2);BadEpochs{j}(2);BadEpochs{j}(1)];
+        patch_y(:,end+1) = [yl(1);yl(1);yl(2);yl(2)];
       end
     end
+
+    set(badevents_line([1,3]),'XData',green_x,'YData',green_y);
+    set(badevents_line([2,4]),'XData',red_x,'YData',red_y);
+    set(badevents_patch,'XData',patch_x,'YData',patch_y);
+
+
+
+    % if ~isempty(BadEpochs)
+    %   for b = 1:numel(BadEpochs)
+    %     line_x = [line_x ]
+    %     line([BadEpochs{b}(1) BadEpochs{b}(1)],yl,'linewidth',lw,'linestyle',ls,'color',[0.1 0.8 0.1],'parent',ax,'YLimInclude','off','HitTest','off')
+    %     if numel(BadEpochs{b}) == 2
+    %       line([BadEpochs{b}(2) BadEpochs{b}(2)],yl,'linewidth',lw,'linestyle',ls,'color','r','parent',ax,'YLimInclude','off','HitTest','off')
+    %       patch([BadEpochs{b}(1) BadEpochs{b}(2) BadEpochs{b}(2) BadEpochs{b}(1)],[yl(1) yl(1) yl(2) yl(2)],'k','parent',ax,'YLimInclude','off','LineStyle','none','FaceAlpha',0.1,'HitTest','off')
+    %     end
+    %   end
+    % end
   end
 
 
@@ -351,9 +358,31 @@ pointer_wait;
     SideWindowData = [];
     PanWindowData = [];
     calcPlotStats('both')
-        
+    
+    % Make all of the bars
+
     cla(MainWindow);
+    hold(MainWindow,'on')
+    chansig = plot(MainWindow,[0 1],ones(2,Nchannels));
+    badevents_line(1) = plot(MainWindow,[NaN NaN],[NaN NaN],'g','LineWidth',2,'LineStyle','--','HitTest','off','YLimInclude','off');
+    badevents_line(2) = plot(MainWindow,[NaN NaN],[NaN NaN],'r','LineWidth',2,'LineStyle','--','HitTest','off','YLimInclude','off');
+    badevents_patch(1) = patch(MainWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
+
     cla(SideWindow);
+    hold(SideWindow,'on')
+    for ch = 1:Nchannels
+       chanbar(ch) = patch(SideWindow,zeros(1,4),zeros(1,4),'k','ButtonDownFcn',@line_click,'uicontextmenu',ContextMenuM.Menu);  
+    end
+
+    cla(PanWindow);
+    hold(PanWindow,'on');
+    set(PanWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[]);
+    PanWindow_line = plot(PanWindow,NaN,NaN,'b');
+    PanWindow_box = patch(NaN,NaN,'r','parent',PanWindow,'facealpha',0.3);
+    badevents_line(3) = plot(PanWindow,[NaN NaN],[NaN NaN],'g','LineWidth',1,'LineStyle','-','HitTest','off','YLimInclude','off');
+    badevents_line(4) = plot(PanWindow,[NaN NaN],[NaN NaN],'r','LineWidth',1,'LineStyle','-','HitTest','off','YLimInclude','off');
+    badevents_patch(2) = patch(PanWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
+
     check_xs; 
     redraw % must check xs still in bounds before redrawing, else may get errors (GC)
     redraw_SideWindow
