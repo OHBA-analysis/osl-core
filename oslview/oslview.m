@@ -193,7 +193,8 @@ pointer_wait;
     set(MainWindow,'position',Layout.MainWindow.position);
     set(PanWindow,'position',Layout.PanWindow.position);
     set(SideWindow,'position',Layout.SideWindow.position);
-    
+    linkaxes([MainWindow,SideWindow],'y')
+
   end
 
 
@@ -233,7 +234,6 @@ pointer_wait;
     
     redraw_PanWindow
     
-    linkaxes([MainWindow,SideWindow],'y')
     
   end
 
@@ -250,11 +250,8 @@ pointer_wait;
     % Add the movable pan box
     box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
     box_y = [ylim(1) ylim(1) ylim(2) ylim(2)];
-    if ~ismac
-        PanBox = patch(box_x,box_y,'r','parent',PanWindow,'facealpha',0.5);
-    else
-        PanBox = patch(box_x,box_y,'r','parent',PanWindow);
-    end
+    PanBox = patch(box_x,box_y,'r','parent',PanWindow,'facealpha',0.3);
+
     
     % Draw bad events
     redraw_BadEvents(PanWindow,1,'-');
@@ -305,11 +302,13 @@ pointer_wait;
 
 
   function redraw_BadEvents(ax,lw,ls)
+    yl = get_ylims;
     if ~isempty(BadEpochs)
       for b = 1:numel(BadEpochs)
-        line([BadEpochs{b}(1) BadEpochs{b}(1)],ylim,'linewidth',lw,'linestyle',ls,'color',[0.1 0.8 0.1],'parent',ax,'YLimInclude','off')
+        line([BadEpochs{b}(1) BadEpochs{b}(1)],yl,'linewidth',lw,'linestyle',ls,'color',[0.1 0.8 0.1],'parent',ax,'YLimInclude','off','HitTest','off')
         if numel(BadEpochs{b}) == 2
-          line([BadEpochs{b}(2) BadEpochs{b}(2)],ylim,'linewidth',lw,'linestyle',ls,'color','r','parent',ax,'YLimInclude','off')
+          line([BadEpochs{b}(2) BadEpochs{b}(2)],yl,'linewidth',lw,'linestyle',ls,'color','r','parent',ax,'YLimInclude','off','HitTest','off')
+          patch([BadEpochs{b}(1) BadEpochs{b}(2) BadEpochs{b}(2) BadEpochs{b}(1)],[yl(1) yl(1) yl(2) yl(2)],'k','parent',ax,'YLimInclude','off','LineStyle','none','FaceAlpha',0.1,'HitTest','off')
         end
       end
     end
