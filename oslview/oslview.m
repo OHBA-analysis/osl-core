@@ -307,9 +307,9 @@ pointer_wait;
   function redraw_BadEvents(ax,lw,ls)
     if ~isempty(BadEpochs)
       for b = 1:numel(BadEpochs)
-        line([BadEpochs{b}(1) BadEpochs{b}(1)],get_ylims,'linewidth',lw,'linestyle',ls,'color',[0.1 0.8 0.1],'parent',ax)
+        line([BadEpochs{b}(1) BadEpochs{b}(1)],ylim,'linewidth',lw,'linestyle',ls,'color',[0.1 0.8 0.1],'parent',ax,'YLimInclude','off')
         if numel(BadEpochs{b}) == 2
-          line([BadEpochs{b}(2) BadEpochs{b}(2)],get_ylims,'linewidth',lw,'linestyle',ls,'color','r','parent',ax)
+          line([BadEpochs{b}(2) BadEpochs{b}(2)],ylim,'linewidth',lw,'linestyle',ls,'color','r','parent',ax,'YLimInclude','off')
         end
       end
     end
