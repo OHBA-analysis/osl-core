@@ -214,7 +214,7 @@ pointer_wait;
     chandata = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
 
     for ch = 1:length(chansig)
-      set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'tag',chan_labels{chan_inds(ch)});
+      set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
     end
 
     % Set plot limits
