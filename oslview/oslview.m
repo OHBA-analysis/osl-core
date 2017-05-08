@@ -263,12 +263,25 @@ pointer_wait;
 
   end
 
+  function bar_patch(h_patch,offset,value,width,c,tag)
+    xv = [0 value];
+    yv = offset + [-1 1]*width/2;
+    set(h_patch,'YData',[yv(1) yv(1) yv(2) yv(2)],'XData',[xv(1) xv(2) xv(2) xv(1)],'FaceColor',c,'LineStyle','none','tag',tag)
+  end
 
   function redraw_SideWindow
-    cla(SideWindow)
-    hold(SideWindow,'on')
-    
+    % Read offsets for the bar positions from elsewhere as well
     ch_bad = get_bad_channels;
+
+    if length(get(SideWindow,'Children')) == Nchannels % Reuse existing handles
+      chanbar = get(SideWindow,'Children');
+    else % Make new handles
+      cla(SideWindow)
+      hold(SideWindow,'on')
+      for ch = 1:Nchannels
+         chanbar(ch) = patch(SideWindow,zeros(1,4),zeros(1,4),'k','ButtonDownFcn',@line_click,'uicontextmenu',ContextMenuM.Menu);  
+      end
+    end
     
     SideWindowData_plot = SideWindowData;
     SideWindowData_plot(ch_bad) = NaN;
@@ -277,12 +290,9 @@ pointer_wait;
     col = colormap(lines); 
     col = col(1:7,:);
     col = repmat(col,ceil(Nchannels/7),1);
-    chanbar = zeros(1,Nchannels);
 
-    
     for ch = 1:Nchannels
-       chanbar(ch) = barh(SideWindow,offsets(ch),SideWindowData_plot(ch),range(offsets)/Nchannels,'facecolor',col(ch,:),'edgecolor','none');  
-       set(chanbar(ch),'tag',chan_labels{chan_inds(ch)},'ButtonDownFcn',@line_click,'uicontextmenu',ContextMenuM.Menu);
+      bar_patch(chanbar(ch),offsets(ch),SideWindowData_plot(ch),range(offsets)/Nchannels,col(ch,:),chan_labels{chan_inds(ch)});
     end
     
     set(SideWindow,'ylim',get(MainWindow,'ylim'))
