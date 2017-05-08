@@ -57,7 +57,7 @@ MainFig = figure('Name',                  ['OSLview - ' strtok(D.fname,'.')] ,..
 c = onCleanup(@() delete(MainFig));
              
 % Create plotting windows
-MainWindow = axes('parent',MainFig, 'units','pixels');
+MainWindow = axes('parent',MainFig, 'units','pixels','XGrid','on');
 PanWindow  = axes('parent',MainFig, 'units','pixels');
 SideWindow = axes('parent',MainFig, 'units','pixels');
 
