@@ -1,4 +1,4 @@
-function D = add_montage(D,W,name,labels)
+function D = add_montage(D,W,name,labels,channels)
 	% Add an online montage to an MEEG object (in memory)
 	% 
 	% INPUTS
@@ -7,7 +7,8 @@ function D = add_montage(D,W,name,labels)
 	% 	  This matrix premultiplies the active montage and must therefore have the same number 
 	% - name (optional string giving name of new montage)
 	% - labels (optional cell array of names for each channel)
-	
+	% - channels (optional struct array that provides channel information)
+
 	% First, check proposed tra matrix is OK in terms of orientation
 	% That way, size(W,1) is guaranteed to be the new number of channels
 	assert(size(W,2)==D.nchannels,sprintf('Transformation matrix is wrong size (is %dx%d, needs to be Nx%d)',size(W,1),size(W,2),D.nchannels));
@@ -35,9 +36,14 @@ function D = add_montage(D,W,name,labels)
     else
     	newMontage      = currentMontage;
 		newMontage.tra  = W * currentMontage.tra;
-        newMontage      = rmfield(newMontage, 'channels');
 	end
 
+	if isempty(channels)
+		newMontage      = rmfield(newMontage, 'channels');
+	else
+		newMontage.channels = channels;
+	end
+	
 	newMontage.name = name;
 	newMontage.labelnew = labels;
 
