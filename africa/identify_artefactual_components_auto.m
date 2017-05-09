@@ -98,7 +98,7 @@ if D.ntrials==1;
     badsections = false(1,D.nsamples);
     Events = D.events;
     if ~isempty(Events)
-        Events = Events(strcmp({Events.type},'BadEpoch'));
+        Events = Events(ismember({Events.type},{'BadEpoch','artefact_OSL'}));
         for ev = 1:numel(Events)
             badsections = badsections | t >= Events(ev).time & t < (Events(ev).time+Events(ev).duration);
         end
