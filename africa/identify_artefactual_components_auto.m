@@ -21,57 +21,33 @@ function [bad_components, metrics,fig_handles, fig_names, fig_titles] = identify
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set-Up
-if isfield(S,'do_plots');
-    do_plots=S.do_plots;
-else
-    do_plots=1;
+arg = inputParser;
+
+arg.addParameter('max_num_artefact_comps',10);
+arg.addParameter('do_plots',1);
+arg.addParameter('modality',[]);
+
+% Mains defaults
+arg.addParameter('do_mains',false); 
+arg.addParameter('mains_frequency',50); 
+arg.addParameter('mains_kurt_thresh',0.4); 
+
+% Kurtosis defaults
+arg.addParameter('do_kurt',false); 
+arg.addParameter('kurtosis_thresh',20); 
+arg.addParameter('kurtosis_wthresh',0); 
+
+% Artefact chans
+arg.addParameter('artefact_chans_corr_thresh',0.2);
+
+arg.parse(S.ident_params);
+S.ident_params = arg.Results;
+
+if ~isempty(S.artefact_channels)
+    S.ident_params.artefact_chans_corr_thresh = ones(size(S.artefact_channels))*S.ident_params.artefact_chans_corr_thresh;
 end
 
-if ~isfield(S,'ident_params'); 
-    error('Need to specify ident func variables');
-end
-
-if isfield(S.ident,'do_mains') && S.ident.do_mains == 1;
-    if ~isfield(S.ident,'mains_frequency')
-        S.ident.mains_frequency = 50;
-    end
-    if ~isfield(S.ident,'mains_kurt_thresh')
-        S.ident.mains_kurt_thresh = 0.4;
-    end
-else
-    S.ident.do_mains = 0;
-end
-   
-if isfield(S.ident,'do_kurt') && S.ident.do_kurt == 1
-    if ~isfield(S.ident,'kurtosis_thresh')
-        S.ident.kurtosis_thresh = 20;
-    end
-    if ~isfield(S.ident,'kurtosis_wthresh')
-        S.ident.kurtosis_wthresh = 0;
-    end
-else
-    S.ident.do_kurt = 0;
-end
-
-if isfield(S.ident,'artefact_chans')
-    try
-       S.ident.artefact_chans = cellstr(S.ident.artefact_chans);
-    catch
-        error('S.ident.artefact_chans should be strings');             
-    end
-    if ~isfield(S.ident,'artefact_chans_corr_thresh')
-        S.ident.artefact_chans_corr_thresh = ones(size(S.ident.artefact_chans))*0.15;
-    end    
-else
-    S.ident.artefact_chans = [];
-end
-
-if ~isfield(S.ident,'max_num_artefact_comps')
-    S.ident.max_num_artefact_comps = 10;
-end
-
-
-D = spm_eeg_load(S.D);
+D = D.montage('switch',0);
 
 modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3))));  % changed by DM
 
@@ -79,32 +55,16 @@ fig_handles = [];
 fig_names   = [];
 fig_titles  = [];
 
+sm = D.ica.sm;
+tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
+
 %% Select only good data for classification
+samples_of_interest = ~all(badsamples(D,':',':',':'));
+samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
 
-samples_of_interest = false(1,size(S.ica_res.tc,2));
-
-% Remove bad trials/any trial structure
-c=1;
-for i=1:D.ntrials
-    if ~ismember(i,D.badtrials)
-        samples_of_interest(:,c:c+D.nsamples-1)=true;
-    end
-    c=c+D.nsamples;
-end
-
-% Remove bad segments
-if D.ntrials==1;
-    t = D.time;
-    badsections = false(1,D.nsamples);
-    Events = D.events;
-    if ~isempty(Events)
-        Events = Events(ismember({Events.type},{'BadEpoch','artefact_OSL'}));
-        for ev = 1:numel(Events)
-            badsections = badsections | t >= Events(ev).time & t < (Events(ev).time+Events(ev).duration);
-        end
-    end
-    samples_of_interest(1,badsections)=false;
-end
+tc_nans = tc;
+tc_nans(:,~samples_of_interest) = NaN;
+tc = tc(:,samples_of_interest );
 
 if strcmp(S.modality,'EEG')   % changed by DM
     chan_inds=setdiff(find(any([strcmp(D.chantype,'EEG')],1)),D.badchannels);
@@ -115,12 +75,8 @@ else
 end
 %%
 
-sm = S.ica_res.sm;
-tc = S.ica_res.tc;
 
-tc = tc(:,samples_of_interest);
-
-num_ics = S.ica_res.ica_params.num_ics;
+num_ics = D.ica.params.num_ics;
 abs_ft  = abs(fft(demean(tc(:,:),2),[],2));
 freq_ax = 0:(D.fsample/2)/(floor(length(abs_ft)/2)-1):(D.fsample/2);
 
@@ -131,12 +87,12 @@ confirmed_artefact_names = [];
 confirmed_artefact_inds  = [];
 metrics_names = [];
 metrics = [];
-max_num_artefact_comps = S.ident.max_num_artefact_comps; % max number of components that will be allowed to be labelled as bad in each category
+max_num_artefact_comps = S.ident_params.max_num_artefact_comps; % max number of components that will be allowed to be labelled as bad in each category
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Detect Mains components
 
-if S.ident.do_mains
+if S.ident_params.do_mains
 
     spec = abs_ft(1:num_ics,1:floor(length(abs_ft)/2));
     spec(:,1:minhz_ind) = 0;
@@ -146,7 +102,7 @@ if S.ident.do_mains
     kurt = kurtosis(tc,[],2);
     kurt = abs(demean(boxcox1(kurt))); % make distribution more normal to better balance low/high kurtosis
         
-    mains_ind=find(S.ident.mains_frequency-1<fmax & fmax<S.ident.mains_frequency+1 & kurt'<S.ident.mains_kurt_thresh);
+    mains_ind=find(S.ident_params.mains_frequency-1<fmax & fmax<S.ident_params.mains_frequency+1 & kurt'<S.ident_params.mains_kurt_thresh);
     
     if(length(mains_ind) > max_num_artefact_comps),
         warning([num2str(length(mains_ind)) ' Mains comps have been detected. Will only label the top ' num2str(max_num_artefact_comps) ' with the lowest kurtosis as artefacts.' ]);
@@ -156,7 +112,7 @@ if S.ident.do_mains
     
     %figure; plot(fmax);figure; plot(freq_ax,spec);
     
-    msg = sprintf('\n%s%d%s\n%',['Mains (' num2str(S.ident.mains_frequency) ') interference split over '], numel(mains_ind), ' components.');
+    msg = sprintf('\n%s%d%s\n%',['Mains (' num2str(S.ident_params.mains_frequency) ') interference split over '], numel(mains_ind), ' components.');
     fprintf(msg);
 
     confirmed_artefact_inds = mains_ind;
@@ -173,22 +129,22 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Detect artefact channels related components
 
-if(~isempty(S.ident.artefact_chans) && length(S.ident.artefact_chans)>0)
+if(~isempty(S.artefact_channels) && length(S.artefact_channels)>0)
 
     artefact_chan_ind_list         = [];
     artefact_chan_names            = [];
     artefact_chans_corr_thresh_new = [];
     
     %% find all chan indexes for passed in artefact channel names
-    for ii=1:length(S.ident.artefact_chans),
+    for ii=1:length(S.artefact_channels),
         
-        inds = find(strcmp(D.chantype,S.ident.artefact_chans{ii}));
+        inds = find(strcmp(D.chantype,S.artefact_channels{ii}));
         
         if isempty(inds),
             % allow, as a backup, specifying channel exact name
-            inds = find(strcmpi(chanlabels(D), S.ident.artefact_chans{ii})); 
+            inds = find(strcmpi(chanlabels(D), S.artefact_channels{ii})); 
             if isempty(inds),
-                disp(['Artefact channel ' S.ident.artefact_chans{ii} ' not found.']);
+                disp(['Artefact channel ' S.artefact_channels{ii} ' not found.']);
             else
                 inds = [];
             end
@@ -197,8 +153,8 @@ if(~isempty(S.ident.artefact_chans) && length(S.ident.artefact_chans)>0)
         artefact_chan_ind_list = [artefact_chan_ind_list inds];
         
         for jj=1:length(inds),
-            artefact_chan_names{length(artefact_chan_names)+1} = S.ident.artefact_chans{ii};
-            artefact_chans_corr_thresh_new(length(artefact_chans_corr_thresh_new)+1) = S.ident.artefact_chans_corr_thresh(ii);
+            artefact_chan_names{length(artefact_chan_names)+1} = S.artefact_channels{ii};
+            artefact_chans_corr_thresh_new(length(artefact_chans_corr_thresh_new)+1) = S.ident_params.artefact_chans_corr_thresh(ii);
         end
     end
     
@@ -223,7 +179,7 @@ if(~isempty(S.ident.artefact_chans) && length(S.ident.artefact_chans)>0)
             psig=(sig.^2)';
             artefact_tc_corr(kk)=abs(corr(psig,artefact_tc(samples_of_interest)'));
         end
-       
+
         artefact_ic_inds = find(artefact_tc_corr>artefact_chans_corr_thresh_new(ii));
 
         msg = [artefact_chan_names{ii} ' artefacts split over ', num2str(numel(artefact_ic_inds)), ' components.'];   
@@ -260,7 +216,7 @@ if length(inds)>0, metrics=metrics_new; end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Do plots for mains and chan artefact related ICs
 
-if do_plots
+if S.ident_params.do_plots
     if ~isempty(confirmed_artefact_inds)
         for ii=1:length(confirmed_artefact_inds),            
             
@@ -294,7 +250,7 @@ if do_plots
                 t = (1:length(samples_of_interest))./D.fsample;
             end
             
-            plot(t(samples_of_interest),tc(confirmed_artefact_inds(ii),:));title([confirmed_artefact_names{ii} ' Artefacts']);xlabel('Time (s)');axis tight;
+            plot(t,tc_nans(confirmed_artefact_inds(ii),:));title([confirmed_artefact_names{ii} ' Artefacts']);xlabel('Time (s)');axis tight;
             
         end;
     end;
@@ -304,8 +260,8 @@ end;
 %% Artefact rejection using kurtosis.
 
 reject_kurt = [];
-if S.ident.do_kurt > 0,
-    [comps2reject,fig_handles_tmp,fig_names_tmp,fig_titles_tmp] = rank_and_plot(tc,sm,abs_ft,freq_ax,D,'abs_kurtosis',modalities,samples_of_interest,S.ident.kurtosis_wthresh,S.ident.kurtosis_thresh,max_num_artefact_comps);
+if S.ident_params.do_kurt > 0,
+    [comps2reject,fig_handles_tmp,fig_names_tmp,fig_titles_tmp] = rank_and_plot(tc_nans,sm,abs_ft,freq_ax,D,'abs_kurtosis',modalities,samples_of_interest,S.ident_params.kurtosis_wthresh,S.ident_params.kurtosis_thresh,max_num_artefact_comps);
     fig_handles=[fig_handles, fig_handles_tmp];
     for ii=1:length(fig_names_tmp)
         fig_names{length(fig_names)+1}=fig_names_tmp{ii};
@@ -407,7 +363,7 @@ for i = 1:length(comps2reject),
     else
         t = (1:length(samples_of_interest))./D.fsample;
     end
-    
+
     subplot(2,ncols,ncols+1); plot(t(samples_of_interest),tc(comps2reject(i),:)); title({['Component ' num2str(comps2reject(i)) ': ' figlab ' = ' num2str(met_ord(i))] 'Independent Time Course'}); xlabel('Time (s)');axis tight;
     subplot(2,ncols,ncols+2); plot(freq_ax,abs_ft(comps2reject(i),1:floor(length(abs_ft)/2))); title({['Component ' num2str(comps2reject(i)) ': ' figlab ' = ' num2str(met_ord(i))] 'Frequency Spectrum'}); xlabel('Frequency (Hz)');axis tight;
 

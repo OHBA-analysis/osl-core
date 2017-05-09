@@ -1,4 +1,4 @@
-function [D,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin)
+function [D,fig_handles,fig_names,fig_titles,S] = osl_africa(D,varargin)
     % AfRICA - ArteFact Rejection using Independent Component Analysis
     % performs ICA denoising of MEG data using either semi-manual or automated
     % identification artefact components.
@@ -58,15 +58,12 @@ function [D,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin)
     arg.addParameter('ica_params',struct); % ICA parameters passed to run_sensorspace_ica
     arg.parse(varargin{:});
     S = arg.Results; % Result of parsing arguments is essentially the settings struct
-
-    if ~isfield(S.ident_params,'artefact_channels')
-        S.ident_params.artefact_channels = S.artefact_channels;
-    end
     
     fig_handles = [];
     fig_names   = [];
     fig_titles  = [];
 
+    D = D.montage('switch',0);
 
     % Do ICA decomposition
     if S.do_ica
@@ -93,9 +90,9 @@ function [D,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin)
     % Identify bad components, store them together with metrics in the D object
     if S.do_ident
         if(S.do_plots)
-            [D.ica.bad_components, D.ica.metrics, fig_handles, fig_names, fig_titles] = feval(S.ident_func,D,S.ident_params);
+            [D.ica.bad_components, D.ica.metrics, fig_handles, fig_names, fig_titles] = feval(S.ident_func,D,S);
         else
-            [D.ica.bad_components, D.ica.metrics ]= feval(S.ident_func,D,S.ident_params);
+            [D.ica.bad_components, D.ica.metrics ]= feval(S.ident_func,D,S);
         end
     else
         fprintf('Using existing bad_components\n')
