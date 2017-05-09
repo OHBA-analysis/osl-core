@@ -52,7 +52,7 @@ function [D,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin)
     arg.addParameter('do_ident',true); 
     arg.addParameter('do_remove',true); 
     arg.addParameter('artefact_channels',{}); 
-    arg.addParameter('ident_func',@identify_artefactual_components_manual);
+    arg.addParameter('ident_func',@identify_artefactual_components_manual2);
     arg.addParameter('ident_params',struct); % Extra parameters for ident_func
     arg.addParameter('used_maxfilter',false);
     arg.addParameter('ica_params',struct); % ICA parameters passed to run_sensorspace_ica
