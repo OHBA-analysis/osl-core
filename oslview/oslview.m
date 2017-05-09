@@ -19,12 +19,6 @@ function D = oslview(D)
 % Get directory of the viewer
 viewer_dir = strrep(which('oslview'),'oslview.m','');
 
-% Update D with the one on file
-current_montage = D.montage('getindex');
-datafile = fullfile(D.path,D.fname);
-D = spm_eeg_load(datafile);
-D = montage(D,'switch',current_montage);
-
 % Initialise shared variables
 p1=[]; p2=[];
 t1=[]; t2=[];
@@ -53,8 +47,6 @@ MainFig = figure('Name',                  ['OSLview - ' strtok(D.fname,'.')] ,..
                  'NumberTitle',           'off'     ,...
                  'Menubar',               'none'    ,...
                  'DockControls',          'off'     ,...
-                 'WindowButtonDownFcn',   @btn_down ,...
-                 'WindowButtonUpFcn',     @btn_up   ,...
                  'KeyPressFcn',           @key_press,...
                  'ResizeFcn',             @resize   ,...
                  'CloseRequestFcn',       @close_fig,...
@@ -113,12 +105,6 @@ pointer_wait;
 Nsamples = D.nsamples;
 t = D.time;
 
-% Set downsample factor and initial plotting width
-xwidth = D.fsample*D.time(end);
-ds = max([1 fix(xwidth/1000)]);
-xs = 1:ds:xwidth;
-
-
 % Set gain for zooming
 G = 1;
 
@@ -159,8 +145,39 @@ jFig.setMaximized(true);
 warning on MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
 
 pointer_wait;
+%drag_listener1 = addlistener(MainWindow,'XLim','PostSet',@redraw);
+set(PanWindow,'ButtonDownFcn',@pan_jump)
 
+h_pan = pan(MainFig);
+setAllowAxesPan(h_pan,PanWindow,false)
+setAllowAxesPan(h_pan,SideWindow,false)
+setAllowAxesPan(h_pan,MainWindow,true)
+setAxesPanConstraint(h_pan,MainWindow,'x')
+h_pan.Enable = 'on';
+h_pan.ButtonDownFilter = @pan_filter
+h_pan.ActionPreCallback = @plot_low_res;
+h_pan.ActionPostCallback = @redraw;
 
+function flag = pan_filter(obj,event)
+  if obj == PanWindow || obj == SideWindow
+    flag = true;
+  elseif ~strcmp(get(MainFig,'selectionType'),'normal'); % Pass through all right clicks
+    flag = true;
+  else
+    flag = false;
+  end
+end
+
+function plot_low_res(varargin)
+  xs = unique(round(D.fsample*linspace(D.time(1),D.time(end),2000)));
+  xs = xs(2:end);
+  chandata = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
+  for ch = 1:length(chansig)
+    set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
+  end
+end
+
+% drag_listener2 = addlistener(MainWindow,'XLim','PreSet',@validate_xlim);
 
   function createlayout(varargin)
     % Perform one-off creation of axes objects etc. 
@@ -196,16 +213,44 @@ pointer_wait;
     Layout.SideWindow.Y(2) = Layout.FigHeight - Layout.BorderWidth;
     Layout.SideWindow.position = [Layout.SideWindow.X(1),Layout.SideWindow.Y(1),abs(diff(Layout.SideWindow.X)),abs(diff(Layout.SideWindow.Y))];
 
-    set(MainWindow,'position',Layout.MainWindow.position);
+    set(MainWindow,'position',Layout.MainWindow.position,'XLim',D.time([1 end])); 
     set(PanWindow,'position',Layout.PanWindow.position);
     set(SideWindow,'position',Layout.SideWindow.position);
+    box(MainWindow,'on')
+    box(PanWindow,'on')
+    box(SideWindow,'on')
+
     linkaxes([MainWindow,SideWindow],'y')
 
   end
 
+  function pan_jump(ax,hit)
+    xspan = get(MainWindow,'XLim')
+    set(MainWindow,'XLim',hit.IntersectionPoint(1)+[-0.5 0.5]*diff(xspan));
+    redraw
+  end
 
-  function redraw
+  function redraw(varargin)
     % Update all plots
+    % pan_only = true means that the sidebar won't be updated
+    % if nargin == 2 then this was called via the figure pan object, so
+    % definitely only pan required
+    if nargin == 2 || nargin < 1 || isempty(pan_only) 
+      pan_only = false;
+    end
+    
+
+    xspan = get(MainWindow,'XLim');
+    xwidth = xspan(2)-xspan(1);
+    xspan(1) = max(xspan(1),D.time(1));
+    xspan(2) = min(xspan(2),D.time(end));
+    set(MainWindow,'XLim',xspan);
+
+    % Based on the time window desired, calculate the indexes of the D object to sample
+    x_window = round(xspan*D.fsample - D.time(1)); % Convert from time to samples
+    x_window(1) = max(x_window(1),1);
+    x_window(2) = min(x_window(2),length(D.time));
+    xs = unique(round(linspace(x_window(1),x_window(2),1000)));
     
     ylim_mainwindow = diff(get_ylims).*yzoom + min(get_ylims);
     
@@ -217,8 +262,8 @@ pointer_wait;
       set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
     end
 
-    % Set plot limits
-    set(MainWindow,'xlim',[t(xs(1)) t(xs(end))])   
+
+    % set(MainWindow,'xlim',[t(xs(1)) t(xs(end))])   
     set(MainWindow,'ylim',ylim_mainwindow)
     set(MainWindow,'ytick',[],'yticklabel',[])
 
@@ -235,13 +280,16 @@ pointer_wait;
     PanWindowData_plot(get_bad_inds) = NaN;
     
     set(PanWindow_line,'XData',t,'YData',PanWindowData_plot);
-
     axis(PanWindow,'tight')
     ylim = get(PanWindow,'ylim');
 
     box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
     box_y = [ylim(1) ylim(1) ylim(2) ylim(2)];
     set(PanWindow_box,'XData',box_x,'YData',box_y);   
+
+    if pan_only
+      return
+    end
 
     %% SIDE WINDOW
     
@@ -338,10 +386,10 @@ pointer_wait;
     calcPlotStats('both')
     
     % Make all of the bars
-
+    xspan = get(MainWindow,'XLim');
     cla(MainWindow);
     hold(MainWindow,'on')
-    chansig = plot(MainWindow,[0 1],ones(2,Nchannels),'ButtonDownFcn',@line_click);
+    chansig = plot(MainWindow,xspan,ones(2,Nchannels),'ButtonDownFcn',@line_click);
     badevents_line(1) = plot(MainWindow,[NaN NaN],[NaN NaN],'g','LineWidth',2,'LineStyle','--','HitTest','off','YLimInclude','off');
     badevents_line(2) = plot(MainWindow,[NaN NaN],[NaN NaN],'r','LineWidth',2,'LineStyle','--','HitTest','off','YLimInclude','off');
     badevents_patch(1) = patch(MainWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
@@ -354,16 +402,16 @@ pointer_wait;
 
     cla(PanWindow);
     hold(PanWindow,'on');
-    set(PanWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[]);
-    PanWindow_line = plot(PanWindow,NaN,NaN,'b');
-    PanWindow_box = patch(NaN,NaN,'r','parent',PanWindow,'facealpha',0.3);
+    set(PanWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[],'ButtonDownFcn',@pan_jump);
+    PanWindow_line = plot(PanWindow,NaN,NaN,'b','HitTest','off');
+    PanWindow_box = patch(NaN,NaN,'r','parent',PanWindow,'facealpha',0.3,'HitTest','off');
     badevents_line(3) = plot(PanWindow,[NaN NaN],[NaN NaN],'g','LineWidth',1,'LineStyle','-','HitTest','off','YLimInclude','off');
     badevents_line(4) = plot(PanWindow,[NaN NaN],[NaN NaN],'r','LineWidth',1,'LineStyle','-','HitTest','off','YLimInclude','off');
     badevents_patch(2) = patch(PanWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
 
-    check_xs; 
-    redraw % must check xs still in bounds before redrawing, else may get errors (GC)
-    pointer_wait;
+    redraw
+    pointer_wait
+
   end
 
 
@@ -397,6 +445,8 @@ pointer_wait;
     end
 
     if isempty(tmp_line)
+        xl = get(MainWindow,'XLim');
+        xs = find(D.time >= xl(1) & D.time <= xl(2));
         tmp_line = plot(MainWindow,t(xs),G*ones(size(Nchannels)).*D(chan_inds(ch),xs) + repmat(offsets(ch),size(xs)),'color','k','linewidth',2);
     else
         delete(tmp_line);
@@ -412,6 +462,7 @@ pointer_wait;
         end
       tmp_line = [];
     end
+    set(MainWindow,'tag',''); 
   end
 
 
@@ -457,51 +508,17 @@ pointer_wait;
     ContextMenuOff % deselect highlighted channel
     
     if strcmp(get(MainFig,'selectionType'),'normal') % if left click
-      set(MainFig,'WindowButtonMotionFcn',@btn_move); 
+      %set(MainFig,'WindowButtonMotionFcn',@btn_move); 
       switch(gca)        
-        case MainWindow       
-          t1 = get(MainWindow,'CurrentPoint');
-          [~,p1] = min(abs(t-t1(1)));
+        case MainWindow % Going to drag
           ClickedWindow = MainWindow;        
-        case PanWindow
+        case PanWindow % Going to update to clicked point
           ClickedWindow = PanWindow;        
       end
+      t1 = get(ClickedWindow,'CurrentPoint');
     end
     
   end % btn_down
-
-
-  function btn_up(varargin)
-   
-    set(MainFig,'WindowButtonMotionFcn', []);
-    if ClickedWindow == PanWindow
-      updatePanWindow
-    end
-    
-    ClickedWindow = [];
-    
-    
-  end % btn_up
-
-
-  function btn_move(varargin)
-    
-    if ClickedWindow == MainWindow
-        t2 = get(MainWindow,'CurrentPoint');
-        t2 = t2(1);
-        [~,p2] = min(abs(t-t2));
-        % Only redraw if change in x position greater than 10% of view
-        if abs(t1(1)-t2) > 0.1*diff(get(MainWindow,'xlim'))
-          xs = xs + round(p1-p2);
-          check_xs
-          redraw
-        end
-    else
-      updatePanWindow
-    end
-    
-  end % btn_move
-
 
   function mark_bad(varargin)
     
@@ -517,7 +534,7 @@ pointer_wait;
       % then assume it was meant to be at the start or end.
       if t_current < t_window(1) + 0.01*diff(t_window)
         t_current = t_window(1);
-      elseif t_current > t_window(1) + 0.95*diff(t_window)
+      elseif t_current > t_window(1) + 0.99*diff(t_window)
         t_current = t_window(2);
       end
 
@@ -629,18 +646,6 @@ pointer_wait;
     redraw
   end
 
-
-  function updatePanWindow
-    t1 = get(PanWindow,'CurrentPoint');
-    t1 = t1(1);
-    [~,p1] = min(abs(t-t1));
-    
-    xs = p1-ceil(xwidth/2)+1:ds:p1+fix(xwidth/2);
-    check_xs
-    redraw
-  end
-
-
   function resize(varargin)
     createlayout
   end
@@ -659,21 +664,15 @@ pointer_wait;
 
 
   function inc_xwidth(varargin)
-    xwidth = min(xwidth*2,numel(D.time));
-    ds = max([1 fix(xwidth/1000)]);
-    xc = round(median(xs));
-    xs = xc-ceil(xwidth/2)+1:ds:xc+fix(xwidth/2);
-    check_xs
+    xspan = get(MainWindow,'XLim');
+    set(MainWindow,'XLim',mean(xspan) + [-1 1]*diff(xspan))
     redraw
   end
 
 
   function dec_xwidth(varargin)
-    xwidth = fix(xwidth/2);
-    ds = max([1 fix(xwidth/1000)]);
-    xc = round(median(xs));
-    xs = xc-ceil(xwidth/2)+1:ds:xc+fix(xwidth/2);
-    check_xs
+    xspan = get(MainWindow,'XLim');
+    set(MainWindow,'XLim',mean(xspan) + 0.25*[-1 1]*diff(xspan))
     redraw
   end
 
@@ -687,56 +686,6 @@ pointer_wait;
       set(MainFig,'pointer','arrow')
     end
   end
-
-
-  function check_xs
-  % checks validity of xs
-
-  % not all problems are necessarily fixed in one pass. 
-  % E.g. if xwidth was several times greater than Nsamples.
-  % If we've changed something, let's check again. We should keep tabs on
-  % how many times we check
-  % GC 2014
-  maxNchecks = 15;
-  iCheck = 0;
-  while iCheck < maxNchecks,
-      allChecksOK = run_xs_checks;
-      if allChecksOK, 
-          return;
-      end
-      iCheck = iCheck + 1;
-  end%while
-  % if we're here, have gone through several checks and still not fixed
-  xwidth = Nsamples;
-  xs = 1:ds:xwidth;
-
-  
-      function allChecksOK = run_xs_checks
-          allChecksOK = 1;
-          
-          if xwidth > Nsamples
-              xwidth = xwidth/2;
-              allChecksOK = 0;
-          end
-          
-          if xs(1) <= 0
-              xs = 1:ds:xwidth;
-              allChecksOK = 0;
-          end
-          if xs(end) > Nsamples
-              xs = (Nsamples:-ds:Nsamples-xwidth);
-              xs = xs(end:-1:1);
-              allChecksOK = 0;
-          end
-          
-          if xwidth < 10
-              xwidth = xwidth*2;
-              xs = 1:ds:xwidth;
-              allChecksOK = 0;
-          end
-      end%run_xs_checks
-  end%check_xs
-
    
   function get_bad
     BadEpochs = {};
@@ -911,3 +860,22 @@ pointer_wait;
 
 end % OSLview
 
+function flag = is_multiple_call()
+% From File Exchange, Yair Altman
+  flag = false; 
+  % Get the stack
+  s = dbstack();
+  if numel(s) <= 2
+    % Stack too short for a multiple call
+    return
+  end
+ 
+  % How many calls to the calling function are in the stack?
+  names = {s(:).name};
+  TF = strcmp(s(2).name,names);
+  count = sum(TF);
+  if count>1
+    % More than 1
+    flag = true; 
+  end
+end

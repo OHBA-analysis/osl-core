@@ -273,10 +273,10 @@ uiwait(MainFig)
 
         % Add info about metrics as title above tICWindow
         titlestr = 'Component ranking: ';
-        rank_metric = @(a,b) sum(a<=b);
-        for metric_name = metric_names'
-            r = rank_metric(metrics.(char(metric_name)).value(current_comp),metrics.(char(metric_name)).value);
-            titlestr = [titlestr sprintf('%s: %i   ',char(metric_name),r)];
+        for j = 1:length(metric_names)
+            v = metrics.(metric_names{j}).value(current_comp); % Metric value
+            r = sum(v <= metrics.(metric_names{j}).value);
+            titlestr = [titlestr sprintf('%s: %i (%.2f)  ',metric_names{j},r,v)];
         end  
         title(tICWindow,titlestr,'fontsize',FONTSIZE)
         
