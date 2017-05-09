@@ -59,6 +59,10 @@ function [D,fig_handles,fig_names,fig_titles,S] = osl_africa2(D,varargin)
     arg.parse(varargin{:});
     S = arg.Results; % Result of parsing arguments is essentially the settings struct
 
+    if ~isfield(S.ident_params,'artefact_channels')
+        S.ident_params.artefact_channels = S.artefact_channels;
+    end
+    
     fig_handles = [];
     fig_names   = [];
     fig_titles  = [];
