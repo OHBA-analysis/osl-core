@@ -44,7 +44,7 @@ function D = oslview(D)
 	badevents_patch = [];
 	PanWindow_line = [];
 	PanWindow_box = [];
-	get_bad;
+	BadEpochs = read_bad_events(D);
 
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Create UI %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -55,7 +55,7 @@ function D = oslview(D)
 						'WindowButtonDownFcn',@btn_down	,...
 						'WindowButtonUpFcn',@btn_up	,...
 						'KeyPressFcn',@key_press,...
-						'ResizeFcn',@resize	,...
+						'ResizeFcn',@(a,b,c) createlayout,...
                         'Units','pixels',...
 						'Visible','off');
 			
@@ -150,7 +150,10 @@ function D = oslview(D)
 	%drag_listener1 = addlistener(MainWindow,'XLim','PostSet',@redraw);
 	set(PanWindow,'ButtonDownFcn',@pan_jump)
 
-	uiwait(MainFig)
+	uiwait(MainFig) % Wait for user to close window
+
+	D = set_bad_events(D,BadEpochs);
+	return
 
 	function createlayout(varargin)
 		% Perform one-off creation of axes objects etc.
@@ -237,7 +240,6 @@ function D = oslview(D)
 		ylim_mainwindow = diff(get_ylims).*yzoom + min(get_ylims);
 		
 		% Plot channel signals within current range
-
 		chan_time = t(xs);
 		chan_data = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
 
@@ -257,12 +259,9 @@ function D = oslview(D)
 		set(chansig(ch_bad),'linestyle','--','linewidth',1);
 
 		%% PAN WINDOW
-		PanWindowData_plot = PanWindowData;
-		PanWindowData_plot(get_bad_inds) = NaN;
-		
-		set(PanWindow_line,'XData',t,'YData',PanWindowData_plot);
+		set(PanWindow_line,'XData',t,'YData',PanWindowData);
 		axis(PanWindow,'tight')
-		ylim = get(PanWindow,'ylim');
+        ylim = get(PanWindow,'YLim');
 
 		box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
 		box_y = [ylim(1) ylim(1) ylim(2) ylim(2)];
@@ -386,7 +385,7 @@ function D = oslview(D)
 		hold(PanWindow,'on');
 		set(PanWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[],'ButtonDownFcn',@pan_jump);
 		PanWindow_line = plot(PanWindow,NaN,NaN,'b','HitTest','off');
-		PanWindow_box = patch(NaN,NaN,'r','parent',PanWindow,'facealpha',0.3,'HitTest','off');
+		PanWindow_box = patch(NaN,NaN,'r','parent',PanWindow,'facealpha',0.3,'HitTest','off','YLimInclude','off');
 		badevents_line(3) = plot(PanWindow,[NaN NaN],[NaN NaN],'g','LineWidth',1,'LineStyle','-','HitTest','off','YLimInclude','off');
 		badevents_line(4) = plot(PanWindow,[NaN NaN],[NaN NaN],'r','LineWidth',1,'LineStyle','-','HitTest','off','YLimInclude','off');
 		badevents_patch(2) = patch(PanWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
@@ -394,7 +393,6 @@ function D = oslview(D)
 		redraw
 
 	end
-
 
 	function ContextMenuOn(src,~)
 		
@@ -530,6 +528,7 @@ function D = oslview(D)
 	end
 
 	function btn_up(varargin)
+		% Disable drag movement when button is lifted
 		set(MainFig,'WindowButtonMotionFcn',[]);
 		if drag.state == 1
 			redraw
@@ -538,7 +537,9 @@ function D = oslview(D)
 	end
 
 	function mark_bad(varargin)
-		
+		% This callback adds event start/stop times and handles manipulation
+		% of BadEpochs
+
 		t_current = get(MainWindow,'CurrentPoint');
 		t_current = t_current(1,1);
 		t_window	= get(MainWindow,'xlim');
@@ -552,20 +553,16 @@ function D = oslview(D)
 				t_current = t_window(2);
 			end
 
-			if isempty(BadEpochs) || length(BadEpochs{end}) == 2 % Create new epoch
-				get_bad;
+			if isempty(BadEpochs) || length(BadEpochs{end}) == 2 % Start a new epoch
 				BadEpochs{end+1}(1) = t_current;
 				redraw
-			else % End previous epoch
+			else % End previous epoch, recompute stats
 				BadEpochs{end}(2) = t_current;
-				set_bad;
 				calcPlotStats
 				redraw
 			end		
 		elseif strcmp(get(ContextMenuM.MarkEvent,'label'),'Remove Event')	%	Remove existing event
-			get_bad;
 			BadEpochs(cellfun(@(x) ~sum(sign(x-t_current)),BadEpochs)) = [];
-			set_bad;
 			calcPlotStats
 			redraw
 		end
@@ -573,6 +570,8 @@ function D = oslview(D)
 
 
 	function bad_channel(varargin)
+		% Toggle the bad_channel state of the channel with the specified name
+
 		% Read the bad channel from the parent 
 		label = get(findobj(get(varargin{1},'Parent'),'Enable','off'),'Label'); % Get the parent ContextMenu, find the entry that's greyed out, and return its label
 
@@ -608,7 +607,6 @@ function D = oslview(D)
 		% Bad Sample indices
 		t_bad = get_bad_inds;
 
-		
 		Dsig_inds = 1:20:D.nsamples; Dsig_inds(t_bad(Dsig_inds)) = [];
 		Dsig = std(D(:,Dsig_inds,:),[],2);
 		offsets = 3*iqr(D(:,Dsig_inds,:),2);
@@ -618,11 +616,12 @@ function D = oslview(D)
 		offsets(isnan(offsets)) = nanmean(offsets);
 		offsets = cumsum(offsets);
 	
-	
-		stat_inds = 1:D.nsamples; stat_inds = stat_inds(1:20:end);
+		% For the PanWindow, display the variability across the good channels
+		stat_inds = 1:D.nsamples; 
+		stat_inds = stat_inds(1:20:end);
 		tmp = std(D(chan_inds(~ch_bad),stat_inds,1));
 		PanWindowData = interp1(linspace(0,1,length(tmp)),tmp,linspace(0,1,D.nsamples));
-		
+		PanWindowData(t_bad) = NaN;
 
 		stat_inds = 1:D.nsamples; stat_inds = stat_inds(~t_bad); stat_inds = stat_inds(1:20:end);
 		SideWindowData = stat(D(chan_inds,stat_inds,1),[],2);
@@ -652,22 +651,15 @@ function D = oslview(D)
 		redraw
 	end
 
-	function resize(varargin)
-		createlayout
-	end
-
-
 	function inc_scale(varargin)
 		G = G * Ginc;
 		redraw
 	end
 
-
 	function dec_scale(varargin)
 		G = G / Ginc;
 		redraw
 	end
-
 
 	function inc_xwidth(varargin)
 		xspan = get(MainWindow,'XLim');
@@ -675,13 +667,11 @@ function D = oslview(D)
 		redraw
 	end
 
-
 	function dec_xwidth(varargin)
 		xspan = get(MainWindow,'XLim');
 		set(MainWindow,'XLim',mean(xspan) + 0.25*[-1 1]*diff(xspan))
 		redraw
 	end
-
 
 	function mouse_mode(src,~)
 		if strcmp(get(uitools.rect,'state'),'on')
@@ -693,51 +683,8 @@ function D = oslview(D)
 		end
 	end
 
-	function get_bad
-		BadEpochs = {};
-		Events = D.events;
-		for ev = 1:numel(Events)
-			if isfield(Events,'type') && strcmp(Events(ev).type,'artefact_OSL')
-				BadEpochs{end+1}(1) = Events(ev).time;
-				BadEpochs{end}(2) = Events(ev).time + Events(ev).duration;
-			end
-		end
-	end
-
-	function set_bad
-		% Save bad epochs using method meeg/events
-		BadEvents = struct([]);
-		for ev = 1:numel(BadEpochs)
-			if numel(BadEpochs{ev} == 2)
-			BadEvents(ev).type			= 'artefact_OSL';
-			BadEvents(ev).value		= 'all';
-			BadEvents(ev).time			=	BadEpochs{ev}(1);
-			BadEvents(ev).duration = diff(BadEpochs{ev});
-			BadEvents(ev).offset = 0;
-			end
-		end
-		
-		% Load events
-		Events = D.events;
-			
-		% Remove previous bad epoch events
-		if isfield(Events,'type')
-			Events(strcmp({Events.type},'artefact_OSL')) = [];
-		end
-		
-		% Concatenate new and old events
-		if size(Events,1) < size(Events,2)
-			BadEvents = BadEvents(:);
-		end
-		if ~isempty(BadEvents)
-			Events = [Events(:); BadEvents(:)];
-		end
-		
-		% Save new events with previous
-		D = events(D,1,Events);
-	end
-
 	function ch_bad = get_bad_channels
+		% Get bad channels, return them in the currently displayed sort order
 		if ~isempty(D.badchannels)
 			ch_bad = ismember(chan_labels(chan_inds),D.chanlabels(D.badchannels));
 		else
@@ -746,6 +693,8 @@ function D = oslview(D)
 	end
 
 	function t_bad = get_bad_inds
+		% Return bad time based solely on the BadEpochs variable
+		% A kind of stripped-down meeg.badsamples()
 		t_bad = false(1,Nsamples);
 		for b = 1:numel(BadEpochs)
 			if numel(BadEpochs{b}) == 2
@@ -759,6 +708,52 @@ function D = oslview(D)
 	end
 
 end % OSLview
+
+function BadEpochs = read_bad_events(D)
+	% Set BadEpochs by reading artefact_OSL artefacts from the D object
+	% Run once at initialization
+	BadEpochs = {};
+	Events = D.events;
+	for ev = 1:numel(Events)
+		if isfield(Events,'type') && strcmp(Events(ev).type,'artefact_OSL')
+			BadEpochs{end+1}(1) = Events(ev).time;
+			BadEpochs{end}(2) = Events(ev).time + Events(ev).duration;
+		end
+	end
+end
+
+function D = set_bad_events(D,BadEpochs)
+	% Save bad epochs using method meeg/events
+	BadEvents = struct([]);
+	for ev = 1:numel(BadEpochs)
+		if numel(BadEpochs{ev} == 2)
+			BadEvents(ev).type	= 'artefact_OSL';
+			BadEvents(ev).value	= 'all';
+			BadEvents(ev).time	= BadEpochs{ev}(1);
+			BadEvents(ev).duration = diff(BadEpochs{ev}) + 2/D.fsample; % Need to account for SPM12's weird rounding here
+			BadEvents(ev).offset = 0;
+		end
+	end
+	
+	% Load events
+	Events = D.events;
+		
+	% Remove previous bad epoch events
+	if isfield(Events,'type')
+		Events(strcmp({Events.type},'artefact_OSL')) = [];
+	end
+	
+	% Concatenate new and old events
+	if size(Events,1) < size(Events,2)
+		BadEvents = BadEvents(:);
+	end
+	if ~isempty(BadEvents)
+		Events = [Events(:); BadEvents(:)];
+	end
+	
+	% Save new events with previous
+	D = events(D,1,Events);
+end
 
 function flag = is_multiple_call()
 % From File Exchange, Yair Altman
