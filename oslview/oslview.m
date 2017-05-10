@@ -15,6 +15,10 @@ function D = oslview(D)
 	% - Have a reset view button or right click option always available.
 	% - Tighter control over SideWindow bars
 
+	if nargout == 0
+		fprintf(2,'Warning - oslview returns an MEEG object but it is not being assigned to a variable\n');
+	end
+
 	% Get directory of the viewer
 	viewer_dir = strrep(which('oslview'),'oslview.m','');
 
@@ -52,7 +56,6 @@ function D = oslview(D)
 						'WindowButtonUpFcn',@btn_up	,...
 						'KeyPressFcn',@key_press,...
 						'ResizeFcn',@resize	,...
-						'CloseRequestFcn',@close_fig,...
                         'Units','pixels',...
 						'Visible','off');
 			
@@ -73,8 +76,6 @@ function D = oslview(D)
 	uitools.rect				= uitoggletool(uitools.toolbar,	'ClickedCallback',@mouse_mode,			'CData',icons.rect,						'TooltipString','Zoom to channels');
 	uitools.zoomin			= uipushtool(uitools.toolbar,		'ClickedCallback',@inc_scale,				'CData',icons.zoomin,					'TooltipString','Increase scale');
 	uitools.zoomout		= uipushtool(uitools.toolbar,		'ClickedCallback',@dec_scale,				'CData',icons.zoomout,				'TooltipString','Decrease scale');
-	%uitools.switchchan = uipushtool(uitools.toolbar,		'ClickedCallback',@switch_chantype, 'CData',icons.plan,						'TooltipString','Switch channel type');
-	uitools.custom			= uipushtool(uitools.toolbar,		'ClickedCallback',@CustomFunction,	'CData',icons.customfunction, 'TooltipString','Apply custom function');
 
 	% Create menu for channel selection
 	uitools.menu_channels = uimenu('label','Channels');
@@ -138,9 +139,6 @@ function D = oslview(D)
 	end
 	channel_setup; % will also call redraw & redraw_Sidewindow
 
-	% Disable save (and channel switching if CTF)
-	set(uitools.save,'Enable','off');
-
 	set(MainFig,'visible','on');
 
 	drawnow
@@ -152,7 +150,7 @@ function D = oslview(D)
 	%drag_listener1 = addlistener(MainWindow,'XLim','PostSet',@redraw);
 	set(PanWindow,'ButtonDownFcn',@pan_jump)
 
-	uiwait()
+	uiwait(MainFig)
 
 	function createlayout(varargin)
 		% Perform one-off creation of axes objects etc.
@@ -198,7 +196,8 @@ function D = oslview(D)
 	end
 
 	function pan_jump(ax,hit)
-		xspan = get(MainWindow,'XLim')
+		% Reposition the window by clicking on bottom plot
+		xspan = get(MainWindow,'XLim');
 		set(MainWindow,'XLim',hit.IntersectionPoint(1)+[-0.5 0.5]*diff(xspan));
 		redraw
 	end
@@ -224,6 +223,8 @@ function D = oslview(D)
 	function redraw
 		% Update all plots
 
+		ContextMenuOff() % If redrawing, then we need to get rid of the context menu temporary lines
+		
 		xspan = validate_xspan(get(MainWindow,'XLim'));
 		set(MainWindow,'XLim',xspan);
 
@@ -244,8 +245,6 @@ function D = oslview(D)
 			set(chansig(ch),'XData',chan_time,'YData',chan_data(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
 		end
 
-
-		% set(MainWindow,'xlim',[t(xs(1)) t(xs(end))])
 		set(MainWindow,'ylim',ylim_mainwindow)
 		set(MainWindow,'ytick',[],'yticklabel',[])
 
@@ -299,7 +298,9 @@ function D = oslview(D)
 		end
 
 		%% BAD EVENTS
-		yl = get_ylims;
+		yls= [get(MainWindow,'YLim') get(PanWindow,'YLim')];
+		yl = [min(yls) max(yls)];
+
 		green_x = NaN;
 		green_y = NaN;
 		red_x = NaN;
@@ -311,10 +312,10 @@ function D = oslview(D)
 			green_x = [green_x BadEpochs{j}(1) BadEpochs{j}(1) NaN];
 			green_y = [green_y yl NaN];
 			if numel(BadEpochs{j}) == 2
-			red_x = [red_x BadEpochs{j}(2) BadEpochs{j}(2) NaN];
-			red_y = [red_y yl NaN];
-			patch_x(:,end+1) = [BadEpochs{j}(1);BadEpochs{j}(2);BadEpochs{j}(2);BadEpochs{j}(1)];
-			patch_y(:,end+1) = [yl(1);yl(1);yl(2);yl(2)];
+				red_x = [red_x BadEpochs{j}(2) BadEpochs{j}(2) NaN];
+				red_y = [red_y yl NaN];
+				patch_x(:,end+1) = [BadEpochs{j}(1);BadEpochs{j}(2);BadEpochs{j}(2);BadEpochs{j}(1)];
+				patch_y(:,end+1) = [yl(1);yl(1);yl(2);yl(2)];
 			end
 		end
 
@@ -332,10 +333,8 @@ function D = oslview(D)
 	end
 
 	function switch_chantype(src,~)
-		
 		channel_type = get(src,'label');
 		channel_setup;
-		
 	end
 
 	function channel_setup
@@ -452,7 +451,6 @@ function D = oslview(D)
 		if ishandle(selection.line)
 			delete(selection.line);
 		end
-		set(MainWindow,'tag','');
 	end
 
 	function cb_ContextMenuS(src,~)
@@ -495,7 +493,6 @@ function D = oslview(D)
 		drag.initial_xlim = get(MainWindow,'XLim');
 		drag.state = 2; % 0 - no drag, 1 - drag in progress, 2 - drag armed
 
-		set(MainWindow,'tag','');
 		ContextMenuOff % deselect highlighted channel
 		set(MainFig,'WindowButtonMotionFcn',@btn_move)
 
@@ -542,7 +539,6 @@ function D = oslview(D)
 
 	function mark_bad(varargin)
 		
-		set(uitools.save,'enable','on');
 		t_current = get(MainWindow,'CurrentPoint');
 		t_current = t_current(1,1);
 		t_window	= get(MainWindow,'xlim');
@@ -580,7 +576,6 @@ function D = oslview(D)
 		% Read the bad channel from the parent 
 		label = get(findobj(get(varargin{1},'Parent'),'Enable','off'),'Label'); % Get the parent ContextMenu, find the entry that's greyed out, and return its label
 
-		set(uitools.save,'enable','on');
 		bad_chan = find(strcmp(D.chanlabels,label));
 
 		if isempty(find(D.badchannels==bad_chan,1))
