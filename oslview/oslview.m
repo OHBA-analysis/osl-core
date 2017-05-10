@@ -26,12 +26,13 @@ function D = oslview(D)
 	chan_inds = []; % Array specifying order in which to display the components
 	chan_labels = [];
 
+	selection = struct('line',[],'bar',[]); % Temporary lines for context menu
+
 	Nchannels = [];
 	Dsig = [];
 	SideWindowData  = [];
 	PanWindowData = [];
 	offsets = [];
-	tmp_line = []; % Handle to black line displayed when context menu is shown
 	yzoom = [0 1];
 	BadEpochs = {};
 	chanbar = []; % Handles to bars in sidebar
@@ -101,8 +102,8 @@ function D = oslview(D)
 
 	% Create Context Menu - Side Window patch
 	ContextMenuSP.Menu = uicontextmenu('callback',@ContextMenuOnSP);
-	ContextMenuSP.ChannelLabel = uimenu(ContextMenuM.Menu, 'label','No Channel Selected','Enable','off');
-	ContextMenuSP.SetBad				= uimenu(ContextMenuM.Menu, 'label','Set Channel as Bad', 'callback',@bad_channel);
+	ContextMenuSP.ChannelLabel = uimenu(ContextMenuSP.Menu, 'label','No Channel Selected','Enable','off');
+	ContextMenuSP.SetBad = uimenu(ContextMenuSP.Menu, 'label','Set Channel as Bad', 'callback',@bad_channel);
 
 	% Setup figure layout and plot data
 	createlayout
@@ -221,8 +222,6 @@ function D = oslview(D)
 		box(PanWindow,'on')
 		box(SideWindow,'on')
 
-		linkaxes([MainWindow,SideWindow],'y')
-
 	end
 
 	function pan_jump(ax,hit)
@@ -309,11 +308,14 @@ function D = oslview(D)
 		col = col(1:7,:);
 		col = repmat(col,ceil(Nchannels/7),1);
 
+		% Because offsets are set to cumsum when they are computed, they are guaranteed to be sorted
+		% So they can be replaced here with just simple offsets
+		sidebar_offsets = (1:length(offsets))-0.5;
 		for ch = 1:Nchannels
-			bar_patch(chanbar(ch),offsets(ch),SideWindowData_plot(ch),range(offsets)/Nchannels,col(ch,:),chan_labels{chan_inds(ch)});
+			bar_patch(chanbar(ch),sidebar_offsets(ch),SideWindowData_plot(ch),1,col(ch,:),chan_labels{chan_inds(ch)});
 		end
 		
-		set(SideWindow,'ylim',get(MainWindow,'ylim'))
+		set(SideWindow,'ylim',[0 length(offsets)])
 		set(SideWindow,'xlim',[min(SideWindowData_plot) max(SideWindowData_plot)])
 		set(SideWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[]);
 
@@ -449,49 +451,34 @@ function D = oslview(D)
 			set(ContextMenuM.MarkEvent,'label','Mark Event');
 		end
 
-		if ishandle(tmp_line)
-			delete(tmp_line);
+		if ishandle(selection.line)
+			delete(selection.line);
 		end
-		tmp_line = plot(MainWindow,chan_time,chan_data(ch,:),'Color','k','Linewidth',2);
+		selection.line = plot(MainWindow,chan_time,chan_data(ch,:),'Color','k','Linewidth',2);
 	end
 
 
 	function ContextMenuOnSP(varargin)
-		
-		cp = get(SideWindow,'CurrentPoint');
-
-		keyboard
-		% Find the channel with the closest Y value at that time 
-		[~,ch] = min(abs(cp(1,2)-chan_data(:,t_idx)));
+		ch = find(chanbar == gco); % This context menu is activated by clicking on a bar, so the patch should now be the current object
 	
-		set(ContextMenuM.ChannelLabel,'label',chan_labels{chan_inds(ch)});
+		set(ContextMenuSP.ChannelLabel,'label',chan_labels{chan_inds(ch)});
 		
 		% Change context menu depending on whether channel is marked as bad
-		if isempty(find(D.badchannels==find(strcmp(D.chanlabels,get(ContextMenuM.ChannelLabel,'label'))),1))
-			set(ContextMenuM.SetBad,'label','Set Channel as Bad');
+		if isempty(find(D.badchannels==find(strcmp(D.chanlabels,get(ContextMenuSP.ChannelLabel,'label'))),1))
+			set(ContextMenuSP.SetBad,'label','Set Channel as Bad');
 		else
-			set(ContextMenuM.SetBad,'label','Set Channel as Good');
-		end
-		
-		% Change context menu depending on whether time point with bad epoch
-		if any(cellfun(@(x) ~sum(sign(x-cp(1))),BadEpochs))
-			set(ContextMenuM.MarkEvent,'label','Remove Event');
-		else
-			set(ContextMenuM.MarkEvent,'label','Mark Event');
+			set(ContextMenuSP.SetBad,'label','Set Channel as Good');
 		end
 
-		if ishandle(tmp_line)
-			delete(tmp_line);
+		if ishandle(selection.line)
+			delete(selection.line);
 		end
-		tmp_line = plot(MainWindow,chan_time,chan_data(ch,:),'Color','k','Linewidth',2);
+		selection.line = plot(MainWindow,chan_time,chan_data(ch,:),'Color','k','Linewidth',2);
 	end
 
-
-
-
 	function ContextMenuOff(varargin)
-		if ishandle(tmp_line)
-			delete(tmp_line);
+		if ishandle(selection.line)
+			delete(selection.line);
 		end
 		set(MainWindow,'tag','');
 	end
@@ -618,8 +605,11 @@ function D = oslview(D)
 
 
 	function bad_channel(varargin)
+		% Read the bad channel from the parent 
+		label = get(findobj(get(varargin{1},'Parent'),'Enable','off'),'Label'); % Get the parent ContextMenu, find the entry that's greyed out, and return its label
+
 		set(uitools.save,'enable','on');
-		bad_chan = find(strcmp(D.chanlabels,get(ContextMenuM.ChannelLabel,'label')));
+		bad_chan = find(strcmp(D.chanlabels,label));
 
 		if isempty(find(D.badchannels==bad_chan,1))
 			D = badchannels(D,bad_chan,1);
@@ -628,8 +618,8 @@ function D = oslview(D)
 		end
 			
 		calcPlotStats()
-		if ~isempty(tmp_line)
-			delete(tmp_line);
+		if ~isempty(selection.line)
+			delete(selection.line);
 		end
 		redraw
 	end
