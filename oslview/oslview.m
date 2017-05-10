@@ -21,20 +21,19 @@ function D = oslview(D)
 
 	% Initialise shared variables
 	drag = struct('state',0); % Struct to track the state of the main window drag
-	chantime = []; % Array of time points for plots on main window
-	chandata = []; % Matrix of value points for plots on main window
+	chan_time = []; % Array of time points for plots on main window
+	chan_data = []; % Matrix of value points for plots on main window
+	chan_inds = []; % Array specifying order in which to display the components
+	chan_labels = [];
 
-	Nchannels			= [];
-	Dsig						= [];
-	chan_inds			= [];
-	chan_labels		= [];
-	chancols				= [];
-	SideWindowData = [];
-	PanWindowData	= [];
-	offsets				= [];
-	tmp_line				= [];
-	yzoom					= [0 1];
-	BadEpochs			= {};
+	Nchannels = [];
+	Dsig = [];
+	SideWindowData  = [];
+	PanWindowData = [];
+	offsets = [];
+	tmp_line = []; % Handle to black line displayed when context menu is shown
+	yzoom = [0 1];
+	BadEpochs = {};
 	chanbar = []; % Handles to bars in sidebar
 	chansig = []; % Handle to line plots in main window
 	badevents_line = [];
@@ -93,18 +92,20 @@ function D = oslview(D)
 	ContextMenuM.SetBad				= uimenu(ContextMenuM.Menu, 'label','Set Channel as Bad', 'callback',@bad_channel);
 	set(MainWindow,'uicontextmenu',ContextMenuM.Menu);
 
-	% Create Context Menu - Side Window
+	% Create Context Menu - Side Window axis
 	ContextMenuS.Menu			= uicontextmenu;
-	ContextMenuS.Reorder	= uimenu(ContextMenuS.Menu, 'label','Reorder channels by variance','callback',@cb_ContextMenuS);
+	ContextMenuS.Reorder	= uimenu(ContextMenuS.Menu, 'label','Sort by metric','callback',@cb_ContextMenuS);
 	ContextMenuS.Variance = uimenu(ContextMenuS.Menu, 'label','Variance','Checked','on','callback',@cb_ContextMenuS);
 	ContextMenuS.Kurtosis = uimenu(ContextMenuS.Menu, 'label','Kurtosis','Checked','off','callback',@cb_ContextMenuS);
 	set(SideWindow,'uicontextmenu',ContextMenuS.Menu);
 
+	% Create Context Menu - Side Window patch
+	ContextMenuSP.Menu = uicontextmenu('callback',@ContextMenuOnSP);
+	ContextMenuSP.ChannelLabel = uimenu(ContextMenuM.Menu, 'label','No Channel Selected','Enable','off');
+	ContextMenuSP.SetBad				= uimenu(ContextMenuM.Menu, 'label','Set Channel as Bad', 'callback',@bad_channel);
+
 	% Setup figure layout and plot data
 	createlayout
-
-	pointer_wait;
-
 
 	% Get sample times
 	Nsamples = D.nsamples;
@@ -124,7 +125,7 @@ function D = oslview(D)
 	hz = zoom(MainFig);
 
 	% Set channel type
-	channel_order = 'normal';
+	channel_order = 'normal'; % Default is to use normal ordering (by index)
 	if any(strcmp(D.chantype,'MEGMAG')) && any(strcmp(D.chantype,'MEGPLANAR')) % ELEKTA
 		channel_type = 'MEGPLANAR';
 	elseif any(strcmp(D.chantype,'MEGMAG')) % 4D
@@ -149,7 +150,6 @@ function D = oslview(D)
 	jFig.setMaximized(true);
 	warning on MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
 
-	pointer_wait;
 	%drag_listener1 = addlistener(MainWindow,'XLim','PostSet',@redraw);
 	set(PanWindow,'ButtonDownFcn',@pan_jump)
 
@@ -265,11 +265,11 @@ function D = oslview(D)
 		
 		% Plot channel signals within current range
 
-		chantime = t(xs);
-		chandata = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
+		chan_time = t(xs);
+		chan_data = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
 
 		for ch = 1:length(chansig)
-			set(chansig(ch),'XData',chantime,'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
+			set(chansig(ch),'XData',chan_time,'YData',chan_data(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
 		end
 
 
@@ -317,6 +317,12 @@ function D = oslview(D)
 		set(SideWindow,'xlim',[min(SideWindowData_plot) max(SideWindowData_plot)])
 		set(SideWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[]);
 
+		if strcmp(get(ContextMenuS.Variance,'Checked'),'on')
+			xlabel(SideWindow,'Variance');
+		else
+			xlabel(SideWindow,'Kurtosis');
+		end
+
 		%% BAD EVENTS
 		yl = get_ylims;
 		green_x = NaN;
@@ -362,40 +368,37 @@ function D = oslview(D)
 		% Occurs when the channel type is changed
 		% redraw() edits the properties of the handles created here
 
-		pointer_wait;
-		% Standard deviation of data
-		t_bad = get_bad_inds;
-		Dsig_inds = 1:10:D.nsamples; Dsig_inds(t_bad(Dsig_inds)) = [];
-		Dsig = std(D(:,Dsig_inds,:),[],2);
-
+		% Update the channel statistics
 		chan_inds = find(strcmp(D.chantype, channel_type));
-		
-		switch channel_order
-			case 'normal'
+
+		calcPlotStats
+
+		if strcmp(get(ContextMenuS.Reorder,'Checked'),'on')
+			[~,idx] = sort(SideWindowData,'ascend');
+			chan_inds = chan_inds(idx);
+		else
 			chan_inds = sort(chan_inds,'ascend');
-			case 'variance'
-			[~,ix] = sort(Dsig(chan_inds),'ascend');
-			chan_inds = chan_inds(ix);
 		end
-		
+
 		Nchannels = length(chan_inds);
 
 		% Set channel labels & plot colours
 		chan_labels = D.chanlabels;
-		chancols = colormap(lines); chancols = chancols(1:7,:);
+		chancols = colormap(lines); 
+		chancols = chancols(1:7,:);
 		chancols = repmat(chancols,ceil(Nchannels/7),1);
 		chancols = chancols(1:Nchannels,:);
 		
 		% Calculate side and pan window statistics
 		SideWindowData = [];
 		PanWindowData = [];
-		calcPlotStats('both')
+		calcPlotStats
 		
 		% Make all of the bars
 		xspan = get(MainWindow,'XLim');
 		cla(MainWindow);
 		hold(MainWindow,'on')
-		chansig = plot(MainWindow,xspan,ones(2,Nchannels),'ButtonDownFcn',@line_click);
+		chansig = plot(MainWindow,xspan,ones(2,Nchannels));
 		badevents_line(1) = plot(MainWindow,[NaN NaN],[NaN NaN],'g','LineWidth',2,'LineStyle','--','HitTest','off','YLimInclude','off');
 		badevents_line(2) = plot(MainWindow,[NaN NaN],[NaN NaN],'r','LineWidth',2,'LineStyle','--','HitTest','off','YLimInclude','off');
 		badevents_patch(1) = patch(MainWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
@@ -403,7 +406,7 @@ function D = oslview(D)
 		cla(SideWindow);
 		hold(SideWindow,'on')
 		for ch = 1:Nchannels
-				chanbar(ch) = patch(SideWindow,zeros(1,4),zeros(1,4),'k','ButtonDownFcn',@line_click,'uicontextmenu',ContextMenuM.Menu);
+			chanbar(ch) = patch(SideWindow,zeros(1,4),zeros(1,4),'k','uicontextmenu',ContextMenuSP.Menu);
 		end
 
 		cla(PanWindow);
@@ -416,24 +419,20 @@ function D = oslview(D)
 		badevents_patch(2) = patch(PanWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
 
 		redraw
-		pointer_wait
 
 	end
 
 
 	function ContextMenuOn(src,~)
+		
 		cp = get(MainWindow,'CurrentPoint');
 		
-		tp = cp(1,1); % time point
-		
-		% get channel index from clicked line
-		ch = find(strcmp(get(MainWindow,'tag'),chan_labels(chan_inds)));
-		
-		if isempty(ch) % get closest channel to click location
-			ch = cp(1,2);
-			[~,ch] = min(abs(offsets-ch)); % channel
-		end
-		
+		% Find the time index of clicked time
+		t_idx = find(chan_time<=cp(1),1,'last');
+
+		% Find the channel with the closest value at that time 
+		[~,ch] = min(abs(cp(1,2)-chan_data(:,t_idx)));
+	
 		set(ContextMenuM.ChannelLabel,'label',chan_labels{chan_inds(ch)});
 		
 		% Change context menu depending on whether channel is marked as bad
@@ -444,62 +443,79 @@ function D = oslview(D)
 		end
 		
 		% Change context menu depending on whether time point with bad epoch
-		if any(cellfun(@(x) ~sum(sign(x-tp)),BadEpochs))
+		if any(cellfun(@(x) ~sum(sign(x-cp(1))),BadEpochs))
 			set(ContextMenuM.MarkEvent,'label','Remove Event');
 		else
 			set(ContextMenuM.MarkEvent,'label','Mark Event');
 		end
 
-		if isempty(tmp_line)
-			xl = get(MainWindow,'XLim');
-			xs = find(D.time >= xl(1) & D.time <= xl(2));
-			tmp_line = plot(MainWindow,t(xs),G*ones(size(Nchannels)).*D(chan_inds(ch),xs) + repmat(offsets(ch),size(xs)),'color','k','linewidth',2);
-		else
+		if ishandle(tmp_line)
 			delete(tmp_line);
-			tmp_line = [];
 		end
+		tmp_line = plot(MainWindow,chan_time,chan_data(ch,:),'Color','k','Linewidth',2);
 	end
 
 
+	function ContextMenuOnSP(varargin)
+		
+		cp = get(SideWindow,'CurrentPoint');
+
+		keyboard
+		% Find the channel with the closest Y value at that time 
+		[~,ch] = min(abs(cp(1,2)-chan_data(:,t_idx)));
+	
+		set(ContextMenuM.ChannelLabel,'label',chan_labels{chan_inds(ch)});
+		
+		% Change context menu depending on whether channel is marked as bad
+		if isempty(find(D.badchannels==find(strcmp(D.chanlabels,get(ContextMenuM.ChannelLabel,'label'))),1))
+			set(ContextMenuM.SetBad,'label','Set Channel as Bad');
+		else
+			set(ContextMenuM.SetBad,'label','Set Channel as Good');
+		end
+		
+		% Change context menu depending on whether time point with bad epoch
+		if any(cellfun(@(x) ~sum(sign(x-cp(1))),BadEpochs))
+			set(ContextMenuM.MarkEvent,'label','Remove Event');
+		else
+			set(ContextMenuM.MarkEvent,'label','Mark Event');
+		end
+
+		if ishandle(tmp_line)
+			delete(tmp_line);
+		end
+		tmp_line = plot(MainWindow,chan_time,chan_data(ch,:),'Color','k','Linewidth',2);
+	end
+
+
+
+
 	function ContextMenuOff(varargin)
-		if ~isempty(tmp_line)
-			try
-				delete(tmp_line)
-			end
-			tmp_line = [];
+		if ishandle(tmp_line)
+			delete(tmp_line);
 		end
 		set(MainWindow,'tag','');
 	end
 
 	function cb_ContextMenuS(src,~)
 
-		switch get(src,'label')
-			case get(ContextMenuS.Reorder,'label')
-				if strcmp(get(ContextMenuS.Reorder,'label'),'Reorder channels by variance');
-				channel_order = 'variance';
-				set(ContextMenuS.Reorder,'label','Reset channel ordering');
+		switch src
+			case ContextMenuS.Reorder
+				if strcmp(get(ContextMenuS.Reorder,'Checked'),'off')
+					set(ContextMenuS.Reorder,'Checked','on');
 				else
-				channel_order = 'normal';
-				set(ContextMenuS.Reorder,'label','Reorder channels by variance');
+					set(ContextMenuS.Reorder,'Checked','off');
 				end
-				channel_setup;
-			case get(ContextMenuS.Variance,'label')
+
+			case ContextMenuS.Variance
 				set(ContextMenuS.Variance,'Checked','on');
 				set(ContextMenuS.Kurtosis,'Checked','off');
-			case get(ContextMenuS.Kurtosis,'label')
+			case ContextMenuS.Kurtosis
 				set(ContextMenuS.Kurtosis,'Checked','on');
 				set(ContextMenuS.Variance,'Checked','off');
 		end
 
-			pointer_wait;
-			calcPlotStats('be');
-			redraw
-			pointer_wait;
-	end
-
-
-	function line_click(src,~)
-		set(MainWindow,'tag',get(src,'tag'));
+		channel_setup % Re-run channel setup because chan_inds might have changed
+		
 	end
 
 	function btn_down(varargin)
@@ -508,7 +524,7 @@ function D = oslview(D)
 		% Did we click on the main figure?
 		loc = get(MainFig,'CurrentPoint');
 		pos = get(MainWindow,'Position');
-		inside = loc(1) >= pos(1) && loc(1) <= pos(1)+pos(3) && loc(2) >= pos(2) && loc(2) <= pos(2)+pos(4)
+		inside = loc(1) >= pos(1) && loc(1) <= pos(1)+pos(3) && loc(2) >= pos(2) && loc(2) <= pos(2)+pos(4);
 
 		if ~inside
 			drag.state = 0;
@@ -542,9 +558,9 @@ function D = oslview(D)
 			drag.state = 1;
 			xs = unique(round(D.fsample*linspace(D.time(1),D.time(end),2000)));
 			xs = xs(2:end);
-			chandata = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
+			chan_data = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
 			for ch = 1:length(chansig)
-				set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
+				set(chansig(ch),'XData',t(xs),'YData',chan_data(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
 			end
 		end
 
@@ -588,14 +604,14 @@ function D = oslview(D)
 			else % End previous epoch
 				BadEpochs{end}(2) = t_current;
 				set_bad;
-				calcPlotStats('both')
+				calcPlotStats
 				redraw
 			end		
 		elseif strcmp(get(ContextMenuM.MarkEvent,'label'),'Remove Event')	%	Remove existing event
 			get_bad;
 			BadEpochs(cellfun(@(x) ~sum(sign(x-t_current)),BadEpochs)) = [];
 			set_bad;
-			calcPlotStats('both')
+			calcPlotStats
 			redraw
 		end
 	end
@@ -611,7 +627,7 @@ function D = oslview(D)
 			D = badchannels(D,bad_chan,0);
 		end
 			
-		calcPlotStats('bc')
+		calcPlotStats()
 		if ~isempty(tmp_line)
 			delete(tmp_line);
 		end
@@ -619,18 +635,15 @@ function D = oslview(D)
 	end
 
 
-	function calcPlotStats(drawmode)
+	function calcPlotStats()
 		
-		% Get statistic from side window context menu:
-		stat_checked = arrayfun(@(x) get(x,'checked'),get(ContextMenuS.Menu,'children'),'uniformoutput',0);
-		stat_labels	= arrayfun(@(x) get(x,'label'),get(ContextMenuS.Menu,'children'),'uniformoutput',0);
-		switch(char(stat_labels(strcmp(stat_checked,'on'))))
-			case 'Variance'
-				stat = @nanvar;
-			case 'Kurtosis'
-				stat = @kurtosis;
-		end
-		
+		% Get statistic from side window context menu
+		% Statistic is either variance or Kurtosis
+		if strcmp(get(ContextMenuS.Variance,'Checked'),'on')
+			stat = @nanvar;
+		else
+			stat = @kurtosis;
+		end		
 		
 		% Bad Channel indices
 		ch_bad = get_bad_channels;
@@ -638,29 +651,25 @@ function D = oslview(D)
 		% Bad Sample indices
 		t_bad = get_bad_inds;
 
-		if any(strcmp(drawmode,{'bc','both'}))
 		
-			Dsig_inds = 1:20:D.nsamples; Dsig_inds(t_bad(Dsig_inds)) = [];
-			Dsig = std(D(:,Dsig_inds,:),[],2);
-			offsets = 3*iqr(D(:,Dsig_inds,:),2);
-			offsets(offsets==0) = eps;
-			offsets(D.badchannels) = nan;
-			offsets = offsets(chan_inds);
-			offsets(isnan(offsets)) = nanmean(offsets);
-			offsets = cumsum(offsets);
+		Dsig_inds = 1:20:D.nsamples; Dsig_inds(t_bad(Dsig_inds)) = [];
+		Dsig = std(D(:,Dsig_inds,:),[],2);
+		offsets = 3*iqr(D(:,Dsig_inds,:),2);
+		offsets(offsets==0) = eps;
+		offsets(D.badchannels) = nan;
+		offsets = offsets(chan_inds);
+		offsets(isnan(offsets)) = nanmean(offsets);
+		offsets = cumsum(offsets);
+	
+	
+		stat_inds = 1:D.nsamples; stat_inds = stat_inds(1:20:end);
+		tmp = std(D(chan_inds(~ch_bad),stat_inds,1));
+		PanWindowData = interp1(linspace(0,1,length(tmp)),tmp,linspace(0,1,D.nsamples));
 		
-		
-			stat_inds = 1:D.nsamples; stat_inds = stat_inds(1:20:end);
-			tmp = std(D(chan_inds(~ch_bad),stat_inds,1));
-			PanWindowData = interp1(linspace(0,1,length(tmp)),tmp,linspace(0,1,D.nsamples));
-			
-		end
-			
-		if any(strcmp(drawmode,{'be','both'}))
-			stat_inds = 1:D.nsamples; stat_inds = stat_inds(~t_bad); stat_inds = stat_inds(1:20:end);
-			SideWindowData = stat(D(chan_inds,stat_inds,1),[],2);
-			SideWindowData = SideWindowData./max(SideWindowData(~ch_bad));
-		end
+
+		stat_inds = 1:D.nsamples; stat_inds = stat_inds(~t_bad); stat_inds = stat_inds(1:20:end);
+		SideWindowData = stat(D(chan_inds,stat_inds,1),[],2);
+		SideWindowData = SideWindowData./max(SideWindowData(~ch_bad));
 		
 	end
 
@@ -835,17 +844,6 @@ function D = oslview(D)
 		ylims = [min(offsets)-2*min(offsets) max(offsets)+2*min(offsets)];
 	end
 
-
-	function pointer_wait
-		if(strcmp(get(MainFig,'pointer'),'watch'))
-			set(MainFig,'pointer','arrow');
-		else
-			set(MainFig,'pointer','watch');
-		end
-		pause(0)
-	end
-
-
 	function CustomFunction(varargin)
 		
 		try
@@ -888,9 +886,7 @@ function D = oslview(D)
 				D = Dtmp;
 			end
 			
-			pointer_wait
 			channel_setup
-			pointer_wait
 		
 		end
 		
