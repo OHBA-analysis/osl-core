@@ -41,8 +41,9 @@ try
         D = spm_eeg_load(S.D);
     end;
     D.check;
-catch
-    error('SPM file specification not recognised or incorrect');
+catch ME
+    disp(ME.message);
+    error(['SPM file specification not recognised or incorrect']);
 end
 
 try
@@ -58,7 +59,8 @@ S.method            = ft_getopt(S,'method','PCA');
 
 try 
     maskfname=S.maskfname;
-catch
+catch ME
+    display(ME.message);
     maskfname=[OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz'];                
 end
 
