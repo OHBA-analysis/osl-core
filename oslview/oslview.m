@@ -20,8 +20,7 @@ function D = oslview(D)
 	viewer_dir = strrep(which('oslview'),'oslview.m','');
 
 	% Initialise shared variables
-	p1=[]; p2=[];
-	t1=[]; t2=[];
+	drag = struct('state',0);
 	Nchannels			= [];
 	Dsig						= [];
 	chan_inds			= [];
@@ -43,16 +42,17 @@ function D = oslview(D)
 
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Create UI %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	MainFig = figure('Name',									['OSLview - ' strtok(D.fname,'.')] ,...
-						'NumberTitle',						'off'			,...
-						'Menubar',								'none'		,...
-						'DockControls',					'off'			,...
-						'WindowButtonDownFcn',		@btn_down ,...
-						'WindowButtonUpFcn',			@btn_up		,...
-						'KeyPressFcn',						@key_press,...
-						'ResizeFcn',							@resize		,...
-						'CloseRequestFcn',				@close_fig,...
-						'Visible',								'off');
+	MainFig = figure('Name',['OSLview - ' strtok(D.fname,'.')],...
+						'NumberTitle','off',...
+						'Menubar','none',...
+						'DockControls','off',...
+						'WindowButtonDownFcn',@btn_down	,...
+						'WindowButtonUpFcn',@btn_up	,...
+						'KeyPressFcn',@key_press,...
+						'ResizeFcn',@resize	,...
+						'CloseRequestFcn',@close_fig,...
+                        'Units','pixels',...
+						'Visible','off');
 			
 	c = onCleanup(@() delete(MainFig));
 				
@@ -173,14 +173,7 @@ function D = oslview(D)
 		end
 	end
 
-	function plot_low_res(varargin)
-		xs = unique(round(D.fsample*linspace(D.time(1),D.time(end),2000)));
-		xs = xs(2:end);
-		chandata = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
-		for ch = 1:length(chansig)
-		set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
-		end
-	end
+
 
 	% drag_listener2 = addlistener(MainWindow,'XLim','PreSet',@validate_xlim);
 
@@ -235,23 +228,28 @@ function D = oslview(D)
 		redraw
 	end
 
-	function redraw(varargin)
-		% Update all plots
-		% pan_only = true means that the sidebar won't be updated
-		% if nargin == 2 then this was called via the figure pan object, so
-		% definitely only pan required
-		if nargin == 2 || nargin < 1 || isempty(pan_only)
-			pan_only = false;
+	function xspan = validate_xspan(xspan)
+		% If we want to set the axis limits, it needs to be clipped to the data
+		xwidth = xspan(2)-xspan(1);
+		if xwidth >= (D.time(end)-D.time(1))
+			xspan = [D.time(1) D.time(end)];
+			return
 		end
 		
-		% Turn pan mode off if we are redrawing the figure
-		% This happens as part of h_pan's post-action callback
-		h_pan.Enable = 'off';
+		if xspan(1) < D.time(1)
+			xspan = xspan - xspan(1) + D.time(1);
+		end
 
-		xspan = get(MainWindow,'XLim');
-		xwidth = xspan(2)-xspan(1);
-		xspan(1) = max(xspan(1),D.time(1));
-		xspan(2) = min(xspan(2),D.time(end));
+		if xspan(end) > D.time(end)
+			xspan = xspan - (xspan(end)-D.time(end));
+		end
+
+	end
+
+	function redraw
+		% Update all plots
+
+		xspan = validate_xspan(get(MainWindow,'XLim'));
 		set(MainWindow,'XLim',xspan);
 
 		% Based on the time window desired, calculate the indexes of the D object to sample
@@ -294,10 +292,6 @@ function D = oslview(D)
 		box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
 		box_y = [ylim(1) ylim(1) ylim(2) ylim(2)];
 		set(PanWindow_box,'XData',box_x,'YData',box_y);
-
-		if pan_only
-			return
-		end
 
 		%% SIDE WINDOW
 		
@@ -501,33 +495,70 @@ function D = oslview(D)
 
 
 	function line_click(src,~)
-			set(MainWindow,'tag',get(src,'tag'));
+		set(MainWindow,'tag',get(src,'tag'));
 	end
 
 	function btn_down(varargin)
-		
-		% yzoom = (get(MainWindow,'ylim') - min(get_ylims))./(diff(get_ylims));
+		% Arm the drag mode by clicking on main plot
+
+		% Did we click on the main figure?
+		loc = get(MainFig,'CurrentPoint');
+		pos = get(MainWindow,'Position');
+		inside = loc(1) >= pos(1) && loc(1) <= pos(1)+pos(3) && loc(2) >= pos(2) && loc(2) <= pos(2)+pos(4)
+
+		if ~inside
+			drag.state = 0;
+			return;
+		end
+
+		drag = struct;
+		drag.initial_point = get(MainWindow,'CurrentPoint');
+		drag.initial_xlim = get(MainWindow,'XLim');
+		drag.state = 2; % 0 - no drag, 1 - drag in progress, 2 - drag armed
 
 		set(MainWindow,'tag','');
 		ContextMenuOff % deselect highlighted channel
-		h_pan.Enable = 'on';
+		set(MainFig,'WindowButtonMotionFcn',@btn_move)
 
-		% if strcmp(get(MainFig,'selectionType'),'normal') % if left click
-		% 	%set(MainFig,'WindowButtonMotionFcn',@btn_move);
-		% 	switch(gca)
-		% 	case MainWindow % Going to drag
-		% 		ClickedWindow = MainWindow;
-		% 	case PanWindow % Going to update to clicked point
-		% 		ClickedWindow = PanWindow;
-		% 	end
-		% 	t1 = get(ClickedWindow,'CurrentPoint');
-		% end
-		
+		% yzoom = (get(MainWindow,'ylim') - min(get_ylims))./(diff(get_ylims));
+	end
+
+	function btn_move(varargin)
+		if is_multiple_call
+			return
+		end
+
+		p = get(MainWindow,'CurrentPoint');
+		current_center = mean(get(MainWindow,'XLim')); % Current x limit
+		initial_center = mean(drag.initial_xlim); % 
+		displacement = p(1)-drag.initial_point(1)-(current_center-initial_center);
+
+		% If drag is armed and needs to be initiated, set drag mode and switch to low res plot
+		if drag.state == 2 && abs(displacement/diff(drag.initial_xlim))>0.025 % Start drag after moving just a little
+			drag.state = 1;
+			xs = unique(round(D.fsample*linspace(D.time(1),D.time(end),2000)));
+			xs = xs(2:end);
+			chandata = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
+			for ch = 1:length(chansig)
+				set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
+			end
+		end
+
+		if drag.state == 1
+			new_center = initial_center-displacement;
+			xspan = new_center + 0.5*[-1 1]*diff(drag.initial_xlim); 
+			xspan = validate_xspan(xspan);
+			set(MainWindow,'XLim',xspan);
+			set(PanWindow_box,'XData',[xspan(1) xspan(2) xspan(2) xspan(1)]);
+		end
 	end
 
 	function btn_up(varargin)
-		disp('Setting off')
-		h_pan.Enable = 'off';
+		set(MainFig,'WindowButtonMotionFcn',[]);
+		if drag.state == 1
+			redraw
+		end
+		drag.state = 0;
 	end
 
 	function mark_bad(varargin)
