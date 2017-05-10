@@ -35,10 +35,9 @@ else
 end
 
 chindex = 1:D.nchannels;
-ch = chindex(strcmp(D.chantype,chantype));
+ch = chindex(find(strcmp(D.chantype,chantype)));
 %ch=ch(chaninds);
-
-ch=chaninds(ch);
+%ch=chaninds(ch);
 
 S(:)=0;
 for i = 1:length(ch)
