@@ -20,7 +20,10 @@ function D = oslview(D)
 	viewer_dir = strrep(which('oslview'),'oslview.m','');
 
 	% Initialise shared variables
-	drag = struct('state',0);
+	drag = struct('state',0); % Struct to track the state of the main window drag
+	chantime = []; % Array of time points for plots on main window
+	chandata = []; % Matrix of value points for plots on main window
+
 	Nchannels			= [];
 	Dsig						= [];
 	chan_inds			= [];
@@ -262,10 +265,11 @@ function D = oslview(D)
 		
 		% Plot channel signals within current range
 
+		chantime = t(xs);
 		chandata = G*ones(size(Nchannels)).*D(chan_inds,xs) + repmat(offsets(:),size(xs));
 
 		for ch = 1:length(chansig)
-			set(chansig(ch),'XData',t(xs),'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
+			set(chansig(ch),'XData',chantime,'YData',chandata(ch,:),'LineWidth',0.5,'LineStyle','-','tag',chan_labels{chan_inds(ch)});
 		end
 
 
