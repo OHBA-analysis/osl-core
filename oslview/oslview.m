@@ -763,55 +763,6 @@ function D = oslview(D)
 		ylims = [min(offsets)-2*min(offsets) max(offsets)+2*min(offsets)];
 	end
 
-	function CustomFunction(varargin)
-		
-		try
-			
-			if ~strcmp(datafile,fullfile(D.path,D.fname))
-				choice = questdlg('Use current or original data?','OSLview','Current','Original','Cancel','Original');
-				switch choice
-					case 'Original'
-						% Get bad channel and epoch info of current data set:
-						get_bad
-						ch_bad = D.badchannels;
-						D = spm_eeg_load(datafile);
-				
-						set_bad
-						D = badchannels(D,D.indchantype('MEEG'),0);
-						if ~isempty(ch_bad)
-							D = badchannels(D,ch_bad,1);
-						end
-						save(D);
-					case 'Cancel'
-						return
-				end
-			end
-			
-			CurrentPath = fileparts(mfilename('fullpath'));
-			[FuncName,FuncPath] = uigetfile([CurrentPath,'/*.m']);
-			cd(FuncPath)
-			
-			if ~strcmp(fullfile(D.path,D.fname),[CurrentPath,'/Dtmp.mat'])
-				Dtmp = clone(D,[CurrentPath,'/Dtmp']);
-				copyfile(D.fnamedat,Dtmp.fnamedat, 'f');
-			else
-				Dtmp = D;
-			end
-			
-			Dtmp = feval(str2func(strtok(FuncName,'.')),Dtmp);
-			
-			cd(CurrentPath)
-			if isa(D,'meeg')
-				D = Dtmp;
-			end
-			
-			channel_setup
-		
-		end
-		
-		
-	end
-
 end % OSLview
 
 function flag = is_multiple_call()
