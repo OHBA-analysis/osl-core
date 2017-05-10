@@ -20,7 +20,7 @@ if(nargin<5)
 end;
 
 mask_fname=[OSLDIR '/std_masks/MNI152_T1_' num2str(gridstep) 'mm_brain.nii.gz'];
-mask=read_avw(mask_fname);
+[mask,~,xformmni] = osl_load_nii(mask_fname);
 newmask=zeros(size(mask));
 newmask=vols2matrix(newmask,mask);
 
@@ -56,7 +56,7 @@ end
 
 newmask2=matrix2vols(newmask,mask);
 
-save_avw(newmask2,[fname '_' num2str(gridstep) 'mm'], 'f', [gridstep,gridstep,gridstep,1]); 
+osl_save_nii(newmask2,gridstep,xformmni,[fname '_' num2str(gridstep) 'mm']); 
 
 if(resamp_gridstep~=gridstep)
     osl_resample_nii([fname '_' num2str(gridstep) 'mm'],[fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'trilinear',[OSLDIR '/std_masks/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ]);
