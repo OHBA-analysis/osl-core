@@ -2,7 +2,7 @@ function D = oslview(D)
 	% MEG continuous data viewer
 	% OSLVIEW(D)
 	% ----------------------------------------------------------------
-	% D - SPM meeg object
+	% D - SPM meeg object or file name
 	% ----------------------------------------------------------------
 	% AB 2012
 	% Updated 21/10/14
@@ -13,7 +13,6 @@ function D = oslview(D)
 	% - go to channel
 	% - epoched data?
 	% - Have a reset view button or right click option always available.
-	% - Replace chan_labels with D.chanlabels
 	% - Tighter control over SideWindow bars
 
 	% Get directory of the viewer
@@ -24,7 +23,7 @@ function D = oslview(D)
 	chan_time = []; % Array of time points for plots on main window
 	chan_data = []; % Matrix of value points for plots on main window
 	chan_inds = []; % Array specifying order in which to display the components
-	chan_labels = [];
+	chan_labels = D.chanlabels; % Cache this because accessing it dynamically is extremely slow
 
 	selection = struct('line',[],'bar',[]); % Temporary lines for context menu
 
@@ -69,7 +68,6 @@ function D = oslview(D)
 
 	% Create toolbars
 	uitools.toolbar		= uitoolbar;
-	uitools.save				= uipushtool(uitools.toolbar,		'ClickedCallback',@save_meeg,				'CData',icons.save,						'TooltipString','Save meeg object');
 	uitools.expand			= uipushtool(uitools.toolbar,		'ClickedCallback',@inc_xwidth,			'CData',icons.expand,					'TooltipString','Increase time window');
 	uitools.shrink			= uipushtool(uitools.toolbar,		'ClickedCallback',@dec_xwidth,			'CData',icons.shrink,					'TooltipString','Decrease time window');
 	uitools.rect				= uitoggletool(uitools.toolbar,	'ClickedCallback',@mouse_mode,			'CData',icons.rect,						'TooltipString','Zoom to channels');
@@ -154,32 +152,7 @@ function D = oslview(D)
 	%drag_listener1 = addlistener(MainWindow,'XLim','PostSet',@redraw);
 	set(PanWindow,'ButtonDownFcn',@pan_jump)
 
-
-	h_pan = pan(MainFig);
-	setAllowAxesPan(h_pan,PanWindow,false)
-	setAllowAxesPan(h_pan,SideWindow,false)
-	setAllowAxesPan(h_pan,MainWindow,true)
-	setAxesPanConstraint(h_pan,MainWindow,'x')
-	h_pan.Enable = 'off';
-	% h_pan.ButtonDownFilter = @pan_filter
-	h_pan.ActionPreCallback = @plot_low_res;
-	h_pan.ActionPostCallback = @redraw;
-
-
-
-	function flag = pan_filter(obj,event)
-		if obj == PanWindow || obj == SideWindow
-		flag = true;
-		elseif ~strcmp(get(MainFig,'selectionType'),'normal'); % Pass through all right clicks
-		flag = true;
-		else
-		flag = false;
-		end
-	end
-
-
-
-	% drag_listener2 = addlistener(MainWindow,'XLim','PreSet',@validate_xlim);
+	uiwait()
 
 	function createlayout(varargin)
 		% Perform one-off creation of axes objects etc.
@@ -385,7 +358,6 @@ function D = oslview(D)
 		Nchannels = length(chan_inds);
 
 		% Set channel labels & plot colours
-		chan_labels = D.chanlabels;
 		chancols = colormap(lines); 
 		chancols = chancols(1:7,:);
 		chancols = repmat(chancols,ceil(Nchannels/7),1);
@@ -786,49 +758,6 @@ function D = oslview(D)
 			end
 		end
 	end
-
-	function save_meeg(varargin)
-		if ~isempty(varargin)
-			set(varargin{1},'enable','off');
-		end
-		
-		% Get bad channel and epoch info of current data set:
-		get_bad
-		ch_bad = D.badchannels;
-		
-		D = spm_eeg_load(datafile);
-		
-		D = badchannels(D,D.indchantype('MEEG'),0);
-		if ~isempty(ch_bad)
-			D = badchannels(D,ch_bad,1);
-		end
-		set_bad;
-		D = montage(D,'switch',current_montage);
-
-		save(D);
-	end
-
-
-
-	function close_fig(varargin)
-		if strcmp(get(uitools.save,'enable'),'on')
-			save_flag = questdlg('Save MEEG figure before closing?');
-			switch save_flag
-			case 'Yes'
-				save_meeg;
-				delete(MainFig)
-			case {'Cancel',''}
-				return
-			case 'No'
-				delete(MainFig)
-			end
-		else
-			delete(MainFig)
-
-		end
-	end
-
-
 
 	function ylims = get_ylims
 		ylims = [min(offsets)-2*min(offsets) max(offsets)+2*min(offsets)];
