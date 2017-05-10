@@ -260,9 +260,9 @@ function D = oslview(D)
 
 		%% PAN WINDOW
 		set(PanWindow_line,'XData',t,'YData',PanWindowData);
-		axis(PanWindow,'tight')
-        ylim = get(PanWindow,'YLim');
-
+        ylim = [0 max(PanWindowData)];
+        set(PanWindow,'YLim',ylim);
+        
 		box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
 		box_y = [ylim(1) ylim(1) ylim(2) ylim(2)];
 		set(PanWindow_box,'XData',box_x,'YData',box_y);
@@ -373,22 +373,22 @@ function D = oslview(D)
 		chansig = plot(MainWindow,xspan,ones(2,Nchannels));
 		badevents_line(1) = plot(MainWindow,[NaN NaN],[NaN NaN],'g','LineWidth',2,'LineStyle','--','HitTest','off','YLimInclude','off');
 		badevents_line(2) = plot(MainWindow,[NaN NaN],[NaN NaN],'r','LineWidth',2,'LineStyle','--','HitTest','off','YLimInclude','off');
-		badevents_patch(1) = patch(MainWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
+		badevents_patch(1) = patch(nan(4,1),nan(4,1),'k','LineStyle','none','Parent',MainWindow,'FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
 
 		cla(SideWindow);
 		hold(SideWindow,'on')
 		for ch = 1:Nchannels
-			chanbar(ch) = patch(SideWindow,zeros(1,4),zeros(1,4),'k','uicontextmenu',ContextMenuSP.Menu);
+			chanbar(ch) = patch(zeros(1,4),zeros(1,4),'k','Parent',SideWindow,'uicontextmenu',ContextMenuSP.Menu);
 		end
 
 		cla(PanWindow);
 		hold(PanWindow,'on');
-		set(PanWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[],'ButtonDownFcn',@pan_jump);
+		set(PanWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[],'ButtonDownFcn',@pan_jump,'XLim',[D.time(1) D.time(end)]);
 		PanWindow_line = plot(PanWindow,NaN,NaN,'b','HitTest','off');
 		PanWindow_box = patch(NaN,NaN,'r','parent',PanWindow,'facealpha',0.3,'HitTest','off','YLimInclude','off');
 		badevents_line(3) = plot(PanWindow,[NaN NaN],[NaN NaN],'g','LineWidth',1,'LineStyle','-','HitTest','off','YLimInclude','off');
 		badevents_line(4) = plot(PanWindow,[NaN NaN],[NaN NaN],'r','LineWidth',1,'LineStyle','-','HitTest','off','YLimInclude','off');
-		badevents_patch(2) = patch(PanWindow,nan(4,1),nan(4,1),'k','LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
+		badevents_patch(2) = patch(nan(4,1),nan(4,1),'k','Parent',PanWindow,'LineStyle','none','FaceAlpha',0.1,'HitTest','off','YLimInclude','off');
 
 		redraw
 
