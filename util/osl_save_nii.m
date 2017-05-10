@@ -8,8 +8,12 @@ function save_nii(vol,res,xform,fname)
 	%
 	% Romesh Abeysuriya 2017
 	
-	save_avw(vol,fname,'d',[res 1]);
-
+    if length(res)==1
+        save_avw(vol,fname,'d',[res res res 1]);
+    else
+        save_avw(vol,fname,'d',[res 1]); %MWW
+    end
+    
 	runcmd(['fslorient -setsformcode 0 ' fname])
 	runcmd(['fslorient -setqformcode 2 ' fname])
 	runcmd(['fslorient -setqform ' num2str(reshape(xform',1,16)) ' ' fname])
