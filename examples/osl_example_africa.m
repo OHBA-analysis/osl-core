@@ -100,10 +100,10 @@ D = osl_africa(D,'do_remove',false);
 D = osl_africa(D,'do_remove',false,'artefact_channels',{'EOG','ECG'});
 
 %%
-% Mark a component as bad and then close the GUI. If you inspect D, you can
-% see that the bad components have been marked in |D.ica.bad_components|. At
-% the moment, there are no online montages. To remove these components via an
-% online montage, use
+% Mark a component as bad using the red cross button  toolbar, and then close
+% the GUI. If you inspect D, you can see that the bad components have been
+% marked in |D.ica.bad_components|. At the moment, there are no online
+% montages. To remove these components via an online montage, use
 
 has_montage(D);
 D = osl_africa(D,'do_ident',false,'do_remove',true);
@@ -119,19 +119,19 @@ has_montage(D);
 % write the changes to disk. Normally you would run both the identification
 % and the component removal in a single step, using
 
-D = osl_africa(D)
+% D = osl_africa(D)
 
 %%
-% Note that you now have two online montages
+% Note that this will result in two online montages
 
-has_montage(D)
+% has_montage(D)
 
 %%
 % It can be helpful to delete any unwanted montages prior
 % to using |osl_africa| e.g.
 
-D = D.montage('remove',1) % Remove the first montage
-has_montage(D)
+% D = D.montage('remove',1) % Remove the first montage
+% has_montage(D)
 
 
 %% Automatic component removal
@@ -140,15 +140,18 @@ has_montage(D)
 
 D_automatic = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto)
 
+%%
 % This will automatically assign the bad components. If you redo the manual
 % artefact selection, you can make changes to the assignment if you like.
 D_touchup = osl_africa(D_automatic,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'});
 
+%%
 % You can set the |ident_params| option to a struct that gets passed to the
 % identification function. For example, you can enable mains and kurtosis
 % artefact rejection, and extra plotting
-D_extra = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto,'ident_params',struct('do_mains',true,'do_kurt',true,'do_plots',true));
-
+%
+% D_extra = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto,'ident_params',struct('do_mains',true,'do_kurt',true,'do_plots',true));
+%
 %% Description of method in publications
 %
 % Independent component analysis (ICA) was used to decompose the sensor data for

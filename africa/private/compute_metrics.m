@@ -121,7 +121,7 @@ function [metrics,tc] = compute_metrics(D,S)
 
 	end
 
-	% Add variance as default metric;
+	% Add variance as default metric
 	metrics.variance.value = nanvar(tc,[],2);
 	metrics = orderfields(metrics);
 	tc(:,~samples_of_interest) = NaN;

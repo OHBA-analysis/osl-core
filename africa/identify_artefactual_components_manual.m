@@ -26,6 +26,7 @@ function [bad_components, metrics, fig_handles] = identify_artefactual_component
     arg.addParameter('do_kurt',false); 
     arg.addParameter('do_cardiac',false); 
     arg.addParameter('launch_gui',true); 
+    arg.addParameter('artefact_channels',{}); 
     arg.parse(S);
     S = arg.Results;
 
