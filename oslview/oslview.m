@@ -32,7 +32,6 @@ function D = oslview(D)
 	selection = struct('line',[],'bar',[]); % Temporary lines for context menu
 
 	Nchannels = [];
-	Dsig = [];
 	SideWindowData  = [];
 	PanWindowData = [];
 	offsets = [];
@@ -117,15 +116,10 @@ function D = oslview(D)
 	% Set zooming factor
 	Ginc = 2;
 
-	Layout	= [];
-	PanBox = [];
-	ClickedWindow = [];
-
 	% Handle for zoom control
 	hz = zoom(MainFig);
 
 	% Set channel type
-	channel_order = 'normal'; % Default is to use normal ordering (by index)
 	if any(strcmp(D.chantype,'MEGMAG')) && any(strcmp(D.chantype,'MEGPLANAR')) % ELEKTA
 		channel_type = 'MEGPLANAR';
 	elseif any(strcmp(D.chantype,'MEGMAG')) % 4D
@@ -198,10 +192,10 @@ function D = oslview(D)
 
 	end
 
-	function pan_jump(ax,hit)
+	function pan_jump(varargin)
 		% Reposition the window by clicking on bottom plot
 		xspan = get(MainWindow,'XLim');
-		set(MainWindow,'XLim',hit.IntersectionPoint(1)+[-0.5 0.5]*diff(xspan));
+		set(MainWindow,'XLim',varargin{2}.IntersectionPoint(1)+[-0.5 0.5]*diff(xspan));
 		redraw
 	end
 
@@ -273,17 +267,12 @@ function D = oslview(D)
 		ch_bad = get_bad_channels;
 		SideWindowData_plot = SideWindowData;
 		SideWindowData_plot(ch_bad) = NaN;
-		
-		% Plot bar data
-		col = colormap(lines);
-		col = col(1:7,:);
-		col = repmat(col,ceil(Nchannels/7),1);
 
 		% Because offsets are set to cumsum when they are computed, they are guaranteed to be sorted
 		% So they can be replaced here with just simple offsets
 		sidebar_offsets = (1:length(offsets))-0.5;
 		for ch = 1:Nchannels
-			bar_patch(chanbar(ch),sidebar_offsets(ch),SideWindowData_plot(ch),1,col(ch,:),chan_labels{chan_inds(ch)});
+			bar_patch(chanbar(ch),sidebar_offsets(ch),SideWindowData_plot(ch),1,chan_labels{chan_inds(ch)});
 		end
 		
 		set(SideWindow,'ylim',[0 length(offsets)])
@@ -324,11 +313,11 @@ function D = oslview(D)
 		
 	end
 
-	function bar_patch(h_patch,offset,value,width,c,tag)
+	function bar_patch(h_patch,offset,value,width,tag)
 		% Helper function to use a patch object as a fast horizontal bar
 		xv = [0 value];
 		yv = offset + [-1 1]*width/2;
-		set(h_patch,'YData',[yv(1) yv(1) yv(2) yv(2)],'XData',[xv(1) xv(2) xv(2) xv(1)],'FaceColor',c,'LineStyle','none','tag',tag)
+		set(h_patch,'YData',[yv(1) yv(1) yv(2) yv(2)],'XData',[xv(1) xv(2) xv(2) xv(1)],'tag',tag)
 	end
 
 	function switch_chantype(src,~)
@@ -359,7 +348,6 @@ function D = oslview(D)
 		chancols = colormap(lines); 
 		chancols = chancols(1:7,:);
 		chancols = repmat(chancols,ceil(Nchannels/7),1);
-		chancols = chancols(1:Nchannels,:);
 		
 		% Calculate side and pan window statistics
 		SideWindowData = [];
@@ -378,7 +366,7 @@ function D = oslview(D)
 		cla(SideWindow);
 		hold(SideWindow,'on')
 		for ch = 1:Nchannels
-			chanbar(ch) = patch(zeros(1,4),zeros(1,4),'k','Parent',SideWindow,'uicontextmenu',ContextMenuSP.Menu);
+			chanbar(ch) = patch(zeros(1,4),zeros(1,4),chancols(ch,:),'Parent',SideWindow,'uicontextmenu',ContextMenuSP.Menu,'LineStyle','none');
 		end
 
 		cla(PanWindow);
@@ -394,7 +382,7 @@ function D = oslview(D)
 
 	end
 
-	function ContextMenuOn(src,~)
+	function ContextMenuOn(varargin)
 		
 		cp = get(MainWindow,'CurrentPoint');
 		
@@ -608,7 +596,7 @@ function D = oslview(D)
 		t_bad = get_bad_inds;
 
 		Dsig_inds = 1:20:D.nsamples; Dsig_inds(t_bad(Dsig_inds)) = [];
-		Dsig = std(D(:,Dsig_inds,:),[],2);
+% 		Dsig = std(D(:,Dsig_inds,:),[],2);
 		offsets = 3*iqr(D(:,Dsig_inds,:),2);
 		offsets(offsets==0) = eps;
 		offsets(D.badchannels) = nan;
@@ -632,24 +620,17 @@ function D = oslview(D)
 
 	function key_press(~,evnt)
 		
-		if strcmp(evnt.Key,'rightarrow') || strcmp(evnt.Key,'leftarrow')
-			key_scroll(evnt.Key)
-		end
+        if strcmp(evnt.Key,'rightarrow')
+            xspan = get(MainWindow,'XLim');
+            set(MainWindow,'XLim',xspan + 0.05*diff(xspan));
+            redraw  
+        elseif strcmp(evnt.Key,'leftarrow')
+            xspan = get(MainWindow,'XLim');
+            set(MainWindow,'XLim',xspan - 0.05*diff(xspan));
+            redraw		
+        end
 
-	end % key_press
-
-
-	function key_scroll(key)
-		if strcmp(key,'rightarrow')
-			scroll_dir = 1;
-		else
-			scroll_dir = -1;
-		end
-		
-		xs = xs + scroll_dir*round(0.1*diff(xs([1 end])));
-		check_xs
-		redraw
-	end
+    end
 
 	function inc_scale(varargin)
 		G = G * Ginc;
@@ -673,7 +654,7 @@ function D = oslview(D)
 		redraw
 	end
 
-	function mouse_mode(src,~)
+	function mouse_mode(varargin)
 		if strcmp(get(uitools.rect,'state'),'on')
 			set(hz,'Motion','vertical','Enable','on','RightClickAction','inversezoom')
 			setAllowAxesZoom(hz,PanWindow,false);
