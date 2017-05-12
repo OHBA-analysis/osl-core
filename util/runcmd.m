@@ -28,7 +28,7 @@ function varargout = runcmd(cmd,varargin)
 	end
 
 	% If no output is captured and the function produced no output, don't print anything to the terminal
-	if nargout > 0 && ~isempty(output)
+	if nargout > 0 || ~isempty(output)
 		varargout{1} = output;
 	end
 
