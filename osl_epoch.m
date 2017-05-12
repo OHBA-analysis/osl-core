@@ -18,6 +18,7 @@ if ~(D.montage('getindex')==0)
         warning('Montage will be switched to zero for epoching and current montage index will be saved.')
         D=D.montage('switch',0);
         D.save;
+        S.D = D;
 end
     
 if ~isfield(S,'bad_event_type')

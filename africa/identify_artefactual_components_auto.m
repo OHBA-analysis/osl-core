@@ -18,7 +18,7 @@
 %
 % HL+MWW 2013
 
-function [bad_components, metrics,fig_handles] = identify_artefactual_components_auto(D,S)
+function [bad_components, metrics,figs] = identify_artefactual_components_auto(D,S)
 
     %% Set-Up
     arg = inputParser;
@@ -45,9 +45,14 @@ function [bad_components, metrics,fig_handles] = identify_artefactual_components
     arg.parse(S);
     S = arg.Results;
 
+    if isscalar(S.artefact_chans_corr_thresh)
+        S.artefact_chans_corr_thresh = S.artefact_chans_corr_thresh*ones(size(S.artefact_channels));
+    end
+    
     % Compute metrics
     D = D.montage('switch',0);
-    fig_handles = [];
+    
+    figs = struct('handles',[],'names',[],'titles',[]);
     bad_components = []; 
 
     [metrics,tc] = compute_metrics(D,S);
@@ -107,7 +112,7 @@ function [bad_components, metrics,fig_handles] = identify_artefactual_components
     if(~isempty(S.artefact_channels) && length(S.artefact_channels)>0)
         artefact_chantype = unique(S.artefact_channels);
         for j = 1:length(artefact_chantype)
-            reject = find(metrics.(artefact_chantype{j}).value > S.artefact_chans_corr_thresh);
+            reject = find(metrics.(artefact_chantype{j}).value > S.artefact_chans_corr_thresh(j));
             for k = 1:length(reject)
                 fprintf('Rejecting IC %d due to %s (correlation = %.2f)\n',reject(k),artefact_chantype{j},metrics.(artefact_chantype{j}).value(reject(k)));
                 artefacts{reject(k)} = sprintf('%s %s',artefacts{reject(k)},artefact_chantype{j});
@@ -122,7 +127,9 @@ function [bad_components, metrics,fig_handles] = identify_artefactual_components
     if S.do_kurt > 0,
         sm = D.ica.sm(D.ica.chan_inds,:); % For variance, only use the chan inds 
         [comps2reject,fig_handles_tmp,fig_names_tmp,fig_titles_tmp] = rank_and_plot(tc,sm,abs_ft,freq_ax,D,'abs_kurtosis',modalities,samples_of_interest,S.kurtosis_wthresh,S.kurtosis_thresh,S.max_num_artefact_comps,S.do_plots);
-        fig_handles=[fig_handles, fig_handles_tmp];
+        figs.handles = [figs.handles fig_handles_tmp];
+        figs.names = [figs.names fig_names_tmp];
+        figs.titles = [figs.titles fig_titles_tmp];
         if ~isempty(comps2reject)
             for j = 1:length(comps2reject)
                 fprintf('Rejecting IC %d due to kurtosis\n',comps2reject(j));
@@ -138,17 +145,17 @@ function [bad_components, metrics,fig_handles] = identify_artefactual_components
 
     % Plot if required
     if S.do_plots && ~isempty(bad_components)
-        for j = 1:length(bad_components)    
-            h = figure;
-            fig_handles(end+1) = h;
-            set(h,'Position',[1 1 1500 1000]);
+        for j = 1:length(bad_components)
+            figs.handles(end+1) = figure('Position',[1 1 1500 1000]);
+            figs.names{end+1} =  sprintf('IC %d - %s',bad_components(j),artefacts{bad_components(j)});
+            figs.titles{end+1} = sprintf('AFRICA: IC %d - %s',bad_components(j),artefacts{bad_components(j)});    
 
             c=1;
             ncols=max(numel(modalities),2);
                        
             for m =1:numel(modalities)
                 subplot(2,ncols,c); 
-                component_topoplot(D,sm(:,bad_components(j)),modalities{m},true);
+                component_topoplot(D,D.ica.sm(:,bad_components(j)),modalities{m},true);
                 title(modalities{m}); 
                 axis tight;
                 %title(['IC' num2str(bad_components(j)) ', ' confirmed_artefact_names{ii} ' Artefacts' modalities(m)]);%axis tight;

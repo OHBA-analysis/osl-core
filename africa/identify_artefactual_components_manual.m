@@ -1,7 +1,7 @@
-function [bad_components, metrics, fig_handles] = identify_artefactual_components_manual(D,S)
+function [bad_components, metrics, figs] = identify_artefactual_components_manual(D,S)
     % AfRICA - ArteFact Rejection using Independent Component Analysis
     %
-    % Syntax: [bad_components, fig_handles, fig_names, fig_titles] = identify_artefactual_components_manual(S)
+    % Syntax: [bad_components, figs, fig_names, fig_titles] = identify_artefactual_components_manual(S)
     % S needs to contain be produced inside OSL_AFRICA.m
     %
     % OPTIONAL inputs to compute various metrics:
@@ -32,7 +32,7 @@ function [bad_components, metrics, fig_handles] = identify_artefactual_component
 
     % Compute metrics
     D = D.montage('switch',0);
-    fig_handles = [];
+    figs = struct('handles',[],'names',[],'titles',[]);
     bad_components = []; 
     [metrics,tc] = compute_metrics(D,S);
 
