@@ -103,7 +103,13 @@ switch anatomical
         anatomical_fname=anatomical;    
 end;
 
-runcmd(['fslview ' anatomical_fname ' '  fnames_formatted '&']);
+if ~system('hash fslview_deprecated') % If fslview_deprecated is on the path, use it
+  fslview_cmd = 'fslview_deprecated';
+else
+  fslview_cmd = 'fslview';
+end
+
+runcmd('%s %s %s &',fslview_cmd,anatomical_fname,fnames_formatted);
  
 end
 
