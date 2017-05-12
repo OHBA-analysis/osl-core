@@ -1,5 +1,4 @@
 function [ gstats, statsdir ] = osl_parc_permutation_testing( S )
-2016-11-22 14:22:30
 %%function [ gstats, statsdir ] = osl_parc_permutation_testing( S )
 %
 % S.oat

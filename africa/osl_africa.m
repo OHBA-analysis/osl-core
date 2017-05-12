@@ -1,495 +1,293 @@
-function [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
-% AfRICA - ArteFact Rejection using Independent Component Analysis
-% performs ICA denoising of MEG data using either semi-manual or automated
-% identification artefact components.
-%
-% [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
-%
-% REQUIRED INPUTS:
-%
-% S.D           - SPM MEG object filename
-%
-% S.ica_file    - .mat file in which to save ica results
-%
-%
-% OPTIONAL INPUTS
-%
-% S.todo        - structure with fields:
-%                   .ica    - [0/1] to run ica decomposition
-%                   .ident  - [0/1] to run artefact identification
-%                   .remove - [0/1] to run artefact removal
-%
-% S.ident       - structure with fields:
-%                   .func - function handle to identification function
-%                           e.g. @identify_artefactual_components_manual
-%                   .{extra fields depending on .func}
-%
-% S.logfile     - write logfile [0/1], default = 1
-%
-% S.modality    - modality to use, default = 'MEG'
-%
-% S.do_plots    - produce diagnostic plots, default = 0
-%
-% S.used_maxfilter - [0/1] if Maxfilter has been used, default = 0
-%
-% S.precompute_topos   - pre-compute and save IC spatial map topos after ica is computed for use in ident
-%
-% Written by Henry Luckhoo and Adam Baker
+function [D,figs,S] = osl_africa(D,varargin)
+    % AfRICA - ArteFact Rejection using Independent Component Analysis
+    % performs ICA denoising of MEG data using either semi-manual or automated
+    % identification artefact components.
+    %
+    % [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
+    %
+    % REQUIRED INPUTS:
+    %
+    % D           - SPM MEG object filename
+    %
+    % OPTIONAL INPUTS
+    %
+    % S.todo        - structure with fields:
+    %                   .ica    - [0/1] to run ica decomposition
+    %                   .ident  - [0/1] to run artefact identification
+    %                   .remove - [0/1] to run artefact removal
+    %
+    % S.ident       - structure with fields:
+    %                   .func - function handle to identification function
+    %                           e.g. @identify_artefactual_components_manual
+    %                   .{extra fields depending on .func}
+    %
+    % S.modality    - modality to use, default = 'MEG'
+    %
+    % S.do_plots    - produce diagnostic plots, default = 0
+    %
+    % S.used_maxfilter - [0/1] if Maxfilter has been used, default = 0
+    %
+    % S.precompute_topos   - pre-compute and save IC spatial map topos after ica is computed for use in ident
+    %
+    % Romesh Abeysuriya 2017
+    % Written by Henry Luckhoo and Adam Baker
 
-% note: Behaviour of osl_africa has changed as from 03/29/17. The idea is to
-% ecnourage people to use online montage rather then unnecessarily creating
-% copies of files. Since ICA is a linear operator, these changes can be
-% nicely stored in an online montage.
-% if you wanna keep the old bevhaior, do
-% D.copy
+    % note: Behaviour of osl_africa has changed as from 03/29/17. The idea is to
+    % ecnourage people to use online montage rather then unnecessarily creating
+    % copies of files. Since ICA is a linear operator, these changes can be
+    % nicely stored in an online montage.
+    % if you wanna keep the old bevhaior, do
+    % D.copy
 
-% S.montagename - name of the montage after ICA pruning of artifactual
-% components
-% defaults to 'AFRICA denoised data'
+    % S.montagename - name of the montage after ICA pruning of artifactual
+    % components
+    % defaults to 'AFRICA denoised data'
 
+    arg = inputParser;
+    arg.addParameter('modality','MEG'); 
+    arg.addParameter('montagename','AFRICA denoised data'); 
+    arg.addParameter('do_plots',false); 
+    arg.addParameter('precompute_topos',true);
+    arg.addParameter('do_ica',~isfield(D,'ica')); % By default, use existing ICA plus topos
+    arg.addParameter('do_ident',true); 
+    arg.addParameter('do_remove',true); 
+    arg.addParameter('artefact_channels',{}); 
+    arg.addParameter('ident_func',@identify_artefactual_components_manual);
+    arg.addParameter('ident_params',struct); % Extra parameters for ident_func
+    arg.addParameter('used_maxfilter',false);
+    arg.addParameter('ica_params',struct); % ICA parameters passed to run_sensorspace_ica
+    arg.parse(varargin{:});
+    S = arg.Results; % Result of parsing arguments is essentially the settings struct
 
-% Check SPM File Specification:
-try
-    S.D = char(S.D);
-    [pathstr,filestr] = fileparts(S.D);
-    S.D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
-    D = spm_eeg_load(S.D);
-    % force zero montage
-    if ~(D.montage('getindex')==0)
-        warning('Montage will be switched to zero for AFRICA and current montage index will be saved.')
-        D=D.montage('switch',0);
-        D.save;
-    end
-
-catch
-    if isfield(S,'fname')
-        warning('S.fname is deprecated, please use S.D instead')
-    end
-    error('SPM file specification not recognised or incorrect');
-end
-
-if ~isfield(S,'ica_file') || isempty(S.ica_file)
-    error('No file specified in S.ica_file for saving AFRICA results')
-end
-
-[pathstr,name] = fileparts(S.ica_file);
-if isempty(pathstr)
-    pathstr = D.path;
-end
-S.ica_file = fullfile(pathstr,[name '.mat']);
-
-if ~isdir(pathstr) % Create directory if it doesn't exist
-    mkdir(pathstr);
-end
-
-if isfield(S,'logfile') && S.logfile == 1
-    logfile = fullfile(pathstr,[name '_log.txt']);
-    if exist(logfile,'file')
-        unix(['rm ' logfile]);
-    end
-    diary(logfile);
-end
-
-if not(isfield(S,'modality'))
-    S.modality = 'MEG';
-end
-
-if not(isfield(S,'montagename'))
-    S.montagename='AFRICA denoised data';
-end
-
-if not(isfield(S,'do_plots'))
-    S.do_plots = 0;
-end
-
-if ~isfield(S,'precompute_topos');
-    S.precompute_topos = 0;
-end
-
-if ~isfield(S,'todo');
-    S.todo = struct;
-end
-
-if ~isfield(S.todo,'ica');
-    S.todo.ica = 1;
-end
-
-if ~isfield(S.todo,'ident');
-    S.todo.ident = 1;
-end
-
-if ~isfield(S.todo,'remove');
-    S.todo.remove = 1;
-end
-
-if ~isfield(S,'ident')
-    S.ident = [];
-end
-
-if ~isfield(S.ident,'func')
-    S.ident.func = @identify_artefactual_components_manual;
-end
-
-if ~isfield(S,'used_maxfilter');
-    S.used_maxfilter = 0;
-end
-
-fig_handles = [];
-fig_names   = [];
-fig_titles  = [];
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%% PERFORM SENSOR SPACE ICA %%%%%%%%%%%%%%%%%%%%%%%%
-if S.todo.ica
-    S.ica_res = perform_sensorspace_ica(S);
-    if isfield(S,'ica_file')
-        
-        % Precompute topographies
-        if S.precompute_topos
-            try
-                topos = S.ica_res.topos;
-            catch
-                topos = [];
-                sm = S.ica_res.sm;
-                modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
-                for m = 1:numel(modalities)
-                    disp(['Precomputing sensor topographies for modality ' modalities{m}]);
-                    topos = [topos component_topoplot(D,sm,modalities(m))];
-                end
-            end
-            S.ica_res.topos   = topos;
-        end
-        
-        save(S.ica_file,'S');
-        msg = sprintf('\n%s%s\n%','Saving ICA results to ', S.ica_file);
-        fprintf(msg);
-        
-    else
-        msg = sprintf('\n%s\n%','Results not being saved.');
-        fprintf(msg);
+    % Pass some of the options on to the identification function
+    if ~isfield(S.ident_params,'artefact_channels')
+        S.ident_params.artefact_channels = S.artefact_channels;
     end
     
-elseif any(structfun(@istrue,S.todo))
-    % Load from file
-    if isfield(S,'ica_file') && exist(S.ica_file,'file')==2
-        msg = sprintf('\n%s%s\n%','Loading previous ICA results from ', S.ica_file);
-        fprintf(msg);
-        icafile = load(S.ica_file);
-        if isfield(S,'ident');    icafile.S.ident    = S.ident;    end
-        if isfield(S,'do_plots'); icafile.S.do_plots = S.do_plots; end
-        if isfield(S,'todo');    icafile.S.todo    = S.todo;    end
-        S = icafile.S; clear icafile
+    if ~isfield(S.ident_params,'modality')
+        S.ident_params.modality = S.modality;
     end
-end
+
+    if ~isfield(S.ident_params,'do_plots')
+        S.ident_params.do_plots = S.do_plots;
+    end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%% CLASSIFY BAD COMPONENTS %%%%%%%%%%%%%%%%%%%%%%%%
-if S.todo.ident
-    if isfield(S,'ica_res')
-        
-        if(S.do_plots)
-            [bad_components, fig_handles, fig_names, fig_titles] = feval(S.ident.func,S);
+    figs = struct('handles',[],'names',[],'titles',[]);
+
+    D = D.montage('switch',0);
+
+    % Do ICA decomposition
+    if S.do_ica
+        D = perform_sensorspace_ica(D,S); % Writes a new D.ica, also overwrites any old topos
+
+        if S.precompute_topos
+            topos = [];
+            modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
+            for m = 1:numel(modalities)
+                disp(['Precomputing sensor topographies for modality ' modalities{m}]);
+                topos = [topos component_topoplot(D,D.ica.sm,modalities(m))];
+            end
+            D.ica.topos   = topos;
         else
-            bad_components = feval(S.ident.func,S);
+            D.ica.topos = []; % Compute in identify_artefactual_components_manual_gui.m
         end
-        
-        if isfield(S,'ica_file')
-            icafile = load(S.ica_file);
-            S.ica_res = icafile.S.ica_res; clear icafile
-        end
-        
-        S.ica_res.bad_components = bad_components;
-        
-        msg = sprintf('\n%s%s\n%','Saving bad component selection to ', S.ica_file);
-        fprintf(msg);
-        save(S.ica_file,'S');
-        
+
+        D.save(); % Consider taking this out - but ICA is so time consuming it might be worth it
     else
-        error('ICA decomposition needs to be run. Set S.todo.ica = 1 and try again');
+        assert(isfield(D,'ica'),'No precomputed results - D.ica is missing')
+        fprintf('Using existing ICA decomposition\n')
     end
-end
 
-
-%%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS FROM THE DATA %%%%%%%%%%%%%%%%%%%%
-if S.todo.remove
-    if ~isfield(S,'ica_res')
-        try
-            load(S.ica_file);
-        catch
-            error('Unable to load ICA decomposition from disk. Try rerunning all AfRICA stages');
-        end
+    % Identify bad components, store them together with metrics in the D object
+    if S.do_ident
+        [D.ica.bad_components, D.ica.metrics, figs] = S.ident_func(D,S.ident_params);
+    else
+        fprintf('Using existing bad_components\n')
     end
-    fname_out = remove_bad_components(S);
-else
-    fname_out = [];
-end
 
-if isfield(S,'logfile') && S.logfile == 1,
-    diary off;
-end
+    % Remove bad components
+    %%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS FROM THE DATA %%%%%%%%%%%%%%%%%%%%
+    if S.do_remove
+        D = remove_bad_components(D,S);
+    end
 
 end % MAIN FUNCTION
 
+function D = perform_sensorspace_ica(D,S)
+    % Given a D object and a settings struct, run fastica
+    % Return a D object with D.ica created or overwritten
 
-
-
-
-
-
-function ica_res = perform_sensorspace_ica(S)
-
-D = spm_eeg_load(S.D);
-
-if ~(D.montage('getindex')==0)
-warning('Montage will be switched to zero for AFRICA and current montage index will be saved.')
-D=D.montage('switch',0);
-D.save;
-end
-    
-if strcmp(S.modality,'EEG')
-    chantype = 'EEG';
-else
-    chantype = {'MEG','MEGANY'}; % need both flags to capture MEG, MEGMAG, MEGGRAD and MEGPLANAR channel types.
-end
-
-% Good channels:
-chan_inds = indchantype(D,chantype,'GOOD');
-
-% Good timepoints/trials
-good_samples = ~all(badsamples(D,':',':',':'));
-good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-
-% Select data:
-icadata = D(chan_inds,:,:);
-
-% Remove trial structure:
-icadata = reshape(icadata,size(icadata,1),[]);
-
-% Select good timepoints
-icadata = icadata(:,good_samples);
-
-%%%%%%%%%%%%%%%%%%%% APPLY MAXFILTER SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%%%%
-if isfield(S,'used_maxfilter') && S.used_maxfilter
-    num_ics_default = 62;
-    mag_cutoff      = 62;
-    plan_cutoff     = 62;
-else
-    num_ics_default = 150;
-    mag_cutoff  = sum(strcmp(D.chantype(chan_inds),'MEGMAG'))    - 5;
-    plan_cutoff = sum(strcmp(D.chantype(chan_inds),'MEGPLANAR')) - 5;
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%% SET FASTICA PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%
-if isfield(S,'ica_params')
-    if isfield(S.ica_params,'num_ics');         num_ics       = S.ica_params.num_ics;         else num_ics       = num_ics_default; end
-    if isfield(S.ica_params,'last_eig');        last_eig      = S.ica_params.last_eig;        else last_eig      = num_ics_default; end
-    if isfield(S.ica_params,'nonlinearity');    nonlinearity  = S.ica_params.nonlinearity;    else nonlinearity  = 'tanh';          end
-    if isfield(S.ica_params,'approach');        ica_approach  = S.ica_params.approach;        else ica_approach  = 'symm';          end
-    if isfield(S.ica_params,'stabilization');   stabilization = S.ica_params.stabilization;   else stabilization = 'on';            end
-    if isfield(S.ica_params,'max_iterations');  max_iter      = S.ica_params.max_iterations;  else max_iter      = 1000;            end
-else
-    num_ics       = num_ics_default;
-    last_eig      = num_ics_default;
-    nonlinearity  = 'tanh';
-    ica_approach  = 'symm';
-    stabilization = 'on';
-    max_iter      = 1000;
-end
-
-num_ics  = min(num_ics, size(icadata,1)); % added by DM
-last_eig = min(last_eig,size(icadata,1)); % added by DM
-
-%%%%%%%%%%%%%%%%%%%%  MINIMUM EIGENVALUE NORMALISATION %%%%%%%%%%%%%%%%%%%%
-if strcmp(S.modality,'EEG')  % added by DM
-    norm_vec = max(abs(icadata(:)))/1000*ones(size(icadata,1),1);
-else
-    norm_vec = ones(numel(chan_inds),1);
-    if any(strcmp(D.chantype,'MEGMAG')) && any(strcmp(D.chantype,'MEGPLANAR'))
-        mag_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGMAG'),:)'));
-        mag_min_eig = mean(mag_min_eig(mag_cutoff-2:mag_cutoff));
+    D = D.montage('switch',0);
         
-        plan_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGPLANAR'),:)'));
-        plan_min_eig = mean(plan_min_eig(plan_cutoff-2:plan_cutoff));
-        
-        norm_vec(strcmp(D.chantype(chan_inds),'MEGMAG'))    = mag_min_eig;
-        norm_vec(strcmp(D.chantype(chan_inds),'MEGPLANAR')) = plan_min_eig;
+    if strcmp(S.modality,'EEG')
+        chantype = 'EEG';
     else
-        norm_vec = norm_vec*min(svd(cov(icadata(:,:)')));
+        chantype = {'MEG','MEGANY'}; % need both flags to capture MEG, MEGMAG, MEGGRAD and MEGPLANAR channel types.
     end
-    norm_vec = sqrt(norm_vec);
+
+    % Good channels:
+    chan_inds = indchantype(D,chantype,'GOOD');
+
+    % Good timepoints/trials
+    good_samples = ~all(badsamples(D,':',':',':'));
+    good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+
+    % Select data:
+    icadata = D(chan_inds,:,:);
+
+    % Remove trial structure:
+    icadata = reshape(icadata,size(icadata,1),[]);
+
+    % Select good timepoints
+    icadata = icadata(:,good_samples);
+
+    %%%%%%%%%%%%%%%%%%%% APPLY MAXFILTER SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%%%%
+    if isfield(S,'used_maxfilter') && S.used_maxfilter
+        num_ics_default = 62;
+        mag_cutoff      = 62;
+        plan_cutoff     = 62;
+    else
+        num_ics_default = 150;
+        mag_cutoff  = sum(strcmp(D.chantype(chan_inds),'MEGMAG'))    - 5;
+        plan_cutoff = sum(strcmp(D.chantype(chan_inds),'MEGPLANAR')) - 5;
+    end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%% SET FASTICA PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%
+    ica_params = inputParser;
+    ica_params.addParameter('num_ics',num_ics_default);       
+    ica_params.addParameter('last_eig',num_ics_default);      
+    ica_params.addParameter('nonlinearity','tanh');  
+    ica_params.addParameter('approach','symm');      
+    ica_params.addParameter('stabilization','on'); 
+    ica_params.addParameter('max_iter',1000);
+    ica_params.parse(S.ica_params);
+    ica_params = ica_params.Results;
     
+    ica_params.num_ics  = min(ica_params.num_ics, size(icadata,1)); % added by DM
+    ica_params.last_eig = min(ica_params.last_eig,size(icadata,1)); % added by DM
+
+    %%%%%%%%%%%%%%%%%%%%  MINIMUM EIGENVALUE NORMALISATION %%%%%%%%%%%%%%%%%%%%
+    if strcmp(S.modality,'EEG')  % added by DM
+        norm_vec = max(abs(icadata(:)))/1000*ones(size(icadata,1),1);
+    else
+        norm_vec = ones(numel(chan_inds),1);
+        if any(strcmp(D.chantype,'MEGMAG')) && any(strcmp(D.chantype,'MEGPLANAR'))
+            mag_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGMAG'),:)'));
+            mag_min_eig = mean(mag_min_eig(mag_cutoff-2:mag_cutoff));
+            
+            plan_min_eig = svd(cov(icadata(strcmp(D.chantype(chan_inds),'MEGPLANAR'),:)'));
+            plan_min_eig = mean(plan_min_eig(plan_cutoff-2:plan_cutoff));
+            
+            norm_vec(strcmp(D.chantype(chan_inds),'MEGMAG'))    = mag_min_eig;
+            norm_vec(strcmp(D.chantype(chan_inds),'MEGPLANAR')) = plan_min_eig;
+        else
+            norm_vec = norm_vec*min(svd(cov(icadata(:,:)')));
+        end
+        norm_vec = sqrt(norm_vec);
+        
+    end
+
+    eigs_preNorm  = svd(cov(icadata'));
+
+    % Apply normalisation
+    icadata = icadata ./ repmat(norm_vec,1,size(icadata,2));
+
+    eigs_postNorm = svd(cov(icadata'));
+
+    if S.do_plots
+        figure;
+        semilogy(eigs_preNorm);
+        ho;
+        semilogy(eigs_postNorm,'r--');
+        title('Raw and normalised eigen spectra'); legend('Raw', 'Normalised');
+    end
+
+    %%%%%%%%%%%%%%%%%% AUTOMATIC DIMENSIONALITY ESTIMATION %%%%%%%%%%%%%%%%%%%%
+    if 0 == ica_params.num_ics
+        ica_params.num_ics = spm_pca_order(icadata');
+    end
+    if 0 == ica_params.last_eig
+        ica_params.last_eig = ica_params.num_ics;
+    end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%% ICA DECOMPOSITION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    [tc,sm,~] = fastica(icadata,                           ...
+        'g',                ica_params.nonlinearity,  ...
+        'lastEig',          ica_params.last_eig,      ...
+        'numOfIC',          ica_params.num_ics,       ...
+        'approach',         ica_params.approach,  ...
+        'stabilization',    ica_params.stabilization, ...
+        'maxNumIterations', ica_params.max_iter); % changed by DM
+
+    if ica_params.num_ics ~= size(tc,1)
+        fprintf('\n%s%d%s%d%s\n%','Data dimensionality insufficient to support ', ica_params.num_ics, ' components. Number of components has been reduced to ', size(tc,1), '.');
+        ica_params.num_ics = size(tc,1);
+    end
+
+    D.ica = struct;
+    D.ica.params = ica_params;
+    D.ica.chan_inds = chan_inds;
+    D.ica.norm_vec = norm_vec;
+    D.ica.sm = bsxfun(@times,sm,norm_vec);
+    D.ica.topos = []; % Store topos later
+    D.ica.metrics = []; % Store artefact metrics later
+    D.ica.bad_components = []; % With new components, no bad components selected yet 
+
+    % The commands below expand D.ica.sm out
+    % Need to use D.ica.sm(chan_inds,:) elsewhere but that's what's expcted by a bunch of other things
+    sm_full              = zeros(D.nchannels, size(sm,2));
+    sm_full(chan_inds,:) = D.ica.sm; % So this is mapped onto all of the data w
+    D.ica.sm = sm_full;
+
+    % Reconstruct the IC timecourses with
+    % tc = D(chan_inds,:,:)'*pinv(D.ica.sm)'
+    %    or 
+    % tc = D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))'
 end
 
-eigs_preNorm  = svd(cov(icadata'));
 
-% Apply normalisation
-icadata = icadata ./ repmat(norm_vec,1,size(icadata,2));
+function D = remove_bad_components(D,S)
+    % Take in a D object with D.ica.bad_components
+    % Make a new montage with the components in D.ica.bad_components removed
 
-eigs_postNorm = svd(cov(icadata'));
+    D = D.montage('switch',0);
 
-if S.do_plots
-    figure;
-    semilogy(eigs_preNorm);
-    ho;
-    semilogy(eigs_postNorm,'r--');
-    title('Raw and normalised eigen spectra'); legend('Raw', 'Normalised');
-end
+    if strcmp(S.modality,'EEG')
+        chantype = 'EEG';
+        modality = 'EEG';
+    else
+        chantype = {'MEG','MEGANY'};
+        modality = 'MEG';
+    end
 
-%%%%%%%%%%%%%%%%%% AUTOMATIC DIMENSIONALITY ESTIMATION %%%%%%%%%%%%%%%%%%%%
-if 0 == num_ics
-    num_ics = spm_pca_order(icadata');
-end
-if 0 == last_eig
-    last_eig = num_ics;
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%% ICA DECOMPOSITION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[tc,sm,~] = fastica(icadata,                           ...
-    'g',                nonlinearity,  ...
-    'lastEig',          last_eig,      ...
-    'numOfIC',          num_ics,       ...
-    'approach',         ica_approach,  ...
-    'stabilization',    stabilization, ...
-    'maxNumIterations', max_iter); % changed by DM
-
-if num_ics ~= size(tc,1)
-    msg = sprintf('\n%s%d%s%d%s\n%','Data dimensionality insufficient to support ', num_ics, ' components. Number of components has been reduced to ', size(tc,1), '.');
-    fprintf(msg);
-    num_ics = size(tc,1);
-end
-
-ica_res = [];
-ica_res.ica_params.num_ics      = num_ics;
-ica_res.ica_params.last_eig     = last_eig;
-ica_res.ica_params.nonlinearity = nonlinearity;
-ica_res.D                       = S.D;
-ica_res.tc                      = tc;
-ica_res.sm                      = sm .* repmat(norm_vec,1,num_ics);
-
-%%%%%%%%%%%%%%%%%%% ESTIMATE MISSING CHANNELS AND EPOCHS %%%%%%%%%%%%%%%%%%
-
-sm_full              = zeros(D.nchannels, size(sm,2));
-sm_full(chan_inds,:) = ica_res.sm;
-
-bad_timepoints = all(badsamples(D,':',':',':'));
-bad_timepoints = reshape(bad_timepoints,1,D.nsamples*D.ntrials);
-
-if ~isempty(indchantype(D,chantype,'BAD'))
-    subdata = D(indchantype(D,chantype,'BAD'),:,:);
-    subdata = reshape(subdata,size(subdata,1),[]);
-    sm_full(indchantype(D,chantype,'BAD'),:) = subdata(:,~bad_timepoints)*pinv(ica_res.tc);
-end
-
-subdata = D(chan_inds,:,:);
-subdata = reshape(subdata,size(subdata,1),[]);
-subdata = subdata(:,bad_timepoints); % why is subdat aempty?
-tc_full = zeros(ica_res.ica_params.num_ics,D.ntrials*D.nsamples);
-tc_full(:,~bad_timepoints) = ica_res.tc;
-tc_full(:,bad_timepoints)  = (subdata'*pinv(sm_full(chan_inds,:)'))';
-
-ica_res.sm = sm_full;
-ica_res.tc = tc_full;
-
-end
-
-
-function res = remove_bad_components(S)
-%%%%%%%%%%%%%%%%%%%%%%%% LOAD AND PREPARE MEG DATA %%%%%%%%%%%%%%%%%%%%%%%%
-
-D = spm_eeg_load(S.D);
-D=D.montage('switch',0);
-
-if strcmp(S.modality,'EEG')
-    chantype = 'EEG';
-    modality = 'EEG';
-    use_montage = 1;
-else
-    chantype = {'MEG','MEGANY'};
-    modality = 'MEG';
-    use_montage = 1;
-end
-
-% Good channels:
-chan_inds = indchantype(D,chantype, 'GOOD');
-
-badchannels    = D.badchannels;
-bad_components = unique(S.ica_res.bad_components);
-megdata        = D(chan_inds,:,:);
-megdata        = reshape(megdata,size(megdata,1),[]);
-
-%%%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS USING MONTAGE %%%%%%%%%%%%%%%%%%%
-
-sm = S.ica_res.sm;
-tc = S.ica_res.tc;
-
-tra = eye(D.nchannels);
-
-if use_montage
-    dat_inv = pinv_plus(megdata', S.ica_res.ica_params.num_ics);
-    tra(chan_inds,chan_inds) = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(chan_inds,bad_components)'))';
-    
-    % Set up montage with full channel list:
-    montage             =  [];
-    montage.tra         =  tra;
-    montage.labelnew    =  D.chanlabels;
-    montage.labelorg    =  D.chanlabels;
-    
-    % Exclude channels that are not MEEG:
-    xchans = setdiff(1:D.nchannels,indchantype(D,chantype));
-    montage.tra(xchans,:)    = [];
-    montage.tra(:,xchans)    = [];
-    montage.labelorg(xchans) = [];
-    montage.labelnew(xchans) = [];
-    
-    [~,indx] = ismember(montage.labelnew,D.sensors(modality).label);
-    
+    % Good channels:
+    chan_inds = indchantype(D,chantype, 'GOOD');
     tmp = struct(D);
-    montage.channels = tmp.channels(indx);
-    
-    montage.name = S.montagename;
-    
-    % this is adding a montage for the raw data
-    
-    nMontages=D.montage('getnumber');
+    channels = tmp.channels(chan_inds);
+
+    badchannels    = D.badchannels;
+    bad_components = unique(D.ica.bad_components);
+    megdata        = D(chan_inds,:,:);
+    megdata        = reshape(megdata,size(megdata,1),[]);
+
+    %%%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS USING MONTAGE %%%%%%%%%%%%%%%%%%%
+
+    sm = D.ica.sm;
+    tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
+
+    tra = eye(D.nchannels);
+    dat_inv = pinv_plus(megdata', D.ica.params.num_ics);
+    tra(chan_inds,chan_inds) = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(chan_inds,bad_components)'))';
+    labels = D.chanlabels;
+
+    xchans = setdiff(1:D.nchannels,indchantype(D,chantype));
+    tra(xchans,:)    = [];
+    % tra(:,xchans)    = [];
+    labels(xchans) = [];
    
-    Dclean = D.montage('add', montage);
-    
-    % at the moment, we do still write out another, identical file with
-    % only the clean data. This might be changed in the future.
-    Dclean = Dclean.montage('switch', nMontages + 1);
-    Dclean.save;
-    
-    S_montage                =  [];
-    S_montage.D              =  D; %fullfile(D.path,D.fname);
-    S_montage.montage        =  montage;
-    S_montage.keepothers     =  true;
-    S_montage.updatehistory  =  1;
-    
-    Dmontaged = osl_montage(S_montage);
-    %
-    %     % rename montaged file
-    S_copy         = [];
-    S_copy.D       = Dmontaged;
-    S_copy.outfile = fullfile(D.path, ['A' D.fname]);
-    Dclean = spm_eeg_copy(S_copy);
-    %
-    Dmontaged.delete;
-    %end
-    
-else
-    error('Not supported');
-    [dir,nam,~] = fileparts(fullfile(D.path,D.fname));
-    fname_out = [dir '/A' nam '.dat'];
-    meg_dat_clean = megdata-(sm(chan_inds,bad_components)*tc(bad_components,:));
-    
-    Dclean=clone(D,fname_out,size(D));
-    Dclean(chan_inds,:) = meg_dat_clean;   % changed by DM
-    Dclean.save;
-end
-
-
-res = fullfile(Dclean.path, Dclean.fname);
-
+    D = add_montage(D,tra,S.montagename,labels,channels)
+   
 end
 
 

@@ -520,47 +520,31 @@ for subi=1:length(opt.sessions_to_do),
             africa_dir=fullfile(opt.dirname,'africa');
             mkdir(africa_dir);
 
-            S=opt.africa;
+            %% ADAPTER CODE FOR NEW CHANGES TO AFRICA
+            S = struct;
+            S.do_ica = opt.africa.todo.ica;
+            S.do_ident = opt.africa.todo.ident;
+            S.do_remove = opt.africa.todo.remove;
+            S.precompute_topos = opt.africa.precompute_topos;
+            S.used_maxfilter = opt.africa.used_maxfilter;
+            S.ident_params = opt.africa.ident;
+            S.artefact_channels = S.ident_params.artefact_chans;
+            S.ident_func = S.ident_params.func;
+            S.do_plots = true;
 
             spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
-            S.D=spm_file;
-            S.logfile = 0;
+            D = spm_eeg_load(D);
+            [D, figs]=osl_africa(D,S);
+            D.save()
 
-            S.ica_file = fullfile(africa_dir, strtok(spm_files_basenames{subnum},'.'));
-
-            S.do_plots=1;
-            S.todo = opt.africa.todo;
-            S.precompute_topos=opt.africa.precompute_topos;
-
-            [spm_files_new{subnum}, fig_handles, fig_names, fig_titles, S]=osl_africa(S);
-
-            opt_results.ica_file=S.ica_file;
-
-            report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
+            report=osl_report_set_figs(report,figs.names,figs.handles,figs.titles);
             report=osl_report_print_figs(report);
 
-            % delete obsolete spm file
-            spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];
-            Dold=spm_eeg_load(spm_file_old);
-
-            % don't delete pre-africa file as it may be needed for rerunning
-            % africa
-
-            %if (opt.cleanup_files == 2)
-            %    if opt.africa.todo.remove ~= 0;
-            %        % Don't delete the old file if we haven't made a new one yet
-            %        Dold.delete;
-            %    end
-            %end;
-
-            if opt.africa.todo.remove
-                spm_files_basenames{subnum}=['A' spm_files_basenames{subnum}];
-            else
-                spm_files_basenames{subnum}=[spm_files_basenames{subnum}];
+            if ~opt.africa.todo.remove
                 warning('AFRICA has been run, but bad components have not been removed');
             end
         end
-
+            
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Mark bad segments
         if(opt.bad_segments.do)
