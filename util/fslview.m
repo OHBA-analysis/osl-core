@@ -103,7 +103,7 @@ switch anatomical
         anatomical_fname=anatomical;    
 end;
 
-if ~system('hash fslview_deprecated') % If fslview_deprecated is on the path, use it
+if ~system('hash fslview_deprecated 2>/dev/null') % If fslview_deprecated is on the path, use it
   fslview_cmd = 'fslview_deprecated';
 else
   fslview_cmd = 'fslview';
