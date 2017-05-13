@@ -474,6 +474,11 @@ function D = oslview(D)
 			return;
 		end
 
+		if strcmp(get(MainFig,'SelectionType'),'extend')
+			mark_bad
+			return
+		end
+
 		drag = struct;
 		drag.initial_point = get(MainWindow,'CurrentPoint');
 		drag.initial_xlim = get(MainWindow,'XLim');
@@ -531,8 +536,22 @@ function D = oslview(D)
 		t_current = get(MainWindow,'CurrentPoint');
 		t_current = t_current(1,1);
 		t_window	= get(MainWindow,'xlim');
-		
-		if strcmp(get(ContextMenuM.MarkEvent,'label'),'Mark Event') %	Create new event
+
+		if isempty(varargin)
+			if any(cellfun(@(x) ~sum(sign(x-t_current(1))),BadEpochs))
+				new_event = false;
+			else
+				new_event = true;
+			end
+		else
+			if strcmp(get(ContextMenuM.MarkEvent,'label'),'Mark Event')
+				new_event = true;
+			else
+				new_event = false;
+			end
+		end
+
+		if new_event %	Create new event
 			% if position of marker is within the first or last 1% of the window
 			% then assume it was meant to be at the start or end.
 			if t_current < t_window(1) + 0.01*diff(t_window)
@@ -549,7 +568,7 @@ function D = oslview(D)
 				calcPlotStats
 				redraw
 			end		
-		elseif strcmp(get(ContextMenuM.MarkEvent,'label'),'Remove Event')	%	Remove existing event
+		else	%	Remove existing event
 			BadEpochs(cellfun(@(x) ~sum(sign(x-t_current)),BadEpochs)) = [];
 			calcPlotStats
 			redraw
