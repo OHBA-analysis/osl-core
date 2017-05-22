@@ -236,7 +236,23 @@ end
 %% Normalise modalities using, e.g., mean or smallest eigenvalues
 %% calculated using good channels and good trials, and over all woi
 
-if ~strcmp(source_recon_sess.normalise_method,'none'),
+if strcmp( source_recon_sess.normalise_method,'zscore');
+    % Z-score samples within channels and trials
+    [dirname, fname, ext] = fileparts(D.fullfile);
+    Dnew = D.clone( fullfile(dirname,['M' fname ext]) );
+
+    dat = D(:,:,:);
+    for jj = 1:size(dat,3)
+        dat(:,:,jj) = zscore(dat(:,:,jj),[],2);
+    end
+    Dnew(:,:,:) = dat;
+
+    D = Dnew;
+    chanind=indchantype(D,modality_meeg,'GOOD');
+    pcadim=length(chanind);
+    normalisation=1;
+
+elseif ~strcmp(source_recon_sess.normalise_method,'none'),
     
     disp('Establish dimensionality and Normalising modalities...');
     S2=source_recon_sess;
