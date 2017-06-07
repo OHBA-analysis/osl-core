@@ -506,11 +506,17 @@ for subi_todo=1:length(first_level.sessions_to_do),
     % i.e. following any TF transform and time windowing
     % note that this will ony contain one freq band as we are looping
     % over freq bands
+    %
+    % We need to be careful to preseve both the real and imaginary parts of
+    % complex data if necessary. They are stored in separate files for the
+    % moment and will be separately reconstructed from the beamformer
+    % weights.
+
     Sc=[];
     Sc.D = D;
     [path nm ext]=fileparts(fullfile(D));
     Sc.newname = [path '/TF' nm ext];
-    Sc.newdata = sensor_data_tf;
+    Sc.newdata = real(sensor_data_tf);
     Sc.time = tf_out_times;
     Sc.frequencies = first_level_results.frequencies;
     Sc.remove_montages=0;
@@ -527,6 +533,21 @@ for subi_todo=1:length(first_level.sessions_to_do),
         end
     end
     
+    if ~isreal(sensor_data_tf)
+        Sc.newname = [path '/TFimag' nm ext];
+        Sc.newdata = imag(sensor_data_tf);
+        D_tf_imag = osl_change_spm_eeg_data( Sc );
+
+        if D_tf_imag.nfrequencies==1
+            D_tf_imag(classchanind_tf,:,1)=D(classchanind,D_time_indices(tf_time_indices_into_D_times),1);
+        else
+            for ff = 1:D_tf_imag.nfrequencies
+                D_tf_imag(classchanind_tf,ff,:,1)=permute(D(classchanind,D_time_indices(tf_time_indices_into_D_times),1),[1 3 2]);
+            end
+        end
+    else
+        D_tf_imag = [];
+    end
     clear sensor_data_tf;
         
     %%%%%%%%%%%%%%%%
@@ -655,11 +676,21 @@ for subi_todo=1:length(first_level.sessions_to_do),
         S2.index=first_level_results.mask_indices_in_source_recon(indind);     
 
         if source_recon_results.is_sensor_space==1
-            dat_tf = permute(S2.D(indind,:,:,1),[3 2 1 4]);
+            dat_tf = permute(S2.D(indind,:,:,1),[3 2 1 4]); %[1 3 4 2]
         else
             [dat_tf S2] = osl_get_recon_timecourse( S2 );
+            if isa(D_tf_imag,'meeg')
+                Sc.D = D_tf_imag;
+                [tmp ~] = osl_get_recon_timecourse( S2 );
+                dat_tf = dat_tf + 1i.*tmp;
+                clear tmp
+            end
             % dat_tf needs to trials x time:
-            dat_tf=permute(dat_tf,[2 1 3]);
+            if isempty(S2.D.nfrequencies)
+                dat_tf=permute(dat_tf,[2 1 3]); %[2 1 3]
+            else
+                dat_tf=permute(dat_tf,[3 2 1]);
+            end
         end
         
         first_level_results.pseudo_zstat_var(indind)=var(dat_tf(:,1));
