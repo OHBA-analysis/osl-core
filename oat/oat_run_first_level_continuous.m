@@ -342,8 +342,16 @@ for subi_todo=1:length(first_level.sessions_to_do),
             first_level.design_matrix=ones(1,length(D_time_indices));
         end;
     end;
-    
-    if strcmp(first_level.design_matrix,'avg')
+
+    if subi_todo == 1
+        if  strcmp(first_level.design_matrix,'avg')
+            avg_design_matrix = true;
+        else
+            avg_design_matrix = false;
+        end
+    end
+
+    if avg_design_matrix == true
         disp('Using single constant regressor as design matrix');
         
         if post_tf_ds_factor~=1
@@ -390,6 +398,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
         end;
     end;
 
+    processed_design_matrix2 = zeros(size(processed_design_matrix,1),length(tf_time_indices_into_D_times));
     for pp=1:size(processed_design_matrix,1),
         processed_design_matrix2(pp,:)=processed_design_matrix(pp,tf_time_indices_into_D_times);
     end;   
