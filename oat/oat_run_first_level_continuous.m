@@ -162,6 +162,8 @@ for subi_todo=1:length(first_level.sessions_to_do),
                 clear S;
             else
                 if first_level.parcellation.do 
+
+                    first_level_results.gridstep=source_recon_results.gridstep;
     
                     Dold=D;
                     S=first_level.parcellation;
