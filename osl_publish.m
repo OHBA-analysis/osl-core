@@ -24,14 +24,14 @@ function osl_publish(filename,evalCode,stylesheet,maxOutputLines)
     end
 
 	if nargin < 3 || isempty(stylesheet)
-		stylesheet = fullfile(osldir,'osl-core','docs','mxdom2simplehtml_jekyll.xsl');
+		stylesheet = fullfile(osldir,'osl-docs','mxdom2simplehtml_jekyll.xsl');
     end
 
 	if nargin < 2 || isempty(evalCode)
 		evalCode = true;
 	end
 
-	output_html = publish(filename,'evalCode',evalCode,'stylesheet',stylesheet,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'),'maxOutputLines',maxOutputLines);
+	output_html = publish(filename,'evalCode',evalCode,'stylesheet',stylesheet,'format','html','outputDir',fullfile(osldir,'osl-docs','matlab'),'maxOutputLines',maxOutputLines);
 
     %   To check locally, with standard MATLAB html formatting
     %	output_html = publish(filename,'evalCode',evalCode,'format','html','outputDir',fullfile(osldir,'osl-core','docs','matlab'),'maxOutputLines',maxOutputLines);
