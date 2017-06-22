@@ -3,58 +3,26 @@ function [D,figs,S] = osl_africa(D,varargin)
     % performs ICA denoising of MEG data using either semi-manual or automated
     % identification artefact components.
     %
-    % [fname_out,fig_handles,fig_names,fig_titles,S] = osl_africa(S)
-    %
-    % REQUIRED INPUTS:
-    %
-    % D           - SPM MEG object filename
-    %
-    % OPTIONAL INPUTS
-    %
-    % S.todo        - structure with fields:
-    %                   .ica    - [0/1] to run ica decomposition
-    %                   .ident  - [0/1] to run artefact identification
-    %                   .remove - [0/1] to run artefact removal
-    %
-    % S.ident       - structure with fields:
-    %                   .func - function handle to identification function
-    %                           e.g. @identify_artefactual_components_manual
-    %                   .{extra fields depending on .func}
-    %
-    % S.modality    - modality to use, default = 'MEG'
-    %
-    % S.do_plots    - produce diagnostic plots, default = 0
-    %
-    % S.used_maxfilter - [0/1] if Maxfilter has been used, default = 0
-    %
-    % S.precompute_topos   - pre-compute and save IC spatial map topos after ica is computed for use in ident
+    % INPUTS:
+    % - D           - SPM MEG object filename
+    % - varargin    - key-value pairs, see inputParser below
     %
     % Romesh Abeysuriya 2017
-    % Written by Henry Luckhoo and Adam Baker
-
-    % note: Behaviour of osl_africa has changed as from 03/29/17. The idea is to
-    % ecnourage people to use online montage rather then unnecessarily creating
-    % copies of files. Since ICA is a linear operator, these changes can be
-    % nicely stored in an online montage.
-    % if you wanna keep the old bevhaior, do
-    % D.copy
-
-    % S.montagename - name of the montage after ICA pruning of artifactual
-    % components
-    % defaults to 'AFRICA denoised data'
+    % Robert Becker 2017
+    % Written by Henry Luckhoo and Adam Baker (pre-2017)
 
     arg = inputParser;
-    arg.addParameter('modality','MEG'); 
-    arg.addParameter('montagename','AFRICA denoised data'); 
-    arg.addParameter('do_plots',false); 
-    arg.addParameter('precompute_topos',true);
-    arg.addParameter('do_ica',~isfield(D,'ica')); % By default, use existing ICA plus topos
-    arg.addParameter('do_ident',true); 
-    arg.addParameter('do_remove',true); 
-    arg.addParameter('artefact_channels',{}); 
+    arg.addParameter('modality','MEG'); % modality to use, default = 'MEG'
+    arg.addParameter('montagename','AFRICA denoised data'); % New montage will be added with this name
+    arg.addParameter('do_plots',false); % produce diagnostic plots, default = 0
+    arg.addParameter('precompute_topos',true); % pre-compute and save IC spatial map topos after ica is computed for use in ident
+    arg.addParameter('do_ica',~isfield(D,'ica')); % Do ICA decomposition step
+    arg.addParameter('do_ident',true); % Do identification step
+    arg.addParameter('do_remove',true); % Do removal step
+    arg.addParameter('artefact_channels',{}); % Passed to ident_func
     arg.addParameter('ident_func',@identify_artefactual_components_manual);
     arg.addParameter('ident_params',struct); % Extra parameters for ident_func
-    arg.addParameter('used_maxfilter',false);
+    arg.addParameter('used_maxfilter',false); % Reduce ICA dimension if maxfilter was used, 
     arg.addParameter('ica_params',struct); % ICA parameters passed to run_sensorspace_ica
     arg.parse(varargin{:});
     S = arg.Results; % Result of parsing arguments is essentially the settings struct
