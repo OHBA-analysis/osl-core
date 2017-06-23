@@ -8,6 +8,8 @@ function [ mni_res ] = get_nii_spatial_res( mask_fname )
 
     res=[];
 
+    assert(exist(mask_fname,'file')~=0,'File %s not found',mask_fname);
+
     res = runcmd(['fslval ' mask_fname ' pixdim1']);
     mni_res(1)=str2double(res);
     assert(isfinite(mni_res(1)));
