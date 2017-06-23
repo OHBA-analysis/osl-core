@@ -12,8 +12,6 @@ function  ortho_overlay_act( S )
 % or S.range (sets range directly)
 % S.add_colorbar
 
-OSLDIR = getenv('OSLDIR');
-
 set(gcf,'Color','k');
 
 act_cmapname='red2yellow';
@@ -50,7 +48,7 @@ if mni_res~=S.gridstep,
     [pth name ext]=fileparts(fname);
     new_fname=[pth '/' name '_' num2str(S.gridstep) 'mm' '.' ext];
     
-    tmp = osl_resample_nii(fname, new_fname, S.gridstep, S.interp,[osldir '/std_masks/MNI152_T1_' num2str(S.gridstep) 'mm_brain_mask.nii.gz' ],0);
+    tmp = osl_resample_nii(fname, new_fname, S.gridstep, S.interp,fullfile(osldir,'std_masks',['MNI152_T1_' num2str(S.gridstep) 'mm_brain_mask.nii.gz'],0));
     
     if can_delete_fname,
         runcmd(['rm -f ' fname]);
@@ -66,7 +64,7 @@ end;
 ind = osl_mnicoords2ind(S.mni_coord, mni_res);
 ind=ind+1;
 map=read_avw(fname);
-bgmap=read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(mni_res) 'mm_brain']);
+bgmap=read_avw(fullfile(osldir,'std_masks',['MNI152_T1_' num2str(mni_res) 'mm_brain.nii.gz']));
 map=mean(map,4); 
 x1=squash(abs(map),abs(map));
 

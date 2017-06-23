@@ -89,7 +89,7 @@ if(isfield(Sin,'oat')),
     end; %full path of directory where stats will be stored
    
     if Sin.stats.level==1,
-        stdbrainmask_fname=[Sin.oat.source_recon.dirname '/' Sin.oat.first_level.name '_mask'];
+        stdbrainmask_fname=[Sin.oat.source_recon.dirname '/' Sin.oat.first_level.name '_mask.nii.gz'];
     elseif Sin.stats.level==2,
         stdbrainmask_fname=[Sin.oat.source_recon.dirname '/' Sin.oat.first_level.name '_' Sin.oat.subject_level.name '_' Sin.oat.group_level.name '_mask.nii.gz'];
     else
