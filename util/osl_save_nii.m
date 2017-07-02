@@ -3,7 +3,7 @@ function osl_save_nii(vol,res,xform,fname)
 	%
 	% INPUTS
 	% vol - volume matrix to save to nii file
-	% res - Spatial resolution e.g. '2' if same in all dimensions, or '[2 2 2]' to specify independently
+	% res - Spatial resolution
 	% fname - File name of nii file to save
 	% xform - 4x4 matrix. 
 	%
@@ -11,12 +11,24 @@ function osl_save_nii(vol,res,xform,fname)
 	%
 	% Romesh Abeysuriya 2017
 	
-    if length(res)==1
-        save_avw(vol,fname,'d',[res res res 1]);
-    else
-        save_avw(vol,fname,'d',[res 1]); %MWW
-    end
+	% Resolution can be specified in 3 ways
+	% - Single number = same in all dimensions, with time resolution of 1
+	% - 3 numbers, different in all dimensions, time resolution of 1
+	% - 4 numbers, complete resolution specification
+	
+	switch length(res)
+		case 1
+			r = [res res res 1];
+		case 3
+			r = [res 1];
+		case 4
+			r = res;
+		otherwise
+			error('Unknown resolution - should be 1, 3, or 4 elements long');
+	end
 
+    save_avw(vol,fname,'d',r);
+ 
     runcmd(['fslorient -setqform ' num2str(reshape(xform',1,16)) ' ' fname])
     runcmd(['fslorient -setsform ' num2str(reshape(xform',1,16)) ' ' fname])
 	runcmd(['fslorient -setsformcode 0 ' fname])
