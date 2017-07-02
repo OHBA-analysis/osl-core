@@ -219,8 +219,8 @@ S2.resamp_gridstep=oat.source_recon.gridstep;
 mni_brain=[osldir '/std_masks/MNI152_T1_' num2str(S2.resamp_gridstep) 'mm_brain.nii.gz'];
 
 % Inspect the results of an OAT contrast in FSLVIEW
-contrast=;
-runcmd(['fslview ' mni_brain ' ' [statsdir '/tstat' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm'] ' &']);
+% contrast=;
+% runcmd(['fslview ' mni_brain ' ' [statsdir '/tstat' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm'] ' &']);
 
 %% VIEW RESULTS IN FLSVIEW
 %
