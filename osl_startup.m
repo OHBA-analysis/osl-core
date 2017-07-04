@@ -1,17 +1,17 @@
-function osl_startup( osldir )
+function osl_startup( osl_root )
     % Initialize OSL
-    % osldir is the folder containing 'osl-core'
+    % osl_root is the folder containing 'osl-core'
     
-    if nargin < 1 || isempty(osldir) 
+    if nargin < 1 || isempty(osl_root) 
         f = fileparts(mfilename('fullpath'));
-        osldir = fileparts(f);
+        osl_root = fileparts(f);
     end
     
-    if ~exist(osldir,'dir')
-        error(sprintf('Specified OSL directory does not exist: %s',osldir));
+    if ~exist(osl_root,'dir')
+        error(sprintf('Specified OSL directory does not exist: %s',osl_root));
     end
 
-    setenv('OSLDIR',osldir)
+    setenv('OSLDIR',osl_root)
 
     % does no path-changing if running in deployed mode (gw '13).
     if ~isdeployed 
@@ -23,8 +23,8 @@ function osl_startup( osldir )
         restoredefaultpath;
 
         % If anything goes wrong, osl_startup.m should still be left on the path
-        addpath(fullfile(osldir,'osl-core'))
-        addpath(fullfile(osldir,'osl-core','util'))
+        addpath(fullfile(osl_root,'osl-core'))
+        addpath(fullfile(osl_root,'osl-core','util'))
 
         for j = 1:length(oldpaths)
             if strfind(oldpaths{j},matlabroot)
@@ -51,23 +51,23 @@ function osl_startup( osldir )
     initialise_spm()
 
     % Add OHBA shared libraries
-    if ~exist(fullfile(osldir,'ohba-external'))
-        fprintf(2,'Could not find ''%s''\n',fullfile(osldir,'ohba-external'));
+    if ~exist(fullfile(osl_root,'ohba-external'))
+        fprintf(2,'Could not find ''%s''\n',fullfile(osl_root,'ohba-external'));
         error('ohba-external is missing. Clone https://github.com/OHBA-analysis/ohba-external into the same directory as osl-core');
     end
 
-    addpath(fullfile(osldir,'ohba-external'));
+    addpath(fullfile(osl_root,'ohba-external'));
     ohba_external_startup
 
-    addpath(fullfile(osldir,'GLEAN'));
-    addpath(genpath_exclude(fullfile(osldir,'HMM-MAR'),{'.git','.svn'}));
-    addpath(fullfile(osldir,'MEG-ROI-nets'));
+    addpath(fullfile(osl_root,'GLEAN'));
+    addpath(genpath_exclude(fullfile(osl_root,'HMM-MAR'),{'.git','.svn'}));
+    addpath(fullfile(osl_root,'MEG-ROI-nets'));
 
     % Ensure osl-core directories gets priority in path by adding it last
-    addpath(genpath_exclude(fullfile(osldir,'osl-core'),{'.git','.svn','std_masks','docs'}))
-    addpath(osldir)
+    addpath(genpath_exclude(fullfile(osl_root,'osl-core'),{'.git','.svn','std_masks','docs'}))
+    addpath(osl_root)
 
-    rmpath(fullfile(osldir,'osl-core','spm-changes')); % These are already copied into spm
+    rmpath(fullfile(osl_root,'osl-core','spm-changes')); % These are already copied into spm
 
 end
 
