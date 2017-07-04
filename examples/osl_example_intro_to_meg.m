@@ -183,7 +183,13 @@ runcmd('fsleyes %s',abspath('mri_scan_brain.nii.gz'))
 % the fiducial locations and the head shape data points with the MRI scan. We have software to automatically match 
 % them up. We can view the result of this process to check that the algorithm performed correctly 
 
-D = spm_eeg_load(abspath('rhino_example'))
+D = spm_eeg_load(abspath('rhino_example'));
+D.inv{1}.mesh.sMRI = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon.nii');
+D.inv{1}.mesh.def = fullfile(osldir,'example_data','coreg_example','y_subject1_struct_canon.nii');
+D.inv{1}.mesh.tess_ctx = fullfile(osldir,'example_data','coreg_example','subject1_struct_canoncortex_8196.surf.gii');
+D.inv{1}.mesh.tess_scalp = fullfile(osldir,'example_data','coreg_example','subject1_struct_canonscalp_2562.surf.gii');
+D.inv{1}.mesh.tess_oskull = fullfile(osldir,'example_data','coreg_example','subject1_struct_canonoskull_2562.surf.gii');
+D.inv{1}.mesh.tess_iskull = fullfile(osldir,'example_data','coreg_example','subject1_struct_canoniskull_2562.surf.gii');
 rhino_display(D);
 
 %% Beamforming
