@@ -11,6 +11,12 @@ function osl_startup( osl_root )
         error(sprintf('Specified OSL directory does not exist: %s',osl_root));
     end
 
+    % Back up original path
+    backup_path = path;
+    fid = fopen(fullfile(osl_root,'path_backup.txt'),'w');
+    fprintf(fid,backup_path);
+    fclose(fid);
+
     setenv('OSLDIR',osl_root)
 
     % does no path-changing if running in deployed mode (gw '13).
