@@ -17,13 +17,13 @@ function osl_shutdown
 		osl_root = getenv('OSLDIR');
 	end
 
-	% If path backup exists, read it
-	if exist(fullfile(osl_root,'path_backup.txt'),'file')
-		fid = fopen(fullfile(osl_root,'path_backup.txt'),'r');
-		backup_path = fgetl(fid);
-		path(backup_path);
-		fclose(fid);
-		delete(fullfile(osl_root,'path_backup.txt')); % Delete the backup file now that the path has been reset
+	% If path backup exists, use it and then clear it
+	s = osl_conf.read();
+	if isfield(s,'PATH_BACKUP') && ~isempty(s.PATH_BACKUP)
+		path_backup = s.PATH_BACKUP;
+		s.PATH_BACKUP = '';
+		osl_conf.write(s);
+		path(path_backup);
 	end
 
 	% It's concievable that the backup path still contains OSL directories, if osl_startup

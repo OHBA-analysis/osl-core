@@ -12,10 +12,7 @@ function osl_startup( osl_root )
     end
 
     % Back up original path
-    backup_path = path;
-    fid = fopen(fullfile(osl_root,'path_backup.txt'),'w');
-    fprintf(fid,backup_path);
-    fclose(fid);
+    path_backup = path;
 
     setenv('OSLDIR',osl_root)
 
@@ -74,6 +71,11 @@ function osl_startup( osl_root )
     addpath(osl_root)
 
     rmpath(fullfile(osl_root,'osl-core','spm-changes')); % These are already copied into spm
+
+    % Save backed up path
+    s = osl_conf.read();
+    s.PATH_BACKUP = path_backup;
+    osl_conf.write(s);
 
 end
 
