@@ -42,6 +42,18 @@ Run
 
 	osl_startup
 
+### Configuration options
+
+When OSL is first started, a configuration file `osl.conf` will be written. This file defines the following variables
+
+- `FSLDIR` - the root directory for FSL
+- `FSLBIN` - the `bin` directory for FSL. On some platforms, this is not simply `FSLDIR/bin`
+- `FSLLIB` - the `lib` directory for FSL
+- `WORKBENCH` - the root directory for Workbench (i.e. the folder containing either `bin_macosx64` or `bin_linux64`)
+- `FREESURFER` - root directory for Freesurfer (currently not used)
+- `SPMDIR` - root directory for SPM, use this to specify a version of SPM12 (otherwise, the included `OSLDIR/spm12` will be used)
+- `PATH_BACKUP` - automatically set, this is a snapshot of the Matlab path when `osl_startup` is called, which will be restored if `osl_shutdown` is run
+
 ### Troubleshooting
 
 ##### FSL paths
