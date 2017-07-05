@@ -8,7 +8,7 @@ function workbench_initialize()
 		osl_conf.write(s);
 	end
 
-	if isempty(s.WORKBENCH) && exist(s.WORKBENCH) && isempty(strfind(getenv('PATH'),s.WORKBENCH))
+	if ~isempty(s.WORKBENCH) && exist(s.WORKBENCH) && isempty(strfind(getenv('PATH'),s.WORKBENCH))
 		if ismac
 			workbench_path = fullfile(s.WORKBENCH,'bin_macosx64');
 		else
