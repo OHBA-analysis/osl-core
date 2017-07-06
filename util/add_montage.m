@@ -39,7 +39,9 @@ function D = add_montage(D,W,name,labels,channels)
 	end
 
 	if isempty(channels)
-		newMontage      = rmfield(newMontage, 'channels');
+        if isfield(newMontage,'channels')
+            newMontage      = rmfield(newMontage, 'channels');
+        end
 	else
 		newMontage.channels = channels;
 	end
