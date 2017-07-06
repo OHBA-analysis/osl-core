@@ -90,6 +90,9 @@ function initialise_spm
 	filelist{end+1} ='osl-core/spm-changes/private/ft_singleplotTFR.m';
 	targetdir{end+1}='external/fieldtrip/';
 
+	filelist{end+1} ='osl-core/spm-changes/private/functionSignatures.json';
+	targetdir{end+1}='';
+
 	for k=1:length(filelist),
 	    copyfile( fullfile(osldir,filelist{k}), fullfile(SPMDIR,targetdir{k}), 'f' );
 	end

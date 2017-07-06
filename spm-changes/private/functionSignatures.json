@@ -1,0 +1,5 @@
+{"spm_eeg_load":
+{
+ "inputs":   [{"name":"P","type":"filepath"}]
+}
+}
