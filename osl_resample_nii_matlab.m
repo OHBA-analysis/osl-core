@@ -18,7 +18,7 @@ function osl_resample_nii_matlab(input_nii,output_fname,output_mask,varargin)
     % Romesh Abeysuriya 2017
     
     arg = inputParser;
-    arg.addParameter('interptype','nearestneighbour'); % Anything supported by griddedInterpolant e.g. linear, cubic
+    arg.addParameter('interptype','nearest'); % Anything supported by griddedInterpolant e.g. linear, cubic
     arg.addParameter('enforce_mask',true); % assign 0 to any values where the output mask is zero
     arg.addParameter('force_positive',false); % assign 0 to any negative values. Helpful if resampling a positive matrix where extrapolation could potentially produce negative values
     arg.parse(varargin{:});
