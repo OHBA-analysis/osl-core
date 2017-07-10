@@ -80,10 +80,10 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical)
     assert(numel(unique(res)) == 1,'Spatial maps must be of equal sizes')
     
     if isempty(anatomical)
-        anatomical_fname = fullfile(osldir,'std_masks',sprintf('MNI152_T1_%dmm_brain',res(1)));  
+        anatomical = fullfile(osldir,'std_masks',sprintf('MNI152_T1_%dmm_brain',res(1))); 
     end
 
     % Current version of fsleyes returns 0 even if an error occurred. So this command
     % below will fail silently. Hopefully this will be fixed upstream later on
-    runcmd('fsleyes %s %s &',anatomical_fname,file_string);
+    runcmd('fsleyes %s %s &',anatomical,file_string);
      
