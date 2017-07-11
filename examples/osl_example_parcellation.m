@@ -309,3 +309,18 @@ p2 = p.merge_parcels({[1 2],[3 4]});
 p2.labels{1} % The first parcel is now ROI 5
 p2.labels{end} % The last parcel is a composite of ROIs 3 and 4
 
+%%
+% Another operation that may be useful is splitting parcels. Currently this can be performed using
+% k-means clustering of the voxel coordinates. To split parcels, use the |split_parcels()| method.
+% The first argument is a list of parcels to split, and the second argument is the number of 
+% parcels to split it into. For example
+p2 = p.split_parcels([1 2],[3 4]);
+
+%%
+% will split the first parcel into 3 parts, and the second parcel into 4 parts. You can 
+% specify a scalar number of splits, which will be applied to every parcel, or you can leave
+% the parcel list empty which will operate on all parcels e.g.
+p3 = p.split_parcels([],2);
+
+%%
+% will split every parcel into two parts. The parcel names will be updated to reflect the splits.
