@@ -210,7 +210,7 @@ colorbar
 title('Envelope correlation after leakage correction and downsampling to 10Hz')
 
 figure
-imagesc(corr(resample(Hen_lc',1,D.fsample*10))+diag(nan(38,1)))
+imagesc(corr(resample(Hen_lc',1,D.fsample))+diag(nan(38,1)))
 axis square
 colorbar
 title('Envelope correlation after leakage correction and downsampling to 1Hz')
