@@ -1,29 +1,30 @@
-### OSL-CORE
+# OSL - OHBA SOFTWARE LIBRARY
 
-OHBA software library
+To set up OSL, follow the directions below:
 
-### Dependencies
+### Prerequisites
 
-- Matlab R2014b and newer fully supported
-- Matlab R2012b-R2014a have basic testing for processing, known graphics incompatibilities
+In order to use OSL, you must have FSL already installed - see [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation). 
 
-### Setup
+When you start up OSL for the first time, a file `osl.conf` will be created in your OSL directory. Among other settings, this file contains a list of locations for components of FSL, specifying where the binaries, libraries, and Matlab utilities are located. By default, OSL will look in some standard locations for FSL and use those if FSL is present. If FSL is in an unexpected location, an error will be raised, and you will need to specify the location of FSL manually. Edit `osl.conf` to specify the directories on your system. 
 
-For turnkey operation, download a `.zip` distribution release of OSL.
+You can also use this facility to specify which version of FSL you want to use, if you have multiple versions of FSL on your system.
 
-To set up from GitHub, perform the following
+There are some OSL functions that rely on Workbench. As with FSL, after you have run OSL for the first time,  you can edit `osl.conf` to specify the location of Workbench on your system.
 
-- Clone this repository
-- Clone `https://github.com/OHBA-analysis/ohba-external`
-- Clone `https://github.com/OHBA-analysis/HMM-MAR`
-- Clone `https://github.com/OHBA-analysis/GLEAN`
-- Clone `https://github.com/OHBA-analysis/MEG-ROI-nets`
-- Download `spm12` [here](http://www.fil.ion.ucl.ac.uk/spm/software/spm12/)
-- Download OSL standard masks etc. from the OSL wiki
+##### MATLAB version
 
-Your directory structure should then look like
+Matlab R2014b and newer are fully supported. Matlab R2012b-R2014a have basic testing for processing, but there are known graphics incompatibilities. We have not tested functionality for versions of Matlab below R2012b.
 
-	- some_directory (OSLDIR)
+##### SPM12 version
+
+OSL includes its own version of SPM12 because we have made some changes to functions within SPM. Some functions in OSL may not work correctly if you use an unsupported version of SPM. You can test different versions of SPM by changing the `SPMDIR` specified in `osl.conf`
+
+### Getting started
+
+You should have the following directory structure
+
+	- osl
 		- osl-core
 		- ohba-external
 		- HMM-MAR
@@ -34,15 +35,21 @@ Your directory structure should then look like
 		- std_masks
 		- parcellations
 
-Add the `osl-core` folder to your path e.g.
+To start using OSL, add the `osl-core` folder to your path, and run `osl_startup`.
 
-	addpath('some_directory/osl-core')
+We refer to the 'osl' folder above as `OSLDIR`, which you can identify in Matlab by typing `osldir` after initializing OSL.  
 
-Run
+To check if there are any compatibility issues, add the `osl-core` folder to your path and run `osl_check_installation`
 
-	osl_startup
+#### Example data
 
-### Configuration options
+To run the tutorial examples, download the example data tar file, and extract it. Place the resulting folder inside your OSL directory, so that you have `osl/example_data`
+
+#### Shutting down OSL
+
+Sometimes you may wish to use OSL for part of your pipeline, but then switch back to something else e.g. FieldTrip. When you run `osl_startup`, your Matlab path is automatically backed up. If you run `osl_shutdown`, your path will be restored. 
+
+#### Configuration options
 
 When OSL is first started, a configuration file `osl.conf` will be written. This file defines the following variables
 
@@ -53,6 +60,14 @@ When OSL is first started, a configuration file `osl.conf` will be written. This
 - `FREESURFER` - root directory for Freesurfer (currently not used)
 - `SPMDIR` - root directory for SPM, use this to specify a version of SPM12 (otherwise, the included `OSLDIR/spm12` will be used)
 - `PATH_BACKUP` - automatically set, this is a snapshot of the Matlab path when `osl_startup` is called, which will be restored if `osl_shutdown` is run
+
+#### In-place upgrading
+
+It is possible to update the code by downloading the latest version from GitHub. This can be accomplished by opening a terminal, going into the `osl-core` folder, and running `upgrade.sh`. This will overwrite the code folders with the latest versions from GitHub. 
+
+**Note that your local copies of `osl-core` `ohba-external` `HMM-MAR` `GLEAN` and `MEG-ROI-nets` will be deleted, so any new files you have placed in these folders will be lost**. 
+
+An OSL release consists of a matched set of the files in the code repositories, and the extra content such as `std_masks`, `spm12` etc. These folders will not be affected by the upgrade process. It is possible that there may be incompatibilities between the latest code, and your old copies of these supplementary files. If you encounter unexpected behaviour after upgrading your release, you may instead need to download the complete package again. 
 
 ### Troubleshooting
 
@@ -82,7 +97,6 @@ It's possible for FSLView to appear off the screen, if an external monitor was p
 
 5. Once FSLView is opened (i.e. the icon has appeared in the dock, even if the FSLView window is located offscreen), double click `fix_fslview.app`
 6. The FSLView window should now be repositioned on your screen
-
 
 ##### FieldTrip mex errors
 
