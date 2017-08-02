@@ -1,4 +1,4 @@
-%% Utils - Surrogate data 
+%% Utilities - Surrogate data 
 %
 % One of the most important steps in developing and using analyses is checking
 % to what extent results can be explained by chance. This is commonly
