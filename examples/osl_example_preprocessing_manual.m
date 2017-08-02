@@ -1,4 +1,4 @@
-%% Preproc - manual 
+%% Preproc - Manual 
 % This an example for running a manual preprocessing pipeline in OSL. For today's workshop we will copy and paste directly from this practical
 % on the website. You can also do the same with the Matlab script found
 % under /osl-core/examples/osl_example_preprocessing_manual.m .

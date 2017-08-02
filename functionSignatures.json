@@ -1,0 +1,5 @@
+{"osl_resample_nii_matlab":
+{
+ "inputs":   [{"name":"input_nii","type":"filepath"},{"name":"output_mask","type":"filepath"}]
+}
+}

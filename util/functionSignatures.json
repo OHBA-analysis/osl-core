@@ -1,0 +1,9 @@
+{"fsleyes":
+{
+ "inputs":   [{"name":"fnames","type":"filepath"},{"name":"anatomical","type":"filepath"}]
+},
+"fslview":
+{
+ "inputs":   [{"name":"fnames","type":"filepath"},{"name":"anatomical","type":"filepath"}]
+}
+}

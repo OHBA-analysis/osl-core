@@ -19,7 +19,6 @@
 %
 
 %% Trial response, individual trials and averaging
-%%
 % First, we are going to load in the data files
 abspath = @(s) fullfile(osldir,'example_data','intro_to_meg',s); % Get files relative to this path
 oat = osl_load_oat(abspath('sensorspace_erf.oat'));

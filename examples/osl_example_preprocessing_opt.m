@@ -1,4 +1,4 @@
-%% Preproc - opt
+%% Preproc - OPT
 % This is an example for running the OHBA recommended preprocessing
 % pipeline on Elekta-Neuromag data (a very similar pipeline will work on
 % CTF data as well) using OPT (OSL's preproscessing tool). It works through

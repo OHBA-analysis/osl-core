@@ -1,5 +1,4 @@
 %% Preproc - AFRICA (ICA artefact removal)
-%
 % OSL provides a framework for employing Independent Component Analysis (ICA)
 % to remove certain artefacts from MEG data. Using this framework, sources of
 % interference, such as eye-blinks, ECG and line noise, can be separated from
