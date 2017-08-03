@@ -1,9 +1,9 @@
 classdef osleyes < handle
 
 	properties
-		clims = {}; % Values outside range are transparent!
-		colormaps= {};
-		current_point = [1 1 1]
+		clims = {}; % Values below range are transparent!
+		colormaps= {}; % Can be name of a colormap function on the path
+		current_point = [1 1 1 1]; % Includes time index
 	end
 
 	properties(SetAccess=protected)
@@ -13,7 +13,13 @@ classdef osleyes < handle
 		coord
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
 		h_crosshair
+		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
 	end
+
+	properties(GetAccess=private,SetAccess=private)
+		colormap_matrices = {}; % Cached colormaps 
+	end
+
 
 	methods
 
@@ -33,11 +39,13 @@ classdef osleyes < handle
 			self.nii = []
 			for j = 1:length(niifiles)
 				self.nii{j} = load_untouch_nii(niifiles{j}); % Do not apply xform/qform
+				self.nii{j}.img = double(self.nii{j}.img);
 				self.coord{j} = get_coords(self.nii{j}.hdr);
-				self.h_img{j}(1) = imagesc(self.coord{j}.y,self.coord{j}.z,permute(self.nii{j}.img(1,:,:),[2 3 1])','Parent',self.ax(1),'HitTest','off');
-				self.h_img{j}(2) = imagesc(self.coord{j}.x,self.coord{j}.z,permute(self.nii{j}.img(:,1,:),[1 3 2])','Parent',self.ax(2),'HitTest','off');
-				self.h_img{j}(3) = imagesc(self.coord{j}.x,self.coord{j}.y,permute(self.nii{j}.img(:,:,1),[1 2 3])','Parent',self.ax(3),'HitTest','off');
+				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.nii{j}.img(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off');
+				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.nii{j}.img(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off');
+				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.nii{j}.img(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off');
 				self.clims{j} = [min(self.nii{j}.img(:)),max(self.nii{j}.img(:))];
+				self.colormaps{j} = 'bone';
 			end
 
 			xlims = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
@@ -56,12 +64,33 @@ classdef osleyes < handle
 			self.h_crosshair(3) = plot(self.ax(3),NaN,NaN,'g','HitTest','off');
 			set(self.ax,'ButtonDownFcn',@(a,b) axis_click(a,b,self))
 
-			colormap(self.ax(1),'bone')
-			colormap(self.ax(2),'bone')
-			colormap(self.ax(3),'bone')
 
-			self.refresh_slices()
+			self.refresh_colors();
 
+		end
+
+		function set.colormaps(self,val)
+			assert(length(val) == length(self.clims),'Number of colormaps must match number of clims');
+			for j = 1:length(val)
+				if iscell(val{j})
+					assert(length(val{j})==2,'Colormap must either be a value or a cell array of length 2');
+				end
+			end
+			self.colormaps = val;
+			self.refresh_colors;
+		end
+
+		function set.clims(self,val)
+			assert(length(val) == length(self.colormaps),'Number of clims must match number of colormaps');
+			for j = 1:length(self.colormaps)
+				assert(length(val{j}==2),'Colour limits must have two elements')
+				assert(val{j}(2)>=val{j}(1),'Colour limits must be in ascending order')
+				if iscell(self.colormaps{j})
+					assert(val{j}(1)>=0,'If using bidirectional limits, colour range must start >= 0')
+				end
+			end
+			self.clims = val;
+			self.refresh_colors;
 		end
 
 		function set.current_point(self,val)
@@ -97,22 +126,66 @@ classdef osleyes < handle
 				[~,idx(2)] = min(abs(self.coord{j}.y-p(2)));
 				[~,idx(3)] = min(abs(self.coord{j}.z-p(3)));
 
-				d1 = permute(self.nii{j}.img(idx(1),:,:),[2 3 1])';
-				d2 = permute(self.nii{j}.img(:,idx(2),:),[1 3 2])';
-				d3 = permute(self.nii{j}.img(:,:,idx(3)),[1 2 3])';
-				set(self.h_img{j}(1),'CData',d1,'AlphaData',+(d1>self.clims{j}(1)));
-				set(self.h_img{j}(2),'CData',d2,'AlphaData',+(d2>self.clims{j}(1)));
-				set(self.h_img{j}(3),'CData',d3,'AlphaData',+(d3>self.clims{j}(1)));
+				% These are the slice maps - need to convert them to color values now
+				d1 = permute(self.nii{j}.img(idx(1),:,:,p(4)),[2 3 1])';
+				d2 = permute(self.nii{j}.img(:,idx(2),:,p(4)),[1 3 2])';
+				d3 = permute(self.nii{j}.img(:,:,idx(3),p(4)),[1 2 3])';
+
+
+
+				set(self.h_img{j}(1),'CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d1)>self.clims{j}(1)));
+				set(self.h_img{j}(2),'CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d2)>self.clims{j}(1)));
+				set(self.h_img{j}(3),'CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d3)>self.clims{j}(1)));
 			end
 		end
 
 		function refresh_colors(self)
-
+			% Turn the colormap strings into colormap matrices
+			for j = 1:length(self.colormaps)
+				if iscell(self.colormaps{j})
+					self.colormap_matrices{j}{1} = feval(self.colormaps{j}{1},self.colormap_resolution);
+					self.colormap_matrices{j}{2} = feval(self.colormaps{j}{2},self.colormap_resolution);
+				else
+					self.colormap_matrices{j} = feval(self.colormaps{j},self.colormap_resolution);
+				end
+			end
+			self.refresh_slices;
 		end
 
 	end
 
 end
+
+function rgb = map_colors(x,cmap,clim)
+	% x - data
+	% cmap - color matrix OR cell with two color matrices
+	% clim - color limit for this plot
+
+	if iscell(cmap) % We need to treat the positive and negative parts separately
+		% These are the positive indices
+		pos_idx = min(size(cmap{1},1),round((size(cmap{1},1)-1)*(x-clim(1))/(clim(2)-clim(1)))+1);
+		neg_idx = min(size(cmap{2},1),round((size(cmap{2},1)-1)*(-x-clim(1))/(clim(2)-clim(1)))+1);
+		r = zeros(size(x));
+		g = zeros(size(x));
+		b = zeros(size(x));
+		r(x>=0) = cmap{1}(idx(x>0),1);
+		g(x>=0) = cmap{1}(idx(x>0),2);
+		b(x>=0) = cmap{1}(idx(x>0),3);
+		r(x<0) = cmap{2}(idx(x<0),1);
+		g(x<0) = cmap{2}(idx(x<0),2);
+		b(x<0) = cmap{2}(idx(x<0),3);
+	else
+		idx = min(size(cmap,1),round((size(cmap,1)-1)*(x-clim(1))/(clim(2)-clim(1)))+1);
+		r = reshape(cmap(idx,1),size(x));
+		g = reshape(cmap(idx,2),size(x));
+		b = reshape(cmap(idx,3),size(x));
+	end
+
+	rgb = cat(3,r,g,b);
+
+end
+
+
 
 function axis_click(a,b,self)
 	p = get(a,'CurrentPoint');
