@@ -1,96 +1,129 @@
-function osleyes(niifiles)
-	% To behave properly - we have a single MNI coordinate system
-	% which is where the crosshairs are pointed
+classdef osleyes < handle
 
-	% For consistency - *always* flip left-right
-
-	niifiles = {'std_masks/MNI152_T1_8mm_brain.nii.gz'}
-
-	% Set up three axes
-	h.fig = figure;
-	h.ax(1) = axes;
-	h.ax(2) = axes;
-	h.ax(3) = axes;
-	set([h.fig h.ax],'Units','normalized');
-
-	for j = 1:length(niifiles)
-		imgfile = load_untouch_nii(niifiles{j}); % Include applying xform/qform
-		h.imgdata{j} = imgfile.img(:,:,:); % Flip left to right
-		h.coord{j} = get_coords(imgfile.hdr);
-		h.img{j} = render_image(h.imgdata{j},h.coord{j},h.ax);
+	properties
+		clims = {}; % Values outside range are transparent!
+		colormaps= {};
+		current_point = [1 1 1]
 	end
 
-	%hold(ax,'on');
-	% h_img(1) = imagesc(permute(img{1}(10,:,:),[2 3 1]),'Parent',ax(1),'HitTest','off')
-	% h_img(2) = imagesc(permute(img{1}(:,10,:),[1 3 2]),'Parent',ax(2),'HitTest','off')
-	% h_img(3) = imagesc(permute(img{1}(:,:,10),[1 2 3]),'Parent',ax(3),'HitTest','off')
+	properties(SetAccess=protected)
+		fig
+		ax
+		nii
+		coord
+		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
+		h_crosshair
+	end
 
-	set(h.ax(1),'Position',[0 0.2 0.3 0.8],'View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
-	set(h.ax(2),'Position',[0.35 0.2 0.3 0.8],'View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
-	set(h.ax(3),'Position',[0.7 0.2 0.3 0.8],'View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+	methods
 
-	hold(h.ax(1),'on');
-	hold(h.ax(2),'on');
-	hold(h.ax(3),'on');
+		function self = osleyes(niifiles)
 
-	h.h_crosshair(1) = plot(h.ax(1),NaN,NaN,'g','HitTest','off');
-	h.h_crosshair(2) = plot(h.ax(2),NaN,NaN,'g','HitTest','off');
-	h.h_crosshair(3) = plot(h.ax(3),NaN,NaN,'g','HitTest','off');
-	set(h.ax,'ButtonDownFcn',@axis_click)
-	colormap bone
+			niifiles = {'std_masks/MNI152_T1_8mm_brain.nii.gz'}
 
-	h.current_point = [10 10 10];
+			self.fig = figure;
+			self.ax(1) = axes();
+			self.ax(2) = axes();
+			self.ax(3) = axes();
+			hold(self.ax(1),'on');
+			hold(self.ax(2),'on');
+			hold(self.ax(3),'on');
+			set([self.fig self.ax],'Units','normalized');
 
-	guidata(h.fig,h)
+			self.nii = []
+			for j = 1:length(niifiles)
+				self.nii{j} = load_untouch_nii(niifiles{j}); % Do not apply xform/qform
+				self.coord{j} = get_coords(self.nii{j}.hdr);
+				self.h_img{j}(1) = imagesc(self.coord{j}.y,self.coord{j}.z,permute(self.nii{j}.img(1,:,:),[2 3 1])','Parent',self.ax(1),'HitTest','off');
+				self.h_img{j}(2) = imagesc(self.coord{j}.x,self.coord{j}.z,permute(self.nii{j}.img(:,1,:),[1 3 2])','Parent',self.ax(2),'HitTest','off');
+				self.h_img{j}(3) = imagesc(self.coord{j}.x,self.coord{j}.y,permute(self.nii{j}.img(:,:,1),[1 2 3])','Parent',self.ax(3),'HitTest','off');
+				self.clims{j} = [min(self.nii{j}.img(:)),max(self.nii{j}.img(:))];
+			end
 
-	update_slices(h.fig)
+			xlims = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
+			ylims = [min(cellfun(@(x) min(x.y),self.coord)) max(cellfun(@(x) max(x.y),self.coord))];
+			zlims = [min(cellfun(@(x) min(x.z),self.coord)) max(cellfun(@(x) max(x.z),self.coord))];
+			set(self.ax(1),'XLim',ylims,'YLim',zlims);
+			set(self.ax(2),'XLim',xlims,'YLim',zlims);
+			set(self.ax(3),'XLim',xlims,'YLim',ylims);
+
+			set(self.ax(1),'Color','k','Position',[0 0.2 0.3 0.8],'View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
+			set(self.ax(2),'Color','k','Position',[0.35 0.2 0.3 0.8],'View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+			set(self.ax(3),'Color','k','Position',[0.7 0.2 0.3 0.8],'View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+
+			self.h_crosshair(1) = plot(self.ax(1),NaN,NaN,'g','HitTest','off');
+			self.h_crosshair(2) = plot(self.ax(2),NaN,NaN,'g','HitTest','off');
+			self.h_crosshair(3) = plot(self.ax(3),NaN,NaN,'g','HitTest','off');
+			set(self.ax,'ButtonDownFcn',@(a,b) axis_click(a,b,self))
+
+			colormap(self.ax(1),'bone')
+			colormap(self.ax(2),'bone')
+			colormap(self.ax(3),'bone')
+
+			self.refresh_slices()
+
+		end
+
+		function set.current_point(self,val)
+			% Validate limits
+			xl = get(self.ax(3),'XLim');
+			yl = get(self.ax(1),'XLim');
+			zl = get(self.ax(1),'YLim');
+
+			val(1) = max(xl(1), min(xl(2), val(1)));
+			val(2) = max(yl(1), min(yl(2), val(2)));
+			val(3) = max(zl(1), min(zl(2), val(3)));
+
+			self.current_point = val;
+			refresh_slices(self)
+		end
+
+
+	end
+
+	methods(Access=private)
+		function refresh_slices(self)
+			% Given crosshair position, update the slices
+			p = self.current_point; % Current point in 3D
+
+			set(self.h_crosshair(1),'XData',[get(self.ax(1),'XLim') NaN p(2) p(2)],'YData',[p(3) p(3) NaN get(self.ax(1),'YLim')]);
+			set(self.h_crosshair(2),'XData',[get(self.ax(2),'XLim') NaN p(1) p(1)],'YData',[p(3) p(3) NaN get(self.ax(2),'YLim')]);
+			set(self.h_crosshair(3),'XData',[get(self.ax(3),'XLim') NaN p(1) p(1)],'YData',[p(2) p(2) NaN get(self.ax(3),'YLim')]);
+
+			% Now update each slice
+
+			for j = 1:length(self.nii)
+				[~,idx(1)] = min(abs(self.coord{j}.x-p(1)));
+				[~,idx(2)] = min(abs(self.coord{j}.y-p(2)));
+				[~,idx(3)] = min(abs(self.coord{j}.z-p(3)));
+
+				d1 = permute(self.nii{j}.img(idx(1),:,:),[2 3 1])';
+				d2 = permute(self.nii{j}.img(:,idx(2),:),[1 3 2])';
+				d3 = permute(self.nii{j}.img(:,:,idx(3)),[1 2 3])';
+				set(self.h_img{j}(1),'CData',d1,'AlphaData',+(d1>self.clims{j}(1)));
+				set(self.h_img{j}(2),'CData',d2,'AlphaData',+(d2>self.clims{j}(1)));
+				set(self.h_img{j}(3),'CData',d3,'AlphaData',+(d3>self.clims{j}(1)));
+			end
+		end
+
+		function refresh_colors(self)
+
+		end
+
+	end
 
 end
 
-function h_img = render_image(img,coord,ax)
-	h_img(1) = imagesc(coord.y,coord.z,permute(img(1,:,:),[2 3 1])','Parent',ax(1),'HitTest','off');
-	h_img(2) = imagesc(coord.x,coord.z,permute(img(:,1,:),[1 3 2])','Parent',ax(2),'HitTest','off');
-	h_img(3) = imagesc(coord.x,coord.y,permute(img(:,:,1),[1 2 3])','Parent',ax(3),'HitTest','off');
-end
-
-function axis_click(a,b)
-	h = guidata(a);
+function axis_click(a,b,self)
 	p = get(a,'CurrentPoint');
-
-	if a == h.ax(1)
-		h.current_point(2:3) = p(1,1:2);
-	elseif a == h.ax(2)
-		h.current_point([1,3]) = p(1,1:2);
+	if a == self.ax(1)
+		self.current_point(2:3) = p(1,1:2);
+	elseif a == self.ax(2)
+		self.current_point([1,3]) = p(1,1:2);
 	else
-		h.current_point(1:2) = p(1,1:2);
-	end
-	h.current_point
-	guidata(h.fig,h);
-	update_slices(h.fig)
-end
-
-function update_slices(fig)
-	% Given crosshair position, update the slices
-	h = guidata(fig);
-	p = h.current_point; % Current point in 3D
-
-	set(h.h_crosshair(1),'XData',[get(h.ax(1),'XLim') NaN p(2) p(2)],'YData',[p(3) p(3) NaN get(h.ax(1),'YLim')]);
-	set(h.h_crosshair(2),'XData',[get(h.ax(2),'XLim') NaN p(1) p(1)],'YData',[p(3) p(3) NaN get(h.ax(2),'YLim')]);
-	set(h.h_crosshair(3),'XData',[get(h.ax(3),'XLim') NaN p(1) p(1)],'YData',[p(2) p(2) NaN get(h.ax(3),'YLim')]);
-
-	% Now update each slice
-
-	for j = 1:length(h.img)
-		[~,idx(1)] = min(abs(h.coord{j}.x-p(1)));
-		[~,idx(2)] = min(abs(h.coord{j}.y-p(2)));
-		[~,idx(3)] = min(abs(h.coord{j}.z-p(3)));
-		set(h.img{j}(1),'CData',permute(h.imgdata{j}(idx(1),:,:),[2 3 1])');
-		set(h.img{j}(2),'CData',permute(h.imgdata{j}(:,idx(2),:),[1 3 2])');
-		set(h.img{j}(3),'CData',permute(h.imgdata{j}(:,:,idx(3)),[1 2 3])');
+		self.current_point(1:2) = p(1,1:2);
 	end
 end
-
-
 
 function c = get_coords(hdr)
 	% See https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html#ref0
