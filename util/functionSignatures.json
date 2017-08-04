@@ -5,5 +5,11 @@
 "fslview":
 {
  "inputs":   [{"name":"fnames","type":"filepath"},{"name":"anatomical","type":"filepath"}]
+},
+"osl_load_nii":
+{
+ "inputs":   [{"name":"fname","type":"filepath=*.nii,*.gz"}]
 }
 }
+
+
