@@ -8,6 +8,8 @@ classdef osleyes < handle
 		colormaps= {}; % Can be name of a colormap function on the path
 		current_point = [1 1 1]; % Includes time index
 		current_vols = [];
+		visible = logical(1);
+		active_layer = 1;
 	end
 
 	properties(SetAccess=protected)
@@ -19,19 +21,20 @@ classdef osleyes < handle
 	properties(GetAccess=private,SetAccess=private)
 		fig
 		ax
-		h_crosshair
-		coord
+		controls
+
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
+		h_crosshair
+		
+		coord % Axis coordinates for each image
 		colormap_matrices = {}; % Cached colormaps
 		under_construction = true; % Don't render anything while this is true
 		motion_active = 0; % Index of which axis to compare against
 		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
 		contextmenu
-		controlpanel
 	end
 
 	properties(Dependent)
-		valid % Object is valid only if its bound figure is still open
 	end
 
 	methods
@@ -56,23 +59,17 @@ classdef osleyes < handle
 
 			%self.fig = figure('Units','normalized','Menubar','none','Color','k');
 			self.fig = figure('Units','Pixels','Color','k');
+			self.initial_render();
 			set(self.fig,'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
-
-
-			self.ax(1) = axes('Parent',self.fig,'Units','characters')
-			self.ax(2) = axes('Parent',self.fig,'Units','characters')
-			self.ax(3) = axes('Parent',self.fig,'Units','characters')
-			self.controlpanel = uipanel(self.fig,'BorderType','none','Units','characters');
-			self.resize()
-
-			hold(self.ax(1),'on');
-			hold(self.ax(2),'on');
-			hold(self.ax(3),'on');
+		
 
 			self.nii = []
 			self.niifiles = niifiles;
+			dropdown_strings = {};
 			for j = 1:length(self.niifiles)
 				self.nii{j} = load_untouch_nii(self.niifiles{j}); % Do not apply xform/qform
+				[~,fname,ext] = fileparts(self.niifiles{j});
+				dropdown_strings{j} = [fname '.' ext];
 				self.nii{j}.img = double(self.nii{j}.img);
 				self.coord{j} = get_coords(self.nii{j}.hdr);
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.nii{j}.img(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off');
@@ -92,8 +89,10 @@ classdef osleyes < handle
 				end
 
 				self.current_vols(j) = 1;
+				self.visible(j) = 1;
 			end
 
+			set(self.controls.image_list,'String',dropdown_strings);
 			self.lims(1,:) = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
 			self.lims(2,:) = [min(cellfun(@(x) min(x.y),self.coord)) max(cellfun(@(x) max(x.y),self.coord))];
 			self.lims(3,:) = [min(cellfun(@(x) min(x.z),self.coord)) max(cellfun(@(x) max(x.z),self.coord))];
@@ -122,29 +121,10 @@ classdef osleyes < handle
 			self.contextmenu.plot_timeseries = uimenu(self.contextmenu.root, 'label','Plot time series','Enable','On','Callback',@(~,~) context_plot_ts(self));
 			set(self.fig,'uicontextmenu',self.contextmenu.root);
 
+			self.resize()
 			self.under_construction = false; % Enable rendering
 			self.refresh_colors();
-
-		end
-
-		function resize(self)
-			set(self.fig,'Units','Characters');
-			figpos = get(self.fig,'Position');
-			% set(self.fig,'Units','pixels');
-
-			w = 0.3*figpos(3);
-			p = (figpos(3)-3*w)/6;
-			control_height = 3; % Control panel height
-			ax_height = figpos(4)-control_height;
-
-			if ax_height <= 0
-				return
-			end
-
-			set(self.ax(1),'Position',[p control_height w ax_height]);
-			set(self.ax(2),'Position',[p+w+p+p  control_height w ax_height]);
-			set(self.ax(3),'Position',[p+w+p+p+w+p+p control_height w ax_height]);
-			set(self.controlpanel,'Position',[0 0 figpos(3) control_height]);
+			self.active_layer = length(self.niifiles);
 		end
 
 
@@ -182,6 +162,7 @@ classdef osleyes < handle
 			end
 			self.clims = val;
 			self.refresh_colors;
+			self.active_layer = self.active_layer; % Update the text boxes
 		end
 
 		function set.current_point(self,val)
@@ -206,8 +187,43 @@ classdef osleyes < handle
 			refresh_slices(self)
 		end
 
-		function v = get.valid(self)
-			v = ishandle(self.fig);
+		function v = set.active_layer(self,val)
+			assert(val > 0,'Layer must be positive');
+			assert(val <= length(self.niifiles),'Layer number cannot exceed number of layers');
+			assert(val == round(val),'Layer must be an integer');
+			self.active_layer = val;
+			set(self.controls.image_list,'Value',val)
+			set(self.controls.clim(1),'String',sprintf('%.1f',self.clims{get(self.controls.image_list,'Value')}(1)));
+			set(self.controls.clim(2),'String',sprintf('%.1f',self.clims{get(self.controls.image_list,'Value')}(2)));
+			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
+			set(self.controls.visible,'Value',self.visible(self.active_layer));
+			self.refresh_slices();
+		end
+
+		function set.current_vols(self,val)
+			if self.under_construction
+				self.current_vols = val;
+				return;
+			end
+
+			assert(isvector(val) && length(val) == length(self.niifiles));
+
+			for j = 1:length(val)
+				assert(val(j)>0 && val(j) <= size(self.nii{j}.img,4),'Volume index out of bounds');
+			end
+
+			self.current_vols = val;
+			self.refresh_slices();
+		end
+
+		function set.visible(self,val)
+			self.visible = val;
+
+			if self.under_construction
+				return;
+			end
+
+			self.refresh_slices();
 		end
 
 		function delete(self)
@@ -219,10 +235,8 @@ classdef osleyes < handle
 	methods(Access=private)
 
 		function plot_timeseries(self)
-
 			figure
 			title('Not yet implemented')
-
 		end
 
 		function refresh_slices(self)
@@ -233,6 +247,11 @@ classdef osleyes < handle
 			set(self.h_crosshair(1),'XData',[self.lims(2,:) NaN p(2) p(2)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
 			set(self.h_crosshair(2),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
 			set(self.h_crosshair(3),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(2) p(2) NaN self.lims(2,:)]);
+
+			set(self.controls.marker(1),'String',sprintf('X = %+07.2f',p(1)));
+			set(self.controls.marker(2),'String',sprintf('Y = %+07.2f',p(2)));
+			set(self.controls.marker(3),'String',sprintf('Z = %+07.2f',p(3)));
+			%self.controls.marker(4)
 
 			% Now update each slice
 
@@ -246,11 +265,19 @@ classdef osleyes < handle
 				d2 = permute(self.nii{j}.img(:,idx(2),:,self.current_vols(j)),[1 3 2])';
 				d3 = permute(self.nii{j}.img(:,:,idx(3),self.current_vols(j)),[1 2 3])';
 
+				if j == self.active_layer
+					set(self.controls.marker(4),'String',sprintf('Value = %+07.2f',self.nii{j}.img(idx(1),idx(2),idx(3),self.current_vols(j))));
+                end
 
-
-				set(self.h_img{j}(1),'CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d1)>self.clims{j}(1)));
-				set(self.h_img{j}(2),'CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d2)>self.clims{j}(1)));
-				set(self.h_img{j}(3),'CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d3)>self.clims{j}(1)));
+                if self.visible(j)
+					set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d1)>self.clims{j}(1)));
+					set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d2)>self.clims{j}(1)));
+					set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d3)>self.clims{j}(1)));
+				else
+					set(self.h_img{j}(1),'Visible','off');
+					set(self.h_img{j}(2),'Visible','off');
+					set(self.h_img{j}(3),'Visible','off');
+				end
 			end
 		end
 
@@ -283,9 +310,87 @@ classdef osleyes < handle
 			self.motion_active = 0;
 		end
 
+		function initial_render(self)
+			self.ax(1) = axes('Parent',self.fig,'Units','characters');
+			self.ax(2) = axes('Parent',self.fig,'Units','characters');
+			self.ax(3) = axes('Parent',self.fig,'Units','characters');
+			self.controls.panel = uipanel(self.fig,'BorderType','none','Units','characters');
+			hold(self.ax(1),'on');
+			hold(self.ax(2),'on');
+			hold(self.ax(3),'on');
+
+			self.controls.image_list = uicontrol(self.controls.panel,'Callback',@(~,~) image_list_callback(self),'style','popupmenu','String','test','Units','characters','Position',[0 1 25 1]);
+			self.controls.clim(1) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.0','Units','characters','Position',[0 0.9 5 1.2]);
+			self.controls.clim(2) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.2','Units','characters','Position',[0 0.9 5 1.2]);
+			self.controls.clim_label = uicontrol(self.controls.panel,'style','text','String','to','Units','characters','Position',[0 1 3 1]);
+
+			self.controls.volume_label = uicontrol(self.controls.panel,'style','text','String','Volume:','Units','characters','Position',[0 1 6 1]);
+			self.controls.volume = uicontrol(self.controls.panel,'style','edit','String','1','Units','characters','Position',[0 0.9 5 1.2]);
+
+			self.controls.visible = uicontrol(self.controls.panel,'Callback',@(~,~) visible_box_callback(self),'style','checkbox','Units','characters','Position',[0 1 3 1]);
+
+
+			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.00','Units','characters','Position',[0 2 12 1]);
+			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.00','Units','characters','Position',[0 1 12 1]);
+			self.controls.marker(3) = uicontrol(self.controls.panel,'style','text','String','Z = +000.00','Units','characters','Position',[0 0 12 1]);
+			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +000.00','Units','characters','Position',[0 0.9 16 1]);
+
+			% Put b to the right of a with given padding
+			next_to = @(b,a,padding) 	set(b,'Position',sum(get(a,'Position').*[1 0 1 0]).*[1 0 0 0]  + [padding 0 0 0] + [0 1 1 1].*get(b,'Position'));
+
+			set(self.controls.visible,'Position',[1 1 3 1])
+			next_to(self.controls.image_list,self.controls.visible,1);
+			next_to(self.controls.volume_label,self.controls.image_list,2);
+			next_to(self.controls.volume,self.controls.volume_label,2);
+			next_to(self.controls.clim(1),self.controls.volume,2);
+			next_to(self.controls.clim_label,self.controls.clim(1),2);
+			next_to(self.controls.clim(2),self.controls.clim_label,2);
+
+			next_to(self.controls.marker(1),self.controls.clim(2),3);
+			next_to(self.controls.marker(2),self.controls.clim(2),3);
+			next_to(self.controls.marker(3),self.controls.clim(2),3);
+			next_to(self.controls.marker(4),self.controls.marker(3),3);
+
+
+		end
+
+
+		function resize(self)
+			set(self.fig,'Units','Characters');
+			figpos = get(self.fig,'Position');
+			% set(self.fig,'Units','pixels');
+
+			w = 0.3*figpos(3);
+			p = (figpos(3)-3*w)/6;
+			control_height = 3; % Control panel height
+			ax_height = figpos(4)-control_height;
+
+			if ax_height <= 0
+				return
+			end
+
+			set(self.ax(1),'Position',[p control_height w ax_height]);
+			set(self.ax(2),'Position',[p+w+p+p  control_height w ax_height]);
+			set(self.ax(3),'Position',[p+w+p+p+w+p+p control_height w ax_height]);
+			set(self.controls.panel,'Position',[0 0 figpos(3) control_height]);
+		end
+
 	end
 
 end
+
+function image_list_callback(self)
+	self.active_layer = get(self.controls.image_list,'Value');
+end
+
+function clim_box_callback(self)
+	self.clims{self.active_layer} = [str2double(get(self.controls.clim(1),'String')) str2double(get(self.controls.clim(2),'String'))];
+end
+
+function visible_box_callback(self)
+	self.visible(self.active_layer) = get(self.controls.visible,'Value');
+end
+
 
 function context_plot_ts(self)
 	self.plot_timeseries;
