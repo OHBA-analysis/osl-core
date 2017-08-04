@@ -27,6 +27,7 @@ classdef osleyes < handle
 		motion_active = 0; % Index of which axis to compare against
 		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
 		contextmenu
+		controlpanel
 	end
 
 	properties(Dependent)
@@ -53,18 +54,20 @@ classdef osleyes < handle
             	colormaps = cell(length(niifiles),1);
             end
 
-			self.fig = figure('Units','normalized','Menubar','none','Color','k');
-			set(self.fig,'CloseRequestFcn',@(a,b) delete(self));
+			%self.fig = figure('Units','normalized','Menubar','none','Color','k');
+			self.fig = figure('Units','Pixels','Color','k');
+			set(self.fig,'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
 
-			w = 0.3;
-			p = (1-3*w)/6;
-			self.ax(1) = axes('Position',[p 0.2 w 0.8]);
-			self.ax(2) = axes('Position',[p+w+p+p  0.2 w 0.8]);
-			self.ax(3) = axes('Position',[p+w+p+p+w+p+p 0.2 w 0.8]);
+
+			self.ax(1) = axes('Parent',self.fig,'Units','characters')
+			self.ax(2) = axes('Parent',self.fig,'Units','characters')
+			self.ax(3) = axes('Parent',self.fig,'Units','characters')
+			self.controlpanel = uipanel(self.fig,'BorderType','none','Units','characters');
+			self.resize()
+
 			hold(self.ax(1),'on');
 			hold(self.ax(2),'on');
 			hold(self.ax(3),'on');
-			set(self.fig,'Units','pixels'); % So dragging works by comparing against getpixelposition(ax(j))
 
 			self.nii = []
 			self.niifiles = niifiles;
@@ -123,6 +126,27 @@ classdef osleyes < handle
 			self.refresh_colors();
 
 		end
+
+		function resize(self)
+			set(self.fig,'Units','Characters');
+			figpos = get(self.fig,'Position');
+			% set(self.fig,'Units','pixels');
+
+			w = 0.3*figpos(3);
+			p = (figpos(3)-3*w)/6;
+			control_height = 3; % Control panel height
+			ax_height = figpos(4)-control_height;
+
+			if ax_height <= 0
+				return
+			end
+
+			set(self.ax(1),'Position',[p control_height w ax_height]);
+			set(self.ax(2),'Position',[p+w+p+p  control_height w ax_height]);
+			set(self.ax(3),'Position',[p+w+p+p+w+p+p control_height w ax_height]);
+			set(self.controlpanel,'Position',[0 0 figpos(3) control_height]);
+		end
+
 
 		function set.colormaps(self,val)
 			if self.under_construction
@@ -244,12 +268,12 @@ classdef osleyes < handle
 			self.refresh_slices;
 		end
 
-		function activate_motion(self)
-			if is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(1)))
+		function activate_motion(self)	
+			if is_within(self.fig,self.ax(1))
 				self.motion_active = 1;
-			elseif is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(2)))
+			elseif is_within(self.fig,self.ax(2))
 				self.motion_active = 2;
-			elseif is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(3)))
+			elseif is_within(self.fig,self.ax(3))
 				self.motion_active = 3;
 			end
 			move_mouse(self)
@@ -348,19 +372,22 @@ function move_mouse(self)
 	if isMultipleCall();  return;  end
 	if ~self.motion_active; return; end
 
-	if self.motion_active == 1 && is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(1)))
+	if self.motion_active == 1 && is_within(self.fig,self.ax(1))
 		p = get(self.ax(1),'CurrentPoint');
 		self.current_point(2:3) = p(1,1:2);
-	elseif self.motion_active == 2 && is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(2)))
+	elseif self.motion_active == 2 && is_within(self.fig,self.ax(2))
 		p = get(self.ax(2),'CurrentPoint');
 		self.current_point([1,3]) = p(1,1:2);
-	elseif self.motion_active == 3 && is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(3)))
+	elseif self.motion_active == 3 && is_within(self.fig,self.ax(3))
 		p = get(self.ax(3),'CurrentPoint');
 		self.current_point(1:2) = p(1,1:2);
 	end
 end
 
-function within = is_within(C,pos)
+function within = is_within(f,h)
+	C = get(f,'CurrentPoint');
+	pos = get(h,'Position');
+
 	if C(1) < pos(1) || C(1) > pos(1)+pos(3) || C(2) < pos(2) || C(2) > pos(2)+pos(4)
 		within = false;
 	else
