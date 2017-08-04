@@ -1,4 +1,7 @@
 classdef osleyes < handle
+	
+	% TODO - Add support for different volumes
+	% TODO - Add in some text controls
 
 	properties
 		clims = {}; % Values below range are transparent!
@@ -17,7 +20,9 @@ classdef osleyes < handle
 	end
 
 	properties(GetAccess=private,SetAccess=private)
-		colormap_matrices = {}; % Cached colormaps 
+		colormap_matrices = {}; % Cached colormaps
+		under_construction = true; % Don't render anything while this is true
+		motion_active = 0; % Index of which axis to compare against
 	end
 
 
@@ -25,16 +30,18 @@ classdef osleyes < handle
 
 		function self = osleyes(niifiles)
 
-			niifiles = {'std_masks/MNI152_T1_8mm_brain.nii.gz'}
-
-			self.fig = figure;
-			self.ax(1) = axes();
-			self.ax(2) = axes();
-			self.ax(3) = axes();
+			if nargin < 1 || isempty(niifiles) 
+				niifiles = {fullfile(osldir,'std_masks/MNI152_T1_8mm_brain.nii.gz')};
+			end
+			
+			self.fig = figure('Units','normalized');
+			self.ax(1) = axes('Position',[0 0.2 0.3 0.8]);
+			self.ax(2) = axes('Position',[0.35 0.2 0.3 0.8]);
+			self.ax(3) = axes('Position',[0.7 0.2 0.3 0.8]);
 			hold(self.ax(1),'on');
 			hold(self.ax(2),'on');
 			hold(self.ax(3),'on');
-			set([self.fig self.ax],'Units','normalized');
+			set(self.fig,'Units','pixels'); % So dragging works by comparing against getpixelposition(ax(j))
 
 			self.nii = []
 			for j = 1:length(niifiles)
@@ -55,22 +62,31 @@ classdef osleyes < handle
 			set(self.ax(2),'XLim',xlims,'YLim',zlims);
 			set(self.ax(3),'XLim',xlims,'YLim',ylims);
 
-			set(self.ax(1),'Color','k','Position',[0 0.2 0.3 0.8],'View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
-			set(self.ax(2),'Color','k','Position',[0.35 0.2 0.3 0.8],'View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
-			set(self.ax(3),'Color','k','Position',[0.7 0.2 0.3 0.8],'View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+			set(self.ax(1),'Color','k','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
+			set(self.ax(2),'Color','k','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+			set(self.ax(3),'Color','k','View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
 
 			self.h_crosshair(1) = plot(self.ax(1),NaN,NaN,'g','HitTest','off');
 			self.h_crosshair(2) = plot(self.ax(2),NaN,NaN,'g','HitTest','off');
 			self.h_crosshair(3) = plot(self.ax(3),NaN,NaN,'g','HitTest','off');
 			set(self.ax,'ButtonDownFcn',@(a,b) axis_click(a,b,self))
 
+			set(self.fig,'WindowButtonDownFcn',@(~,~) self.activate_motion())
+			set(self.fig,'WindowButtonMotionFcn',@(a,b) move_mouse(self))
+			set(self.fig,'WindowButtonUpFcn',@(~,~) self.deactivate_motion())
 
+			self.under_construction = false; % Enable rendering
 			self.refresh_colors();
 
 		end
 
 		function set.colormaps(self,val)
-			assert(length(val) == length(self.clims),'Number of colormaps must match number of clims');
+			if self.under_construction
+				self.colormaps = val;
+				return;
+			end
+
+			assert(length(val) == length(self.nii),'Number of colormaps must match number of images');
 			for j = 1:length(val)
 				if iscell(val{j})
 					assert(length(val{j})==2,'Colormap must either be a value or a cell array of length 2');
@@ -81,9 +97,14 @@ classdef osleyes < handle
 		end
 
 		function set.clims(self,val)
-			assert(length(val) == length(self.colormaps),'Number of clims must match number of colormaps');
+			if self.under_construction
+				self.clims = val;
+				return;
+			end
+
+			assert(length(val) == length(self.nii),'Number of clims must match number of images');
 			for j = 1:length(self.colormaps)
-				assert(length(val{j}==2),'Colour limits must have two elements')
+				assert(length(val{j})==2,'Colour limits must have two elements')
 				assert(val{j}(2)>=val{j}(1),'Colour limits must be in ascending order')
 				if iscell(self.colormaps{j})
 					assert(val{j}(1)>=0,'If using bidirectional limits, colour range must start >= 0')
@@ -103,10 +124,14 @@ classdef osleyes < handle
 			val(2) = max(yl(1), min(yl(2), val(2)));
 			val(3) = max(zl(1), min(zl(2), val(3)));
 
+			% TODO - better time validation
+			if length(val) == 3
+				val(4) = 1;
+			end
+
 			self.current_point = val;
 			refresh_slices(self)
 		end
-
 
 	end
 
@@ -143,6 +168,7 @@ classdef osleyes < handle
 			% Turn the colormap strings into colormap matrices
 			for j = 1:length(self.colormaps)
 				if iscell(self.colormaps{j})
+                    self.colormap_matrices{j} = cell(2,1);
 					self.colormap_matrices{j}{1} = feval(self.colormaps{j}{1},self.colormap_resolution);
 					self.colormap_matrices{j}{2} = feval(self.colormaps{j}{2},self.colormap_resolution);
 				else
@@ -150,6 +176,20 @@ classdef osleyes < handle
 				end
 			end
 			self.refresh_slices;
+		end
+
+		function activate_motion(self)
+			if is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(1)))
+				self.motion_active = 1;
+			elseif is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(2)))
+				self.motion_active = 2;
+			elseif is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(3)))
+				self.motion_active = 3;
+			end
+		end
+
+		function deactivate_motion(self);
+			self.motion_active = 0;
 		end
 
 	end
@@ -164,18 +204,23 @@ function rgb = map_colors(x,cmap,clim)
 	if iscell(cmap) % We need to treat the positive and negative parts separately
 		% These are the positive indices
 		pos_idx = min(size(cmap{1},1),round((size(cmap{1},1)-1)*(x-clim(1))/(clim(2)-clim(1)))+1);
+        pos_idx(pos_idx<1) = 1;
 		neg_idx = min(size(cmap{2},1),round((size(cmap{2},1)-1)*(-x-clim(1))/(clim(2)-clim(1)))+1);
+        neg_idx(neg_idx<1) = 1;
+
 		r = zeros(size(x));
 		g = zeros(size(x));
 		b = zeros(size(x));
-		r(x>=0) = cmap{1}(idx(x>0),1);
-		g(x>=0) = cmap{1}(idx(x>0),2);
-		b(x>=0) = cmap{1}(idx(x>0),3);
-		r(x<0) = cmap{2}(idx(x<0),1);
-		g(x<0) = cmap{2}(idx(x<0),2);
-		b(x<0) = cmap{2}(idx(x<0),3);
+		r(x>=0) = cmap{1}(pos_idx(x>=0),1);
+		g(x>=0) = cmap{1}(pos_idx(x>=0),2);
+		b(x>=0) = cmap{1}(pos_idx(x>=0),3);
+		r(x<0) = cmap{2}(neg_idx(x<0),1);
+		g(x<0) = cmap{2}(neg_idx(x<0),2);
+		b(x<0) = cmap{2}(neg_idx(x<0),3);
 	else
 		idx = min(size(cmap,1),round((size(cmap,1)-1)*(x-clim(1))/(clim(2)-clim(1)))+1);
+		idx(idx<1) = 1;
+
 		r = reshape(cmap(idx,1),size(x));
 		g = reshape(cmap(idx,2),size(x));
 		b = reshape(cmap(idx,3),size(x));
@@ -228,5 +273,49 @@ function c = get_coords(hdr)
 		c.z = R*hdr.dime.pixdim(1)*hdr.dime.pixdim(4)*bsxfun(@times,k(:),[0 0 1])' + hdr.hist.qoffset_z;
 	end
 
+end
+
+function move_mouse(self)
+	if isMultipleCall();  return;  end
+	if ~self.motion_active; return; end
+
+	if self.motion_active == 1 && is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(1)))
+		p = get(self.ax(1),'CurrentPoint');
+		self.current_point(2:3) = p(1,1:2);
+	elseif self.motion_active == 2 && is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(2)))
+		p = get(self.ax(2),'CurrentPoint');
+		self.current_point([1,3]) = p(1,1:2);
+	elseif self.motion_active == 3 && is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(3)))
+		p = get(self.ax(3),'CurrentPoint');
+		self.current_point(1:2) = p(1,1:2);
+	end
+end
+
+function within = is_within(C,pos)
+	if C(1) < pos(1) || C(1) > pos(1)+pos(3) || C(2) < pos(2) || C(2) > pos(2)+pos(4)
+		within = false;
+	else
+		within = true;
+	end
+end
+
+function flag=isMultipleCall()
+	% Based on Yair Altman's function
+	flag = false; 
+	% Get the stack
+	s = dbstack();
+	if numel(s)<=2
+		% Stack too short for a multiple call
+		return
+	end
+
+	% How many calls to the calling function are in the stack?
+	names = {s(:).name};
+	TF = strcmp(s(2).name,names);
+	count = sum(TF);
+	if count>1
+		% More than 1
+		flag = true; 
+	end
 end
 
