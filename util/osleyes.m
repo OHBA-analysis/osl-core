@@ -10,21 +10,26 @@ classdef osleyes < handle
 	end
 
 	properties(SetAccess=protected)
-		fig
-		ax
+		niifiles
 		nii
 		coord
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
-		h_crosshair
 		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
 	end
 
 	properties(GetAccess=private,SetAccess=private)
+		fig
+		ax
+		h_crosshair
 		colormap_matrices = {}; % Cached colormaps
 		under_construction = true; % Don't render anything while this is true
 		motion_active = 0; % Index of which axis to compare against
+		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
 	end
 
+	properties(Dependent)
+		valid % Object is valid only if its bound figure is still open
+	end
 
 	methods
 
@@ -39,6 +44,8 @@ classdef osleyes < handle
             end
             
 			self.fig = figure('Units','normalized');
+			set(self.fig,'CloseRequestFcn',@(a,b) delete(self));
+
 			self.ax(1) = axes('Position',[0 0.2 0.3 0.8]);
 			self.ax(2) = axes('Position',[0.35 0.2 0.3 0.8]);
 			self.ax(3) = axes('Position',[0.7 0.2 0.3 0.8]);
@@ -59,12 +66,12 @@ classdef osleyes < handle
 				self.colormaps{j} = 'bone';
 			end
 
-			xlims = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
-			ylims = [min(cellfun(@(x) min(x.y),self.coord)) max(cellfun(@(x) max(x.y),self.coord))];
-			zlims = [min(cellfun(@(x) min(x.z),self.coord)) max(cellfun(@(x) max(x.z),self.coord))];
-			set(self.ax(1),'XLim',ylims,'YLim',zlims);
-			set(self.ax(2),'XLim',xlims,'YLim',zlims);
-			set(self.ax(3),'XLim',xlims,'YLim',ylims);
+			self.lims(1,:) = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
+			self.lims(2,:) = [min(cellfun(@(x) min(x.y),self.coord)) max(cellfun(@(x) max(x.y),self.coord))];
+			self.lims(3,:) = [min(cellfun(@(x) min(x.z),self.coord)) max(cellfun(@(x) max(x.z),self.coord))];
+			set(self.ax(1),'XLim',self.lims(2,:),'YLim',self.lims(3,:));
+			set(self.ax(2),'XLim',self.lims(1,:),'YLim',self.lims(3,:));
+			set(self.ax(3),'XLim',self.lims(1,:),'YLim',self.lims(2,:));
 
 			set(self.ax(1),'Color','k','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
 			set(self.ax(2),'Color','k','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
@@ -124,11 +131,18 @@ classdef osleyes < handle
 			yl = get(self.ax(1),'XLim');
 			zl = get(self.ax(1),'YLim');
 
-			val(1) = max(xl(1), min(xl(2), val(1)));
-			val(2) = max(yl(1), min(yl(2), val(2)));
-			val(3) = max(zl(1), min(zl(2), val(3)));
+			if val(1) > xl(2) || val(1) < xl(1)
+				return
+			end
 
-			% TODO - better time validation
+			if val(2) > yl(2) || val(2) < yl(1)
+				return
+			end
+
+			if val(3) > zl(2) || val(3) < zl(1)
+				return
+			end
+
 			if length(val) == 3
 				val(4) = 1;
 			end
@@ -137,16 +151,25 @@ classdef osleyes < handle
 			refresh_slices(self)
 		end
 
+		function v = get.valid(self)
+			v = ishandle(self.fig);
+		end
+
+		function delete(self)
+			delete(self.fig);
+		end
+
 	end
 
 	methods(Access=private)
 		function refresh_slices(self)
 			% Given crosshair position, update the slices
+
 			p = self.current_point; % Current point in 3D
 
-			set(self.h_crosshair(1),'XData',[get(self.ax(1),'XLim') NaN p(2) p(2)],'YData',[p(3) p(3) NaN get(self.ax(1),'YLim')]);
-			set(self.h_crosshair(2),'XData',[get(self.ax(2),'XLim') NaN p(1) p(1)],'YData',[p(3) p(3) NaN get(self.ax(2),'YLim')]);
-			set(self.h_crosshair(3),'XData',[get(self.ax(3),'XLim') NaN p(1) p(1)],'YData',[p(2) p(2) NaN get(self.ax(3),'YLim')]);
+			set(self.h_crosshair(1),'XData',[self.lims(2,:) NaN p(2) p(2)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
+			set(self.h_crosshair(2),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
+			set(self.h_crosshair(3),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(2) p(2) NaN self.lims(2,:)]);
 
 			% Now update each slice
 
@@ -233,8 +256,6 @@ function rgb = map_colors(x,cmap,clim)
 	rgb = cat(3,r,g,b);
 
 end
-
-
 
 function axis_click(a,b,self)
 	p = get(a,'CurrentPoint');
