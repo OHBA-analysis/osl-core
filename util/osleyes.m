@@ -6,11 +6,13 @@ classdef osleyes < handle
 	properties
 		clims = {}; % Values below range are transparent!
 		colormaps= {}; % Can be name of a colormap function on the path
-		current_point = [1 1 1 1]; % Includes time index
+		current_point = [1 1 1]; % Includes time index
+		current_vols = [];
 	end
 
 	properties(SetAccess=protected)
 		niifiles
+		nii % Temporarily accessible
 		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
 	end
 
@@ -18,13 +20,13 @@ classdef osleyes < handle
 		fig
 		ax
 		h_crosshair
-		nii
 		coord
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
 		colormap_matrices = {}; % Cached colormaps
 		under_construction = true; % Don't render anything while this is true
 		motion_active = 0; % Index of which axis to compare against
 		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
+		contextmenu
 	end
 
 	properties(Dependent)
@@ -33,8 +35,8 @@ classdef osleyes < handle
 
 	methods
 
-		function self = osleyes(niifiles)
-
+		function self = osleyes(niifiles,colormaps,clims)
+			
 			if nargin < 1 || isempty(niifiles) 
 				niifiles = {fullfile(osldir,'std_masks/MNI152_T1_8mm_brain.nii.gz')};
             end
@@ -42,14 +44,23 @@ classdef osleyes < handle
             if ~iscell(niifiles)
                 niifiles = {niifiles};
             end
-
             
-			self.fig = figure('Units','normalized');
+            if nargin < 3 || isempty(clims) 
+            	clims = cell(length(niifiles),1);
+            end
+            
+            if nargin < 2 || isempty(colormaps) 
+            	colormaps = cell(length(niifiles),1);
+            end
+
+			self.fig = figure('Units','normalized','Menubar','none','Color','k');
 			set(self.fig,'CloseRequestFcn',@(a,b) delete(self));
 
-			self.ax(1) = axes('Position',[0 0.2 0.3 0.8]);
-			self.ax(2) = axes('Position',[0.35 0.2 0.3 0.8]);
-			self.ax(3) = axes('Position',[0.7 0.2 0.3 0.8]);
+			w = 0.3;
+			p = (1-3*w)/6;
+			self.ax(1) = axes('Position',[p 0.2 w 0.8]);
+			self.ax(2) = axes('Position',[p+w+p+p  0.2 w 0.8]);
+			self.ax(3) = axes('Position',[p+w+p+p+w+p+p 0.2 w 0.8]);
 			hold(self.ax(1),'on');
 			hold(self.ax(2),'on');
 			hold(self.ax(3),'on');
@@ -64,29 +75,49 @@ classdef osleyes < handle
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.nii{j}.img(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off');
 				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.nii{j}.img(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off');
 				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.nii{j}.img(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off');
-				self.clims{j} = [min(self.nii{j}.img(:)),max(self.nii{j}.img(:))];
-				self.colormaps{j} = 'bone';
+				
+				if isempty(clims{j})
+					self.clims{j} = [min(self.nii{j}.img(:)),max(self.nii{j}.img(:))];
+				else
+					self.clims{j} = clims{j};
+				end
+
+				if isempty(colormaps{j})
+					self.colormaps{j} = 'bone';
+				else
+					self.colormaps{j} = colormaps{j};
+				end
+
+				self.current_vols(j) = 1;
 			end
 
 			self.lims(1,:) = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
 			self.lims(2,:) = [min(cellfun(@(x) min(x.y),self.coord)) max(cellfun(@(x) max(x.y),self.coord))];
 			self.lims(3,:) = [min(cellfun(@(x) min(x.z),self.coord)) max(cellfun(@(x) max(x.z),self.coord))];
-			set(self.ax(1),'XLim',self.lims(2,:),'YLim',self.lims(3,:));
-			set(self.ax(2),'XLim',self.lims(1,:),'YLim',self.lims(3,:));
-			set(self.ax(3),'XLim',self.lims(1,:),'YLim',self.lims(2,:));
+			
+			set(self.ax(1),'XLim',self.lims(2,:),'YLim',self.lims(3,:),'Visible','off');
+			set(self.ax(2),'XLim',self.lims(1,:),'YLim',self.lims(3,:),'Visible','off');
+			set(self.ax(3),'XLim',self.lims(1,:),'YLim',self.lims(2,:),'Visible','off');
 
-			set(self.ax(1),'Color','k','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
-			set(self.ax(2),'Color','k','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
-			set(self.ax(3),'Color','k','View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+			set(self.ax(1),'Color','k','Clipping','off','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
+			set(self.ax(2),'Color','k','Clipping','off','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+			set(self.ax(3),'Color','k','Clipping','off','View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+			orientation_letters(self.ax(1),{'P','A','I','S'});
+			orientation_letters(self.ax(2),{'L','R','I','S'});
+			orientation_letters(self.ax(3),{'L','R','A','P'});
+
 
 			self.h_crosshair(1) = plot(self.ax(1),NaN,NaN,'g','HitTest','off');
 			self.h_crosshair(2) = plot(self.ax(2),NaN,NaN,'g','HitTest','off');
 			self.h_crosshair(3) = plot(self.ax(3),NaN,NaN,'g','HitTest','off');
-			set(self.ax,'ButtonDownFcn',@(a,b) axis_click(a,b,self))
 
 			set(self.fig,'WindowButtonDownFcn',@(~,~) self.activate_motion())
 			set(self.fig,'WindowButtonMotionFcn',@(a,b) move_mouse(self))
 			set(self.fig,'WindowButtonUpFcn',@(~,~) self.deactivate_motion())
+
+			self.contextmenu.root = uicontextmenu();
+			self.contextmenu.plot_timeseries = uimenu(self.contextmenu.root, 'label','Plot time series','Enable','On','Callback',@(~,~) context_plot_ts(self));
+			set(self.fig,'uicontextmenu',self.contextmenu.root);
 
 			self.under_construction = false; % Enable rendering
 			self.refresh_colors();
@@ -147,10 +178,6 @@ classdef osleyes < handle
 				return
 			end
 
-			if length(val) == 3
-				val(4) = 1;
-			end
-
 			self.current_point = val;
 			refresh_slices(self)
 		end
@@ -166,6 +193,14 @@ classdef osleyes < handle
 	end
 
 	methods(Access=private)
+
+		function plot_timeseries(self)
+
+			figure
+			title('Not yet implemented')
+
+		end
+
 		function refresh_slices(self)
 			% Given crosshair position, update the slices
 
@@ -183,9 +218,9 @@ classdef osleyes < handle
 				[~,idx(3)] = min(abs(self.coord{j}.z-p(3)));
 
 				% These are the slice maps - need to convert them to color values now
-				d1 = permute(self.nii{j}.img(idx(1),:,:,p(4)),[2 3 1])';
-				d2 = permute(self.nii{j}.img(:,idx(2),:,p(4)),[1 3 2])';
-				d3 = permute(self.nii{j}.img(:,:,idx(3),p(4)),[1 2 3])';
+				d1 = permute(self.nii{j}.img(idx(1),:,:,self.current_vols(j)),[2 3 1])';
+				d2 = permute(self.nii{j}.img(:,idx(2),:,self.current_vols(j)),[1 3 2])';
+				d3 = permute(self.nii{j}.img(:,:,idx(3),self.current_vols(j)),[1 2 3])';
 
 
 
@@ -217,6 +252,7 @@ classdef osleyes < handle
 			elseif is_within(get(self.fig,'CurrentPoint'),getpixelposition(self.ax(3)))
 				self.motion_active = 3;
 			end
+			move_mouse(self)
 		end
 
 		function deactivate_motion(self);
@@ -225,6 +261,10 @@ classdef osleyes < handle
 
 	end
 
+end
+
+function context_plot_ts(self)
+	self.plot_timeseries;
 end
 
 function rgb = map_colors(x,cmap,clim)
@@ -348,3 +388,15 @@ function flag=isMultipleCall()
 	end
 end
 
+function orientation_letters(ax,labels)
+	% Labels will be positioned at:
+	% {left, right, bottom, top}
+	% Hold will be left on
+	xl = get(ax,'XLim');
+	yl = get(ax,'YLim');
+	hold(ax,'on')
+	text(min(xl),mean(yl),labels{1},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','left','VerticalAlignment','middle','HitTest','off','FontSize',6)
+	text(max(xl),mean(yl),labels{2},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','right','VerticalAlignment','middle','HitTest','off','FontSize',6)
+	text(mean(xl),min(yl),labels{3},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','bottom','HitTest','off','FontSize',6)
+	text(mean(xl),max(yl),labels{4},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','top','HitTest','off','FontSize',6)
+end
