@@ -32,8 +32,12 @@ classdef osleyes < handle
 
 			if nargin < 1 || isempty(niifiles) 
 				niifiles = {fullfile(osldir,'std_masks/MNI152_T1_8mm_brain.nii.gz')};
-			end
+            end
 			
+            if ~iscell(niifiles)
+                niifiles = {niifiles};
+            end
+            
 			self.fig = figure('Units','normalized');
 			self.ax(1) = axes('Position',[0 0.2 0.3 0.8]);
 			self.ax(2) = axes('Position',[0.35 0.2 0.3 0.8]);

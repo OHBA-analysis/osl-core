@@ -18,18 +18,26 @@ function osl_save_nii(vol,res,xform,fname)
 	
 	switch length(res)
 		case 1
-			r = [res res res 1];
+			r = [res res res];
 		case 3
-			r = [res 1];
+			r = [res];
 		case 4
-			r = res;
+			r = res(1:3);
 		otherwise
 			error('Unknown resolution - should be 1, 3, or 4 elements long');
 	end
 
-    save_avw(vol,fname,'d',r);
+    nii = make_nii(vol,res);
+    nii.hdr.hist.qform_code = 0;
+    nii.hdr.hist.sform_code = 4;
+    nii.hdr.hist.srow_x = xform(1,:);
+    nii.hdr.hist.srow_y = xform(2,:);
+    nii.hdr.hist.srow_z = xform(3,:);
+    save_nii(nii,fname);
+
+
  
-    runcmd(['fslorient -setqform ' num2str(reshape(xform',1,16)) ' ' fname])
-    runcmd(['fslorient -setsform ' num2str(reshape(xform',1,16)) ' ' fname])
-	runcmd(['fslorient -setsformcode 0 ' fname])
-	runcmd(['fslorient -setqformcode 2 ' fname])
+ %    % runcmd(['fslorient -setqform ' num2str(reshape(xform',1,16)) ' ' fname])
+ %    runcmd(['fslorient -setsform ' num2str(reshape(xform',1,16)) ' ' fname])
+	% runcmd(['fslorient -setsformcode 4 ' fname])
+	% % runcmd(['fslorient -setqformcode  ' fname])
