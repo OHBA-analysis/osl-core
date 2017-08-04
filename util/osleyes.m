@@ -11,9 +11,6 @@ classdef osleyes < handle
 
 	properties(SetAccess=protected)
 		niifiles
-		nii
-		coord
-		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
 		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
 	end
 
@@ -21,6 +18,9 @@ classdef osleyes < handle
 		fig
 		ax
 		h_crosshair
+		nii
+		coord
+		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
 		colormap_matrices = {}; % Cached colormaps
 		under_construction = true; % Don't render anything while this is true
 		motion_active = 0; % Index of which axis to compare against
@@ -42,6 +42,7 @@ classdef osleyes < handle
             if ~iscell(niifiles)
                 niifiles = {niifiles};
             end
+
             
 			self.fig = figure('Units','normalized');
 			set(self.fig,'CloseRequestFcn',@(a,b) delete(self));
@@ -55,8 +56,9 @@ classdef osleyes < handle
 			set(self.fig,'Units','pixels'); % So dragging works by comparing against getpixelposition(ax(j))
 
 			self.nii = []
-			for j = 1:length(niifiles)
-				self.nii{j} = load_untouch_nii(niifiles{j}); % Do not apply xform/qform
+			self.niifiles = niifiles;
+			for j = 1:length(self.niifiles)
+				self.nii{j} = load_untouch_nii(self.niifiles{j}); % Do not apply xform/qform
 				self.nii{j}.img = double(self.nii{j}.img);
 				self.coord{j} = get_coords(self.nii{j}.hdr);
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.nii{j}.img(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off');
@@ -97,6 +99,7 @@ classdef osleyes < handle
 				return;
 			end
 
+			assert(iscell(val),'Colormaps should be a cell array')
 			assert(length(val) == length(self.nii),'Number of colormaps must match number of images');
 			for j = 1:length(val)
 				if iscell(val{j})
@@ -113,6 +116,7 @@ classdef osleyes < handle
 				return;
 			end
 
+			assert(iscell(val),'clims should be a cell array')
 			assert(length(val) == length(self.nii),'Number of clims must match number of images');
 			for j = 1:length(self.colormaps)
 				assert(length(val{j})==2,'Colour limits must have two elements')
