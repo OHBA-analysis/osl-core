@@ -13,6 +13,7 @@ classdef osleyes < handle
 		current_vols = []; % This is an array that specifies which 4D volume is being displayed for each layer
 		visible = logical(1); % This is an array that is true/false for whether a layer is visible or not
 		active_layer = 1; % The active layer controls which layer's properties are shown in the control panel and the colorbars
+		show_controls = 1;
 	end
 
 	properties(SetAccess=protected)
@@ -28,7 +29,8 @@ classdef osleyes < handle
 
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
 		h_crosshair % Handles for crosshairs on each axis
-		h_colorbar % Handles to colorbars
+		h_coloraxes % Handles to colorbar axes
+		h_colorimage % Handles to colorbar images
 		
 		coord % Axis coordinates for each image
 		colormap_matrices = {}; % Cached colormaps
@@ -61,8 +63,7 @@ classdef osleyes < handle
             	colormaps = cell(length(niifiles),1);
             end
 
-			%self.fig = figure('Units','normalized','Menubar','none','Color','k');
-			self.fig = figure('Units','Pixels','Color','k');
+			self.fig = figure('Units','Characters','Color','k');
 			self.initial_render();
 			set(self.fig,'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
 		
@@ -79,7 +80,6 @@ classdef osleyes < handle
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.nii{j}.img(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off');
 				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.nii{j}.img(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off');
 				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.nii{j}.img(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off');
-				
 				if isempty(clims{j})
 					self.clims{j} = [min(self.nii{j}.img(:)),max(self.nii{j}.img(:))];
 				else
@@ -110,7 +110,7 @@ classdef osleyes < handle
 			set(self.ax(3),'Color','k','Clipping','off','View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
 			orientation_letters(self.ax(1),{'P','A','I','S'});
 			orientation_letters(self.ax(2),{'L','R','I','S'});
-			orientation_letters(self.ax(3),{'L','R','A','P'});
+			orientation_letters(self.ax(3),{'L','R','P','A'});
 
 
 			self.h_crosshair(1) = plot(self.ax(1),NaN,NaN,'g','HitTest','off');
@@ -166,7 +166,7 @@ classdef osleyes < handle
 			end
 			self.clims = val;
 			self.refresh_colors;
-			self.active_layer = self.active_layer; % Update the text boxes
+			self.active_layer = self.active_layer; % Update the text boxes and colorbar limits
 		end
 
 		function set.current_point(self,val)
@@ -201,6 +201,24 @@ classdef osleyes < handle
 			set(self.controls.clim(2),'String',sprintf('%.1f',self.clims{get(self.controls.image_list,'Value')}(2)));
 			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
 			set(self.controls.visible,'Value',self.visible(self.active_layer));
+
+			tickstrs = @(low,high,n) arrayfun(@(x) sprintf('%.1f',x),linspace(low,high,n),'UniformOutput',false);
+
+			if iscell(self.colormaps{self.active_layer})
+				set(self.h_coloraxes(1),'Visible','on');
+				set(self.h_colorimage(1),'Visible','on');
+				set(self.h_colorimage(2),'CData',permute(self.colormap_matrices{self.active_layer}{1},[1 3 2]));
+				set(self.h_colorimage(1),'CData',permute(self.colormap_matrices{self.active_layer}{2},[1 3 2]));
+				set(self.h_coloraxes(1),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(-self.clims{self.active_layer}(1),-self.clims{self.active_layer}(2),4))
+				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.clims{self.active_layer}(1),self.clims{self.active_layer}(2),4))
+
+			else
+				set(self.h_coloraxes(1),'Visible','off');
+				set(self.h_colorimage(1),'Visible','off');
+				set(self.h_colorimage(2),'CData',permute(self.colormap_matrices{self.active_layer},[1 3 2]));
+				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.clims{self.active_layer}(1),self.clims{self.active_layer}(2),4))
+			end
+
 			self.refresh_slices();
 		end
 
@@ -234,6 +252,11 @@ classdef osleyes < handle
 			delete(self.fig);
 		end
 
+		function set.show_controls(self,val)
+			self.show_controls = logical(val);
+			self.resize()
+		end
+
 	end
 
 	methods(Access=private)
@@ -252,9 +275,9 @@ classdef osleyes < handle
 			set(self.h_crosshair(2),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
 			set(self.h_crosshair(3),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(2) p(2) NaN self.lims(2,:)]);
 
-			set(self.controls.marker(1),'String',sprintf('X = %+07.2f',p(1)));
-			set(self.controls.marker(2),'String',sprintf('Y = %+07.2f',p(2)));
-			set(self.controls.marker(3),'String',sprintf('Z = %+07.2f',p(3)));
+			set(self.controls.marker(1),'String',sprintf('X = %+06.1f',p(1)));
+			set(self.controls.marker(2),'String',sprintf('Y = %+06.1f',p(2)));
+			set(self.controls.marker(3),'String',sprintf('Z = %+06.1f',p(3)));
 			%self.controls.marker(4)
 
 			% Now update each slice
@@ -270,7 +293,7 @@ classdef osleyes < handle
 				d3 = permute(self.nii{j}.img(:,:,idx(3),self.current_vols(j)),[1 2 3])';
 
 				if j == self.active_layer
-					set(self.controls.marker(4),'String',sprintf('Value = %+07.2f',self.nii{j}.img(idx(1),idx(2),idx(3),self.current_vols(j))));
+					set(self.controls.marker(4),'String',sprintf('Value = %+ 7.2f',self.nii{j}.img(idx(1),idx(2),idx(3),self.current_vols(j))));
                 end
 
                 if self.visible(j)
@@ -287,6 +310,7 @@ classdef osleyes < handle
 
 		function refresh_colors(self)
 			% Turn the colormap strings into colormap matrices
+			% Called if clims or colormap is changed
 			for j = 1:length(self.colormaps)
 				if iscell(self.colormaps{j})
                     self.colormap_matrices{j} = cell(2,1);
@@ -296,7 +320,7 @@ classdef osleyes < handle
 					self.colormap_matrices{j} = feval(self.colormaps{j},self.colormap_resolution);
 				end
 			end
-			self.refresh_slices;
+			self.active_layer = self.active_layer;
 		end
 
 		function activate_motion(self)	
@@ -323,23 +347,32 @@ classdef osleyes < handle
 			hold(self.ax(2),'on');
 			hold(self.ax(3),'on');
 
-			self.controls.image_list = uicontrol(self.controls.panel,'Callback',@(~,~) image_list_callback(self),'style','popupmenu','String','test','Units','characters','Position',[0 1 25 1]);
+			%self.h_colorbar(1) = colorbar('Peer',self.ax(3),'Location','eastoutside','Color','w','Units','characters','TickDirection','in','AxisLocation','in');
+			%self.h_colorbar(2) = colorbar('Peer',self.ax(3),'Location','westoutside','Color','w','Units','characters','TickDirection','in','AxisLocation','out');
+			self.h_coloraxes(1) = axes('Box','on','Color','k','Units','characters');
+			self.h_coloraxes(2) = axes('Box','on','Color','k','Units','characters');
+			self.h_colorimage(1) = image([0 1],[0 1],1,'Parent',self.h_coloraxes(1));
+			self.h_colorimage(2) = image([0 1],[0 1],1,'Parent',self.h_coloraxes(2));
+			set(self.h_coloraxes,'XLim',[0 1],'YLim',[0 1],'XColor','w','YColor','w','XTick',[],'YDir','reverse');
+			set(self.h_coloraxes(2),'YAxisLocation','right','YDir','normal');
+			
+			self.controls.image_list = uicontrol(self.controls.panel,'Callback',@(~,~) image_list_callback(self),'style','popupmenu','String','test','Units','characters','Position',[0 0.75 25 1.5]);
 
-			self.controls.clim(1) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.0','Units','characters','Position',[0 0.2 5 1.2]);
-			self.controls.clim(2) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.2','Units','characters','Position',[0 0.2 5 1.2]);
+			self.controls.clim(1) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.0','Units','characters','Position',[0 0.2 7 1.2]);
+			self.controls.clim(2) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.2','Units','characters','Position',[0 0.2 7 1.2]);
 			self.controls.clim_label(1) = uicontrol(self.controls.panel,'style','text','String','Range:','Units','characters','Position',[0 0.3 8 1]);
 			self.controls.clim_label(2) = uicontrol(self.controls.panel,'style','text','String','to','Units','characters','Position',[0 0.3 3 1]);
 
 			self.controls.volume_label = uicontrol(self.controls.panel,'style','text','String','Volume:','Units','characters','Position',[0 1.6 8 1]);
-			self.controls.volume = uicontrol(self.controls.panel,'Callback',@(~,~) volume_box_callback(self),'style','edit','String','1','Units','characters','Position',[0 1.5 5 1.2]);
+			self.controls.volume = uicontrol(self.controls.panel,'Callback',@(~,~) volume_box_callback(self),'style','edit','String','1','Units','characters','Position',[0 1.5 7 1.2]);
 
 			self.controls.visible = uicontrol(self.controls.panel,'Callback',@(~,~) visible_box_callback(self),'style','checkbox','Units','characters','Position',[0 1 3 1]);
 
 
-			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.00','Units','characters','Position',[0 2 12 1]);
-			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.00','Units','characters','Position',[0 1 12 1]);
-			self.controls.marker(3) = uicontrol(self.controls.panel,'style','text','String','Z = +000.00','Units','characters','Position',[0 0 12 1]);
-			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +000.00','Units','characters','Position',[0 0.9 16 1]);
+			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.0','Units','characters','Position',[0 2 12 1]);
+			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.0','Units','characters','Position',[0 1 12 1]);
+			self.controls.marker(3) = uicontrol(self.controls.panel,'style','text','String','Z = +000.0','Units','characters','Position',[0 0 12 1]);
+			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +0000.0','Units','characters','Position',[0 0.9 16 1]);
 
 			% Put b to the right of a with given padding
 			next_to = @(b,a,padding) 	set(b,'Position',sum(get(a,'Position').*[1 0 1 0]).*[1 0 0 0]  + [padding 0 0 0] + [0 1 1 1].*get(b,'Position'));
@@ -348,30 +381,30 @@ classdef osleyes < handle
 			next_to(self.controls.image_list,self.controls.visible,1);
 
 			next_to(self.controls.volume_label,self.controls.image_list,2);
-			next_to(self.controls.volume,self.controls.volume_label,2);
+			next_to(self.controls.volume,self.controls.volume_label,1);
 
 			next_to(self.controls.clim_label(1),self.controls.image_list,2);
-			next_to(self.controls.clim(1),self.controls.clim_label(1),2);
+			next_to(self.controls.clim(1),self.controls.clim_label(1),1);
 			next_to(self.controls.clim_label(2),self.controls.clim(1),1);
 			next_to(self.controls.clim(2),self.controls.clim_label(2),1);
 
-			next_to(self.controls.marker(1),self.controls.clim(2),3);
-			next_to(self.controls.marker(2),self.controls.clim(2),3);
-			next_to(self.controls.marker(3),self.controls.clim(2),3);
-			next_to(self.controls.marker(4),self.controls.marker(3),3);
+			next_to(self.controls.marker(1),self.controls.clim(2),2);
+			next_to(self.controls.marker(2),self.controls.clim(2),2);
+			next_to(self.controls.marker(3),self.controls.clim(2),2);
+			next_to(self.controls.marker(4),self.controls.marker(3),1);
 
 
 		end
 
 
 		function resize(self)
-			set(self.fig,'Units','Characters');
 			figpos = get(self.fig,'Position');
-			% set(self.fig,'Units','pixels');
 
-			w = 0.3*figpos(3);
-			p = (figpos(3)-3*w)/6;
-			control_height = 3; % Control panel height
+			% Layout is - 0.3 reserved for each axis, plus 0.1 for the two colorbars
+			cb = 0.1; % Colorbar width			
+			w = 0.3*(1-cb)*figpos(3);
+			p = ((1-cb)*figpos(3)-3*w)/6;
+			control_height = 3*+self.show_controls; % Control panel height in characters
 			ax_height = figpos(4)-control_height;
 
 			if ax_height <= 0
@@ -382,6 +415,13 @@ classdef osleyes < handle
 			set(self.ax(2),'Position',[p+w+p+p  control_height w ax_height]);
 			set(self.ax(3),'Position',[p+w+p+p+w+p+p control_height w ax_height]);
 			set(self.controls.panel,'Position',[0 0 figpos(3) control_height]);
+
+			if length(self.colormaps{self.active_layer})>1
+				set(self.h_coloraxes(2),'Position',[(1-cb+0.022)*figpos(3) control_height+ax_height*0.1 0.015*figpos(3) ax_height*0.8]);
+			else
+				set(self.h_coloraxes(1),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.1 0.015*figpos(3) ax_height*0.8]);
+			end
+
 		end
 
 	end
@@ -446,17 +486,6 @@ function rgb = map_colors(x,cmap,clim)
 
 	rgb = cat(3,r,g,b);
 
-end
-
-function axis_click(a,b,self)
-	p = get(a,'CurrentPoint');
-	if a == self.ax(1)
-		self.current_point(2:3) = p(1,1:2);
-	elseif a == self.ax(2)
-		self.current_point([1,3]) = p(1,1:2);
-	else
-		self.current_point(1:2) = p(1,1:2);
-	end
 end
 
 function c = get_coords(hdr)
@@ -545,8 +574,8 @@ function orientation_letters(ax,labels)
 	xl = get(ax,'XLim');
 	yl = get(ax,'YLim');
 	hold(ax,'on')
-	text(min(xl),mean(yl),labels{1},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','left','VerticalAlignment','middle','HitTest','off','FontSize',6)
-	text(max(xl),mean(yl),labels{2},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','right','VerticalAlignment','middle','HitTest','off','FontSize',6)
-	text(mean(xl),min(yl),labels{3},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','bottom','HitTest','off','FontSize',6)
-	text(mean(xl),max(yl),labels{4},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','top','HitTest','off','FontSize',6)
+	%text(min(xl),mean(yl),labels{1},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','left','VerticalAlignment','middle','HitTest','off','FontSize',10)
+	text(max(xl),mean(yl),labels{2},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','right','VerticalAlignment','middle','HitTest','off','FontSize',10)
+	text(mean(xl),min(yl),labels{3},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','bottom','HitTest','off','FontSize',10)
+	%text(mean(xl),max(yl),labels{4},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','top','HitTest','off','FontSize',10)
 end
