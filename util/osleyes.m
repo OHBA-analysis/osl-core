@@ -1,15 +1,18 @@
 classdef osleyes < handle
-	
+	% A pure Matlab NIFTI viewer based on common OSL usage of fsleyes/fslview
+	%
+	% Romesh Abeysuriya 2017
+
 	% TODO - Add support for different volumes
-	% TODO - Add in some text controls
+	% TODO - Display colorbars
 
 	properties
-		clims = {}; % Values below range are transparent!
+		clims = {}; % Values below this range are transparent, values above are clipped
 		colormaps= {}; % Can be name of a colormap function on the path
-		current_point = [1 1 1]; % Includes time index
-		current_vols = [];
-		visible = logical(1);
-		active_layer = 1;
+		current_point = [1 1 1]; % These are the XYZ MNI coordinates for the crosshair
+		current_vols = []; % This is an array that specifies which 4D volume is being displayed for each layer
+		visible = logical(1); % This is an array that is true/false for whether a layer is visible or not
+		active_layer = 1; % The active layer controls which layer's properties are shown in the control panel and the colorbars
 	end
 
 	properties(SetAccess=protected)
@@ -19,19 +22,20 @@ classdef osleyes < handle
 	end
 
 	properties(GetAccess=private,SetAccess=private)
-		fig
-		ax
-		controls
+		fig % Handle to the main figure window bound to the object
+		ax % Handles of the three display axes
+		controls % Handles for control panel and associated controls
 
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
-		h_crosshair
+		h_crosshair % Handles for crosshairs on each axis
+		h_colorbar % Handles to colorbars
 		
 		coord % Axis coordinates for each image
 		colormap_matrices = {}; % Cached colormaps
 		under_construction = true; % Don't render anything while this is true
 		motion_active = 0; % Index of which axis to compare against
 		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
-		contextmenu
+		contextmenu % Handle for the context menu
 	end
 
 	properties(Dependent)
@@ -320,12 +324,14 @@ classdef osleyes < handle
 			hold(self.ax(3),'on');
 
 			self.controls.image_list = uicontrol(self.controls.panel,'Callback',@(~,~) image_list_callback(self),'style','popupmenu','String','test','Units','characters','Position',[0 1 25 1]);
-			self.controls.clim(1) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.0','Units','characters','Position',[0 0.9 5 1.2]);
-			self.controls.clim(2) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.2','Units','characters','Position',[0 0.9 5 1.2]);
-			self.controls.clim_label = uicontrol(self.controls.panel,'style','text','String','to','Units','characters','Position',[0 1 3 1]);
 
-			self.controls.volume_label = uicontrol(self.controls.panel,'style','text','String','Volume:','Units','characters','Position',[0 1 6 1]);
-			self.controls.volume = uicontrol(self.controls.panel,'style','edit','String','1','Units','characters','Position',[0 0.9 5 1.2]);
+			self.controls.clim(1) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.0','Units','characters','Position',[0 0.2 5 1.2]);
+			self.controls.clim(2) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.2','Units','characters','Position',[0 0.2 5 1.2]);
+			self.controls.clim_label(1) = uicontrol(self.controls.panel,'style','text','String','Range:','Units','characters','Position',[0 0.3 8 1]);
+			self.controls.clim_label(2) = uicontrol(self.controls.panel,'style','text','String','to','Units','characters','Position',[0 0.3 3 1]);
+
+			self.controls.volume_label = uicontrol(self.controls.panel,'style','text','String','Volume:','Units','characters','Position',[0 1.6 8 1]);
+			self.controls.volume = uicontrol(self.controls.panel,'Callback',@(~,~) volume_box_callback(self),'style','edit','String','1','Units','characters','Position',[0 1.5 5 1.2]);
 
 			self.controls.visible = uicontrol(self.controls.panel,'Callback',@(~,~) visible_box_callback(self),'style','checkbox','Units','characters','Position',[0 1 3 1]);
 
@@ -340,11 +346,14 @@ classdef osleyes < handle
 
 			set(self.controls.visible,'Position',[1 1 3 1])
 			next_to(self.controls.image_list,self.controls.visible,1);
+
 			next_to(self.controls.volume_label,self.controls.image_list,2);
 			next_to(self.controls.volume,self.controls.volume_label,2);
-			next_to(self.controls.clim(1),self.controls.volume,2);
-			next_to(self.controls.clim_label,self.controls.clim(1),2);
-			next_to(self.controls.clim(2),self.controls.clim_label,2);
+
+			next_to(self.controls.clim_label(1),self.controls.image_list,2);
+			next_to(self.controls.clim(1),self.controls.clim_label(1),2);
+			next_to(self.controls.clim_label(2),self.controls.clim(1),1);
+			next_to(self.controls.clim(2),self.controls.clim_label(2),1);
 
 			next_to(self.controls.marker(1),self.controls.clim(2),3);
 			next_to(self.controls.marker(2),self.controls.clim(2),3);
@@ -391,6 +400,15 @@ function visible_box_callback(self)
 	self.visible(self.active_layer) = get(self.controls.visible,'Value');
 end
 
+function volume_box_callback(self)
+	new_volume = str2double(get(self.controls.volume,'String'));
+	if new_volume < 1 || new_volume > size(self.nii{self.active_layer}.img,4)
+		uiwait(errordlg(sprintf('Volume out of bounds (image has %d volumes)',size(self.nii{self.active_layer}.img,4))));
+		set(self.controls.volume,'String',num2str(self.current_vols(self.active_layer)));
+	else
+		self.current_vols(self.active_layer) = new_volume;
+	end
+end
 
 function context_plot_ts(self)
 	self.plot_timeseries;
