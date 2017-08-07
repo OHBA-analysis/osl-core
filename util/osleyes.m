@@ -3,9 +3,6 @@ classdef osleyes < handle
 	%
 	% Romesh Abeysuriya 2017
 
-	% TODO - Add support for different volumes
-	% TODO - Display colorbars
-
 	properties
 		clims = {}; % Values below this range are transparent, values above are clipped
 		colormaps= {}; % Can be name of a colormap function on the path
@@ -195,14 +192,15 @@ classdef osleyes < handle
 			assert(val > 0,'Layer must be positive');
 			assert(val <= length(self.niifiles),'Layer number cannot exceed number of layers');
 			assert(val == round(val),'Layer must be an integer');
+
 			self.active_layer = val;
 			set(self.controls.image_list,'Value',val)
-			set(self.controls.clim(1),'String',sprintf('%.1f',self.clims{get(self.controls.image_list,'Value')}(1)));
-			set(self.controls.clim(2),'String',sprintf('%.1f',self.clims{get(self.controls.image_list,'Value')}(2)));
+			set(self.controls.clim(1),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(1)));
+			set(self.controls.clim(2),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(2)));
 			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
 			set(self.controls.visible,'Value',self.visible(self.active_layer));
 
-			tickstrs = @(low,high,n) arrayfun(@(x) sprintf('%.1f',x),linspace(low,high,n),'UniformOutput',false);
+			tickstrs = @(low,high,n) arrayfun(@(x) sprintf('%.2g',x),linspace(low,high,n),'UniformOutput',false);
 
 			if iscell(self.colormaps{self.active_layer})
 				set(self.h_coloraxes(1),'Visible','on');
@@ -219,6 +217,7 @@ classdef osleyes < handle
 				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.clims{self.active_layer}(1),self.clims{self.active_layer}(2),4))
 			end
 
+			self.resize(); % Update sizes of colorbars
 			self.refresh_slices();
 		end
 
@@ -297,9 +296,15 @@ classdef osleyes < handle
                 end
 
                 if self.visible(j)
-					set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d1)>self.clims{j}(1)));
-					set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d2)>self.clims{j}(1)));
-					set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d3)>self.clims{j}(1)));
+                	if iscell(self.colormaps{j}) % If bidirectional clim, then hide abs(x)<self.clims, otherwise hide x<clims
+						set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d1)>self.clims{j}(1)));
+						set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d2)>self.clims{j}(1)));
+						set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d3)>self.clims{j}(1)));
+					else
+						set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(d1>self.clims{j}(1)));
+						set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(d2>self.clims{j}(1)));
+						set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(d3>self.clims{j}(1)));
+					end
 				else
 					set(self.h_img{j}(1),'Visible','off');
 					set(self.h_img{j}(2),'Visible','off');
@@ -353,8 +358,8 @@ classdef osleyes < handle
 			self.h_coloraxes(2) = axes('Box','on','Color','k','Units','characters');
 			self.h_colorimage(1) = image([0 1],[0 1],1,'Parent',self.h_coloraxes(1));
 			self.h_colorimage(2) = image([0 1],[0 1],1,'Parent',self.h_coloraxes(2));
-			set(self.h_coloraxes,'XLim',[0 1],'YLim',[0 1],'XColor','w','YColor','w','XTick',[],'YDir','reverse');
-			set(self.h_coloraxes(2),'YAxisLocation','right','YDir','normal');
+			set(self.h_coloraxes,'XLim',[0 1],'YLim',[0 1],'XColor','w','YColor','w','XTick',[],'YDir','reverse','YAxisLocation','right');
+			set(self.h_coloraxes(2),'YDir','normal');
 			
 			self.controls.image_list = uicontrol(self.controls.panel,'Callback',@(~,~) image_list_callback(self),'style','popupmenu','String','test','Units','characters','Position',[0 0.75 25 1.5]);
 
@@ -416,10 +421,11 @@ classdef osleyes < handle
 			set(self.ax(3),'Position',[p+w+p+p+w+p+p control_height w ax_height]);
 			set(self.controls.panel,'Position',[0 0 figpos(3) control_height]);
 
-			if length(self.colormaps{self.active_layer})>1
-				set(self.h_coloraxes(2),'Position',[(1-cb+0.022)*figpos(3) control_height+ax_height*0.1 0.015*figpos(3) ax_height*0.8]);
+			if iscell(self.colormaps{self.active_layer})
+				set(self.h_coloraxes(1),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.075 0.015*figpos(3) ax_height*0.4]);
+				set(self.h_coloraxes(2),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.525 0.015*figpos(3) ax_height*0.4]);
 			else
-				set(self.h_coloraxes(1),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.1 0.015*figpos(3) ax_height*0.8]);
+				set(self.h_coloraxes(2),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.1 0.015*figpos(3) ax_height*0.8]);
 			end
 
 		end

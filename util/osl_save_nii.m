@@ -33,11 +33,5 @@ function osl_save_nii(vol,res,xform,fname)
     nii.hdr.hist.srow_x = xform(1,:);
     nii.hdr.hist.srow_y = xform(2,:);
     nii.hdr.hist.srow_z = xform(3,:);
+    fprintf(2,'Note - check if this needs to be save_untouch_nii here?\n');
     save_nii(nii,fname);
-
-
- 
- %    % runcmd(['fslorient -setqform ' num2str(reshape(xform',1,16)) ' ' fname])
- %    runcmd(['fslorient -setsform ' num2str(reshape(xform',1,16)) ' ' fname])
-	% runcmd(['fslorient -setsformcode 4 ' fname])
-	% % runcmd(['fslorient -setqformcode  ' fname])

@@ -20,6 +20,6 @@ function [vol,res,xform] = osl_load_nii(fname)
 	xform(2,:) = nii.hdr.hist.srow_y;
 	xform(3,:) = nii.hdr.hist.srow_z;
 
-
+	fprintf(2,'Todo - read qform\n')
 
 
