@@ -199,7 +199,7 @@ classdef osleyes < handle
 			set(self.controls.clim(1),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(1)));
 			set(self.controls.clim(2),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(2)));
 			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
-			set(self.controls.volume,'String',sprintf('of %d',self.current_vols(get(self.controls.image_list,'Value'))));
+			set(self.controls.volume_label_count,'String',sprintf('of %d',size(self.img{self.active_layer},4)));
 
 			set(self.controls.visible,'Value',self.visible(self.active_layer));
 
