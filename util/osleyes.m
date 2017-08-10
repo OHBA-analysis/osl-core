@@ -37,6 +37,8 @@ classdef osleyes < handle
 		ax % Handles of the three display axes
 		controls % Handles for control panel and associated controls
 
+		ts_line = NaN % Handle to line in open timeseries plot
+
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
 		h_crosshair % Handles for crosshairs on each axis
 		h_coloraxes % Handles to colorbar axes
@@ -317,8 +319,21 @@ classdef osleyes < handle
 	methods(Access=private)
 
 		function plot_timeseries(self)
-			figure
-			title('Not yet implemented')
+
+			if ~ishandle(self.ts_line)
+				fig = figure;
+				ax = axes(fig);
+				self.ts_line = plot(ax,1,1);
+			end
+
+			% Get the indices in 3D
+			p = self.current_point; % Current point in 3D
+			[~,idx(1)] = min(abs(self.coord{self.active_layer}.x-p(1)));
+			[~,idx(2)] = min(abs(self.coord{self.active_layer}.y-p(2)));
+			[~,idx(3)] = min(abs(self.coord{self.active_layer}.z-p(3)));
+
+			set(self.ts_line,'XData',1:size(self.img{self.active_layer},4),'YData',squeeze(self.img{self.active_layer}(idx(1),idx(2),idx(3),:)));
+			title(get(self.ts_line,'Parent'),sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)),'Interpreter','none')
 		end
 
 		function refresh_slices(self)
@@ -375,6 +390,10 @@ classdef osleyes < handle
 					set(self.h_img{j}(3),'Visible','off');
 				end
 			end
+
+			if ishandle(self.ts_line)
+				self.plot_timeseries()
+			end
 		end
 
 		function refresh_colors(self)
@@ -393,6 +412,11 @@ classdef osleyes < handle
 		end
 
 		function activate_motion(self)	
+
+			if strcmp(get(self.fig,'SelectionType'),'alt')
+				return
+			end
+
 			if is_within(self.fig,self.ax(1))
 				self.motion_active = 1;
 			elseif is_within(self.fig,self.ax(2))
