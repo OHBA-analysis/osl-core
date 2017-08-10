@@ -6,6 +6,11 @@ classdef osleyes < handle
 	% - A *layer* corresponds to a NIFTI file
 	% - A *volume* corresponds to a slice in the 4th dimension of the data in the NIFTI file
 	%
+	% OTHER NOTES
+	% - figure contains 'osleyes' property with handle to this object
+	% - figure will be closed if handle is deleted
+	% - object will be deleted if figure is closed
+
 	% Romesh Abeysuriya 2017
 
 	properties
@@ -71,7 +76,8 @@ classdef osleyes < handle
 			self.fig = figure('Units','Characters','Color','k');
 			self.initial_render();
 			set(self.fig,'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
-		
+			addprop(self.fig,'osleyes');
+			set(self.fig,'osleyes',self); % Store handle to this osleyes in the figure so it can be retrieved later if desired
 
 			self.niifiles = niifiles;
 			dropdown_strings = {};
@@ -135,6 +141,29 @@ classdef osleyes < handle
 			self.refresh_colors();
 			self.active_layer = length(self.niifiles);
 		end
+
+		function delete(self)
+			% Destructor closes the figure when the object ceases to exist
+			delete(self.fig);
+		end
+
+		function animate(self,fps)
+			% Cycle through volumes
+			% Pause assuming no rendering time - so fps is only approximate
+			if nargin < 2 || isempty(fps) 
+				fps = 30;
+			end
+			
+			if size(self.img{self.active_layer},4)==1
+				error('Layer only has one volume, there is nothing to animate!');
+			end
+
+			while 1
+				self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer),size(self.img{self.active_layer},4));
+				pause(1/fps);
+			end
+		end
+		
 
 
 		function set.colormaps(self,val)
@@ -226,6 +255,12 @@ classdef osleyes < handle
 				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.clims{self.active_layer}(1),self.clims{self.active_layer}(2),4))
 			end
 
+			if size(self.img{self.active_layer},4)==1
+				set(self.controls.volume,'Enable','off');
+			else
+				set(self.controls.volume,'Enable','on');
+			end
+
 			self.resize(); % Update sizes of colorbars
 			self.refresh_slices();
 		end
@@ -243,6 +278,7 @@ classdef osleyes < handle
 			end
 
 			self.current_vols = val;
+			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
 			self.refresh_slices();
 		end
 
@@ -254,10 +290,6 @@ classdef osleyes < handle
 			end
 
 			self.refresh_slices();
-		end
-
-		function delete(self)
-			delete(self.fig);
 		end
 
 		function set.show_controls(self,val)
@@ -431,7 +463,6 @@ classdef osleyes < handle
 			next_to(self.controls.marker(2),self.controls.clim(2),2);
 			next_to(self.controls.marker(3),self.controls.clim(2),2);
 			next_to(self.controls.marker(4),self.controls.marker(3),0.5);
-
 
 		end
 
