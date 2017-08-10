@@ -323,7 +323,10 @@ classdef osleyes < handle
 			if ~ishandle(self.ts_line)
 				fig = figure;
 				ax = axes(fig);
-				self.ts_line = plot(ax,1,1);
+				self.ts_line = plot(ax,1,1,'HitTest','off');
+				hold(ax,'on')
+				h_bar = plot(ax,1,1,'r','HitTest','off','Visible','off');
+				set(ax,'ButtonDownFcn',@(~,~) set_volume(ax,h_bar,self));
 			end
 
 			% Get the indices in 3D
@@ -666,4 +669,11 @@ function orientation_letters(ax,labels)
 	text(max(xl),mean(yl),labels{2},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','right','VerticalAlignment','middle','HitTest','off','FontSize',10)
 	text(mean(xl),min(yl),labels{3},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','bottom','HitTest','off','FontSize',10)
 	%text(mean(xl),max(yl),labels{4},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','top','HitTest','off','FontSize',10)
+end
+
+function set_volume(ax,h_bar,h_osleyes)
+	p = get(ax,'CurrentPoint');
+	p = round(p(1,1));
+	set(h_bar,'Visible','on','XData',[p(1,1) p(1,1)],'YData',get(ax,'YLim'));
+	h_osleyes.current_vols(h_osleyes.active_layer) = p;
 end
