@@ -16,7 +16,8 @@ classdef osleyes < handle
 
 	properties(SetAccess=protected)
 		niifiles
-		nii % Temporarily accessible
+		img = {} % Temporarily accessible
+		xform
 		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
 	end
 
@@ -66,20 +67,19 @@ classdef osleyes < handle
 			set(self.fig,'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
 		
 
-			self.nii = []
 			self.niifiles = niifiles;
 			dropdown_strings = {};
 			for j = 1:length(self.niifiles)
-				self.nii{j} = load_untouch_nii(self.niifiles{j}); % Do not apply xform/qform
+				[self.img{j},~,self.xform{j}] = osl_load_nii(self.niifiles{j}); % Do not apply xform/qform
+				self.img{j} = double(self.img{j});
 				[~,fname,ext] = fileparts(self.niifiles{j});
 				dropdown_strings{j} = [fname '.' ext];
-				self.nii{j}.img = double(self.nii{j}.img);
-				self.coord{j} = get_coords(self.nii{j}.hdr);
-				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.nii{j}.img(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off');
-				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.nii{j}.img(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off');
-				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.nii{j}.img(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off');
+				self.coord{j} = get_coords(self.img{j},self.xform{j});
+				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img{j}(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off');
+				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img{j}(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off');
+				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.img{j}(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off');
 				if isempty(clims{j})
-					self.clims{j} = [min(self.nii{j}.img(:)),max(self.nii{j}.img(:))];
+					self.clims{j} = [min(self.img{j}(:)),max(self.img{j}(:))];
 				else
 					self.clims{j} = clims{j};
 				end
@@ -137,7 +137,7 @@ classdef osleyes < handle
 			end
 
 			assert(iscell(val),'Colormaps should be a cell array')
-			assert(length(val) == length(self.nii),'Number of colormaps must match number of images');
+			assert(length(val) == length(self.img),'Number of colormaps must match number of images');
 			for j = 1:length(val)
 				if iscell(val{j})
 					assert(length(val{j})==2,'Colormap must either be a value or a cell array of length 2');
@@ -154,7 +154,7 @@ classdef osleyes < handle
 			end
 
 			assert(iscell(val),'clims should be a cell array')
-			assert(length(val) == length(self.nii),'Number of clims must match number of images');
+			assert(length(val) == length(self.img),'Number of clims must match number of images');
 			for j = 1:length(self.colormaps)
 				assert(length(val{j})==2,'Colour limits must have two elements')
 				assert(val{j}(2)>=val{j}(1),'Colour limits must be in ascending order')
@@ -199,6 +199,8 @@ classdef osleyes < handle
 			set(self.controls.clim(1),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(1)));
 			set(self.controls.clim(2),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(2)));
 			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
+			set(self.controls.volume,'String',sprintf('of %d',self.current_vols(get(self.controls.image_list,'Value'))));
+
 			set(self.controls.visible,'Value',self.visible(self.active_layer));
 
 			tickstrs = @(low,high,n) arrayfun(@(x) sprintf('%.2g',x),linspace(low,high,n),'UniformOutput',false);
@@ -210,7 +212,6 @@ classdef osleyes < handle
 				set(self.h_colorimage(1),'CData',permute(self.colormap_matrices{self.active_layer}{2},[1 3 2]));
 				set(self.h_coloraxes(1),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(-self.clims{self.active_layer}(1),-self.clims{self.active_layer}(2),4))
 				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.clims{self.active_layer}(1),self.clims{self.active_layer}(2),4))
-
 			else
 				set(self.h_coloraxes(1),'Visible','off');
 				set(self.h_colorimage(1),'Visible','off');
@@ -231,7 +232,7 @@ classdef osleyes < handle
 			assert(isvector(val) && length(val) == length(self.niifiles));
 
 			for j = 1:length(val)
-				assert(val(j)>0 && val(j) <= size(self.nii{j}.img,4),'Volume index out of bounds');
+				assert(val(j)>0 && val(j) <= size(self.img{j},4),'Volume index out of bounds');
 			end
 
 			self.current_vols = val;
@@ -293,18 +294,18 @@ classdef osleyes < handle
 
 			% Now update each slice
 
-			for j = 1:length(self.nii)
+			for j = 1:length(self.img)
 				[~,idx(1)] = min(abs(self.coord{j}.x-p(1)));
 				[~,idx(2)] = min(abs(self.coord{j}.y-p(2)));
 				[~,idx(3)] = min(abs(self.coord{j}.z-p(3)));
 
 				% These are the slice maps - need to convert them to color values now
-				d1 = permute(self.nii{j}.img(idx(1),:,:,self.current_vols(j)),[2 3 1])';
-				d2 = permute(self.nii{j}.img(:,idx(2),:,self.current_vols(j)),[1 3 2])';
-				d3 = permute(self.nii{j}.img(:,:,idx(3),self.current_vols(j)),[1 2 3])';
+				d1 = permute(self.img{j}(idx(1),:,:,self.current_vols(j)),[2 3 1])';
+				d2 = permute(self.img{j}(:,idx(2),:,self.current_vols(j)),[1 3 2])';
+				d3 = permute(self.img{j}(:,:,idx(3),self.current_vols(j)),[1 2 3])';
 
 				if j == self.active_layer
-					set(self.controls.marker(4),'String',sprintf('Value = %+ 7.2f',self.nii{j}.img(idx(1),idx(2),idx(3),self.current_vols(j))));
+					set(self.controls.marker(4),'String',sprintf('Value = %+ 7.2f',self.img{j}(idx(1),idx(2),idx(3),self.current_vols(j))));
                 end
 
                 if self.visible(j)
@@ -378,10 +379,11 @@ classdef osleyes < handle
 			self.controls.clim(1) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.0','Units','characters','Position',[0 0.2 7 1.2]);
 			self.controls.clim(2) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.2','Units','characters','Position',[0 0.2 7 1.2]);
 			self.controls.clim_label(1) = uicontrol(self.controls.panel,'style','text','String','Range:','Units','characters','Position',[0 0.3 8 1]);
-			self.controls.clim_label(2) = uicontrol(self.controls.panel,'style','text','String','to','Units','characters','Position',[0 0.3 3 1]);
+			self.controls.clim_label(2) = uicontrol(self.controls.panel,'style','text','String','to','Units','characters','Position',[0 0.3 3 1],'HorizontalAlignment','left');
 
 			self.controls.volume_label = uicontrol(self.controls.panel,'style','text','String','Volume:','Units','characters','Position',[0 1.6 8 1]);
 			self.controls.volume = uicontrol(self.controls.panel,'Callback',@(~,~) volume_box_callback(self),'style','edit','String','1','Units','characters','Position',[0 1.5 7 1.2]);
+			self.controls.volume_label_count = uicontrol(self.controls.panel,'style','text','String','of XXXX','Units','characters','Position',[0 1.6 8 1],'HorizontalAlignment','left');
 
 			self.controls.visible = uicontrol(self.controls.panel,'Callback',@(~,~) visible_box_callback(self),'style','checkbox','Units','characters','Position',[0 1 3 1]);
 
@@ -399,15 +401,16 @@ classdef osleyes < handle
 
 			next_to(self.controls.volume_label,self.controls.image_list,1);
 			next_to(self.controls.volume,self.controls.volume_label,1);
+			next_to(self.controls.volume_label_count,self.controls.volume,1);
 
 			next_to(self.controls.clim_label(1),self.controls.image_list,1);
 			next_to(self.controls.clim(1),self.controls.clim_label(1),1);
 			next_to(self.controls.clim_label(2),self.controls.clim(1),1);
-			next_to(self.controls.clim(2),self.controls.clim_label(2),1);
+			next_to(self.controls.clim(2),self.controls.clim_label(2),0);
 
-			next_to(self.controls.marker(1),self.controls.clim(2),1);
-			next_to(self.controls.marker(2),self.controls.clim(2),1);
-			next_to(self.controls.marker(3),self.controls.clim(2),1);
+			next_to(self.controls.marker(1),self.controls.clim(2),2);
+			next_to(self.controls.marker(2),self.controls.clim(2),2);
+			next_to(self.controls.marker(3),self.controls.clim(2),2);
 			next_to(self.controls.marker(4),self.controls.marker(3),0.5);
 
 
@@ -460,8 +463,8 @@ end
 
 function volume_box_callback(self)
 	new_volume = str2double(get(self.controls.volume,'String'));
-	if new_volume < 1 || new_volume > size(self.nii{self.active_layer}.img,4)
-		uiwait(errordlg(sprintf('Volume out of bounds (image has %d volumes)',size(self.nii{self.active_layer}.img,4))));
+	if new_volume < 1 || new_volume > size(self.img{self.active_layer},4)
+		uiwait(errordlg(sprintf('Volume out of bounds (image has %d volumes)',size(self.img{self.active_layer},4))));
 		set(self.controls.volume,'String',num2str(self.current_vols(self.active_layer)));
 	else
 		self.current_vols(self.active_layer) = new_volume;
@@ -506,7 +509,8 @@ function rgb = map_colors(x,cmap,clim)
 
 end
 
-function c = get_coords(hdr)
+function c = get_coords(img,xform)
+	% 
 	% See https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html#ref0
 	%
 	% Note - this is the point at which xform is used to quantify how the
@@ -516,34 +520,17 @@ function c = get_coords(hdr)
 	% flipped left or right as desired to display in radiological orientation
 	% or not The essential thing is that here, the order of the arrays encodes
 	% whether they are in ascending or descending order in MNI space
-	%
-	% TODO - Do the transformation just based on xform read in by osl_load_nii
-	i = 0:hdr.dime.dim(2)-1;
-	j = 0:hdr.dime.dim(3)-1;
-	k = 0:hdr.dime.dim(4)-1;
 
-	c = struct;
-	if hdr.hist.sform_code > 0 || (hdr.hist.sform_code == 0 && hdr.hist.qform_code == 0)
-		% Use SFORM
-		c.x = hdr.hist.srow_x(1) * i + hdr.hist.srow_x(4);
-		c.y = hdr.hist.srow_y(2) * j + hdr.hist.srow_y(4);
-		c.z = hdr.hist.srow_z(3) * k + hdr.hist.srow_z(4);
-	else
-		warning('Using qform, not fully tested!')
-		% Use QFORM
-		a = 0;
-		b = hdr.hist.quatern_b;
-		c = hdr.hist.quatern_c;
-		d = hdr.hist.quatern_d;
+	i = 0:size(img,1)-1;
+	j = 0:size(img,2)-1;;
+	k = 0:size(img,3)-1;;
 
-		R = [a^2+b^2-c^2-d^2  , 2*b*c-2*a*d     , 2*b*d+2*a*c;
-		     2*b*c+2*a*d      , a^2-b^2+c^2-d^2 , 2*c*d-2*a*b;
-		     2*b*d-2*a*c      , 2*c*d+2*a*b     , a^2-b^2-c^2+d^2;];
+	assert(isdiag(xform(1:3,1:3)),'xform matrix is not diagonal which means there are complex transformations in the NIFTI file. OSLEYES cannot handle these transformations, you must use FSLEYES')
+	assert(all(xform(4,:)==[0 0 0 1]),'Unexpected last row of xform - was expecting [0 0 0 1]. OSLEYES has not been tested with this type of file. Use FSLEYES')
 
-		c.x = R*hdr.dime.pixdim(2)*bsxfun(@times,i(:),[1 0 0])' + hdr.hist.qoffset_x;
-		c.y = R*hdr.dime.pixdim(3)*bsxfun(@times,j(:),[0 1 0])' + hdr.hist.qoffset_y;
-		c.z = R*hdr.dime.pixdim(1)*hdr.dime.pixdim(4)*bsxfun(@times,k(:),[0 0 1])' + hdr.hist.qoffset_z;
-	end
+	c.x = xform(1,1) * i + xform(1,4);
+	c.y = xform(2,2) * j + xform(2,4);
+	c.z = xform(3,3) * k + xform(3,4);
 
 end
 
