@@ -1,17 +1,23 @@
 classdef osleyes < handle
 	% A pure Matlab NIFTI viewer based on common OSL usage of fsleyes/fslview
 	%
+	%
+	% TERMINOLOGY
+	% - A *layer* corresponds to a NIFTI file
+	% - A *volume* corresponds to a slice in the 4th dimension of the data in the NIFTI file
+	%
 	% Romesh Abeysuriya 2017
 
 	properties
 		clims = {}; % Values below this range are transparent, values above are clipped
 		colormaps= {}; % Can be name of a colormap function on the path
 		current_point = [1 1 1]; % These are the XYZ MNI coordinates for the crosshair
-		current_vols = []; % This is an array that specifies which 4D volume is being displayed for each layer
+		current_vols = []; % This is an array that specifies which volume is being displayed for each layer
 		visible = logical(1); % This is an array that is true/false for whether a layer is visible or not
 		active_layer = 1; % The active layer controls which layer's properties are shown in the control panel and the colorbars
 		show_controls = 1;
 		show_crosshair = 1;
+		layer_alpha = []; % Transparency of each layer
 	end
 
 	properties(SetAccess=protected)
@@ -75,9 +81,9 @@ classdef osleyes < handle
 				[~,fname,ext] = fileparts(self.niifiles{j});
 				dropdown_strings{j} = [fname '.' ext];
 				self.coord{j} = get_coords(self.img{j},self.xform{j});
-				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img{j}(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off');
-				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img{j}(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off');
-				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.img{j}(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off');
+				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img{j}(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
+				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img{j}(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
+				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.img{j}(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				if isempty(clims{j})
 					self.clims{j} = [min(self.img{j}(:)),max(self.img{j}(:))];
 				else
@@ -92,6 +98,7 @@ classdef osleyes < handle
 
 				self.current_vols(j) = 1;
 				self.visible(j) = 1;
+				self.layer_alpha(j) = 1;
 			end
 
 			set(self.controls.image_list,'String',dropdown_strings);
@@ -263,6 +270,16 @@ classdef osleyes < handle
 			self.refresh_slices()
 		end
 
+		function set.layer_alpha(self,val)
+			self.layer_alpha = val;
+
+			if self.under_construction
+				return;
+			end
+			
+			self.refresh_slices()
+		end
+
 	end
 
 	methods(Access=private)
@@ -308,16 +325,18 @@ classdef osleyes < handle
 					set(self.controls.marker(4),'String',sprintf('Value = %+ 7.2f',self.img{j}(idx(1),idx(2),idx(3),self.current_vols(j))));
                 end
 
+
+                % If bidirectional colormap, then hide abs(x)<clim(1), otherwise hide x<clim(1)
+                if iscell(self.colormaps{j})
+                	hidefcn = @abs; 
+                else
+                	hidefcn = @(x) x;
+                end
+
                 if self.visible(j)
-                	if iscell(self.colormaps{j}) % If bidirectional clim, then hide abs(x)<self.clims, otherwise hide x<clims
-						set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d1)>self.clims{j}(1)));
-						set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d2)>self.clims{j}(1)));
-						set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(abs(d3)>self.clims{j}(1)));
-					else
-						set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(d1>self.clims{j}(1)));
-						set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(d2>self.clims{j}(1)));
-						set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',+(d3>self.clims{j}(1)));
-					end
+					set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',self.layer_alpha(j)*+(hidefcn(d1)>self.clims{j}(1)));
+					set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',self.layer_alpha(j)*+(hidefcn(d2)>self.clims{j}(1)));
+					set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',self.layer_alpha(j)*+(hidefcn(d3)>self.clims{j}(1)));
 				else
 					set(self.h_img{j}(1),'Visible','off');
 					set(self.h_img{j}(2),'Visible','off');
