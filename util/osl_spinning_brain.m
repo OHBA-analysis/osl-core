@@ -47,6 +47,7 @@ function osl_spinning_brain(fname,fig,duration)
 		v.FrameRate = fps;
 		v.Quality = 60; % About half the default quality file size with minimal loss of quality
 		open(v)
+		cleanup = onCleanup(@() close(v)); % Automatically close when function ends
 	else
 		delayTime = 1/fps;
 	end
@@ -72,13 +73,5 @@ function osl_spinning_brain(fname,fig,duration)
 			end
 		end
 	end
-
-	if strcmp(ext,'.mp4')
-		close(v);
-	end
-
-
-
-
 
 
