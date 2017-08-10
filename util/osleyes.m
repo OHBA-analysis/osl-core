@@ -37,7 +37,9 @@ classdef osleyes < handle
 		ax % Handles of the three display axes
 		controls % Handles for control panel and associated controls
 
-		ts_line = NaN % Handle to line in open timeseries plot
+		ts_ax  % Handle to timeseries axis
+		ts_line  % Handle to line in timeseries plot
+		ts_bar  % Handle to marker bar in timeseries plot
 
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
 		h_crosshair % Handles for crosshairs on each axis
@@ -47,12 +49,9 @@ classdef osleyes < handle
 		coord % Axis coordinates for each image
 		colormap_matrices = {}; % Cached colormaps
 		under_construction = true; % Don't render anything while this is true
-		motion_active = 0; % Index of which axis to compare against
+		motion_active = 0; % If this flag is true, then the slices will be updated when the mouse is moved
 		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
 		contextmenu % Handle for the context menu
-	end
-
-	properties(Dependent)
 	end
 
 	methods
@@ -135,7 +134,7 @@ classdef osleyes < handle
 			set(self.fig,'WindowButtonUpFcn',@(~,~) self.deactivate_motion())
 
 			self.contextmenu.root = uicontextmenu();
-			self.contextmenu.plot_timeseries = uimenu(self.contextmenu.root, 'label','Plot time series','Enable','On','Callback',@(~,~) context_plot_ts(self));
+			self.contextmenu.plot_timeseries = uimenu(self.contextmenu.root, 'label','Plot time series','Enable','On','Callback',@(~,~) self.plot_timeseries());
 			set(self.fig,'uicontextmenu',self.contextmenu.root);
 
 			self.resize()
@@ -282,6 +281,11 @@ classdef osleyes < handle
 			self.current_vols = val;
 			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
 			self.refresh_slices();
+
+			if ishandle(self.ts_bar)
+				set(self.ts_bar,'XData',[1 1]*self.current_vols(self.active_layer),'YData',get(get(self.ts_bar,'Parent'),'YLim'));
+			end
+
 		end
 
 		function set.visible(self,val)
@@ -319,28 +323,31 @@ classdef osleyes < handle
 	methods(Access=private)
 
 		function plot_timeseries(self)
+			% This function will open a new figure window
+			% Plotting the timeseries itself is handled in two parts
+			% - The line is refreshed by refresh_slices when the MNI coordinates change
+			% - The bar is refreshed by set.current_vols when the volume changes
 
-			if ~ishandle(self.ts_line)
-				fig = figure;
-				ax = axes(fig);
-				self.ts_line = plot(ax,1,1,'HitTest','off');
-				hold(ax,'on')
-				h_bar = plot(ax,1,1,'r','HitTest','off','Visible','off');
-				set(ax,'ButtonDownFcn',@(~,~) set_volume(ax,h_bar,self));
+			% Odd things will happen if more than one window is allowed to be bound to the
+			% same osleyes instance
+			if ishandle(self.ts_line)
+				return
 			end
 
-			% Get the indices in 3D
-			p = self.current_point; % Current point in 3D
-			[~,idx(1)] = min(abs(self.coord{self.active_layer}.x-p(1)));
-			[~,idx(2)] = min(abs(self.coord{self.active_layer}.y-p(2)));
-			[~,idx(3)] = min(abs(self.coord{self.active_layer}.z-p(3)));
+			fig = figure;
+			ax = axes(fig);
+			self.ts_line = plot(ax,1,1,'HitTest','off');
+			hold(ax,'on')
+			self.ts_bar = plot(ax,1,1,'r','HitTest','off');
+			set(ax,'ButtonDownFcn',@(~,~) set_volume(ax,self));
+			self.current_vols = self.current_vols; % Reset the data in h_bar via set.current_vols
 
-			set(self.ts_line,'XData',1:size(self.img{self.active_layer},4),'YData',squeeze(self.img{self.active_layer}(idx(1),idx(2),idx(3),:)));
-			title(get(self.ts_line,'Parent'),sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)),'Interpreter','none')
 		end
 
 		function refresh_slices(self)
-			% Given crosshair position, update the slices
+			% Update the slices
+			% This will move the crosshairs, set the position markers, and change which slice is displayed
+			% It will not re-render the colour bars
 
 			p = self.current_point; % Current point in 3D
 
@@ -395,7 +402,11 @@ classdef osleyes < handle
 			end
 
 			if ishandle(self.ts_line)
-				self.plot_timeseries()
+				[~,idx(1)] = min(abs(self.coord{self.active_layer}.x-p(1)));
+				[~,idx(2)] = min(abs(self.coord{self.active_layer}.y-p(2)));
+				[~,idx(3)] = min(abs(self.coord{self.active_layer}.z-p(3)));
+				set(self.ts_line,'XData',1:size(self.img{self.active_layer},4),'YData',squeeze(self.img{self.active_layer}(idx(1),idx(2),idx(3),:)));
+				title(get(self.ts_line,'Parent'),sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)),'Interpreter','none')
 			end
 		end
 
@@ -411,11 +422,16 @@ classdef osleyes < handle
 					self.colormap_matrices{j} = feval(self.colormaps{j},self.colormap_resolution);
 				end
 			end
+
+			% Setting the value here causes the image to be refreshed with the new colour maps
+			% active_layer is changed because the colour bars also need to be refreshed
 			self.active_layer = self.active_layer;
 		end
 
 		function activate_motion(self)	
-
+			% This function is called whenever the user presses the mouse button
+			% It sets the motion_active flag from 0 to the index of which axis the user
+			% clicked on (and thus which axis should be used to compute the coordinates from)
 			if strcmp(get(self.fig,'SelectionType'),'alt')
 				return
 			end
@@ -431,10 +447,13 @@ classdef osleyes < handle
 		end
 
 		function deactivate_motion(self);
+			% This function is called when the user releases the mouse button
 			self.motion_active = 0;
 		end
 
 		function initial_render(self)
+			% Create all of the objects AND perform the one-off layout of the control panel
+
 			self.ax(1) = axes('Parent',self.fig,'Units','characters');
 			self.ax(2) = axes('Parent',self.fig,'Units','characters');
 			self.ax(3) = axes('Parent',self.fig,'Units','characters');
@@ -495,6 +514,10 @@ classdef osleyes < handle
 
 
 		function resize(self)
+			% Resize the main objects in the figure window
+			% The contents of the control panel will not be changed - their position is determined
+			% by the initial layout function and is fixed from that point on
+
 			figpos = get(self.fig,'Position');
 
 			% Layout is - 0.3 reserved for each axis, plus 0.1 for the two colorbars
@@ -527,18 +550,22 @@ classdef osleyes < handle
 end
 
 function image_list_callback(self)
+	% This callback is run when the user selects a layer from the dropdown list
 	self.active_layer = get(self.controls.image_list,'Value');
 end
 
 function clim_box_callback(self)
+	% This callback is run whenever EITHER of the colour range textboxes is modified
 	self.clims{self.active_layer} = [str2double(get(self.controls.clim(1),'String')) str2double(get(self.controls.clim(2),'String'))];
 end
 
 function visible_box_callback(self)
+	% This callback is run if the user clicks the visibility checkbox
 	self.visible(self.active_layer) = get(self.controls.visible,'Value');
 end
 
 function volume_box_callback(self)
+	% If the user types a umber into the volume edit text box, this callback is run
 	new_volume = str2double(get(self.controls.volume,'String'));
 	if new_volume < 1 || new_volume > size(self.img{self.active_layer},4)
 		uiwait(errordlg(sprintf('Volume out of bounds (image has %d volumes)',size(self.img{self.active_layer},4))));
@@ -548,14 +575,18 @@ function volume_box_callback(self)
 	end
 end
 
-function context_plot_ts(self)
-	self.plot_timeseries;
-end
-
 function rgb = map_colors(x,cmap,clim)
-	% x - data
-	% cmap - color matrix OR cell with two color matrices
-	% clim - color limit for this plot
+	% Map the image to colours using the colour matrices
+	% The problem is that each axis contains multiple images each with 
+	% a different colourmap. But an axis can only have one colormap. Therefore
+	% we need to perform the colour mapping ourselves
+	% 
+	% INPUT
+	% 	x - image data
+	% 	cmap - color matrix OR cell with two color matrices
+	% 	clim - color limit for this plot
+	% OUTPUT
+	%   rgb - colour image data for rendering to screen
 
 	if iscell(cmap) % We need to treat the positive and negative parts separately
 		% These are the positive indices
@@ -587,7 +618,11 @@ function rgb = map_colors(x,cmap,clim)
 end
 
 function c = get_coords(img,xform)
-	% 
+	% Take in an image and xform matrix
+	% Return a struct with fields 'x','y','z' containing vectors
+	% of MNI coordinates for each dimension. These are then used by image() when rendering
+	% the layer to get the spatial position, orientation, and size correct
+	%
 	% See https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html#ref0
 	%
 	% Note - this is the point at which xform is used to quantify how the
@@ -612,6 +647,9 @@ function c = get_coords(img,xform)
 end
 
 function move_mouse(self)
+	% This function is called whenever the mouse is moved and is responsible for
+	% redrawing the slices via set.current_point()
+
 	if isMultipleCall();  return;  end
 	if ~self.motion_active; return; end
 
@@ -628,6 +666,12 @@ function move_mouse(self)
 end
 
 function within = is_within(f,h)
+	% This function takes in 
+	% - f - figure handle
+	% - h - handle of object within f
+	% and returns true if the CurrentPoint of the figure is within the 
+	% bounds of the object h (e.g. if the mouse is over an axis)
+
 	C = get(f,'CurrentPoint');
 	pos = get(h,'Position');
 
@@ -659,6 +703,8 @@ function flag=isMultipleCall()
 end
 
 function orientation_letters(ax,labels)
+	% This function adds the orientation letter marker to the main display
+	%
 	% Labels will be positioned at:
 	% {left, right, bottom, top}
 	% Hold will be left on
@@ -671,9 +717,12 @@ function orientation_letters(ax,labels)
 	%text(mean(xl),max(yl),labels{4},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','top','HitTest','off','FontSize',10)
 end
 
-function set_volume(ax,h_bar,h_osleyes)
+function set_volume(ax,h_osleyes)
+	% This is the callback for the axis object in the timeseries plot
+	% It is wrapped in an anonymous function closure that contains
+	% - ax (axes of the timeseries plot)
+	% - h_bar (vertical red line showing which time was clicked)
+	% - h_osleyes (handle to osleyes object that created and is thus bound to this plot)
 	p = get(ax,'CurrentPoint');
-	p = round(p(1,1));
-	set(h_bar,'Visible','on','XData',[p(1,1) p(1,1)],'YData',get(ax,'YLim'));
-	h_osleyes.current_vols(h_osleyes.active_layer) = p;
+	h_osleyes.current_vols(h_osleyes.active_layer) = round(p(1,1));
 end
