@@ -11,6 +11,7 @@ classdef osleyes < handle
 		visible = logical(1); % This is an array that is true/false for whether a layer is visible or not
 		active_layer = 1; % The active layer controls which layer's properties are shown in the control panel and the colorbars
 		show_controls = 1;
+		show_crosshair = 1;
 	end
 
 	properties(SetAccess=protected)
@@ -256,6 +257,11 @@ classdef osleyes < handle
 			self.resize()
 		end
 
+		function set.show_crosshair(self,val)
+			self.show_crosshair = logical(val);
+			self.refresh_slices()
+		end
+
 	end
 
 	methods(Access=private)
@@ -270,9 +276,15 @@ classdef osleyes < handle
 
 			p = self.current_point; % Current point in 3D
 
-			set(self.h_crosshair(1),'XData',[self.lims(2,:) NaN p(2) p(2)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
-			set(self.h_crosshair(2),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
-			set(self.h_crosshair(3),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(2) p(2) NaN self.lims(2,:)]);
+			if self.show_crosshair
+				set(self.h_crosshair(1),'Visible','on','XData',[self.lims(2,:) NaN p(2) p(2)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
+				set(self.h_crosshair(2),'Visible','on','XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
+				set(self.h_crosshair(3),'Visible','on','XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(2) p(2) NaN self.lims(2,:)]);
+			else
+				set(self.h_crosshair(1),'Visible','off');
+				set(self.h_crosshair(2),'Visible','off');
+				set(self.h_crosshair(3),'Visible','off');
+			end
 
 			set(self.controls.marker(1),'String',sprintf('X = %+06.1f',p(1)));
 			set(self.controls.marker(2),'String',sprintf('Y = %+06.1f',p(2)));
@@ -361,7 +373,7 @@ classdef osleyes < handle
 			set(self.h_coloraxes,'XLim',[0 1],'YLim',[0 1],'XColor','w','YColor','w','XTick',[],'YDir','reverse','YAxisLocation','right');
 			set(self.h_coloraxes(2),'YDir','normal');
 			
-			self.controls.image_list = uicontrol(self.controls.panel,'Callback',@(~,~) image_list_callback(self),'style','popupmenu','String','test','Units','characters','Position',[0 0.75 25 1.5]);
+			self.controls.image_list = uicontrol(self.controls.panel,'Callback',@(~,~) image_list_callback(self),'style','popupmenu','String','test','Units','characters','Position',[0 0.75 20 1.5]);
 
 			self.controls.clim(1) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.0','Units','characters','Position',[0 0.2 7 1.2]);
 			self.controls.clim(2) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.2','Units','characters','Position',[0 0.2 7 1.2]);
@@ -374,10 +386,10 @@ classdef osleyes < handle
 			self.controls.visible = uicontrol(self.controls.panel,'Callback',@(~,~) visible_box_callback(self),'style','checkbox','Units','characters','Position',[0 1 3 1]);
 
 
-			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.0','Units','characters','Position',[0 2 12 1]);
-			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.0','Units','characters','Position',[0 1 12 1]);
-			self.controls.marker(3) = uicontrol(self.controls.panel,'style','text','String','Z = +000.0','Units','characters','Position',[0 0 12 1]);
-			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +0000.0','Units','characters','Position',[0 0.9 16 1]);
+			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.0','Units','characters','Position',[0 2 10 1],'HorizontalAlignment','left');
+			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.0','Units','characters','Position',[0 1 10 1],'HorizontalAlignment','left');
+			self.controls.marker(3) = uicontrol(self.controls.panel,'style','text','String','Z = +000.0','Units','characters','Position',[0 0 10 1],'HorizontalAlignment','left');
+			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +0000.0','Units','characters','Position',[0 0.9 16 1],'HorizontalAlignment','left');
 
 			% Put b to the right of a with given padding
 			next_to = @(b,a,padding) 	set(b,'Position',sum(get(a,'Position').*[1 0 1 0]).*[1 0 0 0]  + [padding 0 0 0] + [0 1 1 1].*get(b,'Position'));
@@ -385,18 +397,18 @@ classdef osleyes < handle
 			set(self.controls.visible,'Position',[1 1 3 1])
 			next_to(self.controls.image_list,self.controls.visible,1);
 
-			next_to(self.controls.volume_label,self.controls.image_list,2);
+			next_to(self.controls.volume_label,self.controls.image_list,1);
 			next_to(self.controls.volume,self.controls.volume_label,1);
 
-			next_to(self.controls.clim_label(1),self.controls.image_list,2);
+			next_to(self.controls.clim_label(1),self.controls.image_list,1);
 			next_to(self.controls.clim(1),self.controls.clim_label(1),1);
 			next_to(self.controls.clim_label(2),self.controls.clim(1),1);
 			next_to(self.controls.clim(2),self.controls.clim_label(2),1);
 
-			next_to(self.controls.marker(1),self.controls.clim(2),2);
-			next_to(self.controls.marker(2),self.controls.clim(2),2);
-			next_to(self.controls.marker(3),self.controls.clim(2),2);
-			next_to(self.controls.marker(4),self.controls.marker(3),1);
+			next_to(self.controls.marker(1),self.controls.clim(2),1);
+			next_to(self.controls.marker(2),self.controls.clim(2),1);
+			next_to(self.controls.marker(3),self.controls.clim(2),1);
+			next_to(self.controls.marker(4),self.controls.marker(3),0.5);
 
 
 		end
@@ -496,7 +508,16 @@ end
 
 function c = get_coords(hdr)
 	% See https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html#ref0
-
+	%
+	% Note - this is the point at which xform is used to quantify how the
+	% left-right axes are reversed The arrays here are used as the X and Y
+	% data values in calls to imagesc() which ensures that the image is
+	% correctly oriented relative to its parent axis. Then, the *axis* can be
+	% flipped left or right as desired to display in radiological orientation
+	% or not The essential thing is that here, the order of the arrays encodes
+	% whether they are in ascending or descending order in MNI space
+	%
+	% TODO - Do the transformation just based on xform read in by osl_load_nii
 	i = 0:hdr.dime.dim(2)-1;
 	j = 0:hdr.dime.dim(3)-1;
 	k = 0:hdr.dime.dim(4)-1;
