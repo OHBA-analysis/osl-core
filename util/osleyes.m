@@ -6,6 +6,13 @@ classdef osleyes < handle
 	% - A *layer* corresponds to a NIFTI file
 	% - A *volume* corresponds to a slice in the 4th dimension of the data in the NIFTI file
 	%
+	% osleyes.colormaps - A cell array of colormaps for each layer. Each
+	% 					  element corresponds to a layer. The layer can
+	% 					  contain a colormap, or a cell array with 2 colormaps
+	% 					  for a bidirectional map. A colormap is 
+	% 						- the name of a function that takes in a number of elements e.g. 'hot'
+	%						- a (N x 3) matrix of RGB values (e.g. the matrix returned by 'osl_colormap('hot')'
+	%
 	% OTHER NOTES
 	% - figure contains 'osleyes' property with handle to this object
 	% - figure will be closed if handle is deleted
@@ -165,8 +172,6 @@ classdef osleyes < handle
 			end
 		end
 		
-
-
 		function set.colormaps(self,val)
 			if self.under_construction
 				self.colormaps = val;
@@ -414,13 +419,7 @@ classdef osleyes < handle
 			% Turn the colormap strings into colormap matrices
 			% Called if clims or colormap is changed
 			for j = 1:length(self.colormaps)
-				if iscell(self.colormaps{j})
-                    self.colormap_matrices{j} = cell(2,1);
-					self.colormap_matrices{j}{1} = feval(self.colormaps{j}{1},self.colormap_resolution);
-					self.colormap_matrices{j}{2} = feval(self.colormaps{j}{2},self.colormap_resolution);
-				else
-					self.colormap_matrices{j} = feval(self.colormaps{j},self.colormap_resolution);
-				end
+				self.colormap_matrices{j} = self.compute_color_matrix(self.colormaps{j})
 			end
 
 			% Setting the value here causes the image to be refreshed with the new colour maps
@@ -543,6 +542,21 @@ classdef osleyes < handle
 				set(self.h_coloraxes(2),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.1 0.015*figpos(3) ax_height*0.8]);
 			end
 
+		end
+
+
+		function m = compute_color_matrix(self,cmap)
+			if iscell(cmap)
+				m = cellfun(@(x) self.compute_color_matrix(x),cmap,'UniformOutput',false);
+                return
+            end
+
+			if isstr(cmap)
+				m = feval(cmap,self.colormap_resolution);
+			else
+				assert(size(cmap,2)==3,'Colormap must have 3 columns (RGB matrix)')
+				m = cmap;
+			end
 		end
 
 	end
@@ -726,3 +740,6 @@ function set_volume(ax,h_osleyes)
 	p = get(ax,'CurrentPoint');
 	h_osleyes.current_vols(h_osleyes.active_layer) = round(p(1,1));
 end
+
+
+
