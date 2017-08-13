@@ -86,7 +86,7 @@ classdef osleyes < handle
 
 			self.fig = figure('Units','Characters','Color','k');
 			self.initial_render();
-			set(self.fig,'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
+			set(self.fig,'KeyPressFcn',@(a,b) KeyPressFcn(self,a,b),'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
 			addprop(self.fig,'osleyes');
 			set(self.fig,'osleyes',self); % Store handle to this osleyes in the figure so it can be retrieved later if desired
 
@@ -751,5 +751,13 @@ function set_volume(ax,h_osleyes)
 	h_osleyes.current_vols(h_osleyes.active_layer) = round(p(1,1));
 end
 
+function KeyPressFcn(self,~,KeyData)
+	switch KeyData.Key
+		case 'uparrow'
+			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer),size(self.img{self.active_layer},4));
+		case 'downarrow'
+			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer)-2,size(self.img{self.active_layer},4));
+	end
+end
 
 
