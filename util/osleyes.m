@@ -98,14 +98,21 @@ classdef osleyes < handle
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img{j}(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img{j}(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.img{j}(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
+				
 				if isempty(clims{j})
-					self.clims{j} = [min(self.img{j}(:)),max(self.img{j}(:))];
+					self.clims{j} = [0,max(self.img{j}(:))];
 				else
 					self.clims{j} = clims{j};
 				end
 
 				if isempty(colormaps{j})
-					self.colormaps{j} = 'bone';
+					if min(self.img{j}(:)) < 0
+						self.colormaps{j} = {osl_colormap('hot'),osl_colormap('cold')};
+					elseif j == 1
+						self.colormaps{j} = osl_colormap('grey');
+					else
+						self.colormaps{j} = osl_colormap('hot');
+					end
 				else
 					self.colormaps{j} = colormaps{j};
 				end
@@ -419,7 +426,7 @@ classdef osleyes < handle
 			% Turn the colormap strings into colormap matrices
 			% Called if clims or colormap is changed
 			for j = 1:length(self.colormaps)
-				self.colormap_matrices{j} = self.compute_color_matrix(self.colormaps{j})
+				self.colormap_matrices{j} = self.compute_color_matrix(self.colormaps{j});
 			end
 
 			% Setting the value here causes the image to be refreshed with the new colour maps
@@ -445,7 +452,7 @@ classdef osleyes < handle
 			move_mouse(self)
 		end
 
-		function deactivate_motion(self);
+		function deactivate_motion(self)
 			% This function is called when the user releases the mouse button
 			self.motion_active = 0;
 		end
@@ -648,8 +655,8 @@ function c = get_coords(img,xform)
 	% whether they are in ascending or descending order in MNI space
 
 	i = 0:size(img,1)-1;
-	j = 0:size(img,2)-1;;
-	k = 0:size(img,3)-1;;
+	j = 0:size(img,2)-1;
+	k = 0:size(img,3)-1;
 
 	assert(isdiag(xform(1:3,1:3)),'xform matrix is not diagonal which means there are complex transformations in the NIFTI file. OSLEYES cannot handle these transformations, you must use FSLEYES')
 	assert(all(xform(4,:)==[0 0 0 1]),'Unexpected last row of xform - was expecting [0 0 0 1]. OSLEYES has not been tested with this type of file. Use FSLEYES')
