@@ -22,7 +22,7 @@ function h = osl_plot_nii(fnames,thresholds,colormaps,anatomical)
     end
     
 	if nargin < 4 || isempty(anatomical) 
-		vol = osl_load_nii(fnames{1});
+		vol = nii.load(fnames{1});
 		[~,anatomical,~] = parcellation.guess_template(vol);
 	end
 

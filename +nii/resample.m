@@ -1,4 +1,4 @@
-function osl_resample_nii_matlab(input_nii,output_fname,output_mask,varargin)
+function resample(input_nii,output_fname,output_mask,varargin)
     % Resample a nii file onto a different spatial grid using Matlab interpolation
     %
     % INPUTS
@@ -8,12 +8,14 @@ function osl_resample_nii_matlab(input_nii,output_fname,output_mask,varargin)
     %                If the file doesn't exist, try appending the osl standard mask folder
     %   output_fname : save the result to this file
     %   key-value pairs
-    %       - interptype : passed to flirt e.g. trilinear
+    %       - interptype : passed to griddedInterpolant e.g. trilinear
     %       - enforce_mask : threshold the interpolated input with the output mask
     %       - force_positive : Assign 0 to any negative values (in case they are introduced by the resampling process)
     % 
     % EXAMPLE
-    %   osl_resample_nii('in.nii.gz',8,'out.nii.gz','interptype','nearestneighbour','dilate',true)
+    %   nii.resample('in.nii.gz',8,'out.nii.gz','interptype','nearestneighbour')
+    %
+    % Note that the input file will automatically be cast to double
     %
     % Romesh Abeysuriya 2017
     
@@ -48,7 +50,7 @@ function osl_resample_nii_matlab(input_nii,output_fname,output_mask,varargin)
     output_vol = zeros([size(output_x),size(input_vol,4)]);
 
     for j = 1:size(input_vol,4)
-        F = griddedInterpolant(input_x,input_y,input_z,input_vol(:,:,:,j),arg.Results.interptype);
+        F = griddedInterpolant(input_x,input_y,input_z,double(input_vol(:,:,:,j)),arg.Results.interptype);
         output_vol(:,:,:,j) = F(output_x,output_y,output_z);
     end
 
@@ -60,7 +62,7 @@ function osl_resample_nii_matlab(input_nii,output_fname,output_mask,varargin)
         output_vol(output_vol < 0) = 0;
     end
 
-    osl_save_nii(output_vol,output_step,output_xform,output_fname);
+    nii.save(output_vol,output_step,output_xform,output_fname);
 
 function [xg,yg,zg,vol,xform,step] = load_nii_vol(fname,flip)
     % Read the input nii file, and construct nd arrays for the spatial coordinates
@@ -69,7 +71,7 @@ function [xg,yg,zg,vol,xform,step] = load_nii_vol(fname,flip)
         flip = false;
     end
         
-    [vol,input_res,xform] = osl_load_nii(fname);
+    [vol,input_res,xform] = nii.load(fname);
     step = input_res.*diag(sign(xform(1:3,1:3)))';
 
     x = xform(1,4):step(1):(xform(1,4)+step(1)*(size(vol,1)-1));

@@ -1,4 +1,4 @@
-function [vol,res,xform] = osl_load_nii(fname)
+function [vol,res,xform] = load(fname)
 	% Load a nii volume together with the spatial resolution and xform matrix
 	%
 	% If the NIFTI file's sform code is >0 OR if both the sform and qform codes are zero, then sform will be used

@@ -1,7 +1,7 @@
 classdef osleyes < handle
 	% A pure Matlab NIFTI viewer based on common OSL usage of fsleyes/fslview
 	%
-	%
+	% 
 	% TERMINOLOGY
 	% - A *layer* corresponds to a NIFTI file
 	% - A *volume* corresponds to a slice in the 4th dimension of the data in the NIFTI file
@@ -64,13 +64,21 @@ classdef osleyes < handle
 	methods
 
 		function self = osleyes(niifiles,colormaps,clims)
-			
+			% niifiles is a file name or cell array of file names
+			% If it's a cell array with an empty first element, then the mask
+			% will be automatically guessed
+
 			if nargin < 1 || isempty(niifiles) 
-				niifiles = {fullfile(osldir,'std_masks/MNI152_T1_8mm_brain.nii.gz')};
+				niifiles = {fullfile(osldir,'std_masks/MNI152_T1_2mm_brain.nii.gz')};
             end
 			
             if ~iscell(niifiles)
                 niifiles = {niifiles};
+            end
+
+            if iscell(niifiles) && isempty(niifiles{1})
+            	vol = nii.load(niifiles{2});
+            	[~,niifiles{1},~] = parcellation.guess_template(vol);
             end
             
             if nargin < 3 || isempty(clims) 
@@ -90,7 +98,7 @@ classdef osleyes < handle
 			self.niifiles = niifiles;
 			dropdown_strings = {};
 			for j = 1:length(self.niifiles)
-				[self.img{j},~,self.xform{j}] = osl_load_nii(self.niifiles{j}); % Do not apply xform/qform
+				[self.img{j},~,self.xform{j}] = nii.load(self.niifiles{j}); % Do not apply xform/qform
 				self.img{j} = double(self.img{j});
 				[~,fname,ext] = fileparts(self.niifiles{j});
 				dropdown_strings{j} = [fname '.' ext];
