@@ -1,4 +1,4 @@
-function save(vol,res,xform,fname)
+function fname = save(vol,res,xform,fname)
 	% Save a nii file together with a given xform matrix
 	%
 	% INPUTS
@@ -37,8 +37,12 @@ function save(vol,res,xform,fname)
 			error('Unknown resolution - should be 1, 3, or 4 elements long');
     end
 
-    
-    nii = make_nii(vol,res);
+    nii = make_nii(vol,r);
+
+    if length(res) > 3
+    	nii.hdr.dime.pixdim(1+(1:length(res))) = res;
+    end
+
     nii.hdr.hist.qform_code = 0;
     nii.hdr.hist.sform_code = 4;
     nii.hdr.hist.srow_x = xform(1,:);
