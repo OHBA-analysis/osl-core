@@ -76,11 +76,6 @@ classdef osleyes < handle
                 niifiles = {niifiles};
             end
 
-            if iscell(niifiles) && isempty(niifiles{1})
-            	vol = nii.load(niifiles{2});
-            	[~,niifiles{1},~] = parcellation.guess_template(vol);
-            end
-            
             if nargin < 3 || isempty(clims) 
             	clims = cell(length(niifiles),1);
             end
