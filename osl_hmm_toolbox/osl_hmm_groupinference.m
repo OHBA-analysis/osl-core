@@ -404,7 +404,7 @@ if todo.output
                 end
                 stat = stat ./ length(unique(subj_inds));
                 disp(['Saving state spatial maps to ' statemaps])
-                statemaps = nii_quicksave(stat,statemaps,getmasksize(D.nchannels),2);
+                statemaps = nii.quicksave(stat,statemaps,getmasksize(D.nchannels),2);
                 
             case 'cov'
                 cov_mats = osl_hmm_statemaps(hmm,[],[],'cov');

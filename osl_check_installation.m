@@ -115,10 +115,10 @@ function osl_check_installation(do_log,test_fslview)
 	end
 
 	try
-		m = read_avw(input_mask);
-		log('PASS - read_avw')
+		m = nii.load(input_mask);
+		log('PASS - nii.load')
 	catch ME
-		log(sprintf('FAIL - read_avw\n%s',ME.message));
+		log(sprintf('FAIL - nii.load\n%s',ME.message));
 	end
 
 	if test_fslview

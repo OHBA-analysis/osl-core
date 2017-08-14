@@ -16,7 +16,7 @@ end
 OSLDIR = getenv('OSLDIR');
 
 %% Read in Standard Brain
-stdbrain=read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(spat_res) 'mm_brain.nii.gz']);
+stdbrain=nii.load([OSLDIR '/std_masks/MNI152_T1_' num2str(spat_res) 'mm_brain.nii.gz']);
 stdbrain=uint8(stdbrain/max(stdbrain(:))*255);
 x_range=[min(find(sum(sum(stdbrain>0,2),3)>0)) max(find(sum(sum(stdbrain>0,2),3)>0))];
 y_range=[min(find(sum(sum(stdbrain>0,1),3)>0)) max(find(sum(sum(stdbrain>0,1),3)>0))];
@@ -30,7 +30,7 @@ z_ind=round(z_range(1):diff(z_range)/10:z_range(2));
 
 %% Read in images
 if strcmp(class(in),'char')
-    try, vol_in=read_avw(in); catch, error(['Unable to read nifti file ' in]); end
+    try, vol_in=nii.load(in); catch, error(['Unable to read nifti file ' in]); end
 else
     if numel(size(in))<3
         try, vol_in = matrix2vols(in,stdbrain); catch, error('Unable to convert input matrix into volume');end

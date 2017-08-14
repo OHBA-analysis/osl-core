@@ -71,8 +71,8 @@ else
     switch class(S.parcellation)
         case {'char','cell'}
             try
-                stdbrain = read_avw(maskfname);
-                parc=read_avw(S.parcellation);
+                stdbrain = nii.load(maskfname);
+                parc=nii.load(S.parcellation);
                 parcellation = vols2matrix(parc,stdbrain); %nVoxels x nSamples
             catch
                 error('Make sure the parcellation file and the data are valid and compatible, including having the same spatial resolution.');

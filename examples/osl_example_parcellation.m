@@ -39,7 +39,7 @@ p = parcellation(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PC
 
 %%
 % Alternatively, you can pass in a matrix in one of these supported formats
-m = read_avw(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'));
+m = nii.load(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'));
 size(m)
 p = parcellation(m);
 

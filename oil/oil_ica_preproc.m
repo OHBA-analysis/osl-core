@@ -65,7 +65,7 @@ assert(any(strfind(montageCheck.name, 'with weights normalisation')),        ...
 varianceDir  = fullfile(saveDir, 'variance-maps', filesep);
 varianceFile = fullfile(varianceDir, [saveNameStem '_noise_corrected_variance_map']);
 ROInets.make_directory(varianceDir);
-nii_quicksave(osl_source_variance(D.montage('switch',2)), ... % second montage is weights-normalised
+nii.quicksave(osl_source_variance(D.montage('switch',2)), ... % second montage is weights-normalised
               varianceFile, oil.source_recon.gridstep, 2);
 
 %% Enveloping 
@@ -117,8 +117,8 @@ try
     niftiNoNorm = fullfile(saveDir, [saveNameStem '_NoWeightsNorm_winavHE_delta_' ...
                                   num2str(window_length) 's']);
                               
-    nii_quicksave(unwrap_trials(Dh_norm),   niftiNorm,   oil.source_recon.gridstep);
-    nii_quicksave(unwrap_trials(Dh_nonorm), niftiNoNorm, oil.source_recon.gridstep);
+    nii.quicksave(unwrap_trials(Dh_norm),   niftiNorm,   oil.source_recon.gridstep);
+    nii.quicksave(unwrap_trials(Dh_nonorm), niftiNoNorm, oil.source_recon.gridstep);
 
 catch ME
     % there's a limit on the amount of data that a nifti will take

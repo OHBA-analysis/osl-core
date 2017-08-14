@@ -529,7 +529,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
                 if (isfield(first_level,'mni_coords'))
                     trlwise.mni_coords   = first_level_results.mni_coords;
                 else
-                    trlwise.mask         = read_avw([oat.source_recon.dirname '/' oat.first_level.name '_mask']);
+                    trlwise.mask         = nii.load([oat.source_recon.dirname '/' oat.first_level.name '_mask']);
                     trlwise.gridstep     = first_level_results.gridstep;
                     trlwise.mni_coords   = first_level_results.mni_coords;
                 end % if (isfield(first_level,'mni_coords'))

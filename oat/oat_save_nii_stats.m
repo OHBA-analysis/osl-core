@@ -147,7 +147,7 @@ warning off;
 mkdir(Sin.stats_dir);
 warning on;
 
-% setup options for nii_quicksave calls
+% setup options for nii.quicksave calls
 options=[];
 options.interp='trilinear';
 options.mask_fname=stdbrainmask_fname;
@@ -178,7 +178,7 @@ if(Sin.stats.level==1),
         if use_parcels                
             fname_out = ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
         else
-            fname_out = nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm.nii.gz'],options);
+            fname_out = nii.quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm.nii.gz'],options);
         end
     end;
     
@@ -188,7 +188,7 @@ if(Sin.stats.level==1),
         if use_parcels                
             fname_out = ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
         else
-            fname_out = nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+            fname_out = nii.quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
         end
     end;
     
@@ -236,7 +236,7 @@ for coni=1:length(Sin.first_level_contrasts),
     if use_parcels                
         ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
     else
-        nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
+        nii.quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
     end
     
     fnamet=fname;
@@ -250,7 +250,7 @@ for coni=1:length(Sin.first_level_contrasts),
         if use_parcels                
             fnamet=ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
         else
-            fnamet=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
+            fnamet=nii.quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);        
         end
         
         if Sin.output_varcopes,
@@ -259,7 +259,7 @@ for coni=1:length(Sin.first_level_contrasts),
             if use_parcels                
                 fnamet=ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
             else
-                fnamet=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+                fnamet=nii.quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
             end
         end;
 
@@ -279,7 +279,7 @@ for coni=1:length(Sin.first_level_contrasts),
             if use_parcels                
                 fnamet_mip=ROInets.nii_parcel_quicksave(dat, Sin.stats.D_sensor_data.parcellation.assignments, [fname '_' num2str(options.output_spat_res) 'mm'], nii_parcel_settings);
             else
-                fnamet_mip=nii_quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
+                fnamet_mip=nii.quicksave(dat,[fname '_' num2str(options.output_spat_res) 'mm'],options);
             end
 
         end;
@@ -310,13 +310,14 @@ for coni=1:length(Sin.first_level_contrasts),
         tstats_clust_fname = [fnamet '_clust4d_tstats'];
         cluster_times=Sin.stats.clusterstats{con,gcon}.times;
 
-        save_avw(Sin.stats.clusterstats{con,gcon}.clustimg,[clustimg_fname '_' num2str(gridstep) 'mm'],'i',[gridstep gridstep gridstep tres]);
-        save_avw(pVimg,[pVimg_fname '_' num2str(gridstep) 'mm'],'f',[gridstep gridstep gridstep tres]);
-        save_avw(Sin.stats.clusterstats{con,gcon}.tstats,[tstats_clust_fname '_' num2str(gridstep) 'mm'],'f',[gridstep gridstep gridstep tres]);
+        nii.save(Sin.stats.clusterstats{con,gcon}.clustimg,[gridstep gridstep gridstep tres],[],[clustimg_fname '_' num2str(gridstep) 'mm']);
+        nii.save(pVimg,[gridstep gridstep gridstep tres],[],[pVimg_fname '_' num2str(gridstep) 'mm']);
+        nii.save(Sin.stats.clusterstats{con,gcon}.tstats,[gridstep gridstep gridstep tres],[],[tstats_clust_fname '_' num2str(gridstep) 'mm']);
 
-        osl_resample_nii([clustimg_fname '_' num2str(gridstep) 'mm'],[clustimg_fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'trilinear',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);                    
-        osl_resample_nii([pVimg_fname '_' num2str(gridstep) 'mm'],[pVimg_fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);
-        osl_resample_nii([tstats_clust_fname '_' num2str(gridstep) 'mm'],[tstats_clust_fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);
+        nii.resample([clustimg_fname '_' num2str(gridstep) 'mm'],[clustimg_fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','cubic','enforce_mask',true);                    
+        nii.resample([pVimg_fname '_' num2str(gridstep) 'mm'],[pVimg_fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
+        nii.resample([tstats_clust_fname '_' num2str(gridstep) 'mm'],[tstats_clust_fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
+
         runcmd(['fslmaths ' clustimg_fname '_' num2str(resamp_gridstep) 'mm -thr ' num2str(1-corrp_thresh) ' ' clustimg_fname '_thresh_' num2str(resamp_gridstep) 'mm']);
         % runcmd(['fslmaths ' fnamet '_' num2str(resamp_gridstep) 'mm -mas ' clustimg_fname '_thresh_' num2str(resamp_gridstep) 'mm -thr ' num2str(Sin.stats.S.cluster_stats_thresh) ' ' tstat_thresh_img_fname '_' num2str(resamp_gridstep) 'mm ']);
     end

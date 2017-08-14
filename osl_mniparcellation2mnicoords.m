@@ -4,9 +4,9 @@ function [ mni_coords xform ] = osl_mniparcellation2mnicoords(mask_fname)
 %
 % converts an MNI standard brain mask, mask, into a list of mni_coords.
 
-[ mni_res ] = get_nii_spatial_res( mask_fname );
+[ mni_res ] = nii.get_spatial_res( mask_fname );
 
-mask=read_avw(mask_fname);
+mask=nii.load(mask_fname);
 
 xstart=[90 -126 -72];
 xform=eye(4)*1;xform(1,1)=-mni_res(1);xform(2,2)=mni_res(2);xform(3,3)=mni_res(3);

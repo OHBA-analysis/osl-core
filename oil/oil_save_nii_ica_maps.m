@@ -51,7 +51,7 @@ end
 % get GM mask
 if isfield(oil, 'use_gm_mask') && oil.use_gm_mask,
     try
-        gm_mask = nii_quickread([OSLDIR '/std_masks/grey_matter/MNI_greymatter_priors_' num2str(oil.enveloping.gridstep) 'mm.nii.gz'],oil.enveloping.gridstep);
+        gm_mask = nii.quickread([OSLDIR '/std_masks/grey_matter/MNI_greymatter_priors_' num2str(oil.enveloping.gridstep) 'mm.nii.gz'],oil.enveloping.gridstep);
     catch
         warning('Unable to find Grey Matter Masks');
     end
@@ -62,7 +62,7 @@ switch type
         map_stem = 'ica_spatial_maps_';
         fname    = fullfile(save_dir, ...
                             [map_stem oil.concat_subs.results.concat_file]);
-        map_name = nii_quicksave(oil.ica.results.sICs', fname, ...
+        map_name = nii.quicksave(oil.ica.results.sICs', fname, ...
                                  oil.enveloping.gridstep,2);
         
     case {'variance'}
@@ -70,7 +70,7 @@ switch type
                        num2str(oil.concat_subs.sessions_to_do(1)), ...
                        '_recon_noise_corrected_variance_map'];
 
-        Nvoxels = numel(nii_quickread(fullfile(oil.source_recon.dirname, ...
+        Nvoxels = numel(nii.quickread(fullfile(oil.source_recon.dirname, ...
                                                oil.enveloping.name, ...
                                                'variance_maps', ...
                                                varMapName), ...
@@ -81,7 +81,7 @@ switch type
             singsub_varmaps_name = ['session', ...
                                     num2str(oil.concat_subs.sessions_to_do(i)), ...
                                     '_recon_noise_corrected_variance_map'];
-            var_maps_singsub     = nii_quickread(singsub_varmaps_name, ...
+            var_maps_singsub     = nii.quickread(singsub_varmaps_name, ...
                                                  oil.source_recon.gridstep);
 
             varmaps = varmaps + var_maps_singsub/std(var_maps_singsub);
@@ -92,7 +92,7 @@ switch type
                                                oil.enveloping.name, ...
                                                'variance_maps', ...
                                                'average_of_sessions_recon_noise_corrected_variance_map');
-        map_name = nii_quicksave(varmaps, fname, ...
+        map_name = nii.quicksave(varmaps, fname, ...
                                  oil.source_recon.gridstep, 2);
         
     case {'correlation'}
@@ -106,7 +106,7 @@ switch type
                                         oil.concat_subs.results.concat_file);
 
             try
-                ica_concat = nii_quickread(ica_concat_fname, ...
+                ica_concat = nii.quickread(ica_concat_fname, ...
                                            oil.enveloping.gridstep);
             catch % probably .mat file
                 ica_concat = load(ica_concat_fname);
@@ -122,13 +122,13 @@ switch type
             end
 
             fname    = [save_dir '/' map_stem oil.concat_subs.results.concat_file];
-            map_name = nii_quicksave(map,fname,oil.enveloping.gridstep,2);
+            map_name = nii.quicksave(map,fname,oil.enveloping.gridstep,2);
 
         elseif isfield(oil,'name') && isfield(oil,'ica_concat_path') && isfield(oil,'gridstep') && isfield(oil,'tICs')
             
             ica_concat_fname = oil.ica_concat_path{1};
             try
-                ica_concat = nii_quickread(ica_concat_fname, ...
+                ica_concat = nii.quickread(ica_concat_fname, ...
                                            oil.enveloping.gridstep);
             catch % probably .mat file
                 ica_concat = load(ica_concat_fname);
@@ -148,7 +148,7 @@ switch type
 
             if oil.use_gm_mask; map(gm_mask<0.3)=0; end
 
-            map_name  = nii_quicksave(map,fname,oil.gridstep,2);
+            map_name  = nii.quicksave(map,fname,oil.gridstep,2);
         else
             error('Unexpected input format')
         end
@@ -163,7 +163,7 @@ switch type
                                         oil.concat_subs.name, ...
                                         oil.concat_subs.results.concat_file);
             try
-                ica_concat = nii_quickread(ica_concat_fname, ...
+                ica_concat = nii.quickread(ica_concat_fname, ...
                                            oil.enveloping.gridstep);
             catch % probably .mat file
                 ica_concat = load(ica_concat_fname);
@@ -180,13 +180,13 @@ switch type
             end
 
             fname    = [save_dir filesep map_stem oil.concat_subs.results.concat_file];
-            map_name = nii_quicksave(map, fname, oil.enveloping.gridstep, 2);
+            map_name = nii.quicksave(map, fname, oil.enveloping.gridstep, 2);
 
         elseif isfield(oil,'name') && isfield(oil,'ica_concat_path') && isfield(oil,'gridstep') && isfield(oil,'tICs')
             
             ica_concat_fname = oil.ica_concat_path{1};
             try
-                ica_concat = nii_quickread(ica_concat_fname, ...
+                ica_concat = nii.quickread(ica_concat_fname, ...
                                            oil.enveloping.gridstep);
             catch % probably .mat file
                 ica_concat = load(ica_concat_fname);
@@ -207,7 +207,7 @@ switch type
 
             if oil.use_gm_mask; map(gm_mask<0.3)=0; end
 
-            map_name  = nii_quicksave(map, fname, oil.gridstep, 2);
+            map_name  = nii.quicksave(map, fname, oil.gridstep, 2);
         else
             error('Unexpected input format')
         end
@@ -220,7 +220,7 @@ switch type
                
                 ica_concat_fname = oil.ica.ica_concat_path{f};
                 try
-                    ica_concat = nii_quickread(ica_concat_fname, ...
+                    ica_concat = nii.quickread(ica_concat_fname, ...
                                                oil.enveloping.gridstep);
                 catch % probably .mat file
                     ica_concat = load(ica_concat_fname);
@@ -242,7 +242,7 @@ switch type
 
                 if oil.ica.use_gm_mask; map(gm_mask<0.3)=0; end
 
-                map_name{f} = nii_quicksave(map, fname, ...
+                map_name{f} = nii.quicksave(map, fname, ...
                                             oil.enveloping.gridstep, 2);
             end
         else
@@ -257,7 +257,7 @@ switch type
                 
                 ica_concat_fname = oil.ica.ica_concat_path{f};
                 try
-                    ica_concat = nii_quickread(ica_concat_fname, ...
+                    ica_concat = nii.quickread(ica_concat_fname, ...
                                                oil.enveloping.gridstep);
                 catch % probably .mat file
                     ica_concat = load(ica_concat_fname);
@@ -279,7 +279,7 @@ switch type
 
                 if oil.ica.use_gm_mask; map(gm_mask<0.3)=0; end
 
-                map_name{f} = nii_quicksave(map, fname, oil.enveloping.gridstep, 2);
+                map_name{f} = nii.quicksave(map, fname, oil.enveloping.gridstep, 2);
             end
         else
             error('Unexpected input format')

@@ -48,7 +48,7 @@ if isfield(S,'normalise_vox'),   normalise_vox = S.normalise_vox;  else    norma
 if isfield(S,'subj_ind'),        subj_ind = S.subj_ind;            else    subj_ind = [];                       end;
 if isfield(S,'initGuess'),       initGuess = S.initGuess;          else    initGuess = 0;                       end;
 
-if use_gm_mask, gm_mask = nii_quickread([OSLDIR '/std_masks/grey_matter/MNI_greymatter_priors_' num2str(gridstep) 'mm.nii.gz'],gridstep);  end
+if use_gm_mask, gm_mask = nii.quickread([OSLDIR '/std_masks/grey_matter/MNI_greymatter_priors_' num2str(gridstep) 'mm.nii.gz'],gridstep);  end
 
 if      icasso_its ~= 0 && strcmp(temp_or_spat,'spatial'),     ica_opt = 'icasso_spatial';
 elseif  icasso_its ~= 0 && strcmp(temp_or_spat,'temporal'),    ica_opt = 'icasso_temporal';
@@ -70,7 +70,7 @@ for i=1:length(ica_concat_path)
         end%if
         xall=xall.ica_concat;
     catch % assume nifti
-        xall=nii_quickread(ica_concat_path{i},gridstep);
+        xall=nii.quickread(ica_concat_path{i},gridstep);
     end
     
     if use_gm_mask

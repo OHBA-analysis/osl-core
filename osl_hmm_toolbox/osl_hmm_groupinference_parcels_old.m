@@ -417,9 +417,9 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             else      
                 nii_settings            = [];
                 nii_settings.mask_fname = mask_fname;
-                nii_quicksave(M', savefile_pc_maps, nii_settings);
-                nii_quicksave(mean(abs(M),1)', savefile_mean_pc_maps, nii_settings);
-                nii_quicksave(std(pinv(M)*M*dat_concat,[],2), savefile_std_maps, nii_settings);
+                nii.quicksave(M', savefile_pc_maps, nii_settings);
+                nii.quicksave(mean(abs(M),1)', savefile_mean_pc_maps, nii_settings);
+                nii.quicksave(std(pinv(M)*M*dat_concat,[],2), savefile_std_maps, nii_settings);
             end
             
             disp(['PCA maps saved to '          savefile_pc_maps]);
@@ -613,9 +613,9 @@ if todo.output
                     S2.mask_fname=mask_fname;
                     S2.output_spat_res=2; %mm
                     if isfield(D.parcellation.S,'hcp_sourcemodel3d') 
-                        hcp_nii_quicksave(stat, [statemaps{f},'_wholebrain'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)
+                        hcp_nii.quicksave(stat, [statemaps{f},'_wholebrain'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)
                     else
-                        nii_quicksave(stat,[statemaps{f},'_wholebrain'],S2);
+                        nii.quicksave(stat,[statemaps{f},'_wholebrain'],S2);
                     end;
                 catch
                 end;

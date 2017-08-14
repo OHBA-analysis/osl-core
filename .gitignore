@@ -45,6 +45,7 @@ tmp_*
 *.tiff
 
 osl_debug_log.txt
-
+*.nii.gz
+*.nii
 
 

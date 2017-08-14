@@ -66,14 +66,14 @@ if(isfield(current_level,'mask_fname')) % current level mask also provided
     disp(str);
     
     % save current level mask to disk at low res
-    mask=read_avw(current_level_mask_fname_lowres); 
+    mask=nii.load(current_level_mask_fname_lowres); 
     
     % WAS: save_avw(mask,Sin.current_level.mask_fname, 'f',
     % [gridstep,gridstep,gridstep,1]);  % causes error in first level when
     % using an ROI mask (trys to overwrite 2mm
     % Sin.current_level.mask_fname)!!
 
-    save_avw(mask,Sin.current_level_mask_fname, 'f', [gridstep,gridstep,gridstep,1]); 
+    nii.save(mask,[gridstep,gridstep,gridstep,1],[],Sin.current_level_mask_fname); 
 
 else % no current level mask provided, so use lower level mask (if provided)
 
@@ -89,8 +89,8 @@ else % no current level mask provided, so use lower level mask (if provided)
     if(isfield(Sin,'lower_level_mask_fname')),
         % save current level mask as lower level mask to disk if it exists
         try,
-            mask=read_avw(Sin.lower_level_mask_fname); 
-            save_avw(mask,Sin.current_level_mask_fname, 'f', [gridstep,gridstep,gridstep,1]); 
+            mask=nii.load(Sin.lower_level_mask_fname); 
+            nii.save(mask,[gridstep,gridstep,gridstep,1],[],Sin.current_level_mask_fname); 
         catch,
             disp('No current level mask, just working with MNI coords.');
         end;

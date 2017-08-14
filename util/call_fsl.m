@@ -4,5 +4,5 @@ function [status,output] = call_fsl(cmd)
 	% to environment variables being cleared in the Matlab session
 	%
 	% Note how the order of the outputs is swapped compared to runcmd() to maintain compatibility
-	% with other FSL matlab tools (like read_avw)
+	% with other FSL matlab tools (like nii.load)
 	[output,status] = runcmd(cmd);

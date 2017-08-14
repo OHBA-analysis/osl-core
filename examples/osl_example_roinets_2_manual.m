@@ -32,7 +32,7 @@ D = D.montage('switch',2)
 %%
 % We can load the spatial basis file to confirm the grid size and number of parcels.
 % 23x27x23 corresponds to an 8mm grid, and there are 38 brain regions
-spatial_basis = read_avw(spatial_basis_file);
+spatial_basis = nii.load(spatial_basis_file);
 size(spatial_basis) 
 
 %%

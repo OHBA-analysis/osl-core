@@ -125,7 +125,7 @@ for subi=1:length(current_level.subjects_to_do),
                 
                 % group level mask for doing spatial averaging
                 stdbrain_fname  = S.current_level_mask_fname;
-                curr_level_mask = read_avw(stdbrain_fname);
+                curr_level_mask = nii.load(stdbrain_fname);
                 lower_level_stdbrain_fname = S.lower_level_mask_fname;
                 
             end
@@ -304,7 +304,7 @@ for cc=1:length(current_level.first_level_contrasts_to_do),
             end;
         else
             
-            lower_level_stdbrain=read_avw(lower_level_stdbrain_fname);
+            lower_level_stdbrain=nii.load(lower_level_stdbrain_fname);
             tmp_fname=[lower_level.results_fnames{sub} '_c' num2str(c)];
             
             for sub=1:num_subjects,
@@ -493,7 +493,7 @@ for cc=1:length(current_level.first_level_contrasts_to_do),
             warning('Not implemented for sensor space - no spatial smoothing applied');
         else
             
-            lower_level_stdbrain=read_avw(lower_level_stdbrain_fname);
+            lower_level_stdbrain=nii.load(lower_level_stdbrain_fname);
             tmp_fname=[oat.source_recon.dirname '/' current_level_results.fname '_c' num2str(c) '_tmp'];
             
             for gc=1:length(group_contrast),
@@ -568,12 +568,12 @@ ds=gridstep;
 
 ss=fwhm/2.3; % std spatial smoothing
 
-save_avw(matrix2vols(vol_as_matrix,mask),tmp_fname,'f',[ds, ds, ds, 1]);
+nii.save(matrix2vols(vol_as_matrix,mask),[ds, ds, ds, 1],[],tmp_fname);
 
 mask_tmp_fname=[tmp_fname '_mask_tmp'];
 mask(mask>0)=1;
 
-save_avw(mask,mask_tmp_fname,'f',[ds, ds, ds, 1]);
+nii.save(mask,[ds, ds, ds, 1],[],mask_tmp_fname);
 
 % Smooth image but respect mask edges.
 runcmd(['fslmaths ' tmp_fname  ' -s ' num2str(ss) ' -mas ' mask_tmp_fname ' ' tmp_fname '_tmp1']);
@@ -582,7 +582,7 @@ runcmd(['fslmaths ' tmp_fname '_tmp1.nii* -div ' tmp_fname '_tmp2.nii* ' tmp_fna
 runcmd(['rm ' tmp_fname '_tmp1.nii*']); 
 runcmd(['rm ' tmp_fname '_tmp2.nii*']); 
 
-tmp=read_avw(tmp_fname);
+tmp=nii.load(tmp_fname);
 
 vol_as_matrix=vols2matrix(tmp,mask);
 

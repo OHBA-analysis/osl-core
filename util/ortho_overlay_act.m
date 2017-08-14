@@ -40,7 +40,7 @@ else
 end;
 
 % get current gridstep
-[ mni_res ] = get_nii_spatial_res( fname );
+[ mni_res ] = nii.get_spatial_res( fname );
 mni_res=mni_res(1);
 
 % resample volume
@@ -63,8 +63,8 @@ end;
 % find index for mni coord
 ind = osl_mnicoords2ind(S.mni_coord, mni_res);
 ind=ind+1;
-map=read_avw(fname);
-bgmap=read_avw(fullfile(osldir,'std_masks',['MNI152_T1_' num2str(mni_res) 'mm_brain.nii.gz']));
+map=nii.load(fname);
+bgmap=nii.load(fullfile(osldir,'std_masks',['MNI152_T1_' num2str(mni_res) 'mm_brain.nii.gz']));
 map=mean(map,4); 
 x1=squash(abs(map),abs(map));
 

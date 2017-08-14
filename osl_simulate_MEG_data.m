@@ -371,7 +371,7 @@ dipLocationVector             = zeros(size(brainCoords, 1), 1);
 dipLocationVector(dipMeshInd) = 1;
 
 dipLocNiftiFileName = fullfile(saveDir, 'DipoleLocations');
-nii_quicksave(dipLocationVector, dipLocNiftiFileName, P.spatialRes);
+nii.quicksave(dipLocationVector, dipLocNiftiFileName, P.spatialRes);
 
 % create orientations if not provided
 if isempty(P.dipoleOrientations),
@@ -441,7 +441,7 @@ if doBeamformer,
     sourceVariance   = cell2mat(sourceResults.variance);
     
     varNiftiFileName = fullfile(saveDir, 'OILbeamformedNAI');
-    nii_quicksave(sourceVariance, varNiftiFileName, P.spatialRes);
+    nii.quicksave(sourceVariance, varNiftiFileName, P.spatialRes);
     
 else
     beamformedOil       = [];
