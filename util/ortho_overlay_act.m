@@ -22,7 +22,7 @@ try, tmp=S.add_colorbar; catch, S.add_colorbar=1; end;
 try, tmp=S.gridstep; catch, S.gridstep=2; end;
 
 if ~isfield(S,'interp')
-    S.interp = 'sinc';
+    S.interp = 'cubic';
 end
 
 fname=S.fname;
@@ -48,7 +48,7 @@ if mni_res~=S.gridstep,
     [pth name ext]=fileparts(fname);
     new_fname=[pth '/' name '_' num2str(S.gridstep) 'mm' '.' ext];
     
-    tmp = osl_resample_nii(fname, new_fname, S.gridstep, S.interp,fullfile(osldir,'std_masks',['MNI152_T1_' num2str(S.gridstep) 'mm_brain_mask.nii.gz'],0));
+    tmp = nii.resample(fname, new_fname, S.gridstep, 'interptype',S.interp);
     
     if can_delete_fname,
         runcmd(['rm -f ' fname]);

@@ -197,20 +197,20 @@ for coni=1:length(S.first_level_copes_to_do),
             resamp_gridstep=gridstep;
   
             origname='tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'trilinear',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],1);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','cubic','enforce_mask',true);
             origname='clustere_tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearestneighbour','enforce_mask',true);
             origname='clustere_corrp_tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0); 
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearestneighbour','enforce_mask',true);
       
             resamp_gridstep=2;
             
             origname='tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'trilinear',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],1);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','cubic','enforce_mask',true);
             origname='clustere_tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearestneighbour','enforce_mask',true);
             origname='clustere_corrp_tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearestneighbour','enforce_mask',true);
             
             statsdir=permdir;
             

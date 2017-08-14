@@ -18,9 +18,9 @@ source_recon=oat.source_recon;
 if(isfield(source_recon,'mask_fname'))
 
     if ~isempty(source_recon.gridstep)
-        mask_fname=osl_resample_nii(source_recon.mask_fname, ...
+        mask_fname=nii.resample(source_recon.mask_fname, ...
             [source_recon.mask_fname '_' num2str(source_recon.gridstep) 'mm.nii.gz'], ...
-            source_recon.gridstep, 'nearestneighbour',[OSLDIR '/std_masks/MNI152_T1_' num2str(source_recon.gridstep) 'mm_brain']);
+            source_recon.gridstep, 'interptype', 'nearest','enforce_mask',true);
     else
         mask_fname = source_recon.mask_fname;
     end
