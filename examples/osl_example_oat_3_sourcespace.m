@@ -56,6 +56,15 @@ clear spm_files_continuous spm_files_epoched
 spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
 spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
 
+% Update the location of the structural files within the MEEG files
+D = spm_eeg_load(spm_files_continuous{1});
+D = osl_update_inv_dir(D,structdir);
+D.save()
+
+D = spm_eeg_load(spm_files_epoched{1});
+D = osl_update_inv_dir(D,structdir);
+D.save()
+
 %% SETUP THE OAT:
 %
 % The oat.source_recon options define the parameters for the data
