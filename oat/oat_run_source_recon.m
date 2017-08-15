@@ -175,9 +175,9 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     
     D = osl_inverse_model(S2);
     
-    source_recon_results.BF=load([source_recon_sess.dirname '/BF.mat']);
+    source_recon_results.BF=load(fullfile(source_recon_sess.dirname,'BF.mat'));
 
-    runcmd(['rm -rf ' source_recon_sess.dirname '/BF.mat']);
+    delete(fullfile(source_recon_sess.dirname,'BF.mat'));
 
     source_recon_results.type = source_recon_sess.type;
     source_recon_results.report=report;

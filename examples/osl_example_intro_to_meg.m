@@ -143,7 +143,7 @@ S2.view_cope=1; % set to 0 to see the t-stat
 % * Compute the lead fields
 %
 % First, we will take a look at a whole-head MRI scan.
-runcmd('fsleyes %s',abspath('mri_scan_head.nii'))
+osleyes(abspath('mri_scan_head.nii'))
 
 %%
 % *ACTIVITIES*
@@ -161,8 +161,7 @@ runcmd('fsleyes %s',abspath('mri_scan_head.nii'))
 % that we are more used to, where the brain has been identified and extracted.
 % This one is a 'standard brain' image, which is typically used for analysis
 % after coregistration
-
-runcmd('fsleyes %s',abspath('mri_scan_brain.nii.gz'))
+osleyes(abspath('mri_scan_brain.nii.gz'))
 
 %%
 % <<osl_fsleyes_brain.png>>

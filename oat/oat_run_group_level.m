@@ -316,7 +316,7 @@ for cc=1:length(current_level.first_level_contrasts_to_do),
                 end;
             end;
             
-            runcmd(['rm -f ' tmp_fname '.nii.gz']);
+            delete([tmp_fname '.nii.gz']);
             
         end;
     end;
@@ -505,7 +505,7 @@ for cc=1:length(current_level.first_level_contrasts_to_do),
                 end;
             end;
             
-            runcmd(['rm -f ' tmp_fname '.nii.gz']);
+            delete([tmp_fname '.nii.gz']);
             
         end;
     end;
@@ -579,8 +579,8 @@ nii.save(mask,[ds, ds, ds, 1],[],mask_tmp_fname);
 runcmd(['fslmaths ' tmp_fname  ' -s ' num2str(ss) ' -mas ' mask_tmp_fname ' ' tmp_fname '_tmp1']);
 runcmd(['fslmaths ' mask_tmp_fname ' -s ' num2str(ss)  ' -mas ' mask_tmp_fname ' ' tmp_fname '_tmp2']);
 runcmd(['fslmaths ' tmp_fname '_tmp1.nii* -div ' tmp_fname '_tmp2.nii* ' tmp_fname]);
-runcmd(['rm ' tmp_fname '_tmp1.nii*']); 
-runcmd(['rm ' tmp_fname '_tmp2.nii*']); 
+delete([tmp_fname '_tmp1.nii*']); 
+delete([tmp_fname '_tmp2.nii*']); 
 
 tmp=nii.load(tmp_fname);
 

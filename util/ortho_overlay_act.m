@@ -46,12 +46,13 @@ mni_res=mni_res(1);
 % resample volume
 if mni_res~=S.gridstep,
     [pth name ext]=fileparts(fname);
-    new_fname=[pth '/' name '_' num2str(S.gridstep) 'mm' '.' ext];
+    [~,name] = fileparts(name); % This is an bit of a hack to handle .nii.gz
+    new_fname = fullfile(pth,sprintf('%s_%dmm.nii.gz',name,S.gridstep));
     
     tmp = nii.resample(fname, new_fname, S.gridstep, 'interptype',S.interp);
     
     if can_delete_fname,
-        runcmd(['rm -f ' fname]);
+        delete(fname);
     end;
     
     fname=new_fname;

@@ -494,10 +494,10 @@ classdef osleyes < handle
 			self.controls.visible = uicontrol(self.controls.panel,'Callback',@(~,~) visible_box_callback(self),'style','checkbox','Units','characters','Position',[0 1 3 1]);
 
 
-			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.0','Units','characters','Position',[0 2 10 1],'HorizontalAlignment','left');
-			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.0','Units','characters','Position',[0 1 10 1],'HorizontalAlignment','left');
-			self.controls.marker(3) = uicontrol(self.controls.panel,'style','text','String','Z = +000.0','Units','characters','Position',[0 0 10 1],'HorizontalAlignment','left');
-			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +0000.0','Units','characters','Position',[0 0.9 16 1],'HorizontalAlignment','left');
+			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.0','Units','characters','Position',[0 2 11 1],'HorizontalAlignment','left');
+			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.0','Units','characters','Position',[0 1 11 1],'HorizontalAlignment','left');
+			self.controls.marker(3) = uicontrol(self.controls.panel,'style','text','String','Z = +000.0','Units','characters','Position',[0 0 11 1],'HorizontalAlignment','left');
+			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +0000.0','Units','characters','Position',[0 0.9 18 1],'HorizontalAlignment','left');
 
 			% Put b to the right of a with given padding
 			next_to = @(b,a,padding) 	set(b,'Position',sum(get(a,'Position').*[1 0 1 0]).*[1 0 0 0]  + [padding 0 0 0] + [0 1 1 1].*get(b,'Position'));

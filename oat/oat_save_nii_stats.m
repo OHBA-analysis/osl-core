@@ -149,7 +149,7 @@ warning on;
 
 % setup options for nii.quicksave calls
 options=[];
-options.interp='trilinear';
+options.interp='cubic';
 options.mask_fname=stdbrainmask_fname;
 options.output_spat_res=resamp_gridstep;
 options.tres=tres;

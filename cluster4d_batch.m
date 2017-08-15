@@ -48,7 +48,7 @@ mkdir(scriptdir);
 lfname = [scriptdir '/logfiles'];
 mkdir(lfname);
 
-runcmd(['rm -f ' scriptdir '/DO.sh']);
+delete([scriptdir '/DO.sh']);
 
 fidM =fopen([scriptdir '/DO.sh'],'w'); %overarching script
 fprintf(fidM,'jid3=1\n');

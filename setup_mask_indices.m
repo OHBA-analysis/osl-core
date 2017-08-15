@@ -19,8 +19,6 @@ new_mask=1;
 
 current_level=Sin.current_level;
 
-keyboard
-
 if(isfield(current_level,'mask_fname')) % current level mask also provided
 
     gridstep=Sin.lower_level_gridstep;
