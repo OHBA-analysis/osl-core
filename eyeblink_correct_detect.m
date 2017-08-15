@@ -34,7 +34,7 @@ S.bc = 2;
 S.prefix = 'blink_e'; % note this requires a modified version of spm_eeg_epochs that accepts this input argument... LH 280509
 
 D = spm_eeg_epochs_v2(S);
-blinkfname=[D.path '/' D.fname];
+blinkfname=fullfile(D.path,D.fname);
 
 S = [];
 S.D = D;
@@ -53,7 +53,7 @@ S.ncomp = 4;
 D.save;
 
 mkdir([fname '_svdoutputs']);
-svdfname = [fname '_svdoutputs/blink_svd.mat'];
+svdfname = fullfile([fname '_svdoutputs'],'blink_svd.mat'];
 save(svdfname,'svdoutput');
 
 

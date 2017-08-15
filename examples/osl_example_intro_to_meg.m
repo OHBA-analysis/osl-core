@@ -214,7 +214,7 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 % As before, we might want an overview of where brain activity is in space. In
 % sensor-space we did this using the topological plot. In source-space, we can
 % do this using the brain scan itself.
-fsleyes(abspath('beamformer_erf.oat/session1_wholebrain_first_level_dir/cope3_2mm.nii.gz'))
+osl_plot_nii(abspath(fullfile('beamformer_erf.oat','session1_wholebrain_first_level_dir','cope3_2mm.nii.gz')))
 
 %%
 % <<osl_fsleyes_task.png>>

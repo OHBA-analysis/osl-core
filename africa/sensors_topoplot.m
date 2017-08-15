@@ -13,8 +13,6 @@ if nargin<4
     do_plot=0;
 end
 
-OSLDIR = getenv('OSLDIR');
-
 comp(D.badchannels,:) = 0;
 
 nmodalities=length(modality);
@@ -33,20 +31,20 @@ for modidx=1:nmodalities
     
     if (strcmp(cmodality,'MEGMAG'))
         cfg.channel     = {'MEGMAG'};
-        cfg.layout      = [OSLDIR '/layouts/neuromag306mag.lay'];
+        cfg.layout      = fullfile(osldir,'layouts','neuromag306mag.lay');
     elseif (strcmp(cmodality,'MEGPLANAR'))
         cfg.channel     = {'MEGMAG'};
-        cfg.layout      = [OSLDIR '/layouts/neuromag306mag.lay'];
+        cfg.layout      = fullfile(osldir,'layouts','neuromag306mag.lay');
     elseif (strcmp(cmodality,'MEGGRAD'))
         cfg.channel     = {'MEG'};
-        cfg.layout      = [OSLDIR '/layouts/CTF275.lay'];
+        cfg.layout      = fullfile(osldir,'layouts','CTF275.lay');
     elseif strcmp(cmodality, 'MEG')
         cfg.channel = {'MEG'};
-        cfg.layout  = fullfile(OSLDIR, 'layouts', '4D248.lay');
+        cfg.layout  = fullfile(osldir,'layouts','4D248.lay');
     elseif (strcmp(cmodality,'EEG')),
         warning('EEG not currently supported, using development EEG layout');
         cfg.channel = {'EEG'};
-        cfg.layout  = [OSLDIR '/layouts/EEG60.lay'];
+        cfg.layout  = fullfile(osldir,'layouts','EEG60.lay');
     else
         error('Unsupported modality');
     end

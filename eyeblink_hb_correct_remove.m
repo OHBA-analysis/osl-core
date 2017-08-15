@@ -27,7 +27,7 @@ if strcmp(method,'select')||strcmp(method,'both')
         sfigure;
         for runnum = runs
        
-            svdfname = [fname '_svdoutputs/hb_svd.mat'];
+            svdfname = fullfile([fname '_svdoutputs'],'hb_svd.mat');
          
             load(svdfname);
 
@@ -117,14 +117,14 @@ if strcmp(method,'select')||strcmp(method,'both')
  %           blinkok = 0;
  %   end
 
-    fname = [S.D '_svdoutputs/rejectfs.mat']; 
+    fname = fullfile([S.D '_svdoutputs'],'rejectfs.mat'); 
     
     save(fname,'blinkcomp','hbcomp','blinkok','hbok');
 end
 
 
 if strcmp(method,'correct')||strcmp(method,'both')
-    fname = [S.D '_svdoutputs/rejectfs.mat'];  %contains blinkcomp and hbcomp
+    fname = fullfile([S.D '_svdoutputs'],'rejectfs.mat');  %contains blinkcomp and hbcomp
     load(fname);
     
     for runnum = runs

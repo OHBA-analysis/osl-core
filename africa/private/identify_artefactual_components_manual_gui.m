@@ -442,7 +442,7 @@ cdata_g = double(~cdata);
 cdata_b = double(~cdata);
 icon_bad = cat(3,cdata_r,cdata_g,cdata_b);
  
-icon_zoom = load(fullfile(matlabroot,'/toolbox/matlab/icons/zoom.mat'));
+icon_zoom = load(fullfile(matlabroot,'toolbox','matlab','icons','zoom.mat'));
 icon_zoom = icon_zoom.(char(fieldnames(icon_zoom)));
 
 end

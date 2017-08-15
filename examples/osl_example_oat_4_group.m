@@ -34,7 +34,7 @@
 workingdir = fullfile(osldir,'example_data','faces_group_data');
 
 % Load in the previous OAT
-oat = osl_load_oat([osldir '/example_data/faces_group_data/beamform'], 'first_level_none','sub_level','group_level'); 
+oat = osl_load_oat(fullfile(osldir,'example_data','faces_group_data','beamform'), 'first_level_none','sub_level','group_level'); 
 
 %% EXAMINE THE LOWER LEVEL ANALYSES
 %
@@ -293,13 +293,13 @@ oat_plot_vox_stats(S2);
 % <<osl_example_group_oat_gc1_roistats.png>>
 
 % load OAT analysis for which the first 4 stages have already been run
-oat = osl_load_oat([osldir '/example_data/faces_group_data/beamform'], 'first_level_none','sub_level','group_level'); 
+oat = osl_load_oat(fullfile(osldir,'example_data','faces_group_data','beamform'), 'first_level_none','sub_level','group_level'); 
 
 % Spatially average the results over an ROI
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.group_level.results_fnames;
-S2.mask_fname=[osldir '/std_masks/Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz'];
+S2.mask_fname=fullfile(osldir,'std_masks','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 [stats,times,mni_coords_used]=oat_output_roi_stats(S2);
 
 % plot
@@ -358,10 +358,10 @@ S2.group_level_contrasts = [1];
 con=3;
 gcon=1;
 
-tstat = [statsdir '/tstat' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz '];
-cope  = [statsdir '/cope' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz' ];
+tstat = fullfile(statsdir,['tstat' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz ']);
+cope  = fullfile(statsdir,['cope' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz' ]);
 
-fslview( {cope; tstat} );
+osl_plot_nii( {cope; tstat} );
 
 %% RUN 3D PERMUTATION STATS ON A SINGLE VOLUME
 %
@@ -404,11 +404,11 @@ S.time_average=1;
 % View permutation stats
 con=S.first_level_copes_to_do(1);
 
-tstat = [ gstats.dir '/tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz '];
-clus_tstat = [gstats.dir '/clustere_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz '];
-corr_clus_tstat = [gstats.dir '/clustere_corrp_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz'];
+tstat = fullfile(gstats.dir,['tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz ']);
+clus_tstat = fullfile(gstats.dir,['clustere_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz ']);
+corr_clus_tstat = fullfile(gstats.dir,['clustere_corrp_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz']);
 
-fslview( {tstat; clus_tstat; corr_clus_tstat} );
+osl_plot_nii( {tstat; clus_tstat; corr_clus_tstat} );
 
 %% ROI TIME-FREQ ANALYSIS
 %
@@ -428,7 +428,7 @@ fslview( {tstat; clus_tstat; corr_clus_tstat} );
 
 % load in an OAT for which the first 3 stages have been run to do an ROI
 % analysis using the Right_Temporal_Occipital_Fusiform mask
-oat = osl_load_oat([osldir '/example_data/faces_group_data/beamform_roi'], 'first_level_hilbert','sub_level','group_level'); 
+oat = osl_load_oat(fullfile(osldir,'example_data','faces_group_data','beamform_roi'), 'first_level_hilbert','sub_level','group_level'); 
 
 % setup Group level of OAT and run
 oat.group_level.time_range=oat.first_level.time_range;
@@ -451,7 +451,7 @@ oat=osl_run_oat(oat);
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.group_level.results_fnames;
-S2.mask_fname=[osldir '/std_masks/Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz'];
+S2.mask_fname=fullfile(osldir,'std_masks','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 [stats,times,mni_coords_used]=oat_output_roi_stats(S2);
 
 % Plot the Time-Frequency results
