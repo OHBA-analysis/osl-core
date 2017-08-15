@@ -26,6 +26,6 @@ for ii=1:length(fighands),
  
     report.plot_titles{report.index}=figtitles{ii};
     
-    %close(fighands(ii));        
+    close(fighands(ii));        
 
 end

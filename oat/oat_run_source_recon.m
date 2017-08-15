@@ -65,8 +65,7 @@ end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Save mask in oat dir
 if(~strcmp(mask_fname,''))
-   mask=nii.load(mask_fname); 
-   nii.save(mask,[source_recon.gridstep,source_recon.gridstep,source_recon.gridstep,1],[],[oat.source_recon.dirname '/source_recon_mask']); 
+   copyfile(mask_fname,fullfile(oat.source_recon.dirname,'source_recon_mask.nii.gz'));
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

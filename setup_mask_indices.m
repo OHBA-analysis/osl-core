@@ -91,17 +91,11 @@ else % no current level mask provided, so use lower level mask (if provided)
     
     new_mask=0;
     
-    if(isfield(Sin,'lower_level_mask_fname')),
+    if isfield(Sin,'lower_level_mask_fname') && exist(Sin.lower_level_mask_fname)
         % save current level mask as lower level mask to disk if it exists
-        try,
-            if ~exist(Sin.lower_level_mask_fname)
-                Sin.lower_level_mask_fname = [Sin.lower_level_mask_fname '.nii.gz'];
-            end
-            mask=nii.load(Sin.lower_level_mask_fname); 
-            nii.save(mask,[gridstep,gridstep,gridstep,1],[],Sin.current_level_mask_fname); 
-        catch,
-            disp('No current level mask, just working with MNI coords.');
-        end;
-    end;
-end;
+        copyfile(Sin.lower_level_mask_fname,Sin.current_level_mask_fname);
+    else
+        disp('No current level mask, just working with MNI coords.');
+    end
+end
 
