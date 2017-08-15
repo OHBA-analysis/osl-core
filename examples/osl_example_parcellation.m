@@ -229,24 +229,24 @@ set(gca,'ALim',[0 1]) % Show all connections
 set(gca,'ALim',[0.9 1]) % Start fading in connections above 90th percentile
 set(gca,'ALim',[0.95 0.95+1e-5]) % Hard cutoff at 95th percentile
 
-%% Plotting using fslview
-% There are a number of plotting options using fslview. These can be accessed through the |fslview|
+%% Plotting using osleyes
+% There are a number of plotting options using osleyes. These can be accessed through the |osleyes|
 % method. By default, this will display the parcellation with one volume for each parcel e.g.
-p.fslview
+p.osleyes
 
 %%
-% The |fslview| method allows you to pass in a matrix to be displayed. For example,
+% The |osleyes| method allows you to pass in a matrix to be displayed. For example,
 
-% p.fslview(m)
+p.osleyes(m)
 
 %%
 % where the |m| matrix will be expanded into volume format if required. To plot all parcels in the
 % same volume, you can use
-p.fslview(p.value_vector)
+p.osleyes(p.value_vector)
 
 %%
 % To plot the parcellation after binarization, you can use
-p.fslview(p.binarize)
+p.osleyes(p.binarize)
 
 %% Saving nii files
 % Lastly, and perhaps most importantly, you can save a matrix to a .nii file using

@@ -246,7 +246,7 @@ tstat = fullfile( oat.source_recon.dirname,'first_level_none_sub_level_group_lev
 fusiform = fullfile(osldir,'example_data','faces_group_data','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 
 % Display the results in FSLVIEW
-fslview( {fusiform; tstat}, [0 5;5 8], {'Green';'Red-Yellow'} );
+osl_plot_nii({fusiform,tstat},{[0 5],[5 8]},{osl_colormap('green'),osl_colormap('hot')})
 
 %% INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE
 %
@@ -299,7 +299,7 @@ oat = osl_load_oat(fullfile(osldir,'example_data','faces_group_data','beamform')
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.group_level.results_fnames;
-S2.mask_fname=fullfile(osldir,'std_masks','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
+S2.mask_fname=fullfile(osldir,'example_data','faces_group_data','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 [stats,times,mni_coords_used]=oat_output_roi_stats(S2);
 
 % plot
@@ -361,7 +361,7 @@ gcon=1;
 tstat = fullfile(statsdir,['tstat' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz ']);
 cope  = fullfile(statsdir,['cope' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz' ]);
 
-osl_plot_nii( {cope; tstat} );
+osl_plot_nii( {cope,tstat} );
 
 %% RUN 3D PERMUTATION STATS ON A SINGLE VOLUME
 %

@@ -239,5 +239,5 @@ GLEAN = glean.pcorr(GLEAN,settings);
 % Some well-known resting state networks include the Sensorimotor network (state 4),
 % or the visual network (state 2)
 
-fslview(GLEAN.results.pcorr.parcel.sessionmaps{1},[])
+osl_plot_nii(GLEAN.results.pcorr.parcel.sessionmaps{1})
 

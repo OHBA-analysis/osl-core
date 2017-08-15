@@ -403,7 +403,7 @@ else
                 fig_name{gconi}=['cope_at_maxt_smap_c' num2str(con) '_gc' num2str(gcon)];  
                 fig_title{gconi}=['COPE for gc' num2str(gcon) ' [' oat.group_level.group_contrast_name{gcon} '], at t=' num2str(group_level_results.times(time_ind_max)) 'secs, f=' mat2str(group_level_results.frequency_ranges(freq_ind_max,:)) 'Hz'];  
                 fig_title{gconi}=[fig_title{gconi} ' (Max found using c' num2str(first_level_cons_to_do(1)) ', gc' num2str(group_level_cons_to_do(1)) ')'];
-                S2.fname=[statsdir '/cope' num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'];                              
+                S2.fname=[statsdir '/cope' num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm.nii.gz'];                              
                 ortho_overlay_act( S2 );                     
             end;
             con_report=osl_report_set_figs(con_report,fig_name,fig_handle,fig_title);        
@@ -423,7 +423,7 @@ else
                 fig_name{gconi}=['tstat_at_maxt_smap_c' num2str(con) '_gc' num2str(gcon)];  
                 fig_title{gconi}=['T-stat for gc' num2str(gcon) ' [' oat.group_level.group_contrast_name{gcon} '], at t=' num2str(group_level_results.times(time_ind_max)) 'secs, f=' mat2str(group_level_results.frequency_ranges(freq_ind_max,:)) 'Hz'];  
                 fig_title{gconi}=[fig_title{gconi} ' (Max found using c' num2str(first_level_cons_to_do(1)) ', gc' num2str(group_level_cons_to_do(1)) ')'];
-                S2.fname=[statsdir '/tstat' num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'];                              
+                S2.fname=[statsdir '/tstat' num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm.nii.gz'];                              
                 ortho_overlay_act( S2 );                        
 
             end;
@@ -462,7 +462,7 @@ else
                     %S2.percrange=[70 99.9];
                     S2.mni_coord=group_level_results.mni_coords(vox_ind_max,:);
                     S2.title='';
-                    S2.fname=[statsdir '/cope' num2str(con) '_' num2str(resamp_gridstep) 'mm'];                              
+                    S2.fname=[statsdir '/cope' num2str(con) '_' num2str(resamp_gridstep) 'mm.nii.gz'];                              
                     ortho_overlay_act( S2 ); 
                 end;
                 con_report=osl_report_set_figs(con_report,fig_name,fig_handle,fig_title);        
