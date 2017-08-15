@@ -65,7 +65,7 @@ S2.outfile=[spmname '.mat'];
 
 S2.updatehistory=0;
 D = spm_eeg_copy(S2);
-movefile(fullfile(D.path,D.fname),source_recon_sess.dirname]);
+movefile(fullfile(D.path,D.fname),source_recon_sess.dirname);
 movefile(D.fnamedat,source_recon_sess.dirname);
 spm_filename=fullfile(source_recon_sess.dirname,D.fname);
 D=spm_eeg_load(spm_filename);

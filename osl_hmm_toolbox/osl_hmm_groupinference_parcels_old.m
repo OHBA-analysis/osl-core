@@ -409,7 +409,7 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
         
             if use_parcels                
                 nii_settings            = [];
-                nii_settings.interp     = 'nearestneighbour';
+                nii_settings.interp     = 'nearest';
                 nii_settings.mask_fname = mask_fname;
                 ROInets.nii_parcel_quicksave(M', parcelAssignments, savefile_pc_maps,      nii_settings);
                 ROInets.nii_parcel_quicksave(mean(abs(M),1)', parcelAssignments, savefile_mean_pc_maps, nii_settings);
@@ -625,7 +625,7 @@ if todo.output
                
 
                     % convert parcel statemaps into voxel statemaps                    
-                    S2.interp='nearestneighbour';
+                    S2.interp='nearest';
 
                     if isfield(D.parcellation,'S') && isfield(D.parcellation.S,'hcp_sourcemodel3d') 
                         hcp_nii_parcel_quicksave(statp, parcelAssignments, [statemaps{f},'_parcels'], D.parcellation.S.hcp_sourcemodel3d, S2.output_spat_res, S2)

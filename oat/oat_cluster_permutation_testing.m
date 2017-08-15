@@ -199,18 +199,18 @@ for coni=1:length(S.first_level_copes_to_do),
             origname='tstat';
             nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','cubic','enforce_mask',true);
             origname='clustere_tstat';
-            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearestneighbour','enforce_mask',true);
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
             origname='clustere_corrp_tstat';
-            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearestneighbour','enforce_mask',true);
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
       
             resamp_gridstep=2;
             
             origname='tstat';
             nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','cubic','enforce_mask',true);
             origname='clustere_tstat';
-            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearestneighbour','enforce_mask',true);
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
             origname='clustere_corrp_tstat';
-            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearestneighbour','enforce_mask',true);
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
             
             statsdir=permdir;
             

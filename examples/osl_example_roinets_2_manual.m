@@ -36,13 +36,13 @@ spatial_basis = nii.load(spatial_basis_file);
 size(spatial_basis) 
 
 %%
-% To view the parcellation, you can open the spatial basis file in fslview.
+% To view the parcellation, you can open the spatial basis file in osleyes.
 % Each volume corresponds to one parcel - you can cycle through the volumes to 
 % view each parcel. Note that the parcellation is weighted, which is reflected 
-% in fslview as the gradient of colours in each volume. The parcel is also overlapping,
+% in osleyes as the gradient of colours in each volume. The parcel is also overlapping,
 % because each voxel may belong to more than one parcel. Can you identify which voxels
 % in the first parcel are also present in the second parcel?
-fslview(spatial_basis_file)
+osl_plot_nii(spatial_basis_file)
 
 %%
 %
@@ -84,17 +84,17 @@ has_montage(D)
 
 %%
 % We can extract the timeseries from the D object and compute the parcelwise distribution of power.
-% This can then be displayed as a spatial map, using fslview or using the Parcellation object. To 
-% display the power distribution in fslview, you need to write a '.nii' file. You can use the
+% This can then be displayed as a spatial map, using osleyes or using the Parcellation object. To 
+% display the power distribution in osleyes, you need to write a '.nii' file. You can use the
 % |savenii()| method of the parcellation object to automatically map the vector of parcel power 
 % values onto the 8mm standard mask, and save it to disk. You can then open the resulting file
-% using fslview.
+% using osleyes.
 
 ts = D(:,:,:);
 ts = ft_preproc_bandpassfilter(ts, D.fsample, [8 12], 4, 'but','twopass','no');
 parcel_power = sum(abs(ts),2)/size(ts,2)/(D.time(end)-D.time(1));
 p.plot_activation(parcel_power);
-p.fslview(parcel_power);
+p.osleyes(parcel_power);
 
 %%
 %

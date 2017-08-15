@@ -155,7 +155,7 @@ options.output_spat_res=resamp_gridstep;
 options.tres=tres;
 
 nii_parcel_settings            = [];
-nii_parcel_settings.interp     = 'nearestneighbour';
+nii_parcel_settings.interp     = 'nearest';
 %nii_parcel_settings.mask_fname = Sin.stats.D_sensor_data.parcellation.S.parcellation;
 use_parcels=0;
 

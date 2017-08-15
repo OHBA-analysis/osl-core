@@ -80,7 +80,7 @@ end;
 
 fnames_formatted = [];
 for f=1:numel(fnames)
-  [~,~,scales,~,~] = nii.load(fnames{f});
+  [~,~,scales,~,~] = read_avw(fnames{f});
   gs(f) = scales(1);
   colmap=[' -l "' colour_maps{f} '" '];
   if ~isempty(thresholds)

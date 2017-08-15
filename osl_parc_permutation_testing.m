@@ -180,9 +180,9 @@ for coni=1:length(S.first_level_copes_to_do),
 
 end
 
-nifs = dir([dirname '/*.nii.gz'])
+nifs = dir([dirname filesep '*.nii.gz'])
 nii_parcel_settings            = [];
-nii_parcel_settings.interp     = 'nearestneighbour';
+nii_parcel_settings.interp     = 'nearest';
 
 for idx = 1:length(nifs)
     if strcmp(nifs(idx).name(1:7),'allsubs')
@@ -195,8 +195,8 @@ for idx = 1:length(nifs)
         continue
     end
 
-    dat = nii.load([dirname '/' nifs(idx).name]);
-    ROInets.nii_parcel_quicksave(dat, S.parcel_assignments, strrep([dirname '/' nifs(idx).name],'.nii.gz','_parc.nii.gz'),nii_parcel_settings);
+    dat = nii.load([dirname filesep nifs(idx).name]);
+    ROInets.nii_parcel_quicksave(dat, S.parcel_assignments, strrep([dirname filesep nifs(idx).name],'.nii.gz','_parc.nii.gz'),nii_parcel_settings);
 end
 
 
