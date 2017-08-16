@@ -74,10 +74,11 @@ function varargout = has_montage(D,pattern,case_sensitive)
 
 	for j = 1:n_montages
 		m = D.montage('getmontage',j);
+
 		if case_sensitive
-			f = strfind(m.name,pattern);
+			f = regexp(m.name,pattern,'match');
 		else
-			f = strfind(lower(m.name),lower(pattern));
+			f = regexpi(m.name,pattern,'match');
 		end
 
 		if ~isempty(f)

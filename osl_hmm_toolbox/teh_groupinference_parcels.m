@@ -289,7 +289,7 @@ if todo.prepare
             savefile_std_maps       = [pathstr '/' filestr '_hmmdata_std_maps' ];
 
             nii_settings            = [];
-            nii_settings.interp     = 'nearestneighbour';
+            nii_settings.interp     = 'nearest';
             nii_settings.mask_fname = mask_fname;
             ROInets.nii_parcel_quicksave(M', parcelAssignments, savefile_pc_maps,      nii_settings);
             ROInets.nii_parcel_quicksave(mean(abs(M),1)', parcelAssignments, savefile_mean_pc_maps, nii_settings);
@@ -453,7 +453,7 @@ if todo.output
             statp = statp ./ length(data_files);
 
             % convert parcel statemaps into voxel statemaps                    
-            S2.interp='nearestneighbour';
+            S2.interp='nearest';
             S2.parcelWeights=parcelWeights;
             if isfield(D.parcellation.S,'maskfname')
                 S2.mask_fname=D.parcellation.S.maskfname;

@@ -17,10 +17,10 @@ opt=osl_check_opt(opt);
 %% setup
 % set logfile up
 opt.results=[];
-opt.results.plotsdir=[opt.dirname '/plots'];
-opt.results.logfile=[opt.results.plotsdir '/log-' date '.txt'];
+opt.results.plotsdir=fullfile(opt.dirname,'plots');
+opt.results.logfile=fullfile(opt.results.plotsdir,['log-' date '.txt']);
 % delete any existing diary file with the same name
-runcmd(['rm -f ' opt.results.logfile]);
+delete(opt.results.logfile);
 
 opt.results.date=date;
 
@@ -46,8 +46,8 @@ for subi=1:length(opt.sessions_to_do),
     end
     
     % build logfile
-    runcmd(['cat ' opt_results.logfile '>' opt.results.logfile]);
-        
+    %runcmd(['cat ' opt_results.logfile '>' opt.results.logfile]);
+    opt_results.logfile % With diary on, this should dump the contents to the log file   
 end
 
 % gather the results together

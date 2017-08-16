@@ -42,11 +42,17 @@ function fsl_initialise()
 	addpath(fullfile(s.FSLDIR,'etc','matlab'));
 
 	% Test FSL
-	assert(exist(getenv('FSLDIR'))~=0,'FSLDIR does not exist. Check that it is set correctly in osl.conf')
-	assert(~isempty(which('read_avw')),'FSL matlab utilities not found')
+	if ~exist(getenv('FSLDIR'))
+        fprintf(2,'FSLDIR does not exist. Check that it is set correctly in osl.conf\n');
+    end
+    
+	if isempty(which('read_avw'))
+        fprintf(2,'FSL matlab utilities not found\n')
+    end
+    
 	[status,res] = system('fslval');
 	if status~=1
-	    error('FSL is not installed properly. Have you installed the correct version and set it in osl.conf?');
+	    fprintf(2,'FSL is not installed properly. Have you installed the correct version and set it in osl.conf?\n');
 	end
 
 

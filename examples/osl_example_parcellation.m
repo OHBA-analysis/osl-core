@@ -39,7 +39,7 @@ p = parcellation(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PC
 
 %%
 % Alternatively, you can pass in a matrix in one of these supported formats
-m = read_avw(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'));
+m = nii.load(fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz'));
 size(m)
 p = parcellation(m);
 
@@ -229,24 +229,24 @@ set(gca,'ALim',[0 1]) % Show all connections
 set(gca,'ALim',[0.9 1]) % Start fading in connections above 90th percentile
 set(gca,'ALim',[0.95 0.95+1e-5]) % Hard cutoff at 95th percentile
 
-%% Plotting using fslview
-% There are a number of plotting options using fslview. These can be accessed through the |fslview|
+%% Plotting using osleyes
+% There are a number of plotting options using osleyes. These can be accessed through the |osleyes|
 % method. By default, this will display the parcellation with one volume for each parcel e.g.
-p.fslview
+p.osleyes
 
 %%
-% The |fslview| method allows you to pass in a matrix to be displayed. For example,
+% The |osleyes| method allows you to pass in a matrix to be displayed. For example,
 
-% p.fslview(m)
+p.osleyes(m)
 
 %%
 % where the |m| matrix will be expanded into volume format if required. To plot all parcels in the
 % same volume, you can use
-p.fslview(p.value_vector)
+p.osleyes(p.value_vector)
 
 %%
 % To plot the parcellation after binarization, you can use
-p.fslview(p.binarize)
+p.osleyes(p.binarize)
 
 %% Saving nii files
 % Lastly, and perhaps most importantly, you can save a matrix to a .nii file using
@@ -314,6 +314,8 @@ p2.labels{end} % The last parcel is a composite of ROIs 3 and 4
 % k-means clustering of the voxel coordinates. To split parcels, use the |split_parcels()| method.
 % The first argument is a list of parcels to split, and the second argument is the number of 
 % parcels to split it into. For example
+p = parcellation(p.binarize);
+p = p.remove_parcels(39); % Remove the last parcel, which has no voxels from the binarization
 p2 = p.split_parcels([1 2],[3 4]);
 
 %%

@@ -54,7 +54,7 @@ workingdir=datadir;
 %%
 clear fif_files spm_files_basenames;
 
-fif_files{1}=[datadir '/fifs/sub1_face_sss.fif']; 
+fif_files{1}=fullfile(datadir,'fifs','sub1_face_sss.fif'); 
 
 spm_files_basenames{1}=['spm_meg1.mat'];
 
@@ -82,7 +82,7 @@ spm_files_basenames{1}=['spm_meg1.mat'];
 % face conditions. Check that the histogram plot corresponds to these
 % trials numbers.
 for subnum = 1:length(fif_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,spm_files_basenames{subnum});
 end
 
 if(length(fif_files)>0),
@@ -109,7 +109,7 @@ spm_files{1}
 
 % Set filenames used in following steps.
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,spm_files_basenames{subnum});
 end
 
 % load in the SPM M/EEG object
@@ -180,7 +180,7 @@ methods('meeg')
 % filenames used in following steps and filter.
 
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,spm_files_basenames{subnum});
 end
 
 S2=[];
@@ -199,7 +199,7 @@ D=spm_eeg_filter(S2);
 % general rule, always double-check your data after filtering to avoid bad
 % surprises later in the processing pipeline!
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/f' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir, ['f' spm_files_basenames{subnum}]);
 end
 
 S2=[];
@@ -225,7 +225,7 @@ D=spm_eeg_filter(S2);
 % Set filenames used in following steps. Since we did both a highpass and a
 % stopband (aka notch) filter, the prefix here needs to be 'ff'.
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/ff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir, ['ff' spm_files_basenames{subnum}]);
 end
 
 %%
@@ -248,7 +248,7 @@ end
 % steps. Again, to load the latest data set, we need the prefixes ffd (2x
 % filtered and downsampled after = 'dff').
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/dff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 end
 
 %%
@@ -276,7 +276,7 @@ D
 %%
 % Load in the filtered data (prefix 'f'):
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/dff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 end
 
 % load in the SPM M/EEG object
@@ -318,7 +318,7 @@ D=oslview(D);
 %%
 % Set new SPM M/EEG object filenames to be used in following steps
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/dff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 end
 
 %%
@@ -370,7 +370,7 @@ end
 % 'online montage' attached to the current D object. This is what we will
 % use now to have a look.
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/dff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 end
 
 %%
@@ -495,7 +495,7 @@ legend({'Raw' 'AFRICA'});
 % As before, here we set filenames used for the following step. Prefix is
 % now 'dff'. The next part does the actual epoching:
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/dff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 end
 
 for i=1:length(spm_files), % Iterating over subjects
@@ -562,7 +562,7 @@ end;
 %%
 % We need to load in the data with prefix 'edff'.
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/edff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,['edff' spm_files_basenames{subnum}]);
 end
 
 D = spm_eeg_load(spm_files{subnum});
@@ -649,7 +649,7 @@ title('Raw event-related field, average','FontSize',20)
 % Now we will run a Fieldtrip interactive tool.
 %
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/edff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,['edff' spm_files_basenames{subnum}]);
 end
 
 for i=1:length(spm_files), % Run the visual artifact rejection
@@ -686,7 +686,7 @@ end;
 %%
 % Set new SPM M/EEG object filenames to be used in following steps
 for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=[workingdir '/edff' spm_files_basenames{subnum}];
+    spm_files{subnum}=fullfile(workingdir,['edff' spm_files_basenames{subnum}]);
 end
 
 %%

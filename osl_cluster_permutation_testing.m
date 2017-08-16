@@ -75,11 +75,11 @@ current_level=S.oat.group_level;
 % sort out oat group masks (in native res)
 % current_level_mask_fname=[S.oat.source_recon.dirname '/' current_level.name '_mask'];
 current_level_mask_fname=[S.oat.source_recon.dirname '/' S.oat.first_level.name '_' S.oat.subject_level.name '_' current_level.name '_mask'];
-stdbrainmask=read_avw(current_level_mask_fname);
+stdbrainmask=nii.load(current_level_mask_fname);
 
 % load in mask to use for randomise (assumed to be in native res)
 if isfield(S,'randomise_mask_fname'),
-    randomise_mask=read_avw(S.randomise_mask_fname);
+    randomise_mask=nii.load(S.randomise_mask_fname);
 else
     randomise_mask=stdbrainmask;
 end;
@@ -121,7 +121,7 @@ for coni=1:length(S.first_level_copes_to_do),
         for t=1:size(cope_smooth_lower_level,3),
 
             fnamet=sprintf('%s/allsubs_time%04.0f',dirname,t);
-            save_avw(matrix2vols(cope_smooth_lower_level(:,:,t),stdbrainmask),fnamet,'f',[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1]);
+            nii.save(matrix2vols(cope_smooth_lower_level(:,:,t),stdbrainmask),[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1],[],fnamet);
 
             % mask
             fnamet=sprintf('%s/mask_time%04.0f',dirname,t);
@@ -130,10 +130,10 @@ for coni=1:length(S.first_level_copes_to_do),
                 if ~any(squash(randomise_mask(:,:,:,t)))
                     do_tpt(t)=0;  
                 else
-                    save_avw(randomise_mask(:,:,:,t),fnamet,'f',[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1]);
+                    nii.save(randomise_mask(:,:,:,t),[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1],[],fnamet);
                 end;
             else
-                save_avw(randomise_mask(:,:,:,1),fnamet,'f',[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1]);
+                nii.save(randomise_mask(:,:,:,1),[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1],[],fnamet);
             end;
         end;
     else
@@ -143,7 +143,7 @@ for coni=1:length(S.first_level_copes_to_do),
         
         fnamet=sprintf('%s/allsubs_time%04.0f',dirname,1);
         
-        save_avw(matrix2vols(cope_smooth_lower_level(:,:,1),stdbrainmask),fnamet,'f',[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1]);
+        nii.save(matrix2vols(cope_smooth_lower_level(:,:,1),stdbrainmask),[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1],[],fnamet);
 
         % mask - use max over timepoints
         disp('Using max of mask over time window');
@@ -152,7 +152,7 @@ for coni=1:length(S.first_level_copes_to_do),
         
         fnamet=sprintf('%s/mask_time%04.0f',dirname,1);
         
-        save_avw(randomise_mask(:,:,:,1),fnamet,'f',[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1]);
+        nii.save(randomise_mask(:,:,:,1),[gstats.gridstep,gstats.gridstep, gstats.gridstep, 1],[],fnamet);
          
     end;
     
@@ -197,20 +197,20 @@ for coni=1:length(S.first_level_copes_to_do),
             resamp_gridstep=gridstep;
   
             origname='tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'trilinear',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],1);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','cubic','enforce_mask',true);
             origname='clustere_tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
             origname='clustere_corrp_tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0); 
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
       
             resamp_gridstep=2;
             
             origname='tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'trilinear',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],1);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','cubic','enforce_mask',true);
             origname='clustere_tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
             origname='clustere_corrp_tstat';
-            osl_resample_nii([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'nearestneighbour',[masksdir '/MNI152_T1_' num2str(resamp_gridstep) 'mm_brain_mask' ],0);                                        
+            nii.resample([permdir '/stats_' origname num2str(1)],[permdir '/' origname num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','nearest','enforce_mask',true);
             
             statsdir=permdir;
             

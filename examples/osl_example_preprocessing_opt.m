@@ -14,12 +14,6 @@
 % already been SSS Maxfiltered and downsampled to 250 Hz, and which we will
 % used for this analysis.
 
-
-%% SET UP THE MATLAB PATHS, DIRECTORIES AND FILES
-% You should not need to run this if you have already done this previously.
-% If MATLAB has trouble finding any osl functions, run:
-osl_startup;
-
 %%
 % *SPECIFY DIRECTORIES FOR THIS ANALYSIS*
 % 
@@ -41,9 +35,9 @@ datadir = fullfile(osldir,'example_data','preproc_example','automatic_opt')
 
 clear raw_fif_files input_files spm_files structural_files;
 
-raw_fif_files{1}=[datadir '/fifs/loc_S02.fif']; 
-input_files{1}=[datadir '/fifs/loc_S02_sss1.fif']; 
-spm_files{1}=[datadir '/spm_files/loc_S02']; 
+raw_fif_files{1}=fullfile(datadir,'fifs','loc_S02.fif');
+input_files{1}=fullfile(datadir,'fifs','loc_S02_sss1.fif');
+spm_files{1}=fullfile(datadir,'spm_files','loc_S02');
 
 %%
 % *SET UP STRUCTURALS*
@@ -52,7 +46,7 @@ spm_files{1}=[datadir '/spm_files/loc_S02'];
 % order as spm_files and fif_files: Note that here we only have 1 subject,
 % but more generally there would be more than one. Here we do not use them,
 % but for any source-reconstruction following OPT you would need them.
-structural_files{1}=[datadir '/structs/anat.nii']; % leave empty if no structural available
+structural_files{1}=fullfile(datadir,'structs','anat.nii'); % leave empty if no structural available
 
 
 %% SETTING UP AN OPT ANALYSIS
@@ -103,7 +97,7 @@ opt.datatype='neuromag';
 % lost. Hence, you should ensure that you change _opt.dirname_ for a new
 % analysis, if you want to avoid overwriting an old one!
 
-opt.dirname=[datadir '/practical_singlesubject.opt'];
+opt.dirname=fullfile(datadir,'practical_singlesubject.opt');
 
 %%
 % *Maxfilter settings:* Here we are going to skip the double maxfilter call
@@ -341,7 +335,7 @@ opt.results.report.html_fname
 % Last but not least you might want to look at your actual data to check
 % whether OPT gives your good results: We will now load the M/EEG object created by OPT (analogous to our
 % resulting D objects in the manual preproc practical).
-D=spm_eeg_load([osldir '/example_data/preproc_example/automatic_opt/practical_singlesubject.opt/Seffdspm_meg1.mat']);
+D=spm_eeg_load(fullfile(osldir,'example_data','preproc_example','automatic_opt','practical_singlesubject.opt','Seffdspm_meg1.mat'));
 
 % Then define some trials to look at:
 %good_stimresp_trls = [D.indtrial('StimLRespL','good') D.indtrial('StimLRespR','good')];

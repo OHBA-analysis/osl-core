@@ -87,7 +87,7 @@ for coni=1:length(S.first_level_copes_to_do),
         for t=1:size(cope_smooth_lower_level,3),
 
             fnamet=sprintf('%s/allsubs_time%04.0f',dirname,t);
-            save_avw(matrix2vols(cope_smooth_lower_level(:,:,t),randomise_mask),fnamet,'f',[nparc, 1, 1, 1]);
+            nii.save(matrix2vols(cope_smooth_lower_level(:,:,t),randomise_mask),[nparc, 1, 1, 1],[],fnamet);
 
             % mask
             fnamet=sprintf('%s/mask_time%04.0f',dirname,t);
@@ -96,10 +96,10 @@ for coni=1:length(S.first_level_copes_to_do),
                 if ~any(squash(randomise_mask(:,:,:,t)))
                     do_tpt(t)=0;
                 else
-                    save_avw(randomise_mask(:,:,:,t),fnamet,'f',[nparc, 1, 1, 1]);
+                    nii.save(randomise_mask(:,:,:,t),[nparc, 1, 1, 1],[],fnamet);
                 end;
             else
-                save_avw(randomise_mask(:,:,:,1),fnamet,'f',[nparc, 1, 1, 1]);
+                nii.save(randomise_mask(:,:,:,1),[nparc, 1, 1, 1],[],fnamet);
             end;
         end;
     else
@@ -109,7 +109,7 @@ for coni=1:length(S.first_level_copes_to_do),
 
         fnamet=sprintf('%s/allsubs_time%04.0f',dirname,1);
 
-        save_avw(matrix2vols(cope_smooth_lower_level(:,:,1),randomise_mask),fnamet,'f',[nparc, 1, 1, 1]);
+        nii.save(matrix2vols(cope_smooth_lower_level(:,:,1),randomise_mask),[nparc, 1, 1, 1],[],fnamet);
 
         % mask - use max over timepoints
         disp('Using max of mask over time window');
@@ -118,7 +118,7 @@ for coni=1:length(S.first_level_copes_to_do),
 
         fnamet=sprintf('%s/mask_time%04.0f',dirname,1);
 
-        save_avw(randomise_mask(:,:,:,1),fnamet,'f',[nparc, 1, 1, 1]);
+        nii.save(randomise_mask(:,:,:,1),[nparc, 1, 1, 1],[],fnamet);
 
     end;
 
@@ -180,9 +180,9 @@ for coni=1:length(S.first_level_copes_to_do),
 
 end
 
-nifs = dir([dirname '/*.nii.gz'])
+nifs = dir([dirname filesep '*.nii.gz'])
 nii_parcel_settings            = [];
-nii_parcel_settings.interp     = 'nearestneighbour';
+nii_parcel_settings.interp     = 'nearest';
 
 for idx = 1:length(nifs)
     if strcmp(nifs(idx).name(1:7),'allsubs')
@@ -195,8 +195,8 @@ for idx = 1:length(nifs)
         continue
     end
 
-    dat = read_avw([dirname '/' nifs(idx).name]);
-    ROInets.nii_parcel_quicksave(dat, S.parcel_assignments, strrep([dirname '/' nifs(idx).name],'.nii.gz','_parc.nii.gz'),nii_parcel_settings);
+    dat = nii.load([dirname filesep nifs(idx).name]);
+    ROInets.nii_parcel_quicksave(dat, S.parcel_assignments, strrep([dirname filesep nifs(idx).name],'.nii.gz','_parc.nii.gz'),nii_parcel_settings);
 end
 
 

@@ -83,8 +83,8 @@ for subi=1:length(oat.subject_level.subjects_to_do),
                     subject_level_results.gridstep=first_level_results.gridstep;
                     S=[];
 
-                    S.lower_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_mask'];
-                    S.current_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' oat.subject_level.name '_mask'];
+                    S.lower_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_mask.nii.gz'];
+                    S.current_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' oat.subject_level.name '_mask.nii.gz'];
 
                     S.current_level=oat.subject_level;
                     S.lower_level_mni_coord=first_level_results.mni_coords;

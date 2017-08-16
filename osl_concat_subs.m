@@ -60,7 +60,7 @@ for I=1:length(filnams),           %loop to concatenate subjects
         xmat=load([oil.source_recon.dirname '/' oil.enveloping.name '/' filnams{I}],'-mat');
         xmat=xmat.ica_course;
     catch
-        xmat = nii_quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' filnams{I}],gridstep);
+        xmat = nii.quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' filnams{I}],gridstep);
     end
     
     subj_ind(I+1)=subj_ind(I)+size(xmat,2);
@@ -98,7 +98,7 @@ end%if
 
 try
     if size(ica_concat,2) < 32767
-        nii_quicksave(ica_concat, ...
+        nii.quicksave(ica_concat, ...
                       fullfile(concatSaveDir, fil_out), ...
                       gridstep);
     else
@@ -127,7 +127,7 @@ if isfield(oil.enveloping.results,'source_space_envelopes_NoWeightsNorm_results_
             xmat=load([oil.source_recon.dirname '/' oil.enveloping.name '/' filnams{I}],'-mat');
             xmat=xmat.ica_course_nonorm;
         catch
-            xmat = nii_quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' filnams{I}],gridstep);
+            xmat = nii.quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' filnams{I}],gridstep);
         end
         
         if(I>1)
@@ -147,7 +147,7 @@ if isfield(oil.enveloping.results,'source_space_envelopes_NoWeightsNorm_results_
     try
         if size(ica_concat,2) < 32767
             fil_out = concatFileNameNoNorm;
-            nii_quicksave(ica_concat_nonorm, ...
+            nii.quicksave(ica_concat_nonorm, ...
                           fullfile(concatSaveDir, fil_out), ...
                           gridstep);
         else

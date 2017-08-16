@@ -66,7 +66,7 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical)
     file_string = '';
     res = nan(length(fnames));
     for j = 1:length(fnames)
-        tmp = get_nii_spatial_res(fnames{j});
+        tmp = nii.get_spatial_res(fnames{j});
         res(j) = tmp(1);
 
         assert(any(ismember(colour_maps{j},available_maps)),'Colour map %s not recognized',colour_maps{j});

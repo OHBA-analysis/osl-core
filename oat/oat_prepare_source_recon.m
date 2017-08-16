@@ -65,9 +65,9 @@ S2.outfile=[spmname '.mat'];
 
 S2.updatehistory=0;
 D = spm_eeg_copy(S2);
-runcmd(['mv ' D.path '/' D.fname ' ' source_recon_sess.dirname]);
-runcmd(['mv ' D.fnamedat ' ' source_recon_sess.dirname]);
-spm_filename=[source_recon_sess.dirname '/' D.fname];
+movefile(fullfile(D.path,D.fname),source_recon_sess.dirname);
+movefile(D.fnamedat,source_recon_sess.dirname);
+spm_filename=fullfile(source_recon_sess.dirname,D.fname);
 D=spm_eeg_load(spm_filename);
 
 % copy the file in the analysis directory in order to give it the standard
@@ -81,8 +81,8 @@ D = spm_eeg_copy(S2);
 % delete the temporary files
 matfn = fullfile(source_recon_sess.dirname,[source_recon_sess.session_name tempstring '_spm_meeg.mat']);
 datfn = fullfile(source_recon_sess.dirname,[source_recon_sess.session_name tempstring '_spm_meeg.dat']);
-runcmd(['rm ' matfn]);
-runcmd(['rm ' datfn]);
+delete(matfn);
+delete(datfn);
 
 spm_filename = fullfile(source_recon_sess.dirname,[source_recon_sess.session_name '_spm_meeg']);
 

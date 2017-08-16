@@ -35,9 +35,9 @@ first = 1;
 tstats=[];
 for i = 1:length(tp);
     fname = sprintf('%s/%s/%04.0f/stats%04.0f_clustere_tstat1.nii.gz',dirname,subdirname,tp(i),tp(i));
-    f = read_avw(fname);
+    f = nii.load(fname);
     fname_rawt = sprintf('%s/%s/%04.0f/stats%04.0f_tstat1.nii.gz',dirname,subdirname,tp(i),tp(i));
-    tmp=read_avw(fname_rawt);
+    tmp=nii.load(fname_rawt);
     if(isempty(tstats)),
        tstats=zeros([size(tmp) length(tp)]); 
     end;
@@ -73,7 +73,7 @@ if isempty(distfile_load) %no distribution to load, so we create it from scratch
         %% first, load in files
         for i = 1:length(tp);
             fname = sprintf('%s/%s/%04.0f/cindex%05.0f',dirname,subdirname,tp(i),np(p));
-            f = read_avw(fname);
+            f = nii.load(fname);
             if first %first image - read in dimensions
                 nV = prod(size(f));
                 X = sparse(nV,nT);
@@ -127,8 +127,8 @@ if save_images
     pVimg_fname = [dirname '/clust4d_corrp.nii.gz'];
     
     tres=1;
-    save_avw(clustimg,clustimg_fname,'i',[gridstep gridstep gridstep tres]);
-    save_avw(pVimg,pVimg_fname,'f',[gridstep gridstep gridstep tres]);
+    nii.save(clustimg,[gridstep gridstep gridstep tres],[],clustimg_fname);
+    nii.save(pVimg,[gridstep gridstep gridstep tres],[],pVimg_fname);
     
 end
 

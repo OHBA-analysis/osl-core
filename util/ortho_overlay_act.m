@@ -22,7 +22,7 @@ try, tmp=S.add_colorbar; catch, S.add_colorbar=1; end;
 try, tmp=S.gridstep; catch, S.gridstep=2; end;
 
 if ~isfield(S,'interp')
-    S.interp = 'sinc';
+    S.interp = 'cubic';
 end
 
 fname=S.fname;
@@ -40,18 +40,19 @@ else
 end;
 
 % get current gridstep
-[ mni_res ] = get_nii_spatial_res( fname );
+[ mni_res ] = nii.get_spatial_res( fname );
 mni_res=mni_res(1);
 
 % resample volume
 if mni_res~=S.gridstep,
     [pth name ext]=fileparts(fname);
-    new_fname=[pth '/' name '_' num2str(S.gridstep) 'mm' '.' ext];
+    [~,name] = fileparts(name); % This is an bit of a hack to handle .nii.gz
+    new_fname = fullfile(pth,sprintf('%s_%dmm.nii.gz',name,S.gridstep));
     
-    tmp = osl_resample_nii(fname, new_fname, S.gridstep, S.interp,fullfile(osldir,'std_masks',['MNI152_T1_' num2str(S.gridstep) 'mm_brain_mask.nii.gz'],0));
+    tmp = nii.resample(fname, new_fname, S.gridstep, 'interptype',S.interp);
     
     if can_delete_fname,
-        runcmd(['rm -f ' fname]);
+        delete(fname);
     end;
     
     fname=new_fname;
@@ -63,8 +64,8 @@ end;
 % find index for mni coord
 ind = osl_mnicoords2ind(S.mni_coord, mni_res);
 ind=ind+1;
-map=read_avw(fname);
-bgmap=read_avw(fullfile(osldir,'std_masks',['MNI152_T1_' num2str(mni_res) 'mm_brain.nii.gz']));
+map=nii.load(fname);
+bgmap=nii.load(fullfile(osldir,'std_masks',['MNI152_T1_' num2str(mni_res) 'mm_brain.nii.gz']));
 map=mean(map,4); 
 x1=squash(abs(map),abs(map));
 

@@ -18,9 +18,9 @@ source_recon=oat.source_recon;
 if(isfield(source_recon,'mask_fname'))
 
     if ~isempty(source_recon.gridstep)
-        mask_fname=osl_resample_nii(source_recon.mask_fname, ...
+        mask_fname=nii.resample(source_recon.mask_fname, ...
             [source_recon.mask_fname '_' num2str(source_recon.gridstep) 'mm.nii.gz'], ...
-            source_recon.gridstep, 'nearestneighbour',[OSLDIR '/std_masks/MNI152_T1_' num2str(source_recon.gridstep) 'mm_brain']);
+            source_recon.gridstep, 'interptype', 'nearest','enforce_mask',true);
     else
         mask_fname = source_recon.mask_fname;
     end
@@ -65,8 +65,7 @@ end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Save mask in oat dir
 if(~strcmp(mask_fname,''))
-   mask=read_avw(mask_fname); 
-   save_avw(mask,[oat.source_recon.dirname '/source_recon_mask'], 'f', [source_recon.gridstep,source_recon.gridstep,source_recon.gridstep,1]); 
+   copyfile(mask_fname,fullfile(oat.source_recon.dirname,'source_recon_mask.nii.gz'));
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -175,9 +174,9 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     
     D = osl_inverse_model(S2);
     
-    source_recon_results.BF=load([source_recon_sess.dirname '/BF.mat']);
+    source_recon_results.BF=load(fullfile(source_recon_sess.dirname,'BF.mat'));
 
-    runcmd(['rm -rf ' source_recon_sess.dirname '/BF.mat']);
+    delete(fullfile(source_recon_sess.dirname,'BF.mat'));
 
     source_recon_results.type = source_recon_sess.type;
     source_recon_results.report=report;

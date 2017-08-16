@@ -15,13 +15,12 @@ end
 mkdir(opt.dirname);
 
 % set logfile up
-opt.results.plotsdir=[opt.dirname '/plots'];
-opt.results.logfile=[opt.results.plotsdir '/log-' date '.txt'];
+opt.results.plotsdir=fullfile(opt.dirname, 'plots');
+opt.results.logfile=fullfile(opt.results.plotsdir,['log-' date '.txt']);
 mkdir(opt.results.plotsdir);
 
 % delete any existing diary file with the same name
-runcmd(['rm -f ' opt.results.logfile]);
-runcmd(['touch ' opt.results.logfile]);
+delete(opt.results.logfile);
 
 opt.results.date=date;
 
@@ -52,10 +51,9 @@ for subi=1:length(opt.sessions_to_do),
     opt_results=[];
 
     % have individual log file for this subject
-    opt_results.logfile=[opt.results.plotsdir '/log-' date '-session' num2str(subnum) '.txt'];
+    opt_results.logfile=fullfile(opt.results.plotsdir,['log-' date '-session' num2str(subnum) '.txt']);
     % delete any existing diary file with the same name
-    runcmd(['rm -f ' opt_results.logfile]);
-    runcmd(['touch ' opt_results.logfile]);
+    delete(opt_results.logfile)
 
     diary(opt_results.logfile);
     diary on;
@@ -78,7 +76,7 @@ for subi=1:length(opt.sessions_to_do),
     try
 
         % set session specific diagnostic report up
-        report_dir=[opt.results.plotsdir '/session' num2str(subnum)];
+        report_dir=fullfile(opt.results.plotsdir,['session' num2str(subnum)]);
         report=osl_report_setup(report_dir,['Session ' num2str(subnum) ' (Input file:' input_file  ')']);
 
         if(opt.maxfilter.do)
@@ -94,7 +92,7 @@ for subi=1:length(opt.sessions_to_do),
             Smf=[];
             Smf.maxfilt_dir=opt.maxfilter.maxfilt_dir;
             [p fifname e] = fileparts(opt.raw_fif_files{subnum});
-            Smf.fif=[p '/' fifname];
+            Smf.fif=[p filesep fifname];
 
             if opt.maxfilter.ctc_file ~= 0
                 Smf.ctc_file = ctc_file;
@@ -106,7 +104,7 @@ for subi=1:length(opt.sessions_to_do),
             % output fif file from maxfilter call will be placed in the opt
             % directory with a name based on opt.convert.spm_files_basenames{subnum}
             fifname_out=['nosss_fif_' opt.convert.spm_files_basenames{subnum}];
-            Smf.fif_out=[opt.dirname '/' fifname_out];
+            Smf.fif_out=[opt.dirname filesep fifname_out];
             Smf.logfile=1;
 
             if ~(exist([Smf.fif '.fif'],'file')==2),
@@ -135,7 +133,8 @@ for subi=1:length(opt.sessions_to_do),
             else
                 fif_sss=osl_call_maxfilter(Smf);
             end
-            runcmd(['cat ' fif_sss '_log.txt']);
+
+            type([fif_sss '_log.txt']);
 
             if(~exist([fif_sss '.fif'],'file'))
                 warning([fif_sss '.fif does not exist. Can not continue with this subject.']);
@@ -150,10 +149,10 @@ for subi=1:length(opt.sessions_to_do),
             S2=[];
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  CONVERT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
-            spm_file=[opt.dirname '/nosss' opt.convert.spm_files_basenames{subnum}];
+            spm_file=fullfile(opt.dirname,['nosss' opt.convert.spm_files_basenames{subnum}]);
             S2.spm_file=spm_file;
             [p fifname e] = fileparts(Smf.fif_out);
-            S2.fif_file=[p '/' fifname '.fif'];
+            S2.fif_file=[p filesep fifname '.fif'];
             if(isfield(opt.convert,'trigger_channel_mask'))
                 S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
             end;
@@ -161,7 +160,7 @@ for subi=1:length(opt.sessions_to_do),
 
             % delete fif file in opt dir that is no longer needed
             if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
-                runcmd(['rm -f ' S2.fif_file]);
+                delete(S2.fif_file);
             end;
 
             close all
@@ -177,7 +176,7 @@ for subi=1:length(opt.sessions_to_do),
                     %% First detects and remove bad channels on non-SSS data,
                     %% then runs SSS
                     disp(['%%%%%%%%%%%%%%%%%%%%%%%  RM BAD CHANS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
-                    spm_file=[opt.dirname '/nosss' opt.convert.spm_files_basenames{subnum}];
+                    spm_file=fullfile(opt.dirname ,['nosss' opt.convert.spm_files_basenames{subnum}]);
                     D=spm_eeg_load(spm_file);
 
                     for ii=1:length(opt.modalities),
@@ -214,7 +213,7 @@ for subi=1:length(opt.sessions_to_do),
                             end;
 
                             % delete obsolete spm file
-                            spm_file_old=[opt.dirname '/Snosss' opt.convert.spm_files_basenames{subnum}];
+                            spm_file_old=[opt.dirname filesep 'Snosss' opt.convert.spm_files_basenames{subnum}];
                             Dold=spm_eeg_load(spm_file_old);
 
                             if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
@@ -254,7 +253,7 @@ for subi=1:length(opt.sessions_to_do),
                 disp(['%%%%%%%%%%%%%%%%%%%%%%%  MAXFILT WITH SSS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
                 Smf=[];
                 [p fifname e] = fileparts(opt.raw_fif_files{subnum});
-                Smf.fif=[p '/' fifname];
+                Smf.fif=[p filesep fifname];
 
                 if opt.maxfilter.ctc_file ~= 0
                     Smf.ctc_file = ctc_file;
@@ -266,17 +265,17 @@ for subi=1:length(opt.sessions_to_do),
                 % output fif file from maxfilter call will be placed in the opt
                 % directory with a name based on opt.convert.spm_files_basenames{subnum}
                 fifname_out=['sss_fif_' opt.convert.spm_files_basenames{subnum}];
-                Smf.fif_out=[opt.dirname '/' fifname_out];
+                Smf.fif_out=[opt.dirname filesep fifname_out];
 
                 Smf.logfile=1;
                 Smf.nosss=0;
 
-                spm_file=[opt.dirname '/nosss' opt.convert.spm_files_basenames{subnum}]
+                spm_file=[opt.dirname filesep 'nosss' opt.convert.spm_files_basenames{subnum}]
                 Smf.spmfile=spm_file;
 
                 if ~isempty(opt.maxfilter.trans_ref_file) && ~strcmp(opt.maxfilter.trans_ref_file,''),
                     [pth fifname ext] = fileparts(opt.maxfilter.trans_ref_file);
-                    Smf.trans_ref_file=[pth '/' fifname];
+                    Smf.trans_ref_file=[pth filesep fifname];
                 end;
 
                 Smf.movement_compensation=opt.maxfilter.movement_compensation; %can only run with sss AND downsampling has to be switched off
@@ -307,7 +306,7 @@ for subi=1:length(opt.sessions_to_do),
                 else
                     fif_sss=osl_call_maxfilter(Smf);
                 end
-                runcmd(['cat ' fif_sss '_log.txt']);
+                type([fif_sss '_log.txt']);
 
                 opt_results.maxfilter.sss_autobad_off(subnum)=0;
 
@@ -331,7 +330,7 @@ for subi=1:length(opt.sessions_to_do),
                     else
                         fif_sss=osl_call_maxfilter(Smf);
                     end
-                    runcmd(['cat ' fif_sss '_log.txt']);
+                    type([fif_sss '_log.txt']);
 
                     % check if Maxfilter has worked
                     [maxfilter_failed D report]=opt_maxfilter_check_output(opt, fif_sss, spm_files_basenames{subnum}, report);
@@ -343,7 +342,7 @@ for subi=1:length(opt.sessions_to_do),
 
                 %%%
                 % delete obsolete nosss spm file with pre sss bad channels
-                spm_file_old=[opt.dirname '/nosss' opt.convert.spm_files_basenames{subnum}];
+                spm_file_old=[opt.dirname filesep 'nosss' opt.convert.spm_files_basenames{subnum}];
                 Dold=spm_eeg_load(spm_file_old);
                 if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
                     Dold.delete;
@@ -367,7 +366,7 @@ for subi=1:length(opt.sessions_to_do),
 
                 [p spmname e] = fileparts(opt.convert.spm_files_basenames{subnum});
                 spm_files_basenames{subnum}=[spmname '.mat'];
-                S2.spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+                S2.spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
 
                 [p fifname e] = fileparts(opt.input_files{subnum});
 
@@ -382,7 +381,7 @@ for subi=1:length(opt.sessions_to_do),
                     end;
                 end;
 
-                S2.fif_file=[p '/' fifname e];
+                S2.fif_file=[p filesep fifname e];
 
                 if(isfield(opt.convert,'trigger_channel_mask'))
                     S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
@@ -402,7 +401,7 @@ for subi=1:length(opt.sessions_to_do),
                 D = spm_eeg_load(opt.spm_files{subnum});
                 spm_files_basenames{subnum} = D.fname;
 
-                Dnew = copy(D,[opt.dirname '/' D.fname]);
+                Dnew = copy(D,[opt.dirname filesep D.fname]);
 
             end;
 
@@ -442,13 +441,13 @@ for subi=1:length(opt.sessions_to_do),
         if(opt.downsample.do),
             S=[];
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  DOWNSAMP, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             S.D=spm_file;
             S.fsample_new = opt.downsample.freq;
             D = spm_eeg_downsample (S);
 
             % delete obsolete spm file
-            spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file_old=[opt.dirname filesep spm_files_basenames{subnum}];
             Dold=spm_eeg_load(spm_file_old);
             if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
                 Dold.delete;
@@ -465,7 +464,7 @@ for subi=1:length(opt.sessions_to_do),
 
         if(opt.highpass.do)
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  HP FILT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             S=[];
             S.D = spm_file;
             S.band='high';
@@ -474,7 +473,7 @@ for subi=1:length(opt.sessions_to_do),
             D = spm_eeg_filter(S);
 
             % delete obsolete spm file
-            spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file_old=[opt.dirname filesep spm_files_basenames{subnum}];
             Dold=spm_eeg_load(spm_file_old);
             if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
                 Dold.delete;
@@ -488,7 +487,7 @@ for subi=1:length(opt.sessions_to_do),
         if(opt.mains.do)
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  MAINS FILT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             S3              = [];
             S3.D            = spm_file;
             S3.type          = 'butterworth';
@@ -499,7 +498,7 @@ for subi=1:length(opt.sessions_to_do),
             D = spm_eeg_filter(S3);
 
             % delete obsolete spm file
-            spm_file_old=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file_old=[opt.dirname filesep spm_files_basenames{subnum}];
             Dold=spm_eeg_load(spm_file_old);
             if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
                 Dold.delete;
@@ -532,7 +531,7 @@ for subi=1:length(opt.sessions_to_do),
             S.ident_func = S.ident_params.func;
             S.do_plots = true;
 
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             D = spm_eeg_load(D);
             [D, figs]=osl_africa(D,S);
             D.save()
@@ -553,7 +552,7 @@ for subi=1:length(opt.sessions_to_do),
 
             %%%%
             % define the trials we want from the event information
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             D_continuous=spm_eeg_load(spm_file);
 
             tind_tsize=opt.bad_segments.dummy_epoch_tsize*D.fsample;
@@ -639,7 +638,7 @@ for subi=1:length(opt.sessions_to_do),
 
         else
             % plot data
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             D_continuous=spm_eeg_load(spm_file);
             S.outlier_measure_fns={'std', 'min'};
             S.modalities=opt.modalities;
@@ -693,7 +692,7 @@ for subi=1:length(opt.sessions_to_do),
         if(opt.coreg.do),
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  COREG, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             S=[];
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum} '.mat'];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum} '.mat'];
             S.D = [spm_file];
             S.mri=opt.coreg.mri{subnum};
             S.useheadshape=opt.coreg.useheadshape;
@@ -717,7 +716,7 @@ for subi=1:length(opt.sessions_to_do),
             % opt.fid_mnicoords.nasion =[  1.3968   81.9389  -44.9899];opt.fid_mnicoords.lpa =[-83.3246  -20.2372  -68.1528];opt.fid_mnicoords.rpa = [83.9906  -19.5985  -65.6612];
 
             %%
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum} '.mat'];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum} '.mat'];
             Dcheck=spm_eeg_load(spm_file);
             %spm_eeg_inv_checkdatareg(D);
 
@@ -782,7 +781,7 @@ for subi=1:length(opt.sessions_to_do),
             %%%%
             % define the trials we want from the event information
             S2 = [];
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
 
             S2.D = spm_file;
             D_continuous=spm_eeg_load(S2.D);
@@ -820,7 +819,7 @@ for subi=1:length(opt.sessions_to_do),
         else
             % check if epoching already been done on spm_file
 
-            spm_file=[opt.dirname '/' spm_files_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
 
             D2=spm_eeg_load(spm_file);
 
@@ -841,7 +840,7 @@ for subi=1:length(opt.sessions_to_do),
             if ~opt.epoch.do           
                 spm_files_epoched_basenames{subnum}=spm_files_basenames{subnum};
             end;
-            spm_file=[opt.dirname '/' spm_files_epoched_basenames{subnum}];
+            spm_file=[opt.dirname filesep spm_files_epoched_basenames{subnum}];
 
             D2=spm_eeg_load(spm_file);
 
@@ -863,7 +862,7 @@ for subi=1:length(opt.sessions_to_do),
             report=osl_report_print_figs(report);
 
             % delete obsolete spm file
-            spm_file_old=[opt.dirname '/' spm_files_epoched_basenames{subnum}];
+            spm_file_old=[opt.dirname filesep spm_files_epoched_basenames{subnum}];
             Dold=spm_eeg_load(spm_file_old);
             
             % in case we had loaded in an SPM file from the start, check it
@@ -914,7 +913,11 @@ for subi=1:length(opt.sessions_to_do),
     end
     
     % build logfile
-    runcmd(['cat ' opt_results.logfile '>' opt.results.logfile]);
+    % the original command was 'cat opt_results.logfile '>' opt.results.logfile'
+    % which implies that opt.results.logfile is overwritten because it uses > not >>
+    % Thus replacing with a copyfile call here. Maybe a more sophisticated solution is
+    % required if 
+    copyfile(opt_results.logfile,opt.results.logfile);
 
 end
 
@@ -936,7 +939,7 @@ opt.results.report=osl_report_write(opt_report);
 %% output res
 opt.osl2_version=osl_version;
 
-opt.fname=[opt.dirname '/opt'];
+opt.fname=[opt.dirname filesep 'opt'];
 
 save(opt.fname, 'opt');
 
@@ -1054,10 +1057,10 @@ end;
 disp(['%%%%%%%%%%%%%%%%%%%%%%%  CONVERT SSS-ed DATA, SESS = ' spm_files_basename '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
 S2=[];
-spm_file=[opt.dirname '/' spm_files_basename];
+spm_file=[opt.dirname filesep spm_files_basename];
 S2.spm_file=spm_file;
 [p fifname e] = fileparts(fif_sss);
-S2.fif_file=[p '/' fifname '.fif'];
+S2.fif_file=[p filesep fifname '.fif'];
 
 if(isfield(opt.convert,'trigger_channel_mask'))
     S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
@@ -1087,7 +1090,7 @@ else
 
     % delete fif file in opt dir that is no longer needed
     if(opt.cleanup_files == 2)
-        runcmd(['rm -f ' S2.fif_file]);
+        delete(S2.fif_file);
     end;
 
 end;

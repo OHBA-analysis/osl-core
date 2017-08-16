@@ -53,8 +53,17 @@ workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 % clear old spm files
 clear spm_files_continuous spm_files_epoched
 
-spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
-spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
+spm_files_continuous{1}=fullfile(datadir,'Aface_meg1.mat');
+spm_files_epoched{1}=fullfile(datadir,'eAface_meg1.mat');
+
+% Update the location of the structural files within the MEEG files
+D = spm_eeg_load(spm_files_continuous{1});
+D = osl_update_inv_dir(D,structdir);
+D.save()
+
+D = spm_eeg_load(spm_files_epoched{1});
+D = osl_update_inv_dir(D,structdir);
+D.save()
 
 %% SETUP THE OAT:
 %
@@ -94,7 +103,7 @@ oat.source_recon.forward_meg='Single Shell';
 oat.source_recon.modalities{1}={'MEGPLANAR', 'MEGMAG'};
 oat.source_recon.report.do_source_variance_maps=1;
 
-oat.source_recon.dirname=[workingdir '/beamformer_erf']; % directory the oat and results will be stored in
+oat.source_recon.dirname=fullfile(workingdir,'beamformer_erf'); % directory the oat and results will be stored in
 
 
 %% SPECIFIY FIRST LEVEL OPTIONS
@@ -216,7 +225,7 @@ S2.resamp_gridstep=oat.source_recon.gridstep;
 % we are running fslview from the matlab command line, but you do not need
 % to - you can run it from the UNIX command line instead.
 
-mni_brain=[osldir '/std_masks/MNI152_T1_' num2str(S2.resamp_gridstep) 'mm_brain.nii.gz'];
+mni_brain=fullfile(osldir,'std_masks',['MNI152_T1_' num2str(S2.resamp_gridstep) 'mm_brain.nii.gz']);
 
 % Inspect the results of an OAT contrast in FSLVIEW
 % contrast=;
@@ -364,7 +373,7 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 % LOAD PREVIOUSLY RUN OAT
 % We are going to use the wholebrain OAT (which was run above for the ERF
 % analysis), to make use of the settings already in there
-oat.source_recon.dirname=[workingdir '/beamformer_erf']; % Make sure this matches the dirname used above
+oat.source_recon.dirname=fullfile(workingdir,'beamformer_erf'); % Make sure this matches the dirname used above
 oat.first_level.name=['wholebrain_first_level'];
 oat=osl_load_oat(oat);
 

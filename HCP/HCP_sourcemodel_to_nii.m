@@ -22,18 +22,14 @@ function HCP_sourcemodel_to_nii(sourcemodel,mask_out)
 	for j = 1:size(idx,1)
 		vol(idx(j,1),idx(j,2),idx(j,3)) = 1;
 	end  
-	
-	% Save the nii file
-	save_avw(vol,mask_out,'i',[res 1]);
 
 	% Add in xform data - also enables recovery of coordinates with osl_mnimask2mnicoords
-	xform = [res(1)  0       0       offset(1),...
-	         0      res(2)   0       offset(2),...
-	         0      0       res(3)   offset(3),...
+	xform = [res(1)  0       0       offset(1);...
+	         0      res(2)   0       offset(2);...
+	         0      0       res(3)   offset(3);...
 	         0      0       0       1];
 
-	runcmd(['fslorient -setqformcode 0 ' mask_out]) % Code 0 means quaternion format is not in use
-	runcmd(['fslorient -setsformcode 2 ' mask_out]) % Code 2 means use affine transform to convert to non-MNI space (Code 4 means MNI space)
-	runcmd(['fslorient -setqform ' num2str(xform) ' ' mask_out])
-	runcmd(['fslorient -setsform ' num2str(xform) ' ' mask_out])
+	nii.save(vol,res,xform,mask_out);
+
+
 

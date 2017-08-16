@@ -27,7 +27,7 @@ save_dir = [oil.source_recon.dirname '/' oil.enveloping.name '/' oil.concat_subs
 if ~isdir(save_dir), mkdir(save_dir); end;
 
 Nics     = oil.ica.num_ics;
-Nvoxels  = size(nii_quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' oil.enveloping.results.source_space_envelopes_results_fnames{oil.concat_subs.sessions_to_do(1)}], oil.enveloping.gridstep),1);
+Nvoxels  = size(nii.quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' oil.enveloping.results.source_space_envelopes_results_fnames{oil.concat_subs.sessions_to_do(1)}], oil.enveloping.gridstep),1);
 subj_ind = oil.concat_subs.results.subj_ind;
 Nsubs    = length(subj_ind)-1;
 
@@ -44,17 +44,17 @@ if isSpatialBasisSet || isSpatialICA, % need to calculate pseudo tcs
     if isSpatialBasisSet, 
         
         % load in spatial basis set
-        [~,~,scales] = read_avw(oil.ica_first_level.spatial_basis_set);
+        [~,~,scales] = nii.load(oil.ica_first_level.spatial_basis_set);
         
         if scales(1) ~= oil.enveloping.gridstep;
-            oil.ica_first_level.spatial_basis_set = osl_resample_nii(...
+            oil.ica_first_level.spatial_basis_set = nii.resample(...
                 oil.ica_first_level.spatial_basis_set, ...
                 [oil.ica_first_level.spatial_basis_set, '_ds', ...
                    num2str(oil.enveloping.gridstep) 'mm'], ...
                 oil.enveloping.gridstep);
         end
     
-        spat_bas = nii_quickread(oil.ica_first_level.spatial_basis_set, ...
+        spat_bas = nii.quickread(oil.ica_first_level.spatial_basis_set, ...
                                  oil.enveloping.gridstep);
         
     else %isSpatialICA still
@@ -70,7 +70,7 @@ if isSpatialBasisSet || isSpatialICA, % need to calculate pseudo tcs
                                     oil.concat_subs.results.concat_file);
 
     try % assume nifti
-        concat_data = nii_quickread(ica_concat_fname, ...
+        concat_data = nii.quickread(ica_concat_fname, ...
                                     oil.enveloping.gridstep);
     catch ME
         % check to see if saves as .mat
@@ -121,7 +121,7 @@ resid = zeros(Nvoxels,1);
 for subnum=1:Nsubs;
     
     % Subject Specific Setup - use nonorm data
-    sing_sub_dat=nii_quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' oil.enveloping.results.source_space_envelopes_NoWeightsNorm_results_fnames{oil.concat_subs.sessions_to_do(subnum)}],oil.enveloping.gridstep);
+    sing_sub_dat=nii.quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' oil.enveloping.results.source_space_envelopes_NoWeightsNorm_results_fnames{oil.concat_subs.sessions_to_do(subnum)}],oil.enveloping.gridstep);
     sing_sub_tc=normalise(tcs2use(:,subj_ind(subnum):subj_ind(subnum+1)-1)',1);  % extract subject specific part of the ICA time courses and normalise to unit std and mean.
         
     % Multiple Regression
@@ -141,9 +141,9 @@ for subnum=1:Nsubs;
     
     % Save COPES and tstats to NII files
     cope_files{subnum} = [save_dir '/ica_copes_' oil.enveloping.results.source_space_envelopes_results_fnames{oil.concat_subs.sessions_to_do(subnum)}];
-    nii_quicksave(copeout',cope_files{subnum},oil.enveloping.gridstep);
+    nii.quicksave(copeout',cope_files{subnum},oil.enveloping.gridstep);
     tstat_files{subnum} = [save_dir '/ica_tstats_' oil.enveloping.results.source_space_envelopes_results_fnames{oil.concat_subs.sessions_to_do(subnum)}];
-    nii_quicksave(copeout'./sqrt(varcopeout'),tstat_files{subnum},oil.enveloping.gridstep);
+    nii.quicksave(copeout'./sqrt(varcopeout'),tstat_files{subnum},oil.enveloping.gridstep);
 end
 
 %% 

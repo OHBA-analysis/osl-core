@@ -30,7 +30,7 @@ if isfield(oil.enveloping, 'gridstep'),                                gridstep 
 
 mask_fname = [OSLDIR '/std_masks/MNI152_T1_' num2str(gridstep) 'mm_brain.nii.gz'];    
 Nsubs       = length(cope_files);
-Nvoxels     = size(nii_quickread(cope_files{1},gridstep),1);
+Nvoxels     = size(nii.quickread(cope_files{1},gridstep),1);
 Nics        = numel(comps2use);
 Ncontrasts = length(contrast);
 
@@ -43,7 +43,7 @@ group_copes = zeros(Nvoxels,Nics,Ncontrasts);
 group_stdcopes = zeros(Nvoxels,Nics,Ncontrasts);
 for subnum = 1:Nsubs
     fprintf('Loading in first-level results for subject %d out of %d. \n', subnum, Nsubs);
-    copes(:,:,subnum) = nii_quickread(cope_files{subnum},oil.enveloping.gridstep);
+    copes(:,:,subnum) = nii.quickread(cope_files{subnum},oil.enveloping.gridstep);
 end
 copes = copes(:,comps2use,:);
 
@@ -74,7 +74,7 @@ end
 
 if group_varcope_spatial_smooth_fwhm > 0
     for c = 1:size(group_stdcopes,3)
-        group_stdcopes(:,:,c)=smooth_vol(group_stdcopes(:,:,c), read_avw([OSLDIR '/std_masks/MNI152_T1_' num2str(oil.enveloping.gridstep) 'mm_brain.nii.gz']), group_varcope_spatial_smooth_fwhm, oil.enveloping.gridstep, 'tmp_fname');
+        group_stdcopes(:,:,c)=smooth_vol(group_stdcopes(:,:,c), nii.load([OSLDIR '/std_masks/MNI152_T1_' num2str(oil.enveloping.gridstep) 'mm_brain.nii.gz']), group_varcope_spatial_smooth_fwhm, oil.enveloping.gridstep, 'tmp_fname');
     end
 end
 
@@ -90,8 +90,8 @@ fprintf('Preparing output. \n');
 for c = 1:Ncontrasts
     fname_cope = [stats_dir '/copes_group_analysis_components_' num2str(comps2use(1)) '_to_' num2str(comps2use(end)) '_contrast_' num2str(c)];
     fname_tstats=[stats_dir '/tstats_group_analysis_components_' num2str(comps2use(1)) '_to_' num2str(comps2use(end)) '_contrast_' num2str(c)];
-    oil.ica_group_level.results.cope_names{c}   = nii_quicksave(group_copes(:,:,c),fname_cope,gridstep,2);
-    oil.ica_group_level.results.tstats_names{c} = nii_quicksave(group_tstats(:,:,c),fname_tstats,gridstep,2);
+    oil.ica_group_level.results.cope_names{c}   = nii.quicksave(group_copes(:,:,c),fname_cope,gridstep,2);
+    oil.ica_group_level.results.tstats_names{c} = nii.quicksave(group_tstats(:,:,c),fname_tstats,gridstep,2);
 end
 
 %% Permutations testing using RANDOMISE
@@ -111,7 +111,7 @@ if use_randomise
         
         for I = 1:Nics
             fname_cope = [dirname 'copes_component_' num2str(comps2use(I))];
-            nii_quicksave(permute(copes(:,I,:),[1 3 2]),fname_cope,oil.enveloping.gridstep);
+            nii.quicksave(permute(copes(:,I,:),[1 3 2]),fname_cope,oil.enveloping.gridstep);
             output_name = [fname_cope '_output' ];
             
             if ischar(thresh) && strcmp(thresh,'TFC')
@@ -124,11 +124,11 @@ if use_randomise
             runcmd(tmp);
             
             if ischar(thresh) && strcmp(thresh,'TFC')
-                group_pvals(:,comps2use(I),c) = nii_quickread([dirname  'copes_component_' num2str(comps2use(I)) '_output_tfce_corrp_tstat1'],gridstep);
-                group_clustered_t_stats(:,comps2use(I),c) = nii_quickread([dirname  'copes_component_' num2str(comps2use(I)) '_output_tfce_tstat1'],gridstep);
+                group_pvals(:,comps2use(I),c) = nii.quickread([dirname  'copes_component_' num2str(comps2use(I)) '_output_tfce_corrp_tstat1'],gridstep);
+                group_clustered_t_stats(:,comps2use(I),c) = nii.quickread([dirname  'copes_component_' num2str(comps2use(I)) '_output_tfce_tstat1'],gridstep);
             else
-                group_pvals(:,comps2use(I),c) = nii_quickread([dirname  'copes_component_' num2str(comps2use(I)) '_output_clustere_corrp_tstat1'],gridstep);
-                group_clustered_t_stats(:,comps2use(I),c) = nii_quickread([dirname  'copes_component_' num2str(comps2use(I)) '_output_clustere_tstat1'],gridstep);
+                group_pvals(:,comps2use(I),c) = nii.quickread([dirname  'copes_component_' num2str(comps2use(I)) '_output_clustere_corrp_tstat1'],gridstep);
+                group_clustered_t_stats(:,comps2use(I),c) = nii.quickread([dirname  'copes_component_' num2str(comps2use(I)) '_output_clustere_tstat1'],gridstep);
             end
         end
     end
@@ -136,8 +136,8 @@ if use_randomise
     for c = 1:Ncontrasts
         fname_pvals = [stats_dir '/randomise_corrected_pvals_group_analysis_components_' num2str(comps2use(1)) '_to_' num2str(comps2use(end)) '_contrast_' num2str(c)];
         fname_clusteredtstats=[stats_dir '/randomise_clustered_tstats_group_analysis_components_' num2str(comps2use(1)) '_to_' num2str(comps2use(end)) '_contrast_' num2str(c)];
-        oil.ica_group_level.results.corr_1minusp_names{c}   = nii_quicksave(group_pvals(:,:,c),fname_pvals,gridstep,2,'nearestneighbour');
-        oil.ica_group_level.results.clustered_tstats_names{c} = nii_quicksave(group_clustered_t_stats(:,:,c),fname_clusteredtstats,gridstep,2,'nearestneighbour');
+        oil.ica_group_level.results.corr_1minusp_names{c}   = nii.quicksave(group_pvals(:,:,c),fname_pvals,gridstep,2,'nearestneighbour');
+        oil.ica_group_level.results.clustered_tstats_names{c} = nii.quicksave(group_clustered_t_stats(:,:,c),fname_clusteredtstats,gridstep,2,'nearestneighbour');
     end
     
     
@@ -155,7 +155,7 @@ function vol_as_matrix=smooth_vol(vol_as_matrix, lower_level_stdbrain, fwhm, gri
 
     ss=fwhm/2.3; % std spatial smoothing
     
-    save_avw(matrix2vols(vol_as_matrix,lower_level_stdbrain),tmp_fname,'f',[ds, ds, ds, 1]);
+    nii.save(matrix2vols(vol_as_matrix,lower_level_stdbrain),[ds, ds, ds, 1],[],tmp_fname);
 
     % Smooth image but respect brain edges.
 
@@ -166,7 +166,7 @@ function vol_as_matrix=smooth_vol(vol_as_matrix, lower_level_stdbrain, fwhm, gri
     
     runcmd(['rm tmp1.nii* tmp2.nii*']); 
 
-    tmp=read_avw(tmp_fname);
+    tmp=nii.load(tmp_fname);
     
     vol_as_matrix=vols2matrix(tmp,lower_level_stdbrain);
 
@@ -177,8 +177,8 @@ wwt_norm=zeros(3559,numel(oil.concat_subs.sessions_to_do));
 
 for subnum = 1:numel(oil.concat_subs.sessions_to_do)
     
-    sing_sub_dat_nn=nii_quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' oil.enveloping.results.source_space_envelopes_NoWeightsNorm_results_fnames{oil.concat_subs.sessions_to_do(subnum)}],oil.enveloping.gridstep);
-    sing_sub_dat_wn=nii_quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' oil.enveloping.results.source_space_envelopes_results_fnames{oil.concat_subs.sessions_to_do(subnum)}],oil.enveloping.gridstep);
+    sing_sub_dat_nn=nii.quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' oil.enveloping.results.source_space_envelopes_NoWeightsNorm_results_fnames{oil.concat_subs.sessions_to_do(subnum)}],oil.enveloping.gridstep);
+    sing_sub_dat_wn=nii.quickread([oil.source_recon.dirname '/' oil.enveloping.name '/' oil.enveloping.results.source_space_envelopes_results_fnames{oil.concat_subs.sessions_to_do(subnum)}],oil.enveloping.gridstep);
     
     if subnum==1;
         wwt_norm=zeros(size(sing_sub_dat_nn,1),numel(oil.concat_subs.sessions_to_do));

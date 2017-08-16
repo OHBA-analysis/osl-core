@@ -1,4 +1,4 @@
-function osl_spinning_brain(fname,fig,duration)
+function osl_spinning_brain(fname,fig,duration,tight)
 	% Make an animation by spinning the figure
 	% The azimuth angle will sweep through 1 revolution, while the
 	% elevation will remain unchanged
@@ -9,7 +9,8 @@ function osl_spinning_brain(fname,fig,duration)
 	% - fname - output file name. Format is chosen based on extension - can be '.mp4' or '.gif'
 	% - fig - Handle to figure to rotate. All axes in figure will be rotated (default: current figure)
 	% - duration - the period of 1 rotation in seconds (default: 5 seconds)
-	% 
+	% - tight - Enlarge brain in plot by expanding the axis and reducing whitespace. Colorbar will disappear!
+
 	% FILE FORMAT NOTE
 	%
 	% mp4 videos are much less CPU-intensive than gif animations, particularly when there are
@@ -19,6 +20,10 @@ function osl_spinning_brain(fname,fig,duration)
 	% POWERPOINT - Check 'Loop until stopped' and add an animation with emphasis effect 'Play' to start
 	% BROWSER HTML - "<video src="filename.mp4" autoplay loop>"
 
+	if nargin < 4 || isempty(tight) 
+		tight = false;
+	end
+	
 	if nargin < 3 || isempty(duration) 
 		duration = 5;
 	end
@@ -42,11 +47,18 @@ function osl_spinning_brain(fname,fig,duration)
 	ax = findobj(fig,'Type','axes'); 
 	axis(ax,'vis3d')
 
+	if tight
+		set(ax,'Position',[0 0 1 1]);
+		outerpos = ax.OuterPosition;
+		ax.Position = [outerpos(1) outerpos(2) 1-2*outerpos(1) 1-2*outerpos(2)];
+	end
+
 	if strcmp(ext,'.mp4')
 		v = VideoWriter(fname,'MPEG-4');
 		v.FrameRate = fps;
 		v.Quality = 60; % About half the default quality file size with minimal loss of quality
 		open(v)
+		cleanup = onCleanup(@() close(v)); % Automatically close when function ends
 	else
 		delayTime = 1/fps;
 	end
@@ -72,13 +84,5 @@ function osl_spinning_brain(fname,fig,duration)
 			end
 		end
 	end
-
-	if strcmp(ext,'.mp4')
-		close(v);
-	end
-
-
-
-
 
 

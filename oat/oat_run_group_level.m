@@ -114,8 +114,8 @@ for subi=1:length(current_level.subjects_to_do),
                 
                 S=[];
                 
-                S.lower_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' lower_level.name '_mask.nii.gz'];
-                S.current_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_' lower_level.name '_' current_level.name '_mask'];
+                S.lower_level_mask_fname=[oat.source_recon.dirname filesep oat.first_level.name '_' lower_level.name '_mask.nii.gz'];
+                S.current_level_mask_fname=[oat.source_recon.dirname filesep oat.first_level.name '_' lower_level.name '_' current_level.name '_mask.nii.gz'];
                 
                 S.current_level=current_level;
                 S.lower_level_mni_coord=lower_level_results.mni_coords;
@@ -125,7 +125,7 @@ for subi=1:length(current_level.subjects_to_do),
                 
                 % group level mask for doing spatial averaging
                 stdbrain_fname  = S.current_level_mask_fname;
-                curr_level_mask = read_avw(stdbrain_fname);
+                curr_level_mask_fname = stdbrain_fname;
                 lower_level_stdbrain_fname = S.lower_level_mask_fname;
                 
             end
@@ -304,20 +304,16 @@ for cc=1:length(current_level.first_level_contrasts_to_do),
             end;
         else
             
-            lower_level_stdbrain=read_avw(lower_level_stdbrain_fname);
-            tmp_fname=[lower_level.results_fnames{sub} '_c' num2str(c)];
             
             for sub=1:num_subjects,
                 for f=1:nfreq,
                     
-                    cope_smooth_lower_level(:,sub,:,f)=smooth_vol(permute(cope_smooth_lower_level(:,sub,:,f),[1 3 2 4]), lower_level_stdbrain, current_level.spatial_smooth_fwhm, lower_level_results.gridstep, tmp_fname);
-                    stdcope_smooth_lower_level(:,sub,:,f)=smooth_vol(permute(stdcope_smooth_lower_level(:,sub,:,f),[1 3 2 4]), lower_level_stdbrain, current_level.spatial_smooth_fwhm, lower_level_results.gridstep, tmp_fname);
+                    cope_smooth_lower_level(:,sub,:,f)=smooth_vol(permute(cope_smooth_lower_level(:,sub,:,f),[1 3 2 4]), lower_level_stdbrain_fname, current_level.spatial_smooth_fwhm);
+                    stdcope_smooth_lower_level(:,sub,:,f)=smooth_vol(permute(stdcope_smooth_lower_level(:,sub,:,f),[1 3 2 4]), lower_level_stdbrain_fname, current_level.spatial_smooth_fwhm);
                     
                 end;
             end;
-            
-            runcmd(['rm -f ' tmp_fname '.nii.gz']);
-            
+                        
         end;
     end;
     
@@ -492,21 +488,17 @@ for cc=1:length(current_level.first_level_contrasts_to_do),
         if strcmp(current_level_results.recon_method,'none'),
             warning('Not implemented for sensor space - no spatial smoothing applied');
         else
-            
-            lower_level_stdbrain=read_avw(lower_level_stdbrain_fname);
-            tmp_fname=[oat.source_recon.dirname '/' current_level_results.fname '_c' num2str(c) '_tmp'];
-            
+                        
             for gc=1:length(group_contrast),
                 for f=1:nfreq,
                     dat=permute(current_level_results.stdcope(:,:,c,f,gc),[1,2,3,4,5]);
                     
-                    current_level_results.stdcope(:,:,c,f,gc)=smooth_vol(dat, curr_level_mask, current_level.group_varcope_spatial_smooth_fwhm, lower_level_results.gridstep, tmp_fname);
+                    % NOTE - This code is translated as is, but it doesn' t look like it would run - need to check which filename to use for curr_level_mask
+                    current_level_results.stdcope(:,:,c,f,gc)=smooth_vol(dat, curr_level_mask_fname, current_level.group_varcope_spatial_smooth_fwhm);
 
                 end;
             end;
-            
-            runcmd(['rm -f ' tmp_fname '.nii.gz']);
-            
+                        
         end;
     end;
     
@@ -559,31 +551,25 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% sub funcs
-function vol_as_matrix=smooth_vol(vol_as_matrix, mask, fwhm, gridstep, tmp_fname)
+function v2 = smooth_vol(vol_as_matrix, mask_fname, fwhm)
 
-OSLDIR = getenv('OSLDIR');
+    [mask,res,xform] = nii.load(mask_fname);
+    mask(mask>0) = 1; % Turn it into a mask
 
-% smooth spatially
-ds=gridstep;
+    sd = fwhm/2.3; % std spatial smoothing, in mm
+    sd = sd/res(1); % standard deviation in voxels
 
-ss=fwhm/2.3; % std spatial smoothing
+    smooth_mask = smooth3(mask,'gaussian',5,sd);
+    smooth_mask(~mask) = 0;
 
-save_avw(matrix2vols(vol_as_matrix,mask),tmp_fname,'f',[ds, ds, ds, 1]);
+    v2 = nan(size(vol_as_matrix));
 
-mask_tmp_fname=[tmp_fname '_mask_tmp'];
-mask(mask>0)=1;
-
-save_avw(mask,mask_tmp_fname,'f',[ds, ds, ds, 1]);
-
-% Smooth image but respect mask edges.
-runcmd(['fslmaths ' tmp_fname  ' -s ' num2str(ss) ' -mas ' mask_tmp_fname ' ' tmp_fname '_tmp1']);
-runcmd(['fslmaths ' mask_tmp_fname ' -s ' num2str(ss)  ' -mas ' mask_tmp_fname ' ' tmp_fname '_tmp2']);
-runcmd(['fslmaths ' tmp_fname '_tmp1.nii* -div ' tmp_fname '_tmp2.nii* ' tmp_fname]);
-runcmd(['rm ' tmp_fname '_tmp1.nii*']); 
-runcmd(['rm ' tmp_fname '_tmp2.nii*']); 
-
-tmp=read_avw(tmp_fname);
-
-vol_as_matrix=vols2matrix(tmp,mask);
-
+    for j = 1:size(vol_as_matrix,2)
+        v = matrix2vols(vol_as_matrix(:,j),mask);
+        v = smooth3(v,'gaussian',5,sd);
+        v(~mask) = 0;
+        v = v./smooth_mask;
+        v2(:,j)=vols2matrix(v,mask);
+    end
 end
+

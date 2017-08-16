@@ -26,10 +26,10 @@ oat.results=[];
 oat.results.date=date;
 
 % set logfile up
-oat.results.plotsdir=[oat.source_recon.dirname '/plots'];
-oat.results.logfile=[oat.results.plotsdir '/log-' date '.txt']
+oat.results.plotsdir=fullfile(oat.source_recon.dirname,'plots');
+oat.results.logfile=fullfile(oat.results.plotsdir,['log-' date '.txt']);
 % delete any existing diary file with the same name
-runcmd(['rm -f ' oat.results.logfile]);
+delete(oat.results.logfile);
 
 % set first level diagnostic report up
 oat_report=osl_report_setup(oat.results.plotsdir,['OAT report'],oat.results.logfile);
@@ -45,6 +45,7 @@ try,
         disp('Running source_recon');
         disp('*************************************************************');
 
+        
         if(strcmp(oat.source_recon.method,'none')),
             [results_fnames results]=oat_run_source_recon_sensorspace(oat);
         else,

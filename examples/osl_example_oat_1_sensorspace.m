@@ -64,8 +64,8 @@ workingdir = fullfile(osldir,'example_data','faces_singlesubject');
 % clear old spm files
 clear spm_files_continuous spm_files_epoched
 
-spm_files_continuous{1}=[datadir '/Aface_meg1.mat'];
-spm_files_epoched{1}=[datadir '/eAface_meg1.mat'];
+spm_files_continuous{1} = fullfile(datadir,'Aface_meg1.mat');
+spm_files_epoched{1}    = fullfile(datadir,'eAface_meg1.mat');
 
 %% SETUP SENSOR SPACE SOURCE RECON
 % This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis.
@@ -83,7 +83,7 @@ oat.source_recon.method='none';
 oat.source_recon.normalise_method='none';
 
 % Set this to something specific
-oat.source_recon.dirname = [workingdir '/sensorspace_erf'];
+oat.source_recon.dirname = fullfile(workingdir,'sensorspace_erf');
 
 %% SETUP THE FIRST LEVEL GLM
 % This cell defines the GLM parameters for the first level analysis.

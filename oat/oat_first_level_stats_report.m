@@ -257,7 +257,7 @@ else
             % Use appropriate interpolation for summary image, default is
             % 'sinc'
             if oat.first_level.parcellation.do == 1
-                S2.interp = 'nearestneighbour';
+                S2.interp = 'nearest';
             end
             ortho_overlay_act( S2 );
 

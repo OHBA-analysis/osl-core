@@ -186,8 +186,8 @@ for subi_todo=1:length(first_level.sessions_to_do),
                 first_level_results.gridstep=source_recon_results.gridstep;
 
                 S=[];
-                S.lower_level_mask_fname=[oat.source_recon.dirname '/' source_recon_name '_mask'];
-                S.current_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_mask'];
+                S.lower_level_mask_fname=[oat.source_recon.dirname '/' source_recon_name '_mask.nii.gz'];
+                S.current_level_mask_fname=[oat.source_recon.dirname '/' oat.first_level.name '_mask.nii.gz'];
                 S.current_level=first_level;
                 S.lower_level_mni_coord=source_recon_results.mni_coords;
                 S.lower_level_gridstep=source_recon_results.gridstep;
@@ -529,7 +529,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
                 if (isfield(first_level,'mni_coords'))
                     trlwise.mni_coords   = first_level_results.mni_coords;
                 else
-                    trlwise.mask         = read_avw([oat.source_recon.dirname '/' oat.first_level.name '_mask']);
+                    trlwise.mask         = nii.load([oat.source_recon.dirname '/' oat.first_level.name '_mask']);
                     trlwise.gridstep     = first_level_results.gridstep;
                     trlwise.mni_coords   = first_level_results.mni_coords;
                 end % if (isfield(first_level,'mni_coords'))
