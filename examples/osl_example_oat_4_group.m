@@ -404,8 +404,8 @@ S.time_average=1;
 % View permutation stats
 con=S.first_level_copes_to_do(1);
 
-tstat = fullfile(gstats.dir,['tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz ']);
-clus_tstat = fullfile(gstats.dir,['clustere_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz ']);
+tstat = fullfile(gstats.dir,['tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz']);
+clus_tstat = fullfile(gstats.dir,['clustere_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz']);
 corr_clus_tstat = fullfile(gstats.dir,['clustere_corrp_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz']);
 
 osleyes( {[],tstat, clus_tstat, corr_clus_tstat} );
@@ -451,7 +451,7 @@ oat=osl_run_oat(oat);
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.group_level.results_fnames;
-S2.mask_fname=fullfile(osldir,'std_masks','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
+S2.mask_fname=fullfile(osldir,'example_data','faces_group_data','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 [stats,times,mni_coords_used]=oat_output_roi_stats(S2);
 
 % Plot the Time-Frequency results

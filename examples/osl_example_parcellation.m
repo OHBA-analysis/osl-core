@@ -314,6 +314,8 @@ p2.labels{end} % The last parcel is a composite of ROIs 3 and 4
 % k-means clustering of the voxel coordinates. To split parcels, use the |split_parcels()| method.
 % The first argument is a list of parcels to split, and the second argument is the number of 
 % parcels to split it into. For example
+p = parcellation(p.binarize);
+p = p.remove_parcels(39); % Remove the last parcel, which has no voxels from the binarization
 p2 = p.split_parcels([1 2],[3 4]);
 
 %%
