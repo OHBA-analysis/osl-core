@@ -246,7 +246,7 @@ tstat = fullfile( oat.source_recon.dirname,'first_level_none_sub_level_group_lev
 fusiform = fullfile(osldir,'example_data','faces_group_data','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 
 % Display the results in FSLVIEW
-osl_plot_nii({fusiform,tstat},{[0 5],[5 8]},{osl_colormap('green'),osl_colormap('hot')})
+osleyes({[],fusiform,tstat},{[0 5],[5 8]},{osl_colormap('green'),osl_colormap('hot')})
 
 %% INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE
 %
@@ -358,10 +358,10 @@ S2.group_level_contrasts = [1];
 con=3;
 gcon=1;
 
-tstat = fullfile(statsdir,['tstat' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz ']);
+tstat = fullfile(statsdir,['tstat' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz']);
 cope  = fullfile(statsdir,['cope' num2str(con) '_gc' num2str(gcon) '_2mm.nii.gz' ]);
 
-osl_plot_nii( {cope,tstat} );
+osleyes( {[],cope,tstat} );
 
 %% RUN 3D PERMUTATION STATS ON A SINGLE VOLUME
 %
@@ -408,7 +408,7 @@ tstat = fullfile(gstats.dir,['tstat' num2str(con) '_gc1_' num2str(gstats.gridste
 clus_tstat = fullfile(gstats.dir,['clustere_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz ']);
 corr_clus_tstat = fullfile(gstats.dir,['clustere_corrp_tstat' num2str(con) '_gc1_' num2str(gstats.gridstep) 'mm.nii.gz']);
 
-osl_plot_nii( {tstat; clus_tstat; corr_clus_tstat} );
+osleyes( {[],tstat, clus_tstat, corr_clus_tstat} );
 
 %% ROI TIME-FREQ ANALYSIS
 %

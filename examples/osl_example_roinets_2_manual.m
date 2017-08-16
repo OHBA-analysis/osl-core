@@ -42,7 +42,7 @@ size(spatial_basis)
 % in osleyes as the gradient of colours in each volume. The parcel is also overlapping,
 % because each voxel may belong to more than one parcel. Can you identify which voxels
 % in the first parcel are also present in the second parcel?
-osl_plot_nii(spatial_basis_file)
+osleyes(spatial_basis_file)
 
 %%
 %

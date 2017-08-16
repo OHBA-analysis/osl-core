@@ -63,7 +63,7 @@ classdef osleyes < handle
 
 	methods
 
-		function self = osleyes(niifiles,colormaps,clims)
+		function self = osleyes(niifiles,clims,colormaps)
 			% niifiles is a file name or cell array of file names
 			% If it's a cell array with an empty first element, then the mask
 			% will be automatically guessed
@@ -73,16 +73,30 @@ classdef osleyes < handle
             end
 			
             if ~iscell(niifiles)
-                niifiles = {niifiles};
-            end
-
-            if nargin < 3 || isempty(clims) 
-            	clims = cell(length(niifiles),1);
+                niifiles = {[],niifiles};
             end
             
-            if nargin < 2 || isempty(colormaps) 
+            if nargin < 3 || isempty(colormaps) 
             	colormaps = cell(length(niifiles),1);
             end
+
+            if nargin < 2 || isempty(clims) 
+            	clims = cell(length(niifiles),1);
+            end
+
+            if isempty(niifiles{1});
+            	vol = nii.load(niifiles{2});
+            	try
+            		[~,niifiles{1},~] = parcellation.guess_template(vol);
+            		clims = {[] clims{:}};
+            		colormaps = {[] colormaps{:}};
+            	catch ME
+            		ME.getReport
+            		niifiles = niifiles(2:end);
+            		clims = clims(2:end);
+            		colormaps = colormaps(2:end);
+            	end
+        	end
 
 			self.fig = figure('Units','Characters','Color','k');
 			self.initial_render();

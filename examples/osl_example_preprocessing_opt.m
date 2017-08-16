@@ -14,12 +14,6 @@
 % already been SSS Maxfiltered and downsampled to 250 Hz, and which we will
 % used for this analysis.
 
-
-%% SET UP THE MATLAB PATHS, DIRECTORIES AND FILES
-% You should not need to run this if you have already done this previously.
-% If MATLAB has trouble finding any osl functions, run:
-osl_startup;
-
 %%
 % *SPECIFY DIRECTORIES FOR THIS ANALYSIS*
 % 

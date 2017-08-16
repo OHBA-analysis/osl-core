@@ -54,7 +54,7 @@ workingdir=datadir;
 %%
 clear fif_files spm_files_basenames;
 
-fif_files{1}=fullfile(datadir 'fifs','sub1_face_sss.fif'); 
+fif_files{1}=fullfile(datadir,'fifs','sub1_face_sss.fif'); 
 
 spm_files_basenames{1}=['spm_meg1.mat'];
 

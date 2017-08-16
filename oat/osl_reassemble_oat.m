@@ -57,7 +57,7 @@ for iSess = 1:nSess
     copyfile(fullfile(subdir,[log_sess_' num2str(iSess) '.txt']),logdir);
     
     % delete the subdirectory
-    delete(subdir)
+    rmdir(subdir,'s')
     
     
     disp(['Adding fields to oat, session ' num2str(iSess) ' of ' num2str(nSess)]);
