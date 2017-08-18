@@ -67,7 +67,9 @@ function [replaced,notfound] = osl_recompile_fieldtrip( fieldtrip_dir )
     end
 
     % Clean up src
-    delete(fullfile(fieldtrip_dir,'src',['*.',mexext]))
+    % Safer to leave disabled because one failure mode is if the original mex file is missing
+    % in which case it won't be moved
+    % delete(fullfile(fieldtrip_dir,'src',['*.',mexext]))
     
 end
 
