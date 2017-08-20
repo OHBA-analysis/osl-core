@@ -20,6 +20,7 @@ classdef osleyes < handle
 
 	% Romesh Abeysuriya 2017
 
+	% Properties controlling the GUI that users can interact with
 	properties
 		clims = {}; % Values below this range are transparent, values above are clipped
 		colormaps= {}; % Can be name of a colormap function on the path
@@ -32,33 +33,42 @@ classdef osleyes < handle
 		layer_alpha = []; % Transparency of each layer
 	end
 
+	% Dependent properties the user might want to use in their code
+	properties(Dependent)
+		nvols % Number of volumes in the active layer
+	end
+
+	% Read-only properties the user might want to use in their code
 	properties(SetAccess=protected)
-		niifiles
-		img = {} % Temporarily accessible
-		xform
-		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
+		fig % Handle to the main figure window bound to the object
+		niifiles = {} % Cell array of filenames for each layer
 	end
 
 	properties(GetAccess=private,SetAccess=private)
-		fig % Handle to the main figure window bound to the object
 		ax % Handles of the three display axes
 		controls % Handles for control panel and associated controls
+		contextmenu % Handle for the context menu
+		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
 
-		ts_ax  % Handle to timeseries axis
-		ts_line  % Handle to line in timeseries plot
-		ts_bar  % Handle to marker bar in timeseries plot
+		img = {} % The image data
+		xform = {} % xform data for the image
+		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
+		coord = {} % Axis coordinates for each image
 
 		h_img = {} % Cell array of img handles associated with each nii file (there are 3)
 		h_crosshair % Handles for crosshairs on each axis
 		h_coloraxes % Handles to colorbar axes
 		h_colorimage % Handles to colorbar images
-		
-		coord % Axis coordinates for each image
+
+		ts_ax  % Handle to timeseries axis
+		ts_line  % Handle to line in timeseries plot
+		ts_bar  % Handle to marker bar in timeseries plot
+		ts_warning % Text object saying only one volume present
+
 		colormap_matrices = {}; % Cached colormaps
 		under_construction = true; % Don't render anything while this is true
 		motion_active = 0; % If this flag is true, then the slices will be updated when the mouse is moved
-		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
-		contextmenu % Handle for the context menu
+
 	end
 
 	methods
@@ -186,16 +196,39 @@ classdef osleyes < handle
 				fps = 30;
 			end
 			
-			if size(self.img{self.active_layer},4)==1
+			if self.nvols == 1
 				error('Layer only has one volume, there is nothing to animate!');
 			end
 
 			while 1
-				self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer),size(self.img{self.active_layer},4));
+				self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer),self.nvols);
 				pause(1/fps);
 			end
 		end
 		
+		function plot_timeseries(self)
+			% This function will open a new figure window
+			% Plotting the timeseries itself is handled in two parts
+			% - The line is refreshed by refresh_slices when the MNI coordinates change
+			% - The bar is refreshed by set.current_vols when the volume changes
+
+			% Odd things will happen if more than one window is allowed to be bound to the
+			% same osleyes instance
+			if ishandle(self.ts_line)
+				return
+			end
+
+			fig = figure;
+			self.ts_ax = axes(fig);
+			self.ts_line = plot(self.ts_ax,1,1,'HitTest','off');
+			hold(self.ts_ax,'on')
+			self.ts_bar = plot(self.ts_ax,1,1,'r','HitTest','off');
+			self.ts_warning = uicontrol(fig,'style','text','String','ONLY ONE VOLUME PRESENT IN ACTIVE LAYER','Units','normalized','Position',[0.25 0.25 0.5 0.5],'HitTest','off','FontSize',20);
+			set(self.ts_ax,'ButtonDownFcn',@(~,~) set_volume(self.ts_ax,self));
+			self.current_vols = self.current_vols; % Reset the data in h_bar via set.current_vols
+
+		end
+
 		function set.colormaps(self,val)
 			if self.under_construction
 				self.colormaps = val;
@@ -224,9 +257,9 @@ classdef osleyes < handle
 			for j = 1:length(self.colormaps)
 				assert(length(val{j})==2,'Colour limits must have two elements')
 				assert(val{j}(2)>=val{j}(1),'Colour limits must be in ascending order')
-				if iscell(self.colormaps{j})
-					assert(val{j}(1)>=0,'If using bidirectional limits, colour range must start >= 0')
-				end
+% 				if iscell(self.colormaps{j})
+% 					assert(val{j}(1)>=0,'If using bidirectional limits, colour range must start >= 0')
+% 				end
 			end
 			self.clims = val;
 			self.refresh_colors;
@@ -265,7 +298,7 @@ classdef osleyes < handle
 			set(self.controls.clim(1),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(1)));
 			set(self.controls.clim(2),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(2)));
 			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
-			set(self.controls.volume_label_count,'String',sprintf('of %d',size(self.img{self.active_layer},4)));
+			set(self.controls.volume_label_count,'String',sprintf('of %d',self.nvols));
 
 			set(self.controls.visible,'Value',self.visible(self.active_layer));
 
@@ -285,7 +318,7 @@ classdef osleyes < handle
 				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.clims{self.active_layer}(1),self.clims{self.active_layer}(2),4))
 			end
 
-			if size(self.img{self.active_layer},4)==1
+			if self.nvols==1
 				set(self.controls.volume,'Enable','off');
 			else
 				set(self.controls.volume,'Enable','on');
@@ -347,31 +380,13 @@ classdef osleyes < handle
 			self.refresh_slices()
 		end
 
+		function n = get.nvols(self)
+			n = size(self.img{self.active_layer},4);
+		end
+
 	end
 
 	methods(Access=private)
-
-		function plot_timeseries(self)
-			% This function will open a new figure window
-			% Plotting the timeseries itself is handled in two parts
-			% - The line is refreshed by refresh_slices when the MNI coordinates change
-			% - The bar is refreshed by set.current_vols when the volume changes
-
-			% Odd things will happen if more than one window is allowed to be bound to the
-			% same osleyes instance
-			if ishandle(self.ts_line)
-				return
-			end
-
-			fig = figure;
-			ax = axes(fig);
-			self.ts_line = plot(ax,1,1,'HitTest','off');
-			hold(ax,'on')
-			self.ts_bar = plot(ax,1,1,'r','HitTest','off');
-			set(ax,'ButtonDownFcn',@(~,~) set_volume(ax,self));
-			self.current_vols = self.current_vols; % Reset the data in h_bar via set.current_vols
-
-		end
 
 		function refresh_slices(self)
 			% Update the slices
@@ -434,8 +449,14 @@ classdef osleyes < handle
 				[~,idx(1)] = min(abs(self.coord{self.active_layer}.x-p(1)));
 				[~,idx(2)] = min(abs(self.coord{self.active_layer}.y-p(2)));
 				[~,idx(3)] = min(abs(self.coord{self.active_layer}.z-p(3)));
-				set(self.ts_line,'XData',1:size(self.img{self.active_layer},4),'YData',squeeze(self.img{self.active_layer}(idx(1),idx(2),idx(3),:)));
+				set(self.ts_line,'XData',1:self.nvols,'YData',squeeze(self.img{self.active_layer}(idx(1),idx(2),idx(3),:)));
 				title(get(self.ts_line,'Parent'),sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)),'Interpreter','none')
+				set(self.ts_ax,'YLim',[min(self.img{self.active_layer}(:)) max(self.img{self.active_layer}(:)) ]);
+				if self.nvols==1
+					set(self.ts_warning,'Visible','on');
+				else
+					set(self.ts_warning,'Visible','off');
+				end
 			end
 		end
 
@@ -605,8 +626,8 @@ end
 function volume_box_callback(self)
 	% If the user types a umber into the volume edit text box, this callback is run
 	new_volume = str2double(get(self.controls.volume,'String'));
-	if new_volume < 1 || new_volume > size(self.img{self.active_layer},4)
-		uiwait(errordlg(sprintf('Volume out of bounds (image has %d volumes)',size(self.img{self.active_layer},4))));
+	if new_volume < 1 || new_volume > self.nvols
+		uiwait(errordlg(sprintf('Volume out of bounds (image has %d volumes)',self.nvols)));
 		set(self.controls.volume,'String',num2str(self.current_vols(self.active_layer)));
 	else
 		self.current_vols(self.active_layer) = new_volume;
@@ -636,12 +657,12 @@ function rgb = map_colors(x,cmap,clim)
 		r = zeros(size(x));
 		g = zeros(size(x));
 		b = zeros(size(x));
-		r(x>=0) = cmap{1}(pos_idx(x>=0),1);
-		g(x>=0) = cmap{1}(pos_idx(x>=0),2);
-		b(x>=0) = cmap{1}(pos_idx(x>=0),3);
-		r(x<0) = cmap{2}(neg_idx(x<0),1);
-		g(x<0) = cmap{2}(neg_idx(x<0),2);
-		b(x<0) = cmap{2}(neg_idx(x<0),3);
+		r(x>=clim(1)) = cmap{1}(pos_idx(x>=clim(1)),1);
+		g(x>=clim(1)) = cmap{1}(pos_idx(x>=clim(1)),2);
+		b(x>=clim(1)) = cmap{1}(pos_idx(x>=clim(1)),3);
+		r(x<clim(1)) = cmap{2}(neg_idx(x<clim(1)),1);
+		g(x<clim(1)) = cmap{2}(neg_idx(x<clim(1)),2);
+		b(x<clim(1)) = cmap{2}(neg_idx(x<clim(1)),3);
 	else
 		idx = min(size(cmap,1),round((size(cmap,1)-1)*(x-clim(1))/(clim(2)-clim(1)))+1);
 		idx(idx<1) = 1;
@@ -761,17 +782,18 @@ function set_volume(ax,h_osleyes)
 	% - ax (axes of the timeseries plot)
 	% - h_bar (vertical red line showing which time was clicked)
 	% - h_osleyes (handle to osleyes object that created and is thus bound to this plot)
-	p = get(ax,'CurrentPoint');
-	h_osleyes.current_vols(h_osleyes.active_layer) = round(p(1,1));
+	if h_osleyes.nvols > 1
+		p = get(ax,'CurrentPoint');
+		h_osleyes.current_vols(h_osleyes.active_layer) = round(p(1,1));
+	end
+
 end
 
 function KeyPressFcn(self,~,KeyData)
 	switch KeyData.Key
 		case 'uparrow'
-			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer),size(self.img{self.active_layer},4));
+			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer),self.nvols);
 		case 'downarrow'
-			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer)-2,size(self.img{self.active_layer},4));
+			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer)-2,self.nvols);
 	end
 end
-
-
