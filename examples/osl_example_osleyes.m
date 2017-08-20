@@ -11,7 +11,7 @@
 % The main limitations are
 %
 % * Not as extensively tested as |fsleyes|
-% * Is likely to have issues with files that have unusual xform
+% * May have issues with files that have unusual xform
 %   transformations, data types, or scalings. There is a low likelihood of
 %   this being a problem in typical MEG analysis usage of OSL, but is a
 %   limitation to keep in mind if using |osleyes| as a general NIFTI viewer
@@ -210,7 +210,7 @@ o.colormaps{2} = rand(10,3);
 % * |rwb| - red-blue with white in the middle
 % * |rkb| - red-blue with black in the middle
 % * |green| - green to light green
-% * |grey|/|gray| - greyscale
+% * |grey| or |gray| - greyscale
 %
 % The |osl_colormap| function returns a matrix of RGB values, and you can use
 % these colormaps in normal Matlab plots by running
@@ -223,7 +223,7 @@ o.colormaps{2} = osl_colormap('green');
 % and negative values. To do this, you set the |colormap| property to a cell
 % array containing two elements - the first entry contains the positive
 % colormap, and the second contains the negative colormap
-o.colormaps{2} = {'jet',osl_colormap('green')}
+o.colormaps{2} = {'jet',osl_colormap('green')};
 
 %%
 % When you do this, values that are larger than the lower color limit will be
