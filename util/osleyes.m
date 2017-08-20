@@ -110,7 +110,7 @@ classdef osleyes < handle
             	end
         	end
 
-			self.fig = figure('Units','Characters','Color','k','Menubar','none');
+			self.fig = figure('Units','Characters','Color','k','Menubar','none','InvertHardCopy','off');
 			self.initial_render();
 			set(self.fig,'KeyPressFcn',@(a,b) KeyPressFcn(self,a,b),'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
 			addprop(self.fig,'osleyes');
