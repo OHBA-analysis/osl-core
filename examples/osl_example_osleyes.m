@@ -1,6 +1,6 @@
-%% Utils - osleyes
+%% Utilities - osleyes
 %
-% As an alternative to |fslview|/|fsleyes|, OSL includes its own NIFTI file
+% As an alternative to |fslview| or |fsleyes|, OSL includes its own NIFTI file
 % viewer, |osleyes|. The main advantages of |osleyes| are
 %
 % * Pure MATLAB implementation, does not require FSL
@@ -150,7 +150,7 @@ o.layer_alpha(3) = 0.5;
 o.visible(3) = 1;
 
 %% Moving around the plot
-% Just like in |fslview|/|fsleyes|, you can change the slices that are displayed
+% Just like in |fslview| or |fsleyes|, you can change the slices that are displayed
 % by clicking and dragging on any of the three brain images. As you move the
 % mouse, the position of the crosshairs will change. The coordinates of the
 % crosshairs in MNI coordinates are displayed as the 'XYZ' values in the
