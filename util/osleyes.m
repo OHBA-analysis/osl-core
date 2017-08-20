@@ -254,9 +254,6 @@ classdef osleyes < handle
 			for j = 1:length(self.colormaps)
 				assert(length(val{j})==2,'Colour limits must have two elements')
 				assert(val{j}(2)>=val{j}(1),'Colour limits must be in ascending order')
-% 				if iscell(self.colormaps{j})
-% 					assert(val{j}(1)>=0,'If using bidirectional limits, colour range must start >= 0')
-% 				end
 			end
 			self.clims = val;
 			self.refresh_colors;
@@ -269,15 +266,8 @@ classdef osleyes < handle
 			yl = get(self.ax(1),'XLim');
 			zl = get(self.ax(1),'YLim');
 
-			if val(1) > xl(2) || val(1) < xl(1)
-				return
-			end
-
-			if val(2) > yl(2) || val(2) < yl(1)
-				return
-			end
-
-			if val(3) > zl(2) || val(3) < zl(1)
+			% Check that coordinates are within axis limits in all axes
+			if val(1) > xl(2) || val(1) < xl(1) || val(2) > yl(2) || val(2) < yl(1) || val(3) > zl(2) || val(3) < zl(1)
 				return
 			end
 
