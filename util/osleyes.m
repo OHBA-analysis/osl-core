@@ -31,6 +31,7 @@ classdef osleyes < handle
 		show_controls = 1;
 		show_crosshair = 1;
 		layer_alpha = []; % Transparency of each layer
+		title = ''; % String of title for plot
 	end
 
 	% Dependent properties the user might want to use in their code
@@ -59,6 +60,7 @@ classdef osleyes < handle
 		h_crosshair % Handles for crosshairs on each axis
 		h_coloraxes % Handles to colorbar axes
 		h_colorimage % Handles to colorbar images
+		h_title % Handle to title uicontrol text object
 
 		ts_ax  % Handle to timeseries axis
 		ts_line  % Handle to line in timeseries plot
@@ -108,7 +110,7 @@ classdef osleyes < handle
             	end
         	end
 
-			self.fig = figure('Units','Characters','Color','k');
+			self.fig = figure('Units','Characters','Color','k','Menubar','none');
 			self.initial_render();
 			set(self.fig,'KeyPressFcn',@(a,b) KeyPressFcn(self,a,b),'CloseRequestFcn',@(~,~) delete(self),'ResizeFcn',@(~,~) resize(self));
 			addprop(self.fig,'osleyes');
@@ -116,8 +118,9 @@ classdef osleyes < handle
 
 			self.niifiles = niifiles;
 			dropdown_strings = {};
+
 			for j = 1:length(self.niifiles)
-				[self.img{j},~,self.xform{j}] = nii.load(self.niifiles{j}); % Do not apply xform/qform
+				[self.img{j},~,self.xform{j}] = nii.load(self.niifiles{j});
 				self.img{j} = double(self.img{j});
 				[~,fname,ext] = fileparts(self.niifiles{j});
 				dropdown_strings{j} = [fname '.' ext];
@@ -153,18 +156,12 @@ classdef osleyes < handle
 			self.lims(1,:) = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
 			self.lims(2,:) = [min(cellfun(@(x) min(x.y),self.coord)) max(cellfun(@(x) max(x.y),self.coord))];
 			self.lims(3,:) = [min(cellfun(@(x) min(x.z),self.coord)) max(cellfun(@(x) max(x.z),self.coord))];
-			
-			set(self.ax(1),'XLim',self.lims(2,:),'YLim',self.lims(3,:),'Visible','off');
-			set(self.ax(2),'XLim',self.lims(1,:),'YLim',self.lims(3,:),'Visible','off');
-			set(self.ax(3),'XLim',self.lims(1,:),'YLim',self.lims(2,:),'Visible','off');
-
-			set(self.ax(1),'Color','k','Clipping','off','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
-			set(self.ax(2),'Color','k','Clipping','off','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
-			set(self.ax(3),'Color','k','Clipping','off','View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+			set(self.ax(1),'XLim',self.lims(2,:),'YLim',self.lims(3,:),'Visible','off','Color','k','Clipping','off','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal');
+			set(self.ax(2),'XLim',self.lims(1,:),'YLim',self.lims(3,:),'Visible','off','Color','k','Clipping','off','View',[0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
+			set(self.ax(3),'XLim',self.lims(1,:),'YLim',self.lims(2,:),'Visible','off','Color','k','Clipping','off','View', [0 90],'DataAspectRatio',[1 1 1],'YDir','normal','XDir','reverse');
 			orientation_letters(self.ax(1),{'P','A','I','S'});
 			orientation_letters(self.ax(2),{'L','R','I','S'});
 			orientation_letters(self.ax(3),{'L','R','P','A'});
-
 
 			self.h_crosshair(1) = plot(self.ax(1),NaN,NaN,'g','HitTest','off');
 			self.h_crosshair(2) = plot(self.ax(2),NaN,NaN,'g','HitTest','off');
@@ -326,6 +323,11 @@ classdef osleyes < handle
 
 			self.resize(); % Update sizes of colorbars
 			self.refresh_slices();
+		end
+
+		function set.title(self,str)
+			set(self.h_title,'String',str);
+			self.resize() % Resize the GUI in case the visibility of the title bar has changed
 		end
 
 		function set.current_vols(self,val)
@@ -497,7 +499,6 @@ classdef osleyes < handle
 
 		function initial_render(self)
 			% Create all of the objects AND perform the one-off layout of the control panel
-
 			self.ax(1) = axes('Parent',self.fig,'Units','characters');
 			self.ax(2) = axes('Parent',self.fig,'Units','characters');
 			self.ax(3) = axes('Parent',self.fig,'Units','characters');
@@ -505,9 +506,6 @@ classdef osleyes < handle
 			hold(self.ax(1),'on');
 			hold(self.ax(2),'on');
 			hold(self.ax(3),'on');
-
-			%self.h_colorbar(1) = colorbar('Peer',self.ax(3),'Location','eastoutside','Color','w','Units','characters','TickDirection','in','AxisLocation','in');
-			%self.h_colorbar(2) = colorbar('Peer',self.ax(3),'Location','westoutside','Color','w','Units','characters','TickDirection','in','AxisLocation','out');
 			self.h_coloraxes(1) = axes('Box','on','Color','k','Units','characters');
 			self.h_coloraxes(2) = axes('Box','on','Color','k','Units','characters');
 			self.h_colorimage(1) = image([0 1],[0 1],1,'Parent',self.h_coloraxes(1));
@@ -515,6 +513,8 @@ classdef osleyes < handle
 			set(self.h_coloraxes,'XLim',[0 1],'YLim',[0 1],'XColor','w','YColor','w','XTick',[],'YDir','reverse','YAxisLocation','right');
 			set(self.h_coloraxes(2),'YDir','normal');
 			
+			self.h_title = uicontrol(self.fig,'style','text','String','','FontSize',12,'Units','characters','Position',[0 0 0 0],'HorizontalAlignment','center','FontWeight','bold','BackgroundColor','k','ForegroundColor','w','HitTest','off');
+
 			self.controls.image_list = uicontrol(self.controls.panel,'Callback',@(~,~) image_list_callback(self),'style','popupmenu','String','test','Units','characters','Position',[0 0.75 20 1.5]);
 
 			self.controls.clim(1) = uicontrol(self.controls.panel,'Callback',@(~,~) clim_box_callback(self),'style','edit','String','1.0','Units','characters','Position',[0 0.2 7 1.2]);
@@ -527,7 +527,6 @@ classdef osleyes < handle
 			self.controls.volume_label_count = uicontrol(self.controls.panel,'style','text','String','of XXXX','Units','characters','Position',[0 1.6 8 1],'HorizontalAlignment','left');
 
 			self.controls.visible = uicontrol(self.controls.panel,'Callback',@(~,~) visible_box_callback(self),'style','checkbox','Units','characters','Position',[0 1 3 1]);
-
 
 			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.0','Units','characters','Position',[0 2 11 1],'HorizontalAlignment','left');
 			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.0','Units','characters','Position',[0 1 11 1],'HorizontalAlignment','left');
@@ -569,12 +568,14 @@ classdef osleyes < handle
 			w = 0.3*(1-cb)*figpos(3);
 			p = ((1-cb)*figpos(3)-3*w)/6;
 			control_height = 3*+self.show_controls; % Control panel height in characters
-			ax_height = figpos(4)-control_height;
+			title_height = 2*~isempty(get(self.h_title,'String'));
+			ax_height = figpos(4)-control_height-title_height;
 
-			if ax_height <= 0
+			if ax_height <= 0 % If user made the window extremely small
 				return
 			end
 
+			set(self.h_title,'Position',[0 figpos(4)-title_height figpos(3) title_height-0.5*(title_height~=0)]);
 			set(self.ax(1),'Position',[p control_height w ax_height]);
 			set(self.ax(2),'Position',[p+w+p+p  control_height w ax_height]);
 			set(self.ax(3),'Position',[p+w+p+p+w+p+p control_height w ax_height]);
