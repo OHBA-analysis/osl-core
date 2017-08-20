@@ -369,6 +369,11 @@ classdef osleyes < handle
 
 		function set.show_crosshair(self,val)
 			self.show_crosshair = logical(val);
+			if self.show_crosshair
+				set(self.h_crosshair,'Visible','on');
+			else
+				set(self.h_crosshair,'Visible','off');
+			end
 			self.refresh_slices()
 		end
 
@@ -397,23 +402,14 @@ classdef osleyes < handle
 
 			p = self.current_point; % Current point in 3D
 
-			if self.show_crosshair
-				set(self.h_crosshair(1),'Visible','on','XData',[self.lims(2,:) NaN p(2) p(2)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
-				set(self.h_crosshair(2),'Visible','on','XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
-				set(self.h_crosshair(3),'Visible','on','XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(2) p(2) NaN self.lims(2,:)]);
-			else
-				set(self.h_crosshair(1),'Visible','off');
-				set(self.h_crosshair(2),'Visible','off');
-				set(self.h_crosshair(3),'Visible','off');
-			end
-
+			set(self.h_crosshair(1),'XData',[self.lims(2,:) NaN p(2) p(2)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
+			set(self.h_crosshair(2),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(3) p(3) NaN self.lims(3,:)]);
+			set(self.h_crosshair(3),'XData',[self.lims(1,:) NaN p(1) p(1)],'YData',[p(2) p(2) NaN self.lims(2,:)]);
 			set(self.controls.marker(1),'String',sprintf('X = %+06.1f',p(1)));
 			set(self.controls.marker(2),'String',sprintf('Y = %+06.1f',p(2)));
 			set(self.controls.marker(3),'String',sprintf('Z = %+06.1f',p(3)));
-			%self.controls.marker(4)
 
 			% Now update each slice
-
 			for j = 1:length(self.img)
 				[~,idx(1)] = min(abs(self.coord{j}.x-p(1)));
 				[~,idx(2)] = min(abs(self.coord{j}.y-p(2)));
