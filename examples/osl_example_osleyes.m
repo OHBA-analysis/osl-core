@@ -318,7 +318,7 @@ o = osleyes({[],nii_roi,nii_tstat},'colormaps',{'jet','hsv',osl_colormap('green'
 % is exactly equivalent to
 %
 %   o = osleyes({[],nii_roi,nii_tstat});
-%   o.colormaps = {'jet','hsv','autumn'};
+%   o.colormaps = {'jet','hsv',osl_colormap('green')};
 %   o.clims = {[],[0 5],[1 5]};
 %   o.show_crosshair = false;
 %   o.current_vols = [1 1 50]
@@ -331,6 +331,17 @@ o = osleyes({[],nii_roi,nii_tstat},'colormaps',{'jet','hsv',osl_colormap('green'
 % |clim| empty for any layer to leave its value unchanged. The same is true
 % for other layer-wise properties such as |current_vols| or |layer_alpha|, but
 % for these you need to provide a specific value.
+
+%%
+% Finally, you could also provide these options as a struct. For example
+%
+%   s = struct;
+%   s.colormaps = {'jet','hsv',osl_colormap('green')};
+%   s.clims = {[],[0 5],[1 5]};
+%   s.show_crosshair = false;
+%   s.current_vols = [1 1 50]
+%   o = osleyes({[],nii_roi,nii_tstat},s);
+%
 
 %% Putting it all together
 % Suppose we wanted to make an animation of the tstat, with the parcel
