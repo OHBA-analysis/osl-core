@@ -75,10 +75,15 @@ classdef osleyes < handle
 
 	methods
 
-		function self = osleyes(niifiles,clims,colormaps)
+		function self = osleyes(niifiles,varargin)
 			% niifiles is a file name or cell array of file names
 			% If it's a cell array with an empty first element, then the mask
 			% will be automatically guessed
+			% Options is a set of key-value pairs that are assigned to the object
+			% after construction. For example
+			% osleyes('myfile','clims',{[],[1 1]})
+			% These must include values for the standard mask (but they can
+			% be left empty as shown above)
 
 			if nargin < 1 || isempty(niifiles) 
 				niifiles = {fullfile(osldir,'std_masks/MNI152_T1_2mm_brain.nii.gz')};
@@ -87,26 +92,14 @@ classdef osleyes < handle
             if ~iscell(niifiles)
                 niifiles = {[],niifiles};
             end
-            
-            if nargin < 3 || isempty(colormaps) 
-            	colormaps = cell(length(niifiles),1);
-            end
-
-            if nargin < 2 || isempty(clims) 
-            	clims = cell(length(niifiles),1);
-            end
 
             if isempty(niifiles{1});
             	vol = nii.load(niifiles{2});
             	try
             		[~,niifiles{1},~] = parcellation.guess_template(vol);
-            		clims = {[] clims{:}};
-            		colormaps = {[] colormaps{:}};
             	catch ME
             		ME.getReport
             		niifiles = niifiles(2:end);
-            		clims = clims(2:end);
-            		colormaps = colormaps(2:end);
             	end
         	end
 
@@ -117,34 +110,26 @@ classdef osleyes < handle
 			set(self.fig,'osleyes',self); % Store handle to this osleyes in the figure so it can be retrieved later if desired
 
 			self.niifiles = niifiles;
-			dropdown_strings = {};
+			self.controls.image_list.String = {};
 
 			for j = 1:length(self.niifiles)
 				[self.img{j},~,self.xform{j}] = nii.load(self.niifiles{j});
 				self.img{j} = double(self.img{j});
 				[~,fname,ext] = fileparts(self.niifiles{j});
-				dropdown_strings{j} = [fname '.' ext];
+				self.controls.image_list.String{j} = [fname '.' ext];
 				self.coord{j} = get_coords(self.img{j},self.xform{j});
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img{j}(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img{j}(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.img{j}(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				
-				if isempty(clims{j})
-					self.clims{j} = [0,max(self.img{j}(:))];
-				else
-					self.clims{j} = clims{j};
-				end
+				self.clims{j} = [0,max(self.img{j}(:))]; % Default color range
 
-				if isempty(colormaps{j})
-					if min(self.img{j}(:)) < 0
-						self.colormaps{j} = {osl_colormap('hot'),osl_colormap('cold')};
-					elseif j == 1
-						self.colormaps{j} = osl_colormap('grey');
-					else
-						self.colormaps{j} = osl_colormap('hot');
-					end
+				if min(self.img{j}(:)) < 0
+					self.colormaps{j} = {osl_colormap('hot'),osl_colormap('cold')};
+				elseif j == 1
+					self.colormaps{j} = osl_colormap('grey');
 				else
-					self.colormaps{j} = colormaps{j};
+					self.colormaps{j} = osl_colormap('hot');
 				end
 
 				self.current_vols(j) = 1;
@@ -152,7 +137,6 @@ classdef osleyes < handle
 				self.layer_alpha(j) = 1;
 			end
 
-			set(self.controls.image_list,'String',dropdown_strings);
 			self.lims(1,:) = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
 			self.lims(2,:) = [min(cellfun(@(x) min(x.y),self.coord)) max(cellfun(@(x) max(x.y),self.coord))];
 			self.lims(3,:) = [min(cellfun(@(x) min(x.z),self.coord)) max(cellfun(@(x) max(x.z),self.coord))];
@@ -179,6 +163,15 @@ classdef osleyes < handle
 			self.under_construction = false; % Enable rendering
 			self.refresh_colors();
 			self.active_layer = length(self.niifiles);
+
+			% Set options
+			arg = inputParser;
+			arg.KeepUnmatched = true;
+			arg.parse(varargin{:});
+			f = fields(arg.Unmatched);
+			for j = 1:length(f)
+				self.(f{j}) = arg.Unmatched.(f{j});
+			end
 		end
 
 		function delete(self)
