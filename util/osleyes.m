@@ -232,10 +232,13 @@ classdef osleyes < handle
 				return;
 			end
 
+			cmaps_original = self.colormaps;
 			assert(iscell(val),'Colormaps should be a cell array')
 			assert(length(val) == length(self.img),'Number of colormaps must match number of images');
 			for j = 1:length(val)
-				if iscell(val{j})
+				if isempty(val{j})
+					val{j} = cmaps_original{j};
+				elseif iscell(val{j})
 					assert(length(val{j})==2,'Colormap must either be a value or a cell array of length 2');
 				end
 			end
@@ -249,11 +252,16 @@ classdef osleyes < handle
 				return;
 			end
 
+			clims_original = self.clims;
 			assert(iscell(val),'clims should be a cell array')
 			assert(length(val) == length(self.img),'Number of clims must match number of images');
 			for j = 1:length(self.colormaps)
-				assert(length(val{j})==2,'Colour limits must have two elements')
-				assert(val{j}(2)>=val{j}(1),'Colour limits must be in ascending order')
+				if isempty(val{j})
+					val{j} = clims_original{j};
+				else
+					assert(length(val{j})==2,'Colour limits must have two elements')
+					assert(val{j}(2)>=val{j}(1),'Colour limits must be in ascending order')
+				end
 			end
 			self.clims = val;
 			self.refresh_colors;
