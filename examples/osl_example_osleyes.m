@@ -33,7 +33,7 @@ osleyes(nii_tstat);
 % * The dropdown list shows the list of layers/images in the plot. A standard
 %   brain has automatically been selected
 % * The range of data values was automatically chosen, and because some values
-%   were negative, a two-sided colourmap has automatically been chosen
+%   were negative, a two-sided colormap has automatically been chosen
 %
 % The first argument to |osleyes| specifies which images you want to display.
 % This can either be the name of a single file, or a cell array of files. If
@@ -144,7 +144,7 @@ o.visible(3) = 0;
 % Another way to change the visibility of a layer is by changing its opacity,
 % which is in the |layer_alpha| property of the |osleyes| object - this is an
 % array with as many entries as layers, and each entry is an opacity value
-% between 0 (fully transparent) and 1 (fully opaque). So to render the t-stat
+% between 0 (fully transparent) and 1 (fully opaque). So to render the tstat
 % layer as semi-transparent, we can use
 o.layer_alpha(3) = 0.5;
 o.visible(3) = 1;
@@ -304,6 +304,34 @@ o.active_layer = 2;
 %%
 % A warning will be displayed on the timeseries plot if this is the case. 
 
+%% Formatting via input options
+% In addition to the NII files, you can also pass additional options to the
+% |osleyes| object. This could allow you to programatically format multiple
+% plots, or to pass complete formatting options from one function to another.
+% These options take the form of key-value pairs. Each key corresponds to a
+% property of the object, and each value corresponds to what you want to
+% assign to that property after construction. For example
+close all
+o = osleyes({[],nii_roi,nii_tstat},'colormaps',{'jet','hsv',osl_colormap('green')},'clims',{[],[0 5],[1 5]},'show_crosshair',false,'current_vols',[1 1 50]);
+
+%%
+% is exactly equivalent to
+%
+%   o = osleyes({[],nii_roi,nii_tstat});
+%   o.colormaps = {'jet','hsv','autumn'};
+%   o.clims = {[],[0 5],[1 5]};
+%   o.show_crosshair = false;
+%   o.current_vols = [1 1 50]
+
+%%
+% Notice that we have specified two input files, but because a standard mask
+% has automatically been added, there are three layers in the final image.
+% This means that the |colormaps| and |clims| properties need to have three
+% entries, because there are three layers. You can leave the |colormap| or the
+% |clim| empty for any layer to leave its value unchanged. The same is true
+% for other layer-wise properties such as |current_vols| or |layer_alpha|, but
+% for these you need to provide a specific value.
+
 %% Putting it all together
 % Suppose we wanted to make an animation of the tstat, with the parcel
 % overlaid as a semitransparent volume with fixed colour. We could do this
@@ -313,7 +341,7 @@ o.active_layer = 2;
 %   o = osleyes({[],nii_tstat,nii_roi}); % Put the ROI layer on top
 %   o.current_point = [34  -50  -13]; % Set the coordinate for the slice
 %   o.colormaps{3} = [0 1 0]; % Make the ROI green
-%   o.layer_alpha(3) = 0.4; % Make the ROI transparet
+%   o.layer_alpha(3) = 0.4; % Make the ROI transparent
 %   o.active_layer = 2; % Display colorbar for the tstat layer
 %   o.colormaps{2} = osl_colormap('hot'); % Use single sided colormap
 %   o.clims{2} = [0 10]; % clip colour at upper end
