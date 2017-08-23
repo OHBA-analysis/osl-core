@@ -56,6 +56,13 @@ if strcmp(ext,'.ds')
     else
         S.artefact_channels = [];
     end
+
+    if isfield(Sin, 'other_channels'),
+        S.other_channels = Sin.other_channels;
+    else
+        S.other_channels = [];
+    end
+
     isctf=1;
 else
     S.channels = 'all';
