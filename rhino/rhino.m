@@ -304,8 +304,8 @@ disp('Running scalp extraction')
            ['bet_file does not exist. '         ...
             'Maybe it failed to create earlier in Rhino?\n']);
        
-    scalp            = nii.load(bet_file);
-    [vol, ~, scales] = nii.load(sMRI);
+    scalp            = read_avw(bet_file);
+    [vol, ~, scales] = read_avw(sMRI);
     
     vol = vol(:,:,:,1); % In case of 4D volumes
     vol = vol ./ max(vol(:));
@@ -392,7 +392,7 @@ disp('Running scalp extraction')
     outline = mask;
     
     % SAVE AS NIFTI
-    nii.save(outline,scales,[],scalp_file);
+    save_avw(outline,scalp_file,'d',scales);
     runcmd(['fslcpgeom  ' bet_file ' ' scalp_file], 1);
 
     % CLEAN UP
@@ -417,7 +417,7 @@ disp('Running scalp extraction')
 else
     
     disp(['Loading existing scalp extraction from ' scalp_file])
-    outline = nii.load(scalp_file); 
+    outline = read_avw(scalp_file); 
     
 end
 
