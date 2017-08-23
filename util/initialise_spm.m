@@ -21,17 +21,9 @@ function initialise_spm
 	%% Copy changes to SPM code from osl
 	filelist={};targetdir={};
 
-	filelist{end+1}='osl-core/spm-changes/private/bf_save.m';
-	targetdir{end+1}='toolbox/spm-beamforming-toolbox';
-
-	filelist{end+1}='osl-core/spm-changes/private/bf_output_montage_osl.m';
-	targetdir{end+1}='toolbox/spm-beamforming-toolbox';
-
-	filelist{end+1}='osl-core/spm-changes/private/bf_write_spmeeg_osl.m';
-	targetdir{end+1}='toolbox/spm-beamforming-toolbox';
-
-	filelist{end+1}='osl-core/spm-changes/private/bf_inverse_mne_adaptive.m';
-	targetdir{end+1}='toolbox/spm-beamforming-toolbox';
+	% Insert the beamforming toolbox
+	rmdir(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'),'s');
+	copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),fullfile(SPMDIR,'toolbox'));
 
 	filelist{end+1}='osl-core/spm-changes/private/ft_read_event_4osl.m';
 	targetdir{end+1}='external/fieldtrip/fileio';
@@ -39,8 +31,8 @@ function initialise_spm
 	filelist{end+1}='osl-core/spm-changes/private/read_trigger_4osl.m';
 	targetdir{end+1}='external/fieldtrip/fileio/private';
 
-	filelist{end+1}='osl-core/spm-changes/private/badsamples.m';
-	targetdir{end+1}='@meeg';
+	% filelist{end+1}='osl-core/spm-changes/private/badsamples.m';
+	% targetdir{end+1}='@meeg';
 
 	filelist{end+1} = 'osl-core/spm-changes/private/undobalancing.m';
 	targetdir{end+1}='external/fieldtrip/forward/private/';

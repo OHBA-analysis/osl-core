@@ -81,7 +81,7 @@ function D_out = osl_detect_artefacts(D_original,varargin)
         S = epochinfo;
         S.D = D_original;
         D = osl_epoch(S);
-
+        D = D.montage('switch',D_original.montage('getindex'));
     else
         D = D_original;
     end
