@@ -135,7 +135,7 @@ rot = [cosa+x^2*vera x*y*vera-z*sina x*z*vera+y*sina; ...
 for i=1:numel(h),
   t = get(h(i),'type');
   skip = 0;
-  t
+  
   if strcmp(t,'surface') || strcmp(t,'line') || strcmp(t,'patch') || strcmp(t,'scatter')
     
     % If patch, rotate vertices  
