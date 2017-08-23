@@ -109,3 +109,15 @@ If the problem is in `ft_getopt` it is also fine to just delete the MEX file i.e
 	osl/spm12/external/fieldtrip/utilities/ft_getopt.mexmaci64
 
 On recent versions of Matlab, there is essentially no performance advantage from using the compiled version of this function.
+
+##### SPM crashes or hangs
+
+If you experience unexpected behaviour in SPM e.g. it hangs when you try to load an MEEG object, you may need to recompile the MEX files. To do this, in a terminal go into your SPM directory and then
+
+	cd src
+	make distclean
+	make && make install
+	make external-distclean
+	make external && make external-install
+
+This will also recompile FieldTrip
