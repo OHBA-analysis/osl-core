@@ -25,64 +25,55 @@ function initialise_spm
 	rmdir(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'),'s');
 	copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),fullfile(SPMDIR,'toolbox'));
 
-	filelist{end+1}='osl-core/spm-changes/private/ft_read_event_4osl.m';
-	targetdir{end+1}='external/fieldtrip/fileio';
+	filelist{end+1} ='osl-core/spm-changes/ft_read_event_4osl.m';
+	targetdir{end+1} ='external/fieldtrip/fileio';
 
-	filelist{end+1}='osl-core/spm-changes/private/read_trigger_4osl.m';
-	targetdir{end+1}='external/fieldtrip/fileio/private';
+	filelist{end+1} ='osl-core/spm-changes/read_trigger_4osl.m';
+	targetdir{end+1} ='external/fieldtrip/fileio/private';
 
-	% filelist{end+1}='osl-core/spm-changes/private/badsamples.m';
-	% targetdir{end+1}='@meeg';
+	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
+	targetdir{end+1} ='external/fieldtrip/forward/private/';
 
-	filelist{end+1} = 'osl-core/spm-changes/private/undobalancing.m';
-	targetdir{end+1}='external/fieldtrip/forward/private/';
+	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
+	targetdir{end+1} ='external/fieldtrip/plotting/private/';
 
-	filelist{end+1} = 'osl-core/spm-changes/private/undobalancing.m';
-	targetdir{end+1}='external/fieldtrip/plotting/private/';
+	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
+	targetdir{end+1} ='external/fieldtrip/fileio/private/';
 
-	filelist{end+1} = 'osl-core/spm-changes/private/undobalancing.m';
-	targetdir{end+1}='external/fieldtrip/fileio/private/';
+	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
+	targetdir{end+1} ='external/fieldtrip/utilities/private/';
 
-	filelist{end+1} = 'osl-core/spm-changes/private/undobalancing.m';
-	targetdir{end+1}='external/fieldtrip/utilities/private/';
+	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
+	targetdir{end+1} ='external/fieldtrip/private/';
 
-	filelist{end+1} = 'osl-core/spm-changes/private/undobalancing.m';
-	targetdir{end+1}='external/fieldtrip/private/';
+	filelist{end+1}  = 'osl-core/spm-changes/ft_headmodel_localspheres.m';
+	targetdir{end+1} ='external/fieldtrip/forward/';
 
-	filelist{end+1} = 'osl-core/spm-changes/private/ft_headmodel_localspheres.m';
-	targetdir{end+1}='external/fieldtrip/forward/';
+	% filelist{end+1}='osl-core/spm-changes/spm_eeg_montage.m';
+	% targetdir{end+1}='';
 
-	filelist{end+1}='osl-core/spm-changes/private/path.m';
-	targetdir{end+1}='@meeg';
-
-	filelist{end+1}='osl-core/spm-changes/private/spm_eeg_montage.m';
+	filelist{end+1} ='osl-core/spm-changes/spm_eeg_inv_mesh_ui.m';
 	targetdir{end+1}='';
 
-	filelist{end+1} ='osl-core/spm-changes/private/spm_eeg_inv_mesh_ui.m';
-	targetdir{end+1}='';
+	% filelist{end+1} ='osl-core/spm-changes/ft_getopt.c';
+	% targetdir{end+1}='external/fieldtrip/src/';
 
-	filelist{end+1} ='osl-core/spm-changes/private/subsref1.m';
-	targetdir{end+1}='@meeg';
+	% filelist{end+1} ='osl-core/spm-changes/ft_select_range.m';
+	% targetdir{end+1}='external/fieldtrip/plotting/';
 
-	filelist{end+1} ='osl-core/spm-changes/private/ft_getopt.c';
-	targetdir{end+1}='external/fieldtrip/src/';
+	% filelist{end+1} ='osl-core/spm-changes/topoplot_common.m';
+	% targetdir{end+1}='external/fieldtrip/private/';
 
-	filelist{end+1} ='osl-core/spm-changes/private/ft_select_range.m';
-	targetdir{end+1}='external/fieldtrip/plotting/';
+	% filelist{end+1} ='osl-core/spm-changes/ft_select_range.m';
+	% targetdir{end+1}='external/fieldtrip/plotting/';
 
-	filelist{end+1} ='osl-core/spm-changes/private/topoplot_common.m';
-	targetdir{end+1}='external/fieldtrip/private/';
+	% filelist{end+1} ='osl-core/spm-changes/ft_singleplotER.m';
+	% targetdir{end+1}='external/fieldtrip/';
 
-	filelist{end+1} ='osl-core/spm-changes/private/ft_select_range.m';
-	targetdir{end+1}='external/fieldtrip/plotting/';
+	% filelist{end+1} ='osl-core/spm-changes/ft_singleplotTFR.m';
+	% targetdir{end+1}='external/fieldtrip/';
 
-	filelist{end+1} ='osl-core/spm-changes/private/ft_singleplotER.m';
-	targetdir{end+1}='external/fieldtrip/';
-
-	filelist{end+1} ='osl-core/spm-changes/private/ft_singleplotTFR.m';
-	targetdir{end+1}='external/fieldtrip/';
-
-	filelist{end+1} ='osl-core/spm-changes/private/functionSignatures.json';
+	filelist{end+1} ='osl-core/spm-changes/functionSignatures.json';
 	targetdir{end+1}='';
 
 	for k=1:length(filelist),
