@@ -76,7 +76,7 @@ end
 
 % Check RHINO Specification:
 try
-    S = ft_checkopt(S,'use_rhino','double');
+    S = ft_checkopt(S,'use_rhino',{'double','logical'});
 catch
     S = ft_setopt(S,'use_rhino',0);
 end
