@@ -1,8 +1,15 @@
 function D_out = osl_detect_artefacts(D_original,varargin)
+    % Detect artefacts in MEG sensor data
     %
-    % Ultimately, need to check for two kinds of artefacts - bad 
-    % channels and bad trials
+    % This is an adapted version of osl_detect_badevent which checks for both bad epochs/trials and
+    % bad channels. The basic workflow is to detect bad channels, and bad times (which are segments for continuous
+    % data, and trials for data that has been epoched). 
     % 
+    % The input is an MEEG, and the output is a modified version of the input MEEG, not saved to disk, with
+    % the 'badchannels' and either 'badtrials' updated, or a set of 'events' of type 'artefact_OSL' added. 
+    % Optional inputs let you set whether to check for bad channels and/or bad times, and what outlier function and
+    % thresholds to use. 
+    %
     % Bad segments are identified in continuous recordings by segmenting into
     % artificial trials, identifying bad trials, and then mapping those 
     % trials back onto the continuous recording. So the workflow is
@@ -13,35 +20,23 @@ function D_out = osl_detect_artefacts(D_original,varargin)
     %   - Check for bad channels and bad trials
     %   - Map bad trials back to segments of continuous recording
     %
+    % Whereas for epoched data, we just look for bad trials directly
+    %
     % EPOCHED - Badchannels and Badtrials
     %   - Check for bad channels and bad trials
     % 
     % Could consider it as - check for badchannels or badtimes
-    % And badtimes could be segments or epochs depending on whether
-    % there are already trials in the D object or not
-
-
-    % Check recording for
     %
-    % - Bad channels
-    % - Bad events
-    % - Bad trials
-    %
-    % And return D object with each of these marked
-    %
-    %
-    % LOGIC
+    % PROGRAM LOGIC
     %
     % Continuous - badchannels=true,badtimes=false
     %   - Detect bad channels in original D object
-    % Continuous - badchannels=true/false,badtimes=true (DEFAULT)
+    % Continuous - badchannels=true/false,badtimes=true
     %   - Split into artificial epochs
     %   - Detect bad events and optionally bad channels
     %   - Map events back to times in continuous recording
     % Epoched - badchannels=true,badtimes=true/false
     %   - Detect bad channels and/or bad events in original D object
-    %
-    % Return D object with bad channels and bad times marked
     %
     % RA 2017
     % MWW 2013

@@ -131,16 +131,8 @@ if S.use_rhino
     
 %%%%%%%%%%%%%%%%%%   R U N   F O R W A R D   M O D E L   %%%%%%%%%%%%%%%%%%
     
-    S_forward               = struct();
-    S_forward.D             = S.D;
-    if isfield(S, 'forward_meg')
-        S_forward.forward_meg   = S.forward_meg;
-    end
-    if isfield(S, 'forward_eeg')
-        S_forward.forward_eeg   = S.forward_eeg;
-    end
-    osl_forward_model(S_forward);
-    
+    D = osl_forward_model(D,S);
+    D.save()
     
 else % ~S.use_rhino
     

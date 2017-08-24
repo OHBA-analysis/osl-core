@@ -142,11 +142,8 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
         
         disp('Co-registration and setting up forward model...');
 
-        S2 = [];
-        S2.D            = [D.path '/' D.fname]; % requires .mat extension
-        S2.forward_meg  = source_recon_sess.forward_meg;
-
-        D = osl_forward_model(S2);
+        D = osl_forward_model(D,source_recon_sess);
+        D.save();
 
         if(oat.do_plots)
             %spm_eeg_inv_checkmeshes(D);
