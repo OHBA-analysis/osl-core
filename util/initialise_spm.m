@@ -1,5 +1,7 @@
 function initialise_spm
 
+	disable_undobalancing = false; % Default is true, to disable undobalancing and preserve third order gradients
+	
 	s = osl_conf.read();
 
 	if ~isfield(s,'SPMDIR')
@@ -17,43 +19,52 @@ function initialise_spm
 	    error(sprintf('SPM12 was not found at the required location: %s',fullfile(SPMDIR)))
 	end
 
+	if disable_undobalancing
+		undobalancing_fname = 'undobalancing_giles.m';
+	else
+		undobalancing_fname = 'undobalancing_original.m';
+	end
+
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	%% Copy changes to SPM code from osl
 	filelist={};targetdir={};
 
 	% Insert the beamforming toolbox
-	rmdir(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'),'s');
-	copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),fullfile(SPMDIR,'toolbox'));
+	if exist(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'))
+		rmdir(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'),'s');
+	end
 
-	filelist{end+1} ='osl-core/spm-changes/ft_read_event_4osl.m';
-	targetdir{end+1} ='external/fieldtrip/fileio';
+	copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'));
 
-	filelist{end+1} ='osl-core/spm-changes/read_trigger_4osl.m';
-	targetdir{end+1} ='external/fieldtrip/fileio/private';
+	filelist{end+1}  = fullfile('osl-core','spm-changes','ft_read_event_4osl.m');
+	targetdir{end+1} = fullfile('external','fieldtrip','fileio');
 
-	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
-	targetdir{end+1} ='external/fieldtrip/forward/private/';
+	filelist{end+1}  = fullfile('osl-core','spm-changes','read_trigger_4osl.m');
+	targetdir{end+1} = fullfile('external','fieldtrip','fileio','private');
 
-	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
-	targetdir{end+1} ='external/fieldtrip/plotting/private/';
+	filelist{end+1}  = fullfile('osl-core','spm-changes',undobalancing_fname);
+	targetdir{end+1} = fullfile('external','fieldtrip','forward','private','undobalancing.m');
 
-	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
-	targetdir{end+1} ='external/fieldtrip/fileio/private/';
+	filelist{end+1}  = fullfile('osl-core','spm-changes',undobalancing_fname);
+	targetdir{end+1} = fullfile('external','fieldtrip','plotting','private','undobalancing.m');
 
-	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
-	targetdir{end+1} ='external/fieldtrip/utilities/private/';
+	filelist{end+1}  = fullfile('osl-core','spm-changes',undobalancing_fname);
+	targetdir{end+1} = fullfile('external','fieldtrip','fileio','private','undobalancing.m');
 
-	filelist{end+1}  = 'osl-core/spm-changes/undobalancing.m';
-	targetdir{end+1} ='external/fieldtrip/private/';
+	filelist{end+1}  = fullfile('osl-core','spm-changes',undobalancing_fname);
+	targetdir{end+1} = fullfile('external','fieldtrip','utilities','private','undobalancing.m');
 
-	filelist{end+1}  = 'osl-core/spm-changes/ft_headmodel_localspheres.m';
-	targetdir{end+1} ='external/fieldtrip/forward/';
+	filelist{end+1}  = fullfile('osl-core','spm-changes',undobalancing_fname);
+	targetdir{end+1} = fullfile('external','fieldtrip','private','undobalancing.m');
+
+	filelist{end+1}  = fullfile('osl-core','spm-changes','ft_headmodel_localspheres.m');
+	targetdir{end+1} = fullfile('external','fieldtrip','forward');
 
 	% filelist{end+1}='osl-core/spm-changes/spm_eeg_montage.m';
 	% targetdir{end+1}='';
 
-	filelist{end+1} ='osl-core/spm-changes/spm_eeg_inv_mesh_ui.m';
-	targetdir{end+1}='';
+	filelist{end+1}  = fullfile('osl-core','spm-changes','spm_eeg_inv_mesh_ui.m');
+	targetdir{end+1} = '';
 
 	% filelist{end+1} ='osl-core/spm-changes/ft_getopt.c';
 	% targetdir{end+1}='external/fieldtrip/src/';
@@ -73,8 +84,8 @@ function initialise_spm
 	% filelist{end+1} ='osl-core/spm-changes/ft_singleplotTFR.m';
 	% targetdir{end+1}='external/fieldtrip/';
 
-	filelist{end+1} ='osl-core/spm-changes/functionSignatures.json';
-	targetdir{end+1}='';
+	filelist{end+1} = fullfile('osl-core','spm-changes','functionSignatures.json');
+	targetdir{end+1}= '';
 
 	for k=1:length(filelist),
 	    copyfile( fullfile(osldir,filelist{k}), fullfile(SPMDIR,targetdir{k}), 'f' );
@@ -90,10 +101,10 @@ function initialise_spm
 	addpath(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'));
 
 	% Remove fieldtrip substitutes for Matlab toolboxes if the toolbox is installed
-	if license('test', 'Statistics_Toolbox')
-	    rmpath(fullfile(osldir,'spm12/external/fieldtrip/external/stats'))
+	if license('test', 'Statistics_Toolbox') && ~isempty(strfind(path,fullfile(SPMDIR,'external','fieldtrip','external','stats')))
+	    rmpath(fullfile(SPMDIR,'external','fieldtrip','external','stats'))
 	end
 
-	if license('test','Signal_Toolbox')
-	    rmpath(fullfile(osldir,'spm12/external/fieldtrip/external/signal'))
+	if license('test','Signal_Toolbox') && ~isempty(strfind(path,fullfile(SPMDIR,'external','fieldtrip','external','signal')))
+	    rmpath(fullfile(SPMDIR,'external','fieldtrip','external','signal'))
 	end
