@@ -6,6 +6,63 @@
 
 % Henry Luckhoo 21.05.12
 
+
+### Reading in with FieldTrip
+
+Reading using FT standard functions i.e.
+
+    d=ft_read_data('data/mark/3004/3004_Eyes_Open_Rest_PROC.ds');
+
+returns a `399 x 6000 x 30` matrix which corresponds to 10s epochs.
+
+See [here](http://www.fieldtriptoolbox.org/getting_started/ctf)
+
+    d=ft_preprocessing(struct('dataset','data/mark/3004/3004_Eyes_Open_Rest_PROC.ds'));
+
+To do the stitching
+
+    d=ft_preprocessing(struct('dataset','data/mark/3004/3004_Eyes_Open_Rest_PROC.ds','continuous','yes'));
+
+        
+    ### SPM
+
+    See [here](https://www.jiscmail.ac.uk/cgi-bin/webadmin?A2=SPM;b3eb04b6.0911)
+
+    From Giles:
+
+        d=spm_eeg_convert(struct('dataset','data/mark/3004/3004_Eyes_Open_Rest_PROC.ds','mode','continuous','checkboundary',false))
+
+
+workingdir = fullfile(startup.get_rootdir,'data','uk_meg');
+S.fif_file = fullfile(workingdir,'raw_data',subject_str,sprintf('%s_Eyes_Open_Rest_PROC.ds',subject_str));
+S.spm_file = fullfile(workingdir,'spm',subject_str);
+
+S.other_channels = {'EEG060','EEG059','EEG057','EEG058'}; % Known artefact channels
+
+% if exist([S.spm_file '.mat'])
+%   D = spm_eeg_load(S.spm_file);
+% else
+    D = osl_convert_script(S);
+    D = D.chantype(find(strcmp(D.chanlabels,'EEG060')),'EMG');
+    D = D.chantype(find(strcmp(D.chanlabels,'EEG059')),'ECG');
+    D = D.chantype(find(strcmp(D.chanlabels,'EEG057')),'EOG1');
+    D = D.chantype(find(strcmp(D.chanlabels,'EEG058')),'EOG2');
+
+    D = D.fiducials(ft_read_headshape(sprintf('raw_data/pos_files/%s.pos',subject_str),'unit','mm'));
+
+    D.save()
+
+    %mri = fullfile(workingdir,'raw_data',subject_str,sprintf('%s_CRG.nii',subject_str));
+    %method = 'Single Shell'
+    %D = ukmeg.coregister(D,mri,method);
+% end
+
+
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
