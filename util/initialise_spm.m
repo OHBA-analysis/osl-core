@@ -29,12 +29,14 @@ function initialise_spm
 	%% Copy changes to SPM code from osl
 	filelist={};targetdir={};
 
-	% Insert the beamforming toolbox
-	if exist(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'))
-		rmdir(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'),'s');
+	% Insert the beamforming toolbox - only do this once
+	% The alternative would be to overwrite this directory every time
+	% The current code makes it possible that someone has an old copy of this toolbox
+	% However, if the folder is deleted every time, this makes it very unreliable to use
+	% OSL on a cluster with a shared OSL folder
+	if ~exist(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'))
+		copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'));
 	end
-
-	copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'));
 
 	filelist{end+1}  = fullfile('osl-core','spm-changes','ft_read_event_4osl.m');
 	targetdir{end+1} = fullfile('external','fieldtrip','fileio');
