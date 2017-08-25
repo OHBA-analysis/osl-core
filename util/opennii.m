@@ -1,3 +1,3 @@
-function opennii(filename)
+function o = opennii(filename)
 	% Open nii files in Matlab using osleyes when double clicking
-	osleyes(filename);
+	o = osleyes(filename);
