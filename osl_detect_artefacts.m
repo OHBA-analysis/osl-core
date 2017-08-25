@@ -49,10 +49,11 @@ function D_out = osl_detect_artefacts(D_original,varargin)
     arg.addParameter('badtimes',true); 
     arg.addParameter('dummy_epoch_tsize',1); % Dummy epoch size in seconds
     arg.addParameter('measure_fns',{'std'}); % list of outlier metric func names to use for bad segment marking
-    arg.addParameter('event_threshold',0.5); % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
+    arg.addParameter('event_threshold',0.3); % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
     arg.addParameter('channel_threshold',0.01); % list of robust GLM weights thresholds to use on chans for bad segment marking, the LOWER the theshold the less aggressive the rejection
     arg.parse(varargin{:});
     options = arg.Results;
+
 
     % Are we continuous? If continuous, Dtemp is a temporary copy with
     % artificial epochs. Otherwise, Dtemp is just the original input file
