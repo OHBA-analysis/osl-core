@@ -66,6 +66,7 @@ try
 catch
     error('SPM file specification not recognised or incorrect');
 end
+D.save(); % Save the object to disk to ensure that the current online montage is used
 
 % Check MNI Coordinates Specification:
 try
@@ -261,6 +262,8 @@ matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             
 
 
 spm_jobman('run',matlabbatch)
+
+D = spm_eeg_load(D.fullfile); % Load the file back from disk with the new online montages
 
 end
 
