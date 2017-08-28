@@ -137,7 +137,7 @@ opt.bad_segments.do=1;
 % preprocessing: If you want to play around with it at a later stage, set
 % .do to 1 and run everything again. Again, make sure to set _opt.dirname_ to something
 % different than before to not overwrite your non-AFRICA results.
-opt.africa.do=0;
+opt.africa.do=1;
 opt.africa.ident.artefact_chans    = {'ECG','EOG'};
 opt.africa.ident.mains_kurt_thresh = 0.5;
 

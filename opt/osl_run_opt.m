@@ -515,10 +515,6 @@ for subi=1:length(opt.sessions_to_do),
 
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  AFRICA, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
-            % store for africa results:
-            africa_dir=fullfile(opt.dirname,'africa');
-            mkdir(africa_dir);
-
             %% ADAPTER CODE FOR NEW CHANGES TO AFRICA
             S = struct;
             S.do_ica = opt.africa.todo.ica;
