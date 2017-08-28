@@ -45,8 +45,8 @@ function D_out = osl_detect_artefacts(D_original,varargin)
     arg.addParameter('modalities',{'MEGGRAD'}); 
     arg.addParameter('max_iter',3);
     arg.addParameter('max_bad_channels',10); % Maximum number of bad channels to identify at this stage 
-    arg.addParameter('badchannels',true); 
-    arg.addParameter('badtimes',true); 
+    arg.addParameter('badchannels',true); % Check for bad channels
+    arg.addParameter('badtimes',true); % Check for bad events
     arg.addParameter('dummy_epoch_tsize',1); % Dummy epoch size in seconds
     arg.addParameter('measure_fns',{'std'}); % list of outlier metric func names to use for bad segment marking
     arg.addParameter('event_threshold',0.3); % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
@@ -55,8 +55,9 @@ function D_out = osl_detect_artefacts(D_original,varargin)
     options = arg.Results;
 
 
-    % Are we continuous? If continuous, Dtemp is a temporary copy with
-    % artificial epochs. Otherwise, Dtemp is just the original input file
+    % Are we continuous and checking for bad timess? If continuous, D becomes
+    % a temporary copy with artificial epochs. Otherwise, D is just the
+    % original input file
     continuous = strcmp(D_original.type,'continuous');
     if continuous && arg.Results.badtimes
 
