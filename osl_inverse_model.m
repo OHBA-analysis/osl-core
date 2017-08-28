@@ -61,12 +61,7 @@ try
         [pathstr,filestr] = fileparts(S.D);
         S.D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
         D = spm_eeg_load(S.D);
-        if montage(D,'getnumber') > 0
-            warning('Removing existing online montages')
-            D = montage(D,'remove',1:montage(D,'getnumber'));
-            D.save;
-        end
-    end;
+    end
     D.check;
 catch
     error('SPM file specification not recognised or incorrect');
