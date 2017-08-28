@@ -125,8 +125,7 @@ function [bad_components, metrics,figs] = identify_artefactual_components_auto(D
 
     reject_kurt = [];
     if S.do_kurt > 0,
-        %sm = D.ica.sm(D.ica.chan_inds,:); % For variance, only use the chan inds 
-        [comps2reject,fig_handles_tmp,fig_names_tmp,fig_titles_tmp] = rank_and_plot(tc,sm,abs_ft,freq_ax,D,'abs_kurtosis',modalities,samples_of_interest,S.kurtosis_wthresh,S.kurtosis_thresh,S.max_num_artefact_comps,S.do_plots);
+        [comps2reject,fig_handles_tmp,fig_names_tmp,fig_titles_tmp] = rank_and_plot(tc,D.ica.sm,abs_ft,freq_ax,D,'abs_kurtosis',modalities,samples_of_interest,S.kurtosis_wthresh,S.kurtosis_thresh,S.max_num_artefact_comps,S.do_plots);
         figs.handles = [figs.handles fig_handles_tmp];
         figs.names = [figs.names fig_names_tmp];
         figs.titles = [figs.titles fig_titles_tmp];
