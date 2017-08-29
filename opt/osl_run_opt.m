@@ -596,7 +596,10 @@ for subi=1:length(opt.sessions_to_do),
             % mark bad chans
             bad_channels=D_dummy.badchannels;
             if ~isempty(bad_channels)
+                idx = D_continuous.montage('getindex');
+                D_continuous = D_continuous.montage('switch',0);
                 D_continuous = D_continuous.badchannels(bad_channels,1);
+                D_continuous = D_continuous.montage('switch',idx);
             end;
 
             %%%%
