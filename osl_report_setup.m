@@ -15,8 +15,8 @@ report.index=0;
 report.plot_names={};
 report.sub_reports={};
 
-warning off;
-mkdir(report_dir);
-warning on;
+if ~exist(report_dir,'dir')
+	mkdir(report_dir);
+end
 
 end
