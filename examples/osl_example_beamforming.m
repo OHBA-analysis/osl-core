@@ -1,4 +1,4 @@
-%% Beamforming
+%% Beamforming in OSL
 % This example shows how to perform beamforming
 
 %%
@@ -89,7 +89,7 @@ size(mni_coords)
 S = struct;
 S.modalities        = {'MEGPLANAR'}; 
 S.timespan          = [0 Inf];
-S.pca_order         = 250;
+S.pca_order         = 50;
 S.type              = 'Scalar';
 S.inverse_method    = 'beamform';
 S.prefix            = '';
@@ -109,7 +109,7 @@ S.prefix            = '';
 % set |pca_order=50| you will be unable to orthogonalize the parcel
 % timecourses for a parcellation with 60 ROIs, and the PCA order must be less
 % than or equal to the rank of the input data. For CTF data, a value of 150 is
-% typical. For Elekta data that has been maxfiltered, a value of more like 60
+% typical. For Elekta data that has been maxfiltered, a value of more like 50
 % may be appropriate.
 %
 % Now we can actually run the beamformer
