@@ -140,7 +140,9 @@ opt.bad_segments.do=1;
 opt.africa.do=1;
 opt.africa.ident.artefact_chans    = {'ECG','EOG'};
 opt.africa.ident.mains_kurt_thresh = 0.5;
-
+opt.africa.ident.do_kurt = true;
+opt.africa.ident.do_plots = true;
+opt.africa.ident.do_mains = true;
 
 %% EPOCHING DATA
 % Here the epochs are set to be from -1s to +2s relative to the stimulus onset in the

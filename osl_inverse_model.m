@@ -1,19 +1,21 @@
-function D = osl_inverse_model(S)
+function D = osl_inverse_model(D,mni_coords,S)
 % OSL_INVERSE_MODEL runs MEG forward model in SPM12
 %
 % This function passes a limited set of parameters to SPM batch and returns
 % an SPM object containing the inverse solution in an online montage.
 %
-% D = osl_inverse_model(S)
+% D = osl_inverse_model(D,mni_coords,S)
 % 
 % REQUIRED INPUTS:
 %
-% S.D             - SPM MEG object filename (or SPM MEG object)
+% D             - SPM MEG object filename (or SPM MEG object)
 %
-% S.mni_coords    - [N x 3] list of MNI coordinates to beamform to
+% mni_coords    - [N x 3] list of MNI coordinates to beamform to
 %
 % 
-% OPTIONAL INPUTS:
+% OPTIONAL INPUTS: 
+%
+% Passed in as a struct:
 %
 % S.modalities     - Sensor modalities to use (e.g. MEG,MEGPLANAR, or both) 
 %                    (default MEGPLANAR for Neuromag, MEG for CTF)
@@ -42,7 +44,7 @@ function D = osl_inverse_model(S)
 %                     (default is to use all)
 %
 % S.dirname        - dir to output results to
-%                     (default is D.path)
+%                     (default is a temporary directory created within D.path)
 %
 % S.prefix         - write new SPM file by prepending this prefix
 %                     (default is '')
@@ -51,29 +53,25 @@ function D = osl_inverse_model(S)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%   P A R S E   I N P U T S   %%%%%%%%%%%%%%%%%%%%%%%
+if nargin == 1
+    error('For clarity, new function syntax makes requires inputs positional. See function definition at top of file - changes required should be trivial');
+end
+
+old_dir = pwd; % Back up the original working directory
 
 % Check SPM File Specification:
 try
-    if strcmp(class(S.D),'meeg'),  
-        D = S.D;
-    else
-        S.D = char(S.D);
-        [pathstr,filestr] = fileparts(S.D);
-        S.D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
-        D = spm_eeg_load(S.D);
+    if ~strcmp(class(D),'meeg'),  
+        D = char(D);
+        [pathstr,filestr] = fileparts(D);
+        D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
+        D = spm_eeg_load(D);
     end
     D.check;
 catch
     error('SPM file specification not recognised or incorrect');
 end
 D.save(); % Save the object to disk to ensure that the current online montage is used
-
-% Check MNI Coordinates Specification:
-try
-    S = ft_checkopt(S,'mni_coords',{'doublevector','doublematrix'});
-catch 
-    error('MNI coordinate specification not recognised or incorrect')
-end
 
 % Check Modality Specification:
 try
@@ -152,9 +150,12 @@ end
 % Check dirname Specification:
 try
     S = ft_checkopt(S,'dirname','char');
-catch 
-    warning('dirname not set, assuming dirname=D.path for now')
-    S = ft_setopt(S,'dirname',D.path);
+catch
+    [~,tn] = fileparts(tempname(D.path));
+    S.dirname = fullfile(D.path,sprintf('osl_bf_temp_%s',tn(3:3+7))); 
+    if ~exist(S.dirname,'dir')
+        mkdir(S.dirname);
+    end
 end
 
 % Check prefix Specification:
@@ -169,7 +170,7 @@ end
 clear matlabbatch
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-matlabbatch{1}.spm.tools.beamforming.data.dir                                   = {S.dirname}; % For now
+matlabbatch{1}.spm.tools.beamforming.data.dir                                   = {S.dirname};
 matlabbatch{1}.spm.tools.beamforming.data.D                                     = {fullfile(D.path,D.fname)};
 matlabbatch{1}.spm.tools.beamforming.data.val                                   = 1;
 matlabbatch{1}.spm.tools.beamforming.data.gradsource                            = 'inv';
@@ -181,7 +182,7 @@ matlabbatch{2}.spm.tools.beamforming.sources.BF(1)                              
 matlabbatch{2}.spm.tools.beamforming.sources.reduce_rank                        = [2 3];
 matlabbatch{2}.spm.tools.beamforming.sources.keep3d                             = 1;
 matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 0;
-matlabbatch{2}.spm.tools.beamforming.sources.plugin.mni_coords.pos              = S.mni_coords;
+matlabbatch{2}.spm.tools.beamforming.sources.plugin.mni_coords.pos              = mni_coords;
 
 
 % MESH STUFF!
@@ -264,6 +265,7 @@ matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             
 spm_jobman('run',matlabbatch)
 
 D = spm_eeg_load(D.fullfile); % Load the file back from disk with the new online montages
+cd(old_dir); % Restore the working directory
 
 end
 
