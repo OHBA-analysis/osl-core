@@ -55,7 +55,7 @@ function D2 = osl_filter(D,fband,order)
 
 	S.order = order;
 	S.type  = 'butterworth';
-	S.dir   = 'twopass'
+	S.dir   = 'twopass';
 
 	D2 = spm_eeg_filter(S);
 	D2 = D2.montage('switch',montage_idx);
