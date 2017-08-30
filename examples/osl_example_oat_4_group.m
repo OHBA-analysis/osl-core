@@ -245,8 +245,8 @@ disp(times)
 tstat = fullfile( oat.source_recon.dirname,'first_level_none_sub_level_group_level_dir','tstat3_gc1_8mm.nii.gz' );
 fusiform = fullfile(osldir,'example_data','faces_group_data','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 
-% Display the results in FSLVIEW
-osleyes({[],fusiform,tstat},{[0 5],[5 8]},{osl_colormap('green'),osl_colormap('hot')})
+% Display the results in OSLEYES
+osleyes({[],fusiform,tstat},'clims',{[],[0 5],[5 8]},'colormaps',{[],osl_colormap('green'),osl_colormap('hot')})
 
 %% INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE
 %
