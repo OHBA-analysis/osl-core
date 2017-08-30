@@ -102,8 +102,9 @@ try
             if strcmp(ext,'.nii') || isempty(ext)% force .nii suffix
                 ext = '.nii';
             elseif strcmp(ext,'.gz')
-                ME = MException('RHINO:checkExt','Please ensure input file is .nii, not .nii.gz');
-                throw(ME)
+                % Need to unzip this file
+                gunzip(sMRI); % This will make a .nii file in the same directory as the .nii.gz file
+                [pathstr,filestr,ext] = fileparts(fullfile(pathstr,filestr)); % Extract the .nii extension
             else
                 ME = MException('RHINO:checkMRI','MRI specification not recognised');
                 throw(ME)
