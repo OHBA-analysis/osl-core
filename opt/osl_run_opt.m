@@ -532,12 +532,24 @@ for subi=1:length(opt.sessions_to_do),
             [D, figs]=osl_africa(D,S);
             D.save()
 
+            % If we removed artefacts, then we want to use the denoised data going forward
+            % However, OAT does not work with online montages, so we need to clone 
+            % the MEEG and store the AFRICA output on disk
+            if S.do_remove
+                [dir,nam,~] = fileparts(fullfile(D.path,D.fname));
+                D2=clone(D.montage('switch',0),[dir '/A' nam '.dat'],size(D.montage('switch',0)));
+                D2(D.ica.chan_inds,:) = D(:,:);
+                D2 = D2.montage('remove',1:D2.montage('getnumber'));
+                D2.save();
+                D = D2;
+                spm_files_basenames{subnum}=['A' spm_files_basenames{subnum}];                    
+            else
+                warning('AFRICA has been run, but bad components have not been removed');
+            end
+
             report=osl_report_set_figs(report,figs.names,figs.handles,figs.titles);
             report=osl_report_print_figs(report);
 
-            if ~opt.africa.todo.remove
-                warning('AFRICA has been run, but bad components have not been removed');
-            end
         end
             
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
