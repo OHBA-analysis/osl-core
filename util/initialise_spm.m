@@ -1,6 +1,6 @@
 function initialise_spm
 
-	disable_undobalancing = false; % Default is true, to disable undobalancing and preserve third order gradients
+	disable_undobalancing = true; % Default is true, to disable undobalancing and preserve third order gradients
 	
 	s = osl_conf.read();
 
