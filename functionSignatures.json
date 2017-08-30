@@ -1,5 +1,5 @@
-{"osl_resample_nii_matlab":
+{"osl_mnimask2mnicoords":
 {
- "inputs":   [{"name":"input_nii","type":"filepath"},{"name":"output_mask","type":"filepath"}]
+ "inputs":   [{"name":"fname","type":"filepath=*.nii,*.gz"}]
 }
 }
