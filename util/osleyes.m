@@ -98,8 +98,13 @@ classdef osleyes < handle
             	try
             		[~,niifiles{1},~] = parcellation.guess_template(vol);
             	catch ME
-            		ME.getReport
-            		niifiles = niifiles(2:end);
+            		switch ME.identifier
+            			case 'osl:parcellation:no_matching_mask'
+            				fprintf(2,'Warning - No matching standard brain mask was found\n');
+            				niifiles = niifiles(2:end);
+            			otherwise
+            				rethrow(ME)
+            		end
             	end
         	end
 
