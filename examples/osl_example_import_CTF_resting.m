@@ -26,17 +26,17 @@ class(d)
 %%
 % Note that CTF data may optionally be processed using a synthetic higher-
 % order gradiometer. Some information about this is available here:
-% <http://www.fieldtriptoolbox.org/faq/how_does_the_ctf_higher-
-% order_gradiometer_work>. This transformation may have already been applied
-% to the data in the |.ds| folder. By default, FieldTrip will automatically
-% undo this 'balancing' procedure when the data is imported into Matlab. This
-% behaviour can be overriden by disabling this unbalancing in FieldTrip, by
-% overwriting the relevant files. This is done automatically by
-% |initialise_spm| which is called by |osl_startup|. If you want to use the
-% original FieldTrip unbalancing, in |initialise_spm.m| at the top of the file
-% set |disable_undobalancing = false|. You will need to restart Matlab and
-% restart OSL for this to take effect. Matlab will display a warning whenever
-% the custom unbalancing code is run, so that you are always aware when this
+% <http://www.fieldtriptoolbox.org/faq/how_does_the_ctf_higher-order_gradiometer_work>.
+% This transformation may have already been applied to the data in the |.ds|
+% folder. By default, FieldTrip will automatically undo this 'balancing'
+% procedure when the data is imported into Matlab. This behaviour can be
+% overriden by disabling this unbalancing in FieldTrip, by overwriting the
+% relevant files. This is done automatically by |initialise_spm| which is
+% called by |osl_startup|. If you want to use the original FieldTrip
+% unbalancing, in |initialise_spm.m| at the top of the file set
+% |disable_undobalancing = false|. You will need to restart Matlab and restart
+% OSL for this to take effect. Matlab will display a warning whenever the
+% custom unbalancing code is run, so that you are always aware when this
 % occurs.
 
 %%
