@@ -1,4 +1,4 @@
-%% Preproc: Standard artefact rejection
+%% Preproc - Standard artefact rejection
 %
 % This example script shows how to perform basic artefact detection and rejection. 
 % The main input required is an MEEG object.

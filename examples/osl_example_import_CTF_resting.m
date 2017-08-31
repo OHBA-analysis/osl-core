@@ -1,4 +1,4 @@
-%% Import: CTF resting state
+%% Import - CTF resting state
 %
 % This example shows how to read in raw data from CTF scanners
 
