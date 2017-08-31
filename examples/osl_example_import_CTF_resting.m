@@ -111,10 +111,13 @@ ft_read_headshape(pos_file)
 %%
 % This struct can be passed straight into the MEEG's |fiducials| method to
 % store it within the SPM object
-D = D.fiducials(ft_read_headshape(pos_file));
+D = D.fiducials(ft_read_headshape(pos_file,'unit','mm'));
 D.fiducials
 
 %%
+% _Note that the headshape points MUST be read in units of 'mm', because this
+% is assumed by RHINO later on in the pipeline_
+%
 % Don't forget to save your updated channel types and fiducials to disk!
 D.save()
 
