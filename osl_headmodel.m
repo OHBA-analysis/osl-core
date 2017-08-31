@@ -125,7 +125,7 @@ if S.use_rhino
         S_coreg.modality(end+1) = {'EEG'};
     end
     S_coreg.do_plots = 0;
-    rhino(S_coreg);
+    D = rhino(S_coreg);
     close all
     
     
