@@ -102,7 +102,9 @@ if S.force_pca_dim,% GC 2013-10-22
 else
     pcaDim = rank(dat'*dat)-1;
 end%if
-[allsvd,Apca]=pca_netlab(dat,pcaDim);
+
+[Apca,~,allsvd] = pca(dat,'numcomponents',pcaDim);
+allsvd = allsvd(1:pcaDim);
 
 fig_handles(1)=sfigure;
 if ~do_plots
@@ -295,7 +297,9 @@ if S.force_pca_dim,% GC 2013-10-22
 else
     pcaDim = rank(dat'*dat)-1;
 end%if
-[allsvd,Apca]=pca_netlab(dat,pcaDim);
+
+[Apca,~,allsvd] = pca(dat,'numcomponents',pcaDim);
+allsvd = allsvd(1:pcaDim);
 
 fig_handles(2)=sfigure;
 if ~do_plots
@@ -364,7 +368,8 @@ else
     
 end;
 
-allsvd      = pca_netlab(dat,pcadim);
+[Apca,~,allsvd] = pca(dat,'numcomponents',pcadim);
+allsvd = allsvd(1:pcadim);
 min_eig2use = osl_check_eigenspectrum(allsvd, pcadim, 0);
 
 if S.force_pca_dim,

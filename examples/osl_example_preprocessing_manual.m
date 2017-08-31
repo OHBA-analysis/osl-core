@@ -327,18 +327,13 @@ end
 % for rejection using the red cross. NB: Just close the window when
 % finished to save your results.
 for subnum = 1:length(spm_files)
-
     [dirname,filename] = fileparts(spm_files{subnum});
-
-    S = [];
-    S.D           = spm_files{subnum};
-    S.logfile         = 1;
-    S.ica_file        = fullfile(dirname,[filename '_africa']);
+    D           = spm_eeg_load(spm_files{subnum}); % Load the MEEG object
+    S = struct;
     S.used_maxfilter  = 1;
-    S.ident.func      = @identify_artefactual_components_manual;
-    S.to_do.ica           = [1 1 1];
-    S.ident.artefact_chans = {'EOG','ECG'};
-    osl_africa(S);
+    S.artefact_channels = {'EOG','ECG'};
+    D = osl_africa(D,S);
+    D.save(); % You need to save the MEEG object to commit marked bad components to disk
 end
 
 %%

@@ -202,14 +202,13 @@ function D = perform_sensorspace_ica(D,S)
     D.ica.metrics = []; % Store artefact metrics later
     D.ica.bad_components = []; % With new components, no bad components selected yet 
 
-    % The commands below expand D.ica.sm out
-    % Need to use D.ica.sm(chan_inds,:) elsewhere but that's what's expcted by a bunch of other things
+    % The commands below expand D.ica.sm out to a full montage
     sm_full              = zeros(D.nchannels, size(sm,2));
     sm_full(chan_inds,:) = D.ica.sm; % So this is mapped onto all of the data w
     D.ica.sm = sm_full;
 
     % Reconstruct the IC timecourses with
-    % tc = D(chan_inds,:,:)'*pinv(D.ica.sm)'
+    % tc = D(:,:,:)'*pinv(D.ica.sm)'
     %    or 
     % tc = D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))'
 end

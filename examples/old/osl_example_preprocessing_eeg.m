@@ -260,7 +260,7 @@ for i=1:length(fif_files), % iterates over subjects
     S.artifact_amplitude=5; % default settings
     S.false_rate=0.2; % maximum rate of removed triggers
     
-    [bad_events,bad_channels]=osl_detect_badevent(S);
+    [bad_events,bad_channels]=osl_detect_badevent_old(S);
     
     S2=[];
     S2.D=D7;

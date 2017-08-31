@@ -13,7 +13,10 @@ function [D fname fig_handles fig_names] = osl_convert_script(Sin)
 %
 % Sin.num_condition_trials_expected : number of expected trials for each condition 
 % Sin.condition_code : list of condition trigger codes 
+% Sin.artefact_channels : Specify artefact channels that will be retained based on chantype
+% Sin.other_channels : Specify other channels to retain based on chanlabel
 %
+% RA 2017
 % MW
 
 try; tmp=Sin.fif_file; catch, error('fif_file not specified');end;
@@ -56,6 +59,13 @@ if strcmp(ext,'.ds')
     else
         S.artefact_channels = [];
     end
+
+    if isfield(Sin, 'other_channels'),
+        S.other_channels = Sin.other_channels;
+    else
+        S.other_channels = [];
+    end
+
     isctf=1;
 else
     S.channels = 'all';

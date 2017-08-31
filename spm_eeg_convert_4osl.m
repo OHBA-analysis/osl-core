@@ -207,12 +207,22 @@ switch S.channels
         [~,chansel_clock]=spm_match_str('SCLK01',hdr.label);
         %find the meg gradiometers
         [~,chansel_meggrads]=spm_match_str('meggrad',hdr.chantype);
+
+        % find artefact channel types
         if isfield(S, 'artefact_channels') && ~isempty(S.artefact_channels),
             [~, chansel_artefact] = spm_match_str(lower(S.artefact_channels), lower(hdr.chantype));
         else
             chansel_artefact = [];
-        end%if
-        chansel=[chansel_stim; chansel_clock; chansel_meggrads; chansel_artefact];    
+        end
+
+        % Find named channel labels
+        if isfield(S, 'other_channels') && ~isempty(S.other_channels),
+            [~, chansel_other] = spm_match_str(lower(S.other_channels), lower(hdr.label));
+        else
+            chansel_other = [];
+        end
+
+        chansel=[chansel_stim; chansel_clock; chansel_meggrads; chansel_artefact chansel_other];    
     otherwise
         chansel = selectchannels(Dhdr, S.channels); 
 end

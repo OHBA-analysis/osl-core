@@ -39,7 +39,6 @@ if(rem(nP,100)~=0)
     error('S.nP must be divisible by 100.');
 end
 
-warning off;
 
 cmd = ['mkdir ' dirname '/' subdirname];
 unix(cmd);
@@ -202,4 +201,3 @@ else,
     disp(['When finished, cluster_stats results will be in: cluster_stats=load(''' distfile_save ''');']);
 end
 
-warning on;

@@ -67,10 +67,8 @@ function osl_startup( osl_root )
     addpath(fullfile(osl_root,'MEG-ROI-nets'));
 
     % Ensure osl-core directories gets priority in path by adding it last
-    addpath(genpath_exclude(fullfile(osl_root,'osl-core'),{'.git','.svn','std_masks','docs'}))
+    addpath(genpath_exclude(fullfile(osl_root,'osl-core'),{'.git','.svn','spm-changes'}))
     addpath(osl_root)
-
-    rmpath(fullfile(osl_root,'osl-core','spm-changes')); % These are already copied into spm
 
     % Save backed up path
     s = osl_conf.read();
