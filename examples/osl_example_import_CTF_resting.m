@@ -176,6 +176,11 @@ D.inv
 D.inv{1}
 
 %%
+% And it's always worth verifying the quality of the coregistration
+rhino_display(D)
+
+%%
 % Now you have a fully imported MEEG file that is ready for preprocessing and
 % beamforming.
+
 
