@@ -1,4 +1,4 @@
-function D_out = osl_detect_artefacts(D_original,varargin)
+function D = osl_detect_artefacts(D,varargin)
     % Detect artefacts in MEG sensor data
     %
     % This is an adapted version of osl_detect_badevent which checks for both bad epochs/trials and
@@ -54,6 +54,7 @@ function D_out = osl_detect_artefacts(D_original,varargin)
     arg.parse(varargin{:});
     options = arg.Results;
 
+    D_original = D;
 
     % Are we continuous and checking for bad timess? If continuous, D becomes
     % a temporary copy with artificial epochs. Otherwise, D is just the
@@ -235,6 +236,8 @@ function D_out = osl_detect_artefacts(D_original,varargin)
         end
     end
 
+    D = D_out;
+    
 function D = set_bad(D,BadEpochs)
     % Save bad epochs using method meeg/events
     BadEvents = struct([]);
