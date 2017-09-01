@@ -538,7 +538,7 @@ for subi=1:length(opt.sessions_to_do),
             if S.do_remove
                 [dir,nam,~] = fileparts(fullfile(D.path,D.fname));
                 D2=clone(D.montage('switch',0),[dir '/A' nam '.dat'],size(D.montage('switch',0)));
-                D2(D.ica.chan_inds,:) = D(:,:);
+                D2(:,:) = D(:,:);
                 D2 = D2.montage('remove',1:D2.montage('getnumber'));
                 D2.save();
                 D = D2;
