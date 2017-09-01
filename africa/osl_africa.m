@@ -216,7 +216,8 @@ end
 
 function D = remove_bad_components(D,S)
     % Take in a D object with D.ica.bad_components
-    % Make a new montage with the components in D.ica.bad_components removed
+    % Make a new montage where all the channels stay the same but 
+    % they have had the bad ICA components subtracted from them
 
     D = D.montage('switch',0);
 
@@ -228,33 +229,18 @@ function D = remove_bad_components(D,S)
         modality = 'MEG';
     end
 
-    % Good channels:
-    chan_inds = indchantype(D,chantype, 'GOOD');
-    tmp = struct(D);
-    channels = tmp.channels(chan_inds);
-
-    badchannels    = D.badchannels;
+    chan_inds = D.ica.chan_inds; % This is a record of which channels have had components subtracted from them
     bad_components = unique(D.ica.bad_components);
     megdata        = D(chan_inds,:,:);
     megdata        = reshape(megdata,size(megdata,1),[]);
 
-    %%%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS USING MONTAGE %%%%%%%%%%%%%%%%%%%
-
-    sm = D.ica.sm;
-    tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
-
+    tc = (D(chan_inds,:,:)'*pinv(D.ica.sm(chan_inds,:))').';
     tra = eye(D.nchannels);
     dat_inv = pinv_plus(megdata', D.ica.params.num_ics);
-    tra(chan_inds,chan_inds) = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*sm(chan_inds,bad_components)'))';
-    labels = D.chanlabels;
-
-    xchans = setdiff(1:D.nchannels,indchantype(D,chantype));
-    tra(xchans,:)    = [];
-    % tra(:,xchans)    = [];
-    labels(xchans) = [];
-   
-    D = add_montage(D,tra,S.montagename,labels,channels)
-   
+    tra(chan_inds,chan_inds) = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*D.ica.sm(chan_inds,bad_components)'))';
+    
+    tmp = struct(D);
+    D = add_montage(D,tra,S.montagename,D.chanlabels,tmp.channels)
 end
 
 
