@@ -59,6 +59,11 @@ end
 
 old_dir = pwd; % Back up the original working directory
 
+if nargin < 3 || isempty(S) 
+    S = struct;
+end
+
+
 % Check SPM File Specification:
 try
     if ~strcmp(class(D),'meeg'),  
