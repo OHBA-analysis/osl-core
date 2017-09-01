@@ -42,7 +42,7 @@ function D = osl_detect_artefacts(D,varargin)
     % MWW 2013
 
     arg = inputParser;
-    arg.addParameter('modalities',{'MEGGRAD'}); 
+    arg.addParameter('modalities',[]); 
     arg.addParameter('max_iter',3);
     arg.addParameter('max_bad_channels',10); % Maximum number of bad channels to identify at this stage 
     arg.addParameter('badchannels',true); % Check for bad channels
@@ -55,7 +55,12 @@ function D = osl_detect_artefacts(D,varargin)
     options = arg.Results;
 
     D_original = D;
-
+    
+    if isempty(options.modalities)
+        options.modalities = unique(D.chantype(D.indchantype({'MEG','MEGGRAD','MEGPLANAR','EEG'})))
+        fprintf('Detecting artefacts in channel types: %s\n',strjoin(options.modalities,','));
+    end
+        
     % Are we continuous and checking for bad timess? If continuous, D becomes
     % a temporary copy with artificial epochs. Otherwise, D is just the
     % original input file
@@ -90,7 +95,7 @@ function D = osl_detect_artefacts(D,varargin)
 
         modality=arg.Results.modalities{mm};
         
-        chan_list = find(strcmp(chantype(D),modality));
+        chan_list = find(strcmp(D.chantype(),modality));
         chanind = setdiff(chan_list, D.badchannels); % All currently good chans
 
         iters = 0;
@@ -105,6 +110,7 @@ function D = osl_detect_artefacts(D,varargin)
 
                     dat = D(chanind,:,D.indtrial(D.condlist,'good')); % Only work on trials that haven't been rejected at any point
                     datchan = feval(arg.Results.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
+                    keyboard
                     [b,stats] = robustfit(ones(length(datchan),1),datchan,'bisquare',4.685,'off');
 
                     if numel(arg.Results.channel_threshold) == 1

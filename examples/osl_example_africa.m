@@ -151,6 +151,45 @@ D_touchup = osl_africa(D_automatic,'used_maxfilter',1,'artefact_channels',{'EOG'
 %
 % D_extra = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto,'ident_params',struct('do_mains',true,'do_kurt',true,'do_plots',true));
 %
+
+%% Effect of including artefacts in the data
+% As discussed above, it is important that bad epochs are excluded prior to running AFRICA. There are actually two problems that can occur if you don't remove
+% them
+%
+% * You might not be able to identify components that correlate with any of the artefact channels
+% * You might find a component that looks like an artefact channel, but it does not get removed correctly
+%
+% The latter point is particularly subtle because it is possible to miss this entirely if you do not inspect the
+% sensor data after running AFRICA. In this tutorial example, we have run AFRICA thus far without including any artefact rejection. However, the timeseries contains
+% a number of artefacts. We can plot the raw data for one of the sensors before and after AFRICA
+D1 = D_automatic.montage('switch',0); % Raw sensors
+D2 = D_automatic.montage('switch',D_automatic.montage('getnumber')); % Result after AFRICA
+figure
+plot(D1.time,[D1(1,:).',D2(1,:)']);
+
+%%
+% As you can see, there are large artefacts in the middle and especially towards the end of the recording. Now we will zoom in to see what the ICA removal has 
+% done
+set(gca,'XLim',[120 125],'YLim',[-1 1]*1e-10)
+
+%%
+% The artefact removal is completely wrong - the ECG component has been _introduced_ into the sensor data even more strongly than it was originally present!
+% It's critical that the artefacts are removed completely. We can do this by excluding the bad times. Normally you would do this with either |oslview| or |osl_detect_artefacts|. 
+% For this tutorial, we will just add these artefact times in directly
+ev(1) = struct('type','artefact_OSL','value','all','duration',81.7271,'time',310.0822,'offset',0);
+ev(2) = struct('type','artefact_OSL','value','all','duration',334.6752,'time',593.3288,'offset',0);
+D_automatic = events(D_automatic,1,ev);
+
+%%
+% Now we will rerun the ICA by setting `do_ica=true`
+D_automatic = osl_africa(D,'do_ica',true,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto)
+
+%%
+% Now we can go back to the time series and verify that the ICA component is now correctly removed
+figure
+plot(D1.time,[D1(1,:).',D_automatic(1,:)']);
+set(gca,'XLim',[120 125],'YLim',[-1 1]*1e-10)
+
 %% Description of method in publications
 %
 % Independent component analysis (ICA) was used to decompose the sensor data for
