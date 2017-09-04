@@ -1,9 +1,12 @@
 %% Preproc - AFRICA (ICA artefact removal)
+%
 % OSL provides a framework for employing Independent Component Analysis (ICA)
 % to remove certain artefacts from MEG data. Using this framework, sources of
 % interference, such as eye-blinks, ECG and line noise, can be separated from
 % the genuine MEG data and removed.
 % 
+
+%%
 % To use ICA denoising, you will use the function osl_africa.m. osl_africa can
 % currently be applied to Elekta Neuromag and CTF data.
 % 
@@ -13,9 +16,9 @@
 %
 % * Here, the MEG data is extracted from the SPM object.
 % * Each sensor type is normalised by its smallest eigenvalue.
-% * Bad epochs (as defined by OSLview), bad trials and bad channels are
+% * Bad epochs (as defined by |oslview|), bad trials and bad channels are
 %   removed.
-% * fastica is used to decompose the data into a set of independent time
+% * |fastica| is used to decompose the data into a set of independent time
 %   courses and associated topographies.
 % * The default parameters are recommended.
 %
@@ -67,15 +70,14 @@ D.ica
 % automatically. However, because ICA is potentially very time consuming,
 % these results are automatically saved to disk. It's possible to end up in a
 % confusing situation - for example
-
-% D = spm_eeg_load(fname)
-% D.ica % Error because field does not exist
-% osl_africa(D) % ICA results saved to disk
-% D.ica % Error because D has not been reloaded
-% D = spm_eeg_load(fname)
-% D.ica % Results work
-
-%%
+%
+%   D = spm_eeg_load(fname)
+%   D.ica % Error because field does not exist
+%   osl_africa(D) % ICA results saved to disk
+%   D.ica % Error because D has not been reloaded
+%   D = spm_eeg_load(fname)
+%   D.ica % Results work
+%
 % To avoid this, make sure you use |D = osl_africa(D,...)| rather than
 % |osl_africa(D,...)|.
 %
@@ -117,21 +119,19 @@ has_montage(D);
 % Remember that these are only in memory, and you need to use |D.save()| to
 % write the changes to disk. Normally you would run both the identification
 % and the component removal in a single step, using
-
-% D = osl_africa(D)
-
-%%
+%
+%   D = osl_africa(D)
+%
 % Note that this will result in two online montages
-
-% has_montage(D)
-
-%%
+%
+%   has_montage(D)
+%
 % It can be helpful to delete any unwanted montages prior
 % to using |osl_africa| e.g.
-
-% D = D.montage('remove',1) % Remove the first montage
-% has_montage(D)
-
+%
+%   D = D.montage('remove',1) % Remove the first montage
+%   has_montage(D)
+%
 
 %% Automatic component removal
 %
@@ -149,7 +149,7 @@ D_touchup = osl_africa(D_automatic,'used_maxfilter',1,'artefact_channels',{'EOG'
 % identification function. For example, you can enable mains and kurtosis
 % artefact rejection, and extra plotting
 %
-% D_extra = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto,'ident_params',struct('do_mains',true,'do_kurt',true,'do_plots',true));
+%   D_extra = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto,'ident_params',struct('do_mains',true,'do_kurt',true,'do_plots',true));
 %
 
 %% Effect of including artefacts in the data
@@ -181,7 +181,7 @@ ev(2) = struct('type','artefact_OSL','value','all','duration',334.6752,'time',59
 D_automatic = events(D_automatic,1,ev);
 
 %%
-% Now we will rerun the ICA by setting `do_ica=true`
+% Now we will rerun the ICA by setting |do_ica=true|
 D_automatic = osl_africa(D_automatic,'do_ica',true,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto)
 
 %%
