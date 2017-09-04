@@ -182,7 +182,7 @@ D_automatic = events(D_automatic,1,ev);
 
 %%
 % Now we will rerun the ICA by setting `do_ica=true`
-D_automatic = osl_africa(D,'do_ica',true,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto)
+D_automatic = osl_africa(D_automatic,'do_ica',true,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto)
 
 %%
 % Now we can go back to the time series and verify that the ICA component is now correctly removed

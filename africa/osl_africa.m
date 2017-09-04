@@ -240,7 +240,7 @@ function D = remove_bad_components(D,S)
     tra(chan_inds,chan_inds) = (eye(numel(chan_inds)) - dat_inv*(tc(bad_components,:)'*D.ica.sm(chan_inds,bad_components)'))';
     
     tmp = struct(D);
-    D = add_montage(D,tra,S.montagename,D.chanlabels,tmp.channels)
+    D = add_montage(D,tra,S.montagename,D.chanlabels,tmp.channels);
 end
 
 
