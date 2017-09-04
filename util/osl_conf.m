@@ -33,6 +33,11 @@ classdef (Abstract) osl_conf
 
 		function write(s,fname)
 		
+			if ~isempty(getCurrentTask)
+				fprintf('Running on parallel worker, not writing to osl.conf to avoid corrupting it\n');
+				return
+			end
+
 			if nargin < 2 || isempty(fname) 
 				fname = fullfile(osldir,'osl.conf');
 			end
