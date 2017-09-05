@@ -397,14 +397,13 @@ else
 
             for gconi=1:length(group_level_cons_to_do),  
                 gcon=group_level_cons_to_do(gconi); 
-
-                fig_handle(gconi)=sfigure; 
-                set(fig_handle(gconi),'Position',[1 1 1300 450]);          
                 fig_name{gconi}=['cope_at_maxt_smap_c' num2str(con) '_gc' num2str(gcon)];  
                 fig_title{gconi}=['COPE for gc' num2str(gcon) ' [' oat.group_level.group_contrast_name{gcon} '], at t=' num2str(group_level_results.times(time_ind_max)) 'secs, f=' mat2str(group_level_results.frequency_ranges(freq_ind_max,:)) 'Hz'];  
                 fig_title{gconi}=[fig_title{gconi} ' (Max found using c' num2str(first_level_cons_to_do(1)) ', gc' num2str(group_level_cons_to_do(1)) ')'];
                 S2.fname=[statsdir '/cope' num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm.nii.gz'];                              
-                ortho_overlay_act( S2 );                     
+                o = ortho_overlay_act( S2 );
+                fig_handle(gconi)= o.fig; 
+                setpixelposition(fig_handle(coni),[1 1 1300 450]);
             end;
             con_report=osl_report_set_figs(con_report,fig_name,fig_handle,fig_title);        
             con_report=osl_report_print_figs(con_report);
@@ -418,14 +417,13 @@ else
             for gconi=1:length(group_level_cons_to_do),  
                 gcon=group_level_cons_to_do(gconi); 
 
-                fig_handle(gconi)=sfigure; 
-                set(fig_handle(gconi),'Position',[1 1 1300 450]);
                 fig_name{gconi}=['tstat_at_maxt_smap_c' num2str(con) '_gc' num2str(gcon)];  
                 fig_title{gconi}=['T-stat for gc' num2str(gcon) ' [' oat.group_level.group_contrast_name{gcon} '], at t=' num2str(group_level_results.times(time_ind_max)) 'secs, f=' mat2str(group_level_results.frequency_ranges(freq_ind_max,:)) 'Hz'];  
                 fig_title{gconi}=[fig_title{gconi} ' (Max found using c' num2str(first_level_cons_to_do(1)) ', gc' num2str(group_level_cons_to_do(1)) ')'];
                 S2.fname=[statsdir '/tstat' num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm.nii.gz'];                              
-                ortho_overlay_act( S2 );                        
-
+                o = ortho_overlay_act( S2 );
+                fig_handle(gconi)= o.fig; 
+                setpixelposition(fig_handle(coni),[1 1 1300 450]);
             end;
             con_report=osl_report_set_figs(con_report,fig_name,fig_handle,fig_title);        
             con_report=osl_report_print_figs(con_report);
@@ -453,8 +451,6 @@ else
                     S2.freq_bin=freq_ind_max;        
                     [statsdir,times,count]=oat_save_nii_stats(S2);
 
-                    fig_handle(subi)=sfigure; 
-                    set(fig_handle(subi),'Position',[1 1 1300 450]);
                     fig_name{subi}=['lower_level_cope_at_maxt_smap_c' num2str(con) '_sub' num2str(sub)];  
                     fig_title{subi}=['Lower level cope' num2str(con) ' for sub' num2str(sub) ', at t=' num2str(group_level_results.times(time_ind_max)) 'secs, f=' mat2str(group_level_results.frequency_ranges(freq_ind_max,:)) 'Hz'];  
                     S2=[];                
@@ -463,7 +459,9 @@ else
                     S2.mni_coord=group_level_results.mni_coords(vox_ind_max,:);
                     S2.title='';
                     S2.fname=[statsdir '/cope' num2str(con) '_' num2str(resamp_gridstep) 'mm.nii.gz'];                              
-                    ortho_overlay_act( S2 ); 
+                    o = ortho_overlay_act( S2 );
+                    fig_handle(subi)= o.fig; 
+                    setpixelposition(fig_handle(coni),[1 1 1300 450]);
                 end;
                 con_report=osl_report_set_figs(con_report,fig_name,fig_handle,fig_title);        
                 con_report=osl_report_print_figs(con_report);

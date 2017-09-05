@@ -552,7 +552,8 @@ classdef osleyes < handle
 			% Resize the main objects in the figure window
 			% The contents of the control panel will not be changed - their position is determined
 			% by the initial layout function and is fixed from that point on
-
+			orig_units = get(self.fig,'Units');
+			set(self.fig,'Units','characters');
 			figpos = get(self.fig,'Position');
 
 			% Layout is - 0.3 reserved for each axis, plus 0.1 for the two colorbars
@@ -579,7 +580,7 @@ classdef osleyes < handle
 			else
 				set(self.h_coloraxes(2),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.1 0.015*figpos(3) ax_height*0.8]);
 			end
-
+			set(self.fig,'Units',orig_units);
 		end
 
 

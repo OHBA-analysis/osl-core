@@ -69,9 +69,9 @@ catch ME,
     return;
 end;
 
-try,
+%try,
     if(oat.to_do(2)),
-
+    
         disp('*************************************************************');
         disp('Running first_level');
         disp('*************************************************************');
@@ -100,11 +100,11 @@ try,
         oat = osl_save_oat(oat);
 
     end;
-catch ME,
-    disp('First level OAT stage has failed');
-    ME.getReport
-    return;
-end;
+%catch ME,
+%    disp('First level OAT stage has failed');
+%    ME.getReport
+%    return;
+%end;
 
 try,
     if(oat.to_do(3)),

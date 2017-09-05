@@ -16,10 +16,19 @@ report.fig_format='png';
 for ii=1:length(fighands),
     
     report.index=report.index+1;
-    sfigure(fighands(ii));
     r = 150; % pixels per inch
-    set(fighands(ii), 'PaperUnits', 'inches', 'PaperPosition', 2*get(fighands(ii),'Position')/r);
-            
+
+    set(fighands(ii),'PaperPositionMode','auto');
+    ppm = get(fighands(ii),'PaperPosition');
+    set(fighands(ii),'PaperPosition',[0 0 ppm(3:4)]);
+    set(fighands(ii),'PaperSize',ppm(3:4));
+
+    if ~all(get(fighands(ii),'Color')==0.94) % The user set a custom background color
+        set(fighands(ii),'InvertHardcopy','off'); % Use it
+    else
+        set(fighands(ii),'InvertHardcopy','on'); % Use it
+    end
+
     report.plot_names{report.index}=[report.dir '/' fignames{ii}];
     print(fighands(ii), ['-d' report.fig_format], sprintf('-r%d',r), report.plot_names{report.index});
     %exportfig(fighands(ii),report.plots{report.index},'Color','rgb','Format',report.fig_format);

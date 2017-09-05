@@ -247,20 +247,16 @@ else
         for coni=1:length(first_level_cons_to_do),
             con=first_level_cons_to_do(coni);
 
-            fig_handle(coni)=sfigure;
             fig_name{coni}=['cope_at_maxt_smap_c' num2str(con)];
             fig_title{coni}=['COPE for c' num2str(con) ' [' first_level_results.first_level_contrast_name{con} '] at t=' num2str(first_level_results.times(time_ind_max)) 'secs' ', f=' mat2str(first_level_results.frequency_ranges(freq_ind_max,:),3) 'Hz'];
             fig_title{coni}=[fig_title{coni} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
-            set(fig_handle(coni),'Position',[1 1 1300 450]);
             S2.fname=[statsdir '/cope' num2str(con) '_' num2str(resamp_gridstep) 'mm.nii.gz'];
-
-            % Use appropriate interpolation for summary image, default is
-            % 'sinc'
             if oat.first_level.parcellation.do == 1
                 S2.interp = 'nearest';
             end
-            ortho_overlay_act( S2 );
-
+            o = ortho_overlay_act( S2 );
+            fig_handle(coni) = o.fig;
+            setpixelposition(fig_handle(coni),[1 1 1300 450]);
         end;
 
     end;
