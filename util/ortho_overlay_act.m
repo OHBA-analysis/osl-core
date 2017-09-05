@@ -69,23 +69,30 @@ bgmap=nii.load(fullfile(osldir,'std_masks',['MNI152_T1_' num2str(mni_res) 'mm_br
 map=mean(map,4); 
 x1=squash(abs(map),abs(map));
 
-if isfield(S, 'percrange'),
-    try
-        low=percentile((x1),S.percrange(1));
-        high=percentile((x1),S.percrange(2));
-    catch
+if all(map(:) == 0)
+    low = 0;
+    high = 0;
+else
+    if isfield(S, 'percrange')
+        try
+            low=percentile((x1),S.percrange(1));
+            high=percentile((x1),S.percrange(2));
+        catch
+            low=min(x1);
+            high=max(x1);
+        end
+    else
+        low=S.range(1);
+        high=S.range(2);
+    end
+    
+    if(low==high)
         low=min(x1);
         high=max(x1);
-    end;
-else
-    low=S.range(1);
-    high=S.range(2);
-end;
+    end
+end
 
-if(low==high)
-    low=min(x1);
-    high=max(x1);
-end;
+
     
 % plot colorbar
 if(S.add_colorbar)  
@@ -124,3 +131,5 @@ set(gcf, 'InvertHardCopy', 'off');
 
 end
 
+% Testing for future - below command should be able to replace all plot commands
+% o = osleyes(fname,'show_controls',false,'show_crosshair',false,'title',S.title,'current_point',S.mni_coord,'clims',{[],[low high]});
