@@ -110,7 +110,7 @@ function D = osl_detect_artefacts(D,varargin)
 
                     dat = D(chanind,:,D.indtrial(D.condlist,'good')); % Only work on trials that haven't been rejected at any point
                     datchan = feval(arg.Results.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
-                    keyboard
+                    
                     [b,stats] = robustfit(ones(length(datchan),1),datchan,'bisquare',4.685,'off');
 
                     if numel(arg.Results.channel_threshold) == 1
