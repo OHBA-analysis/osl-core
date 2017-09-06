@@ -57,7 +57,7 @@ function D = osl_detect_artefacts(D,varargin)
     D_original = D;
     
     if isempty(options.modalities)
-        options.modalities = unique(D.chantype(D.indchantype({'MEG','MEGGRAD','MEGPLANAR','EEG'})))
+        options.modalities = unique(D.chantype(D.indchantype({'MEG','MEGGRAD','MEGPLANAR','EEG'})));
         fprintf('Detecting artefacts in channel types: %s\n',strjoin(options.modalities,','));
     end
         
@@ -65,9 +65,9 @@ function D = osl_detect_artefacts(D,varargin)
     % a temporary copy with artificial epochs. Otherwise, D is just the
     % original input file
     continuous = strcmp(D_original.type,'continuous');
-    if continuous && arg.Results.badtimes
+    if continuous && options.badtimes
 
-        tind_tsize = arg.Results.dummy_epoch_tsize*D_original.fsample;
+        tind_tsize = options.dummy_epoch_tsize*D_original.fsample;
         start_tinds=1:tind_tsize:(D_original.nsamples);
         Ndummytrials=length(start_tinds);
 
@@ -91,9 +91,9 @@ function D = osl_detect_artefacts(D,varargin)
     
     
     % For each modality, detect badness
-    for mm = 1:length(arg.Results.modalities)
+    for mm = 1:length(options.modalities)
 
-        modality=arg.Results.modalities{mm};
+        modality=options.modalities{mm};
         
         chan_list = find(strcmp(D.chantype(),modality));
         chanind = setdiff(chan_list, D.badchannels); % All currently good chans
@@ -101,22 +101,22 @@ function D = osl_detect_artefacts(D,varargin)
         iters = 0;
         detected_badness = true; % The while loop continues as long as something bad was found
         
-        while detected_badness && iters < arg.Results.max_iter
+        while detected_badness && iters < options.max_iter
             iters = iters+1;
             detected_badness = false; % Terminate by default unless something bad is found
 
-            if arg.Results.badchannels % Do a pass for bad channels
-                for ii = 1:length(arg.Results.measure_fns)
+            if options.badchannels % Do a pass for bad channels
+                for ii = 1:length(options.measure_fns)
 
                     dat = D(chanind,:,D.indtrial(D.condlist,'good')); % Only work on trials that haven't been rejected at any point
-                    datchan = feval(arg.Results.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
+                    datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
                     
                     [b,stats] = robustfit(ones(length(datchan),1),datchan,'bisquare',4.685,'off');
 
-                    if numel(arg.Results.channel_threshold) == 1
-                        channel_threshold = arg.Results.channel_threshold;
+                    if numel(options.channel_threshold) == 1
+                        channel_threshold = options.channel_threshold;
                     else
-                        channel_threshold = arg.Results.channel_threshold(ii);
+                        channel_threshold = options.channel_threshold(ii);
                     end
 
                     [bad_chan] = find(stats.w < channel_threshold);
@@ -124,11 +124,11 @@ function D = osl_detect_artefacts(D,varargin)
                     [sorted_w iw] = sort(bad_chan_w);
                     sorted_bad_chan = bad_chan(iw);
 
-                    if length(badchannels(D))+length(sorted_bad_chan) > arg.Results.max_bad_channels
-                        warning(['More than arg.Results.max_bad_channels=' num2str(arg.Results.max_bad_channels) ' have been detected. But only marking the worst ' num2str(arg.Results.max_bad_channels) ' as bad']);
+                    if length(badchannels(D))+length(sorted_bad_chan) > options.max_bad_channels
+                        warning(['More than options.max_bad_channels=' num2str(options.max_bad_channels) ' have been detected. But only marking the worst ' num2str(options.max_bad_channels) ' as bad']);
                     end
 
-                    num_to_add=min(length(sorted_bad_chan),arg.Results.max_bad_channels-length(badchannels(D)));
+                    num_to_add=min(length(sorted_bad_chan),options.max_bad_channels-length(badchannels(D)));
                     
                     if num_to_add > 0
                         sorted_bad_chan = sorted_bad_chan(1:num_to_add);
@@ -148,17 +148,17 @@ function D = osl_detect_artefacts(D,varargin)
                 end
             end
 
-            if arg.Results.badtimes % Do a pass for bad trials
-                for ii = 1:length(arg.Results.measure_fns)
+            if options.badtimes % Do a pass for bad trials
+                for ii = 1:length(options.measure_fns)
                     trials = D.indtrial(D.condlist,'good');
                     dat = D(chanind,:,trials);
-                    datchan = feval(arg.Results.measure_fns{ii},reshape(dat,size(dat,1)*size(dat,2),size(dat,3)),[],1);
+                    datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1)*size(dat,2),size(dat,3)),[],1);
                     [b,stats] = robustfit(ones(length(trials),1),datchan,'bisquare',4.685,'off');
 
-                    if numel(arg.Results.event_threshold) == 1
-                        event_threshold=arg.Results.event_threshold;
+                    if numel(options.event_threshold) == 1
+                        event_threshold=options.event_threshold;
                     else
-                        event_threshold=arg.Results.event_threshold(ii);
+                        event_threshold=options.event_threshold(ii);
                     end
 
                     bad_ev = find(stats.w < event_threshold);
@@ -180,7 +180,7 @@ function D = osl_detect_artefacts(D,varargin)
 
     % If we made a temporary epoched file, need to write the bad
     % segments back to the original file for output
-    if continuous && arg.Results.badtimes
+    if continuous && options.badtimes
         % Initialize output MEEG
         D_out = D_original;
 
