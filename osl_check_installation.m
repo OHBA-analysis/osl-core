@@ -76,6 +76,23 @@ function osl_check_installation(do_log,test_fslview)
     	end
     end
 
+    input_mask = fullfile(osldir,'std_masks','MNI152_T1_8mm_brain.nii.gz');
+
+    section('NIFTI tools');
+    try
+    	[a,b,c] = nii.load(input_mask);
+    	log('PASS - nii.load')
+    catch ME
+    	log(sprintf('FAIL - nii.load\n%s',ME.message));
+    end
+
+    try
+    	nii.save(a,b,c,'test.nii.gz');
+    	log('PASS - nii.save')
+    catch ME
+    	log(sprintf('FAIL - nii.save\n%s',ME.message));
+    end
+
 	% Check that FSL is installed
 	section('FSL');
 	fsldir = getenv('FSLDIR');
@@ -104,21 +121,12 @@ function osl_check_installation(do_log,test_fslview)
 		log(sprintf('FAIL - fslval\n%s',ME.message));
 	end
 
-	input_mask = fullfile(osldir,'std_masks','MNI152_T1_8mm_brain.nii.gz');
-
 	try
 		runcmd('fslmaths %s -thr 100 osl_fslmaths_test.nii.gz',input_mask);
 		log('PASS - fslmaths')
 		delete('osl_fslmaths_test.nii.gz')
 	catch ME
 		log(sprintf('FAIL - fslmaths\n%s',ME.message));
-	end
-
-	try
-		m = nii.load(input_mask);
-		log('PASS - nii.load')
-	catch ME
-		log(sprintf('FAIL - nii.load\n%s',ME.message));
 	end
 
 	if test_fslview
@@ -158,7 +166,45 @@ function osl_check_installation(do_log,test_fslview)
 		log_error('Error testing ft_getopt',ME)
 	end
 
-	% Check if any mex things are required
+	section('Folder permissions')
+
+	try
+		[~,a]=fileattrib(spm('dir'));
+		if a.UserWrite == 1
+			log('PASS - SPMDIR is writable');
+		else
+			log(sprintf('FAIL - cannot write to SPMDIR %s',spm('dir')));
+		end
+	catch ME
+		log_error('Error testing SPMDIR write attribute',ME)
+	end
+
+	try
+		[~,a]=fileattrib(fullfile(osldir,'osl.conf'));
+		if a.UserWrite == 1
+			log('PASS - osl.conf is writable');
+		else
+			log('FAIL - cannot write to osl.conf');
+		end
+	catch ME
+		log_error('Error testing osl.conf write attribute',ME)
+	end
+
+	section('MAC OS XQUARTZ');
+	if ~ismac
+		log('PASS - Not required on this system');
+	else
+		try
+			if exist('/Applications/Utilities/XQuartz.app','dir')
+				log('PASS - XQuartz present');
+			else
+				log('FAIL - Expected /Applications/Utilities/XQuartz.app to exist');
+			end
+		catch ME
+			log_error('Error checking XQuartz',ME)
+		end
+	end
+
 	if do_log
 		diary off
 	end
