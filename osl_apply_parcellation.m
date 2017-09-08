@@ -28,8 +28,6 @@ function [D,parcellation,assignments,mni_coords] = osl_apply_parcellation(S)
 %                 voting
 % mni_coords    - mni_coords of centres of parcels
 
-OSLDIR = getenv('OSLDIR');
-
 % Check SPM File Specification:
 try
     if isa(S.D,'meeg')
