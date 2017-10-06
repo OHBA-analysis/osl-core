@@ -14,6 +14,12 @@ function [S,F,T] = osl_plotspectrogram(Sin)
 %
 % AB & MWW 2016
 
+if isobject(Sin)
+    D=Sin;
+    Sin=[];
+    Sin.D=D;
+end
+
 try D=Sin.D; catch error('Must specify S.D'); end
 try Sin.do_plot=Sin.do_plot; catch Sin.do_plot=true; end
 try D.fsample; catch D=spm_eeg_load(D); end
@@ -21,7 +27,7 @@ try chantype=Sin.chantype; catch chantype='MEGGRAD'; end
 try chaninds=Sin.chaninds; catch chaninds=1:D.nchannels; end
 try cut_badsegments=Sin.cut_badsegments; catch cut_badsegments=0; end
 
-
+    
 if D.ntrials>1
     error('Only works on continuous data')
 end
