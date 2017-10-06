@@ -59,7 +59,7 @@ try
     maskfname=S.maskfname;
 catch ME
     display(ME.message);
-    maskfname=[OSLDIR '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz'];                
+    maskfname=[osldir '/std_masks/MNI152_T1_' num2str(getmasksize(D.nchannels)) 'mm_brain.nii.gz'];                
 end
 
 if isfield(S,'hcp_sourcemodel3d') && ~isempty(S.hcp_sourcemodel3d)
@@ -84,6 +84,12 @@ else
         otherwise
             error('Unrecognized parcellation');
     end
+end
+
+try 
+    innovations_mar_order=S.innovations_mar_order;
+catch
+    innovations_mar_order=12;
 end
 
 if size(parcellation,2) == 1
@@ -116,7 +122,12 @@ if D.ntrials == 1 % can just pass in the MEEG object
     % Get time-coursess
     nodedata = ROInets.get_node_tcs(voxeldata(:,good_samples), parcellation, S.method);
     if ~strcmp(S.orthogonalisation,'none')
-        nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
+        
+        if ~strcmp(S.orthogonalisation, 'innovations_mar')
+            nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
+        else            
+            nodedata = leakcorr(nodedata',size(nodedata,2),innovations_mar_order)';
+        end
     end
 
     data = zeros(size(nodedata,1),length(good_samples));
@@ -129,7 +140,13 @@ elseif isa(D,'meeg') % work with D object in get_node_tcs
     nodedata = ROInets.get_node_tcs(D,parcellation,S.method);
     nodedata = reshape(nodedata(:,:,:),size(nodedata,1),[]);
     if ~strcmp(S.orthogonalisation,'none')
-        nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
+        if ~strcmp(S.orthogonalisation, 'innovations_mar')
+            nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
+        else            
+            nodedata = leakcorr(nodedata',size(nodedata,2),innovations_mar_order)';
+        end
+                  
+        
     end
     data = nodedata;
     data = reshape(data,size(data,1),size(D,2),size(D,3));
@@ -150,7 +167,11 @@ else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG d
                 voxeldata = D(:,:,idx);
                 nodedata(:,:,idx) = ROInets.get_node_tcs(voxeldata, parcellation, S.method,0);
                 if ~strcmp(S.orthogonalisation,'none')
-                    nodedata(:,:,idx) = ROInets.remove_source_leakage(nodedata(:,:,idx), S.orthogonalisation,0);
+                    if ~strcmp(S.orthogonalisation, 'innovations_mar')
+                        nodedata = ROInets.remove_source_leakage(nodedata,S.orthogonalisation);
+                    else            
+                        nodedata(:,:,idx) = leakcorr(nodedata(:,:,idx)',size(nodedata,2),innovations_mar_order)';
+                    end
                 end
             catch,
                 % This trial is probably low rank, ignore it
