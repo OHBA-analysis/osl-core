@@ -488,15 +488,21 @@ for subi=1:length(opt.sessions_to_do),
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  MAINS FILT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
-            S3              = [];
-            S3.D            = spm_file;
-            S3.type          = 'butterworth';
-            S3.freq         = [48 52];
-            S3.band         = 'stop';
-            S3.dir          = 'twopass';
-            S3.order        = 5;
-            D = spm_eeg_filter(S3);
-
+                       
+            D = spm_eeg_load(spm_file); 
+            
+            if D.fsample>100           
+                D = osl_filter(D,-1*(50+[-2 2])); % Remove 50Hz with notch filter
+            else
+                warning('Unable to do mains notch filtering at 50Hz, as D.fsample is not >100Hz');
+            end
+            
+            if D.fsample>200            
+                D = osl_filter(D,-1*(100+[-2 2])); % Remove 100Hz with notch filter
+            else
+                disp('Unable to do mains notch filtering at 100Hz, as D.fsample is not >200Hz');            
+            end
+            
             % delete obsolete spm file
             spm_file_old=[opt.dirname filesep spm_files_basenames{subnum}];
             Dold=spm_eeg_load(spm_file_old);
@@ -506,7 +512,6 @@ for subi=1:length(opt.sessions_to_do),
 
             spm_files_basenames{subnum}=['f' spm_files_basenames{subnum}];
         end
-
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Perform AfRICA - ICA denoising
