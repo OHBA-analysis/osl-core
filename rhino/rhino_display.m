@@ -108,7 +108,10 @@ if nargin < 4
   if isempty(ax) || ax==0,
     error(message('MATLAB:rotate:InvalidHandle'));
   end
-  matlab.ui.internal.UnsupportedInUifigure(ancestor(ax,'figure'));
+  
+  % MWW 6/10/17. Commented this out as it is not a recognised class!:
+  %matlab.ui.internal.UnsupportedInUifigure(ancestor(ax,'figure'));
+  
   origin = sum([get(ax,'xlim')' get(ax,'ylim')' get(ax,'zlim')'])/2;
 end
 
