@@ -19,11 +19,11 @@ function [D,figs,S] = osl_africa(D,varargin)
     arg.addParameter('do_ica',~isfield(D,'ica')); % Do ICA decomposition step
     arg.addParameter('do_ident',true); % Do identification step
     arg.addParameter('do_remove',true); % Do removal step
-    arg.addParameter('artefact_channels',{}); % Passed to ident_func
+    arg.addParameter('artefact_channels',{},@iscell); % Passed to ident_func
     arg.addParameter('ident_func',@identify_artefactual_components_manual);
-    arg.addParameter('ident_params',struct); % Extra parameters for ident_func
+    arg.addParameter('ident_params',struct,@isstruct); % Extra parameters for ident_func
     arg.addParameter('used_maxfilter',false); % Reduce ICA dimension if maxfilter was used, 
-    arg.addParameter('ica_params',struct); % ICA parameters passed to run_sensorspace_ica
+    arg.addParameter('ica_params',struct,@isstruct); % ICA parameters passed to run_sensorspace_ica
     arg.parse(varargin{:});
     S = arg.Results; % Result of parsing arguments is essentially the settings struct
 

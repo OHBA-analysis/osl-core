@@ -42,7 +42,7 @@ function D = osl_detect_artefacts(D,varargin)
     % MWW 2013
 
     arg = inputParser;
-    arg.addParameter('modalities',[]); 
+    arg.addParameter('modalities',{},@iscell); 
     arg.addParameter('max_iter',3);
     arg.addParameter('max_bad_channels',10); % Maximum number of bad channels to identify at this stage 
     arg.addParameter('badchannels',true); % Check for bad channels
