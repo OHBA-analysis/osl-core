@@ -91,26 +91,16 @@ material dull % Improve visibility of the brain by reducing reflection glare
 
 % Make the head upright
 %Currently DOES NOT rotate the scatter objects
-c = get(ha,'Children');
-local_rotate(c,[0 1 0],-35)
+hc = get(ha,'Children');
+local_rotate(ha,hc,[0 1 0],-35)
 
 end
 
-function local_rotate(h,azel,alpha,origin)
+function local_rotate(ax,h,azel,alpha)
 %% Patched version of 'rotate' from Matlab
 
-% Determine the default origin (center of plot box).
-if nargin < 4
-  if ~ishghandle(h)
-    error(message('MATLAB:rotate:InvalidHandle'));
-  end
-  ax = ancestor(h(1),'axes');
-  if isempty(ax) || ax==0,
-    error(message('MATLAB:rotate:InvalidHandle'));
-  end
-  matlab.ui.internal.UnsupportedInUifigure(ancestor(ax,'figure'));
-  origin = sum([get(ax,'xlim')' get(ax,'ylim')' get(ax,'zlim')'])/2;
-end
+% Determine the origin (center of plot box).
+origin = sum([get(ax,'xlim')' get(ax,'ylim')' get(ax,'zlim')'])/2;
 
 % find unit vector for axis of rotation
 if numel(azel) == 2 % theta, phi
