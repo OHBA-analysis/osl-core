@@ -36,6 +36,12 @@ function [HMMresults,statemaps] = teh_groupinference_parcels(data_files,options)
 %                          .embed.centre_freq - centre freq of interest (Hz), used to set the time span of the time embedding 
 %                                               (default is 15Hz)
 %                                               (default is 0)
+%                          .embed.num_embeddings - number of lags for
+%                                                   embeddings, can be set
+%                                                   instead of embed.centre_freq
+%                                               (default is 15Hz)
+%                                               (default is 0)
+
 %                          .filename      - filename to save/load concatenated data from
 %                                           (default <hmmdir>/env_concat.mat)
 %                          .savePCmaps    - save PCA maps [0/1] (default 0)
@@ -146,7 +152,14 @@ logtrans=0;
 
 embed=[];
 try embed.do      = options.prepare.embed.do; catch, embed.do  = 0; end
-try embed.centre_freq = options.prepare.embed.centre_freq; catch, embed.centre_freq  = 15; end %Hz
+try embed.centre_freq = options.prepare.embed.centre_freq; 
+catch 
+    try embed.num_embeddings = options.prepare.embed.num_embeddings; 
+    catch 
+        embed.num_embeddings  = 10; 
+    end %Hz 
+end 
+
 try embed.rectify = options.prepare.embed.rectify; catch, embed.rectify  = false; end %Hz
 
 % Default HMM settings
@@ -307,7 +320,9 @@ if todo.prepare
     %save(filenames.concat,'hmmdata','MixingMatrix','fsample','subj_inds','-v7.3');   
     save(filenames.prepare,'lags','M','C','hmmT','hmmdata','fsample','subj_inds','-v7.3');   
     save(filenames.prepared_data,'X','-v7.3');
-        
+      
+    hmm.subj_inds=subj_inds;
+
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -320,8 +335,9 @@ if todo.hmm
            
     % load in what's needed
     if ~todo.prepare
-        load(filenames.prepare,'hmmT','hmmdata','fsample','subj_inds');  
-        load(filenames.prepared_data,'X');  
+        load(filenames.prepared_data,'X'); 
+        load(filenames.prepare,'subj_inds');  
+        hmm.subj_inds=subj_inds;
     end
     
     % setup default options for hmm
@@ -342,7 +358,6 @@ if todo.hmm
         options.BIGdelay = 5; 
         options.BIGforgetrate = 0.7;
         options.BIGbase_weights = 0.9;
-        options.BIGuniqueTrans = 1;
     end
     
     % copy passed in hmmoptions over default options 
@@ -350,10 +365,12 @@ if todo.hmm
     for fi=1:numel(fn)
         options.(fn{fi}) = hmmoptions.(fn{fi});
     end
+    
     % remove options not used by hmmmar call
     options=rmfield(options,'big');
+    options=rmfield(options, 'filename');
     if ~hmmoptions.big && isfield(options,'BIGNbatch')
-        options=rmfield(options,'BIGNbatch');        
+        options=rmfield(options,'BIGNbatch');    
     end    
     
     % call hmmmar
@@ -383,6 +400,7 @@ if todo.hmm
     %end;
     
     % Save results
+    
     disp(['Saving inferred HMM to ' filenames.hmm])    
     save(filenames.hmm,'hmm');
    
@@ -398,12 +416,13 @@ if todo.output
     
     % load in what's needed
     if ~todo.prepare
-        load(filenames.prepare);  
+        load(filenames.prepare); 
+        hmm.subj_inds=subj_inds;
     end
     if ~todo.hmm
         load(filenames.hmm);
     end
-
+   
     switch output_method
         case {'pcorr','conn'}
             
