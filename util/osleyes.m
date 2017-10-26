@@ -22,6 +22,14 @@ classdef osleyes < handle
 
 	% Properties controlling the GUI that users can interact with
 	properties
+		% layer = struct() % Struct array with layer data
+		% layer.volume
+		% layer.clim
+		% layer.colormap
+		% layer.label 
+		% layer.visible
+		% layer.alpha 
+
 		clims = {}; % Values below this range are transparent, values above are clipped
 		colormaps= {}; % Can be name of a colormap function on the path
 		current_point = [1 1 1]; % These are the XYZ MNI coordinates for the crosshair
@@ -42,7 +50,7 @@ classdef osleyes < handle
 	% Read-only properties the user might want to use in their code
 	properties(SetAccess=protected)
 		fig % Handle to the main figure window bound to the object
-		niifiles = {} % Cell array of filenames for each layer
+		images = {} % Input image data - file name, matrix, or struct
 	end
 
 	properties(GetAccess=private,SetAccess=private)
@@ -67,7 +75,7 @@ classdef osleyes < handle
 		ts_bar  % Handle to marker bar in timeseries plot
 		ts_warning % Text object saying only one volume present
 
-		colormap_matrices = {}; % Cached colormaps
+		colormap_matrices = {}; % Cached colormaps - could be at higher resolution than input colormap
 		under_construction = true; % Don't render anything while this is true
 		motion_active = 0; % If this flag is true, then the slices will be updated when the mouse is moved
 
@@ -75,33 +83,69 @@ classdef osleyes < handle
 
 	methods
 
-		function self = osleyes(niifiles,varargin)
-			% niifiles is a file name or cell array of file names
+		function self = osleyes(images,varargin)
+			% Constructor for osleyes
+			% 
+			% INPUTS
+			%
+			% - images : specify input images. These can be in one of 4 formats
+			%
+			% 	- A file name e.g. "myfile.nii.gz". A standard brain will
+			% 	  automatically be guessed
+			%	- A cell array of file names e.g.
+			%	  {"layer1.nii.gz","layer2.nii.gz"}. If the first entry is
+			%	  empty, then a standard mask/brain image will automatically
+			%	  be guessed.
+			%	- A matrix can be used instead of strings to specify
+			%	  an image. In this case, the size of the matrix will be used
+			%	  to guess the standard mask. If no mask is found, an error
+			%	  will be raised. The matrix will automatically be reshaped if possible
+			% 	- A struct can be used instead of strings, containing fields
+			% 	  'img' and 'xform'. Can optionally also contain 'label'
+			%
+			% 	This aims to provide a high degree of flexibility. For example, you could use
+			% 	
+			%	osleyes({[],'myfile.nii.gz',x,struct('img',y,'xform',y_xform)})
+			% 	
+			%	to mix all possible input types. Note that if you want to display an image
+			% *without* a standard brain being automatically included, you need to input a
+			% cell array e.g.
+			%
+			%	osleyes({[],'myfile.nii.gz'}) - display with standard brain as first layer
+			%	osleyes('myfile.nii.gz') - exactly equivalent to above command
+			%	osleyes({'myfile.nii.gz'}) - display only included file, no standard brain
+			%
+			% - varargin : This is a set of key-value pair
+			%   pairs that are assigned to the object after
+			%   construction. For example osleyes('myfile','clims',{[],[1 1]})
+			%
+			% OUTPUTS
+			% - instance of osleyes class
+			%
+			% images is a file name or cell array of file names
 			% If it's a cell array with an empty first element, then the mask
 			% will be automatically guessed
-			% Options is a set of key-value pairs that are assigned to the object
-			% after construction. For example
-			% osleyes('myfile','clims',{[],[1 1]})
-			% These must include values for the standard mask (but they can
-			% be left empty as shown above)
+			%   These must include values for the standard mask (but they can
+			%   be left empty as shown above)
 
-			if nargin < 1 || isempty(niifiles) 
-				niifiles = {fullfile(osldir,'std_masks/MNI152_T1_2mm_brain.nii.gz')};
+
+			if nargin < 1 || isempty(images) 
+				images = {fullfile(osldir,'std_masks/MNI152_T1_2mm_brain.nii.gz')};
             end
 			
-            if ~iscell(niifiles)
-                niifiles = {[],niifiles};
+            if ~iscell(images)
+                images = {[],images};
             end
 
-            if isempty(niifiles{1});
-            	vol = nii.load(niifiles{2});
+            if isempty(images{1});
+            	vol = load_image(images{2});
             	try
-            		[~,niifiles{1},~] = parcellation.guess_template(vol);
+            		[~,images{1},~] = parcellation.guess_template(vol);
             	catch ME
             		switch ME.identifier
             			case 'osl:parcellation:no_matching_mask'
             				fprintf(2,'Warning - No matching standard brain mask was found\n');
-            				niifiles = niifiles(2:end);
+            				images = images(2:end);
             			otherwise
             				rethrow(ME)
             		end
@@ -114,14 +158,13 @@ classdef osleyes < handle
 			addprop(self.fig,'osleyes');
 			set(self.fig,'osleyes',self); % Store handle to this osleyes in the figure so it can be retrieved later if desired
 
-			self.niifiles = niifiles;
+			self.images = images;
 			self.controls.image_list.String = {};
 
-			for j = 1:length(self.niifiles)
-				[self.img{j},~,self.xform{j}] = nii.load(self.niifiles{j});
-				self.img{j} = double(self.img{j});
-				[~,fname,ext] = fileparts(self.niifiles{j});
-				self.controls.image_list.String{j} = [fname '.' ext];
+
+			for j = 1:length(self.images)
+
+				[self.img{j},self.xform{j},self.controls.image_list.String{j}] = load_image(self.images{j});
 				self.coord{j} = get_coords(self.img{j},self.xform{j});
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img{j}(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img{j}(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
@@ -167,7 +210,7 @@ classdef osleyes < handle
 			self.resize()
 			self.under_construction = false; % Enable rendering
 			self.refresh_colors();
-			self.active_layer = length(self.niifiles);
+			self.active_layer = length(self.images);
 
 			% Set options
 			arg = inputParser;
@@ -283,7 +326,7 @@ classdef osleyes < handle
 
 		function v = set.active_layer(self,val)
 			assert(val > 0,'Layer must be positive');
-			assert(val <= length(self.niifiles),'Layer number cannot exceed number of layers');
+			assert(val <= length(self.images),'Layer number cannot exceed number of layers');
 			assert(val == round(val),'Layer must be an integer');
 
 			self.active_layer = val;
@@ -332,7 +375,7 @@ classdef osleyes < handle
 				return;
 			end
 
-			assert(isvector(val) && length(val) == length(self.niifiles));
+			assert(isvector(val) && length(val) == length(self.images));
 
 			for j = 1:length(val)
 				assert(val(j)>0 && val(j) <= size(self.img{j},4),'Volume index out of bounds');
@@ -790,4 +833,49 @@ function KeyPressFcn(self,~,KeyData)
 		case 'downarrow'
 			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer)-2,self.nvols);
 	end
+end
+
+function [img,xform,name] = load_image(x)
+	% Load an input image
+    % If name is not provided, it will be empty
+    % This function is guaranteed to produce sensible outputs except
+    % if the input image is a 2D matrix whose row count does not match
+    % any standard mask - in which case, turning into a 3D matrix 
+    % is impossible and a hard error will be thrown
+	name = '';
+
+	if ischar(x) || isstring(x)
+		[img,~,xform] = nii.load(x);
+		[~,fname,ext] = fileparts(x);
+		name = [fname '.' ext];
+	elseif isstruct(x)
+		img = x.img;
+		xform = x.xform;
+		if isfield(x,'name')
+			name = x.name;
+		end
+	else
+		try % Try to guess template
+			[~,mask_fname] = parcellation.guess_template(x);
+			[mask,~,xform] = nii.load(mask_fname);
+			if ndims(x) < 3 % Can only reshape if we successfully guessed the template
+				img = matrix2vols(x,mask);
+            else
+                img = x;
+			end
+			fprintf(2,'Guessing template: %s\n',mask_fname);
+		catch ME
+			switch ME.identifier
+				case 'osl:parcellation:no_matching_mask'
+					fprintf(2,'No matching mask found - could not guess xform!\n')
+					xform = eye(4);
+				otherwise
+					rethrow(ME)
+            end
+            img = x;
+		end
+
+		assert(ndims(img)>=3,'Input image must be a 3D or 4D matrix, or have the same number of rows as a standard mask')
+	end
+	img = double(img);
 end
