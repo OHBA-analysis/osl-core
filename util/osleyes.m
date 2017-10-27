@@ -22,23 +22,11 @@ classdef osleyes < handle
 
 	% Properties controlling the GUI that users can interact with
 	properties
-		% layer = struct() % Struct array with layer data
-		% layer.volume
-		% layer.clim
-		% layer.colormap
-		% layer.label 
-		% layer.visible
-		% layer.alpha 
-
-		clims = {}; % Values below this range are transparent, values above are clipped
-		colormaps= {}; % Can be name of a colormap function on the path
+		layer = struct() % Struct array with layer properties - colormap, clim, alpha, name, visible, volume
 		current_point = [1 1 1]; % These are the XYZ MNI coordinates for the crosshair
-		current_vols = []; % This is an array that specifies which volume is being displayed for each layer
-		visible = logical(1); % This is an array that is true/false for whether a layer is visible or not
 		active_layer = 1; % The active layer controls which layer's properties are shown in the control panel and the colorbars
 		show_controls = 1;
 		show_crosshair = 1;
-		layer_alpha = []; % Transparency of each layer
 		title = ''; % String of title for plot
 	end
 
@@ -116,18 +104,11 @@ classdef osleyes < handle
 			%	osleyes({'myfile.nii.gz'}) - display only included file, no standard brain
 			%
 			% - varargin : This is a set of key-value pair
-			%   pairs that are assigned to the object after
+			%   pairs that are assigned to the layer properties or object after
 			%   construction. For example osleyes('myfile','clims',{[],[1 1]})
 			%
 			% OUTPUTS
 			% - instance of osleyes class
-			%
-			% images is a file name or cell array of file names
-			% If it's a cell array with an empty first element, then the mask
-			% will be automatically guessed
-			%   These must include values for the standard mask (but they can
-			%   be left empty as shown above)
-
 
 			if nargin < 1 || isempty(images) 
 				images = {fullfile(osldir,'std_masks/MNI152_T1_2mm_brain.nii.gz')};
@@ -161,28 +142,31 @@ classdef osleyes < handle
 			self.images = images;
 			self.controls.image_list.String = {};
 
-
 			for j = 1:length(self.images)
 
-				[self.img{j},self.xform{j},self.controls.image_list.String{j}] = load_image(self.images{j});
+				[self.img{j},self.xform{j},self.layer(j).name] = load_image(self.images{j});
 				self.coord{j} = get_coords(self.img{j},self.xform{j});
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img{j}(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img{j}(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.img{j}(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				
-				self.clims{j} = [0,max(self.img{j}(:))]; % Default color range
+				self.layer(j).clim = [0,max(self.img{j}(:))]; % Default color range
 
 				if min(self.img{j}(:)) < 0
-					self.colormaps{j} = {osl_colormap('hot'),osl_colormap('cold')};
+					self.layer(j).colormap = {osl_colormap('hot'),osl_colormap('cold')};
 				elseif j == 1
-					self.colormaps{j} = osl_colormap('grey');
+					self.layer(j).colormap = osl_colormap('grey');
 				else
-					self.colormaps{j} = osl_colormap('hot');
+					self.layer(j).colormap = osl_colormap('hot');
 				end
 
-				self.current_vols(j) = 1;
-				self.visible(j) = 1;
-				self.layer_alpha(j) = 1;
+				if isempty(self.layer(j).name)
+					self.layer(j).name = sprintf('Image %d',j);
+				end
+
+				self.layer(j).volume = 1;
+				self.layer(j).visible = 1;
+				self.layer(j).alpha = 1;
 			end
 
 			self.lims(1,:) = [min(cellfun(@(x) min(x.x),self.coord)) max(cellfun(@(x) max(x.x),self.coord))];
@@ -209,8 +193,7 @@ classdef osleyes < handle
 
 			self.resize()
 			self.under_construction = false; % Enable rendering
-			self.refresh_colors();
-			self.active_layer = length(self.images);
+			self.active_layer = length(self.images); % Triggers re-rendering
 
 			% Set options
 			arg = inputParser;
@@ -218,7 +201,21 @@ classdef osleyes < handle
 			arg.parse(varargin{:});
 			f = fields(arg.Unmatched);
 			for j = 1:length(f)
-				self.(f{j}) = arg.Unmatched.(f{j});
+				if ismember(f{j},fieldnames(self.layer))
+					for k = 1:length(self.layer)
+						if iscell(arg.Unmatched.(f{j}))
+							if ~isempty(arg.Unmatched.(f{j}){k})
+								self.layer(k).(f{j}) = arg.Unmatched.(f{j}){k};
+							end
+						else
+							if isfinite(arg.Unmatched.(f{j})(k)) 
+								self.layer(k).(f{j}) = arg.Unmatched.(f{j})(k);
+							end
+						end
+					end
+				else
+					self.(f{j}) = arg.Unmatched.(f{j});
+				end
 			end
 		end
 
@@ -239,7 +236,7 @@ classdef osleyes < handle
 			end
 
 			while 1
-				self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer),self.nvols);
+				self.layer(self.active_layer).volume = 1+mod(self.layer(self.active_layer).volume,self.nvols);
 				pause(1/fps);
 			end
 		end
@@ -261,52 +258,68 @@ classdef osleyes < handle
 			self.ts_line = plot(self.ts_ax,1,1,'HitTest','off');
 			hold(self.ts_ax,'on')
 			self.ts_bar = plot(self.ts_ax,1,1,'r','HitTest','off');
-			self.ts_warning = uicontrol(fig,'style','text','String','ONLY ONE VOLUME PRESENT IN ACTIVE LAYER','Units','normalized','Position',[0.25 0.25 0.5 0.5],'HitTest','off','FontSize',20);
+			self.ts_warning = uicontrol(fig,'style','text','String','ONLY ONE VOLUME PRESENT IN ACTIVE LAYER','Units','normalized','Position',[0.25 0.25 0.5 0.5],'HitTest','off','FontSize',20,'BackgroundColor','w');
 			set(self.ts_ax,'ButtonDownFcn',@(~,~) set_volume(self.ts_ax,self));
-			self.current_vols = self.current_vols; % Reset the data in h_bar via set.current_vols
+			self.active_layer = self.active_layer; % Reset the data in h_bar via set.current_vols
 
 		end
 
-		function set.colormaps(self,val)
+		function set.layer(self,val)
+			% Generic layer change function when clim, colormap, visible, alpha, vol are changed
+			% UPDATE HIERARCHY
+			% - active_layer (includes colormaps, so is slower) 
+			%	- refresh_slices (only re-renders the image, must be fast because called while dragging)
+
 			if self.under_construction
-				self.colormaps = val;
-				return;
+				self.layer = val;
+				return
 			end
 
-			cmaps_original = self.colormaps;
-			assert(iscell(val),'Colormaps should be a cell array')
-			assert(length(val) == length(self.img),'Number of colormaps must match number of images');
+			assert(length(val)==length(self.img),'Number of layer entries does not match number of images')
+			assert(isempty(setdiff(fieldnames(val),fieldnames(self.layer))),'New layer fields do not match - fields must be: %s', cell2mat(cellfun(@(x) [x,', '],fieldnames(self.layer),'UniformOutput',false)'));
+
+			colors_required = false; % Flag to check if we need to recompute colormaps
 			for j = 1:length(val)
-				if isempty(val{j})
-					val{j} = cmaps_original{j};
-				elseif iscell(val{j})
-					assert(length(val{j})==2,'Colormap must either be a value or a cell array of length 2');
-				end
-			end
-			self.colormaps = val;
-			self.refresh_colors;
-		end
 
-		function set.clims(self,val)
-			if self.under_construction
-				self.clims = val;
-				return;
-			end
-
-			clims_original = self.clims;
-			assert(iscell(val),'clims should be a cell array')
-			assert(length(val) == length(self.img),'Number of clims must match number of images');
-			for j = 1:length(self.colormaps)
-				if isempty(val{j})
-					val{j} = clims_original{j};
+				% Check colormaps
+                assert(~iscell(val(j).colormap) || (iscell(val(j).colormap) && length(val(j).colormap)==2),'Colormap must either be a value or a cell array of length 2');
+                if ~strcmp(class(val(j).colormap),class(self.layer(j).colormap))
+                    colors_required = true;
+                elseif iscell(val(j).colormap)
+					colors_required = colors_required || any(size(val(j).colormap{1})~=size(self.layer(j).colormap{1})) || any(size(val(j).colormap{2})~=size(self.layer(j).colormap{2})) || any(val(j).colormap{1}(:)~=self.layer(j).colormap{1}(:)) || any(val(j).colormap{2}(:)~=self.layer(j).colormap{2}(:));
 				else
-					assert(length(val{j})==2,'Colour limits must have two elements')
-					assert(val{j}(2)>=val{j}(1),'Colour limits must be in ascending order')
+					colors_required = colors_required || any(size(val(j).colormap)~=size(self.layer(j).colormap)) || any(val(j).colormap(:)~=self.layer(j).colormap(:));
 				end
+
+				% Check clims
+				assert(length(val(j).clim)==2,'Colour limits must have two elements')
+				assert(val(j).clim(2)>=val(j).clim(1),'Colour limits must be in ascending order')
+				colors_required = colors_required || any(val(j).clim(:)~=self.layer(j).clim(:));
+
+				% Check alpha
+				assert(isscalar(val(j).alpha) && isnumeric(val(j).alpha) && isfinite(val(j).alpha))
+				assert(val(j).alpha>=0 && val(j).alpha<=1)
+
+				% Check volume indices
+				assert(isscalar(val(j).volume) && isnumeric(val(j).volume) && isfinite(val(j).volume))
+				assert(val(j).volume>0 && val(j).volume <= size(self.img{j},4),'Volume index out of bounds');
+
+				% Check name
+				assert(ischar(val(j).name) || isstring(val(j).name))
+				colors_required = colors_required || ~strcmp(val(j).name,self.layer(j).name);
+
+				% Check visible
+				assert(isscalar(val(j).visible))
 			end
-			self.clims = val;
-			self.refresh_colors;
-			self.active_layer = self.active_layer; % Update the text boxes and colorbar limits
+
+			self.layer = val;
+
+			if colors_required
+				self.active_layer = self.active_layer;
+			else
+				self.refresh_slices();
+			end
+
 		end
 
 		function set.current_point(self,val)
@@ -325,33 +338,39 @@ classdef osleyes < handle
 		end
 
 		function v = set.active_layer(self,val)
+			% Refresh the UI - called also via set.layer()
 			assert(val > 0,'Layer must be positive');
 			assert(val <= length(self.images),'Layer number cannot exceed number of layers');
 			assert(val == round(val),'Layer must be an integer');
 
+			% Refresh the colormaps
+			for j = 1:length(self.layer)
+				self.colormap_matrices{j} = self.compute_color_matrix(self.layer(j).colormap);
+			end
+
 			self.active_layer = val;
-			set(self.controls.image_list,'Value',val)
-			set(self.controls.clim(1),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(1)));
-			set(self.controls.clim(2),'String',sprintf('%g',self.clims{get(self.controls.image_list,'Value')}(2)));
-			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
+			set(self.controls.image_list,'Value',val,'String',{self.layer.name})
+			set(self.controls.clim(1),'String',sprintf('%g',self.layer(self.active_layer).clim(1)));
+			set(self.controls.clim(2),'String',sprintf('%g',self.layer(self.active_layer).clim(2)));
+			set(self.controls.volume,'String',sprintf('%d',self.layer(self.active_layer).volume));
 			set(self.controls.volume_label_count,'String',sprintf('of %d',self.nvols));
 
-			set(self.controls.visible,'Value',self.visible(self.active_layer));
+			set(self.controls.visible,'Value',self.layer(self.active_layer).visible);
 
 			tickstrs = @(low,high,n) arrayfun(@(x) sprintf('%.2g',x),linspace(low,high,n),'UniformOutput',false);
 
-			if iscell(self.colormaps{self.active_layer})
+			if iscell(self.layer(self.active_layer).colormap)
 				set(self.h_coloraxes(1),'Visible','on');
 				set(self.h_colorimage(1),'Visible','on');
 				set(self.h_colorimage(2),'CData',permute(self.colormap_matrices{self.active_layer}{1},[1 3 2]));
 				set(self.h_colorimage(1),'CData',permute(self.colormap_matrices{self.active_layer}{2},[1 3 2]));
-				set(self.h_coloraxes(1),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(-self.clims{self.active_layer}(1),-self.clims{self.active_layer}(2),4))
-				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.clims{self.active_layer}(1),self.clims{self.active_layer}(2),4))
+				set(self.h_coloraxes(1),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(-self.layer(self.active_layer).clim(1),-self.layer(self.active_layer).clim(2),4))
+				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.layer(self.active_layer).clim(1),self.layer(self.active_layer).clim(2),4))
 			else
 				set(self.h_coloraxes(1),'Visible','off');
 				set(self.h_colorimage(1),'Visible','off');
 				set(self.h_colorimage(2),'CData',permute(self.colormap_matrices{self.active_layer},[1 3 2]));
-				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.clims{self.active_layer}(1),self.clims{self.active_layer}(2),4))
+				set(self.h_coloraxes(2),'YTick',linspace(0,1,4),'YTickLabel',tickstrs(self.layer(self.active_layer).clim(1),self.layer(self.active_layer).clim(2),4))
 			end
 
 			if self.nvols==1
@@ -369,38 +388,6 @@ classdef osleyes < handle
 			self.resize() % Resize the GUI in case the visibility of the title bar has changed
 		end
 
-		function set.current_vols(self,val)
-			if self.under_construction
-				self.current_vols = val;
-				return;
-			end
-
-			assert(isvector(val) && length(val) == length(self.images));
-
-			for j = 1:length(val)
-				assert(val(j)>0 && val(j) <= size(self.img{j},4),'Volume index out of bounds');
-			end
-
-			self.current_vols = val;
-			set(self.controls.volume,'String',sprintf('%d',self.current_vols(get(self.controls.image_list,'Value'))));
-			self.refresh_slices();
-
-			if ishandle(self.ts_bar)
-				set(self.ts_bar,'XData',[1 1]*self.current_vols(self.active_layer),'YData',get(get(self.ts_bar,'Parent'),'YLim'));
-			end
-
-		end
-
-		function set.visible(self,val)
-			self.visible = val;
-
-			if self.under_construction
-				return;
-			end
-
-			self.refresh_slices();
-		end
-
 		function set.show_controls(self,val)
 			self.show_controls = logical(val);
 			self.resize()
@@ -416,16 +403,6 @@ classdef osleyes < handle
 			self.refresh_slices()
 		end
 
-		function set.layer_alpha(self,val)
-			self.layer_alpha = val;
-
-			if self.under_construction
-				return;
-			end
-			
-			self.refresh_slices()
-		end
-
 		function n = get.nvols(self)
 			n = size(self.img{self.active_layer},4);
 		end
@@ -435,9 +412,8 @@ classdef osleyes < handle
 	methods(Access=private)
 
 		function refresh_slices(self)
-			% Update the slices
+			% Update the slices without re-rendering colour bars
 			% This will move the crosshairs, set the position markers, and change which slice is displayed
-			% It will not re-render the colour bars
 
 			p = self.current_point; % Current point in 3D
 
@@ -447,6 +423,7 @@ classdef osleyes < handle
 			set(self.controls.marker(1),'String',sprintf('X = %+06.1f',p(1)));
 			set(self.controls.marker(2),'String',sprintf('Y = %+06.1f',p(2)));
 			set(self.controls.marker(3),'String',sprintf('Z = %+06.1f',p(3)));
+			set(self.controls.volume,'String',sprintf('%d',self.layer(self.active_layer).volume));
 
 			% Now update each slice
 			for j = 1:length(self.img)
@@ -455,26 +432,25 @@ classdef osleyes < handle
 				[~,idx(3)] = min(abs(self.coord{j}.z-p(3)));
 
 				% These are the slice maps - need to convert them to color values now
-				d1 = permute(self.img{j}(idx(1),:,:,self.current_vols(j)),[2 3 1])';
-				d2 = permute(self.img{j}(:,idx(2),:,self.current_vols(j)),[1 3 2])';
-				d3 = permute(self.img{j}(:,:,idx(3),self.current_vols(j)),[1 2 3])';
+				d1 = permute(self.img{j}(idx(1),:,:,self.layer(j).volume),[2 3 1])';
+				d2 = permute(self.img{j}(:,idx(2),:,self.layer(j).volume),[1 3 2])';
+				d3 = permute(self.img{j}(:,:,idx(3),self.layer(j).volume),[1 2 3])';
 
 				if j == self.active_layer
-					set(self.controls.marker(4),'String',sprintf('Value = %+ 7.2f',self.img{j}(idx(1),idx(2),idx(3),self.current_vols(j))));
+					set(self.controls.marker(4),'String',sprintf('Value = %+ 7.2f',self.img{j}(idx(1),idx(2),idx(3),self.layer(j).volume)));
                 end
 
-
                 % If bidirectional colormap, then hide abs(x)<clim(1), otherwise hide x<clim(1)
-                if iscell(self.colormaps{j})
+                if iscell(self.layer(j).colormap)
                 	hidefcn = @abs; 
                 else
                 	hidefcn = @(x) x;
                 end
 
-                if self.visible(j)
-					set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.clims{j}),'AlphaData',self.layer_alpha(j)*+(hidefcn(d1)>self.clims{j}(1)));
-					set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.clims{j}),'AlphaData',self.layer_alpha(j)*+(hidefcn(d2)>self.clims{j}(1)));
-					set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.clims{j}),'AlphaData',self.layer_alpha(j)*+(hidefcn(d3)>self.clims{j}(1)));
+                if self.layer(j).visible
+					set(self.h_img{j}(1),'Visible','on','CData',map_colors(d1,self.colormap_matrices{j},self.layer(j).clim),'AlphaData',self.layer(j).alpha*+(hidefcn(d1)>self.layer(j).clim(1)));
+					set(self.h_img{j}(2),'Visible','on','CData',map_colors(d2,self.colormap_matrices{j},self.layer(j).clim),'AlphaData',self.layer(j).alpha*+(hidefcn(d2)>self.layer(j).clim(1)));
+					set(self.h_img{j}(3),'Visible','on','CData',map_colors(d3,self.colormap_matrices{j},self.layer(j).clim),'AlphaData',self.layer(j).alpha*+(hidefcn(d3)>self.layer(j).clim(1)));
 				else
 					set(self.h_img{j}(1),'Visible','off');
 					set(self.h_img{j}(2),'Visible','off');
@@ -489,24 +465,15 @@ classdef osleyes < handle
 				set(self.ts_line,'XData',1:self.nvols,'YData',squeeze(self.img{self.active_layer}(idx(1),idx(2),idx(3),:)));
 				title(get(self.ts_line,'Parent'),sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)),'Interpreter','none')
 				set(self.ts_ax,'YLim',[min(self.img{self.active_layer}(:)) max(self.img{self.active_layer}(:)) ]);
+				set(self.ts_bar,'XData',[1 1]*self.layer(self.active_layer).volume,'YData',get(get(self.ts_bar,'Parent'),'YLim'));
 				if self.nvols==1
 					set(self.ts_warning,'Visible','on');
+					set(self.ts_bar,'Visible','off')
 				else
 					set(self.ts_warning,'Visible','off');
+					set(self.ts_bar,'Visible','on')
 				end
 			end
-		end
-
-		function refresh_colors(self)
-			% Turn the colormap strings into colormap matrices
-			% Called if clims or colormap is changed
-			for j = 1:length(self.colormaps)
-				self.colormap_matrices{j} = self.compute_color_matrix(self.colormaps{j});
-			end
-
-			% Setting the value here causes the image to be refreshed with the new colour maps
-			% active_layer is changed because the colour bars also need to be refreshed
-			self.active_layer = self.active_layer;
 		end
 
 		function activate_motion(self)	
@@ -617,7 +584,7 @@ classdef osleyes < handle
 			set(self.ax(3),'Position',[p+w+p+p+w+p+p control_height w ax_height]);
 			set(self.controls.panel,'Position',[0 0 figpos(3) control_height]);
 
-			if iscell(self.colormaps{self.active_layer})
+			if iscell(self.layer(self.active_layer).colormap)
 				set(self.h_coloraxes(1),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.075 0.015*figpos(3) ax_height*0.4]);
 				set(self.h_coloraxes(2),'Position',[(1-cb+0.005)*figpos(3) control_height+ax_height*0.525 0.015*figpos(3) ax_height*0.4]);
 			else
@@ -652,12 +619,12 @@ end
 
 function clim_box_callback(self)
 	% This callback is run whenever EITHER of the colour range textboxes is modified
-	self.clims{self.active_layer} = [str2double(get(self.controls.clim(1),'String')) str2double(get(self.controls.clim(2),'String'))];
+	self.layer(self.active_layer).clim = [str2double(get(self.controls.clim(1),'String')) str2double(get(self.controls.clim(2),'String'))];
 end
 
 function visible_box_callback(self)
 	% This callback is run if the user clicks the visibility checkbox
-	self.visible(self.active_layer) = get(self.controls.visible,'Value');
+	self.layer(self.active_layer).visible = get(self.controls.visible,'Value');
 end
 
 function volume_box_callback(self)
@@ -665,9 +632,9 @@ function volume_box_callback(self)
 	new_volume = str2double(get(self.controls.volume,'String'));
 	if new_volume < 1 || new_volume > self.nvols
 		uiwait(errordlg(sprintf('Volume out of bounds (image has %d volumes)',self.nvols)));
-		set(self.controls.volume,'String',num2str(self.current_vols(self.active_layer)));
+		set(self.controls.volume,'String',num2str(self.layer(self.active_layer).volume));
 	else
-		self.current_vols(self.active_layer) = new_volume;
+		self.layer(self.active_layer).volume = new_volume;
 	end
 end
 
@@ -821,7 +788,7 @@ function set_volume(ax,h_osleyes)
 	% - h_osleyes (handle to osleyes object that created and is thus bound to this plot)
 	if h_osleyes.nvols > 1
 		p = get(ax,'CurrentPoint');
-		h_osleyes.current_vols(h_osleyes.active_layer) = round(p(1,1));
+		h_osleyes.layer(h_osleyes.active_layer).volume = round(p(1,1));
 	end
 
 end
@@ -829,9 +796,9 @@ end
 function KeyPressFcn(self,~,KeyData)
 	switch KeyData.Key
 		case 'uparrow'
-			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer),self.nvols);
+			self.layer(self.active_layer).volume = 1+mod(self.layer(self.active_layer).volume,self.nvols);
 		case 'downarrow'
-			self.current_vols(self.active_layer) = 1+mod(self.current_vols(self.active_layer)-2,self.nvols);
+			self.layer(self.active_layer).volume = 1+mod(self.layer(self.active_layer).volume-2,self.nvols);
 	end
 end
 

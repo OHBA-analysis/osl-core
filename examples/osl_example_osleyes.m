@@ -85,34 +85,78 @@ o = get(gcf,'osleyes')
 % bound to, if you want to operate on the figure associated with the object
 o.fig
 
+%% Displaying variables
+% You can also plot variables directly without first saving them to a nii file.
+% There are two ways to specify the inputs:
+%
+% * A matrix
+% * A struct
+%
+% To specify input as a matrix, you can provide either
+%
+% * A 1D vector with number of rows equal to voxels in a standard mask (e.g.
+%   3559x1)
+% * A 2D vector as per above (e.g. 3559x5 would have 5 volumes)
+% * A 3D matrix with resolution the same as one of the standard masks (e.g.
+%   23×27×23)
+% * A 4D matrix as per above (e.g. 23×27×23x5 would have 5 volumes)
+%
+% In this case, a standard mask is guessed based on the size of the matrix,
+% and the xform data for that standard mask is automatically attached. A
+% warning will be displayed to indicate that this has occurred - in general,
+% you should always keep track of your xform matrix.
+o = osleyes(randn(3559,1));
+
+%%
+% Alternative, you can specify the xform matrix by using a struct, with fields
+% |img| and |xform|. Note that in this case, |img| must be 3D or 4D, because
+% without a standard mask, you cannot reshape a matrix into a volume.
+[nii_data,~,nii_xform] = nii.load(nii_tstat);
+o = osleyes(struct('img',nii_data,'xform',nii_xform));
+
+%%
+% You can optionally include a |name| field that will be used in the dropdown
+% list.
+o = osleyes(struct('img',nii_data,'xform',nii_xform,'name','tstat'));
+
 %% Selecting layers 
 % Each image is a layer/overlay in the viewer. The order of
 % the layers is determined by the order of the input nii files. For simplicity
-% in implementation, you cannot change the nii files or their ordering after
+% in implementation, you cannot change the image data or the order of the layers after
 % you have created the figure - if you want to change these properties, just
 % make a new |osleyes| figure. However, you can change things like the colour
-% map, range, and visibility of the layers afterwards. Each layer has several
-% key properties
+% map, range, and visibility of the layers. Each layer has several
+% properties
 %
-% * |visibility| - whether the layer is drawn or not
-% * |current_vol| - for images that have more than one volume (i.e. a 4D image),
+% * |visible| - whether the layer is drawn or not
+% * |volume| - for images that have more than one volume (i.e. a 4D image),
 %   which volume is being displayed
 % * |clim| - the colour range limits
 % * |colormap| - which colormap is used for the layer
 % * |alpha| - opacity value for the layer
+% * |name| - label that appears in the dropdown list. By default, this is the
+%   name of the nii file, but a numerical index will be used if you input a
+%   matrix. In that case, you may wish to change the name to something more
+%   informative.
 %
 % All of these properties can be set programatically by interacting with the
-% |osleyes| object, and for convenience, the visibility, current volume, and
-% color range can also be set in the GUI. The |active_layer| is the layer
-% whose properties are displayed in the GUI controls and the layer whose
-% colormap and color range are used for the colorbar displayed on screen. The
-% layers are listed in the dropdown list in the GUI, and also in the
-% |niifiles| property of the |osleyes| object:
-o.niifiles{:}
+% |layer| property of the |osleyes| object, and for convenience, the
+% visibility, current volume, and color range can also be set in the GUI. The
+% |active_layer| is the layer whose properties are displayed in the GUI
+% controls and the layer whose colormap and color range are used for the
+% colorbar displayed on screen. The layers are listed in the dropdown list in
+% the GUI, and also in the |images| property of the |osleyes| object:
+close all
+o = osleyes({nii_std_brain,nii_roi,nii_tstat});
+o.images{:}
 
 %%
-% The active layer is 'tstat1_gc1_2mm.nii.gz' which is the third layer. To
-% change the layer, simply set it to a different one
+% The |images| property will contain the name of the nii file if the layer
+% data came from a nii file, otherwise it will contain original image data 
+% if the input was a matrix or struct.
+%
+% Currently the active layer is 'tstat1_gc1_2mm.nii.gz' which is the third
+% layer. To change the layer, simply set it to a different one
 o.active_layer = 1;
 
 %%
@@ -131,47 +175,44 @@ o.active_layer = 1;
 %
 % * You could use the dropdown box to select the layer, and then the checkbox
 %   to the left of the dropdown to turn the layer off
-% * You can set the 'visible' property of the |osleyes| object to hide that
+% * You can set the 'visible' property of the layer to hide that
 %   layer
 % 
-% The 'visible' property is an array with as many elements as there are
-% layers, and a value of 0 or 1 depending on whether the layer should be
-% rendered or not. To hide the tstat layer, we can simply set the visibility
-% of layer 3 to off
-o.visible(3) = 0;
+% The 'visible' property is an boolean entry with a value of 0 or 1 depending
+% on whether the layer should be rendered or not. To hide the tstat layer, we
+% can simply set the visibility of layer 3 to off
+o.layer(3).visible = 0;
 
 %%
 % Another way to change the visibility of a layer is by changing its opacity,
-% which is in the |layer_alpha| property of the |osleyes| object - this is an
-% array with as many entries as layers, and each entry is an opacity value
+% which is in the |alpha| property of the |layer| containing an opacity value
 % between 0 (fully transparent) and 1 (fully opaque). So to render the tstat
 % layer as semi-transparent, we can use
-o.layer_alpha(3) = 0.5;
-o.visible(3) = 1;
+o.layer(3).alpha = 0.5; % Set 50% opacity
+o.layer(3).visible = 1;	% Make the layer visible
 
 %% Moving around the plot
-% Just like in |fslview| or |fsleyes|, you can change the slices that are displayed
-% by clicking and dragging on any of the three brain images. As you move the
-% mouse, the position of the crosshairs will change. The coordinates of the
-% crosshairs in MNI coordinates are displayed as the 'XYZ' values in the
-% figure. You can also retrieve them programatically through the
-% |current_point| property of the |osleyes| object. This also lets you set
-% which slices to render - for example
+% Just like in |fslview| or |fsleyes|, you can change the slices that are
+% displayed by clicking and dragging on any of the three brain images. As you
+% move the mouse, the position of the crosshairs will change. The coordinates
+% of the crosshairs in MNI coordinates are displayed as the 'XYZ' values in
+% the figure. You can also retrieve or set the coordinates for the crosshair
+% programatically through the |current_point| property of the |osleyes|
+% object.
+o.current_point
 o.current_point = [35  -55  -17];
 
 %% Colour scales
 % Each layer has its own colormap and color range. These are stored in the
-% |colormaps| and |clims| properties of the |osleyes| object, respectively.
-% First, we will change to the parcel layer
+% |colormap| and |clim| properties of the |layer|. First, we will change to
+% the parcel layer and make hide the tstat layer
 o.active_layer = 2;
-o.layer_alpha(3) = 1;
-o.visible(3) = 0;
+o.layer(3).alpha = 1;
+o.layer(3).visible = 0;
 
 %%
-% We are working on the second layer, so need to work with the second entry in
-% the 'clims' and 'colormaps' cell arrays. First, we will set the colour
-% range. For example
-o.clims{2} = [10 50];
+% First, we will set the colour range for the parcel layer (which is layer 2).
+o.layer(2).clim = [10 50];
 
 %%
 % Notice that when the colour range is updated, the colorbar changes, the
@@ -190,11 +231,11 @@ o.clims{2} = [10 50];
 %   the normal 'colormap' function in Matlab
 %
 % For example, to change to the jet colormap, we can use
-o.colormaps{2} = 'jet';
+o.layer(2).colormap = 'jet';
 
 %%
 % Or a random colormap
-o.colormaps{2} = rand(10,3);
+o.layer(2).colormap = rand(10,3);
 
 %%
 % A good colormap should be 'perceptually uniform' - qualitatively, this means
@@ -216,14 +257,14 @@ o.colormaps{2} = rand(10,3);
 % these colormaps in normal Matlab plots by running
 % |colormap(osl_colormap('hot'))|. Similarly, in |osleyes| you can pass the
 % output of this function to the colormap property
-o.colormaps{2} = osl_colormap('green');
+o.layer(2).colormap = osl_colormap('green');
 
 %%
 % Lastly, sometimes it is necessary to select different colormaps for positive
 % and negative values. To do this, you set the |colormap| property to a cell
 % array containing two elements - the first entry contains the positive
 % colormap, and the second contains the negative colormap
-o.colormaps{2} = {'jet',osl_colormap('green')};
+o.layer(2).colormap = {'jet',osl_colormap('green')};
 
 %%
 % When you do this, values that are larger than the lower color limit will be
@@ -249,11 +290,11 @@ o.title = 'My Plot';
 % Some NIFTI files contain a fourth dimension - for images like tstat maps,
 % this could be time, and for images like parcellations, it could be parcel
 % index. You can set which volume is displayed using the 'volume' text box in
-% the GUI, or using the 'current_vols' property of the |osleyes| object. For
+% the GUI, or using the |volume| property of the |layer|. For
 % example, to display the fifth volume of the tstat, we could use
 o.active_layer = 3;
-o.visible(3) = 1;
-o.current_vols(3) = 5;
+o.layer(3).visible = 1;
+o.layer(3).volume = 5;
 
 %%
 % With the GUI as the active window, you can use the up and down arrow keys to
@@ -290,7 +331,7 @@ o.plot_timeseries()
 
 %%
 % The red bar marks the current volume, and is updated if you set the current volume or run the animation
-o.current_vols(3) = 50;
+o.layer(3).volume = 50;
 
 %%
 % If you click on the timeseries plot, the current volume will be changed
@@ -312,32 +353,39 @@ o.active_layer = 2;
 % property of the object, and each value corresponds to what you want to
 % assign to that property after construction. For example
 close all
-o = osleyes({[],nii_roi,nii_tstat},'colormaps',{'jet','hsv',osl_colormap('green')},'clims',{[],[0 5],[1 5]},'show_crosshair',false,'current_vols',[1 1 50]);
+o = osleyes({[],nii_roi,nii_tstat},'colormap',{'jet','hsv',osl_colormap('green')},'clim',{[],[0 5],[1 5]},'alpha',[NaN 0.5 0.25],'show_crosshair',false,'current_vols',[1 1 50]);
 
 %%
-% is exactly equivalent to
+% For properties of the |osleyes| object, (that is, not layer properties),
+% this is equivalent to
 %
-%   o = osleyes({[],nii_roi,nii_tstat});
-%   o.colormaps = {'jet','hsv',osl_colormap('green')};
-%   o.clims = {[],[0 5],[1 5]};
-%   o.show_crosshair = false;
-%   o.current_vols = [1 1 50]
-
-%%
-% Notice that we have specified two input files, but because a standard mask
-% has automatically been added, there are three layers in the final image.
-% This means that the |colormaps| and |clims| properties need to have three
-% entries, because there are three layers. You can leave the |colormap| or the
-% |clim| empty for any layer to leave its value unchanged. The same is true
-% for other layer-wise properties such as |current_vols| or |layer_alpha|, but
-% for these you need to provide a specific value.
+%   o.show_crosshair = false; o.current_vols = [1 1 50]
+%
+% For properties of the |layer|, you need to pass in an array or cell array
+% with the same length as |o.layer|. Each entry of the array will be assigned
+% to each layer, if it is not empty or is finite. So for example
+% 
+%	'clim',{[],[0 5],[1 5]}
+%
+% is equivalent to
+%
+%	o.layer(2).clim = [0 5] o.layer(3).clim = [1 5]
+% 
+% and layer 1 is skipped because an empty list was present. Similarly, the use
+% of
+% 
+%	'alpha',[NaN 0.5 0.25]
+%
+% means to skip setting the 'alpha' property of the first layer, and to set
+% the other two.
 
 %%
 % Finally, you could also provide these options as a struct. For example
 %
 %   s = struct;
-%   s.colormaps = {'jet','hsv',osl_colormap('green')};
-%   s.clims = {[],[0 5],[1 5]};
+%   s.colormap = {'jet','hsv',osl_colormap('green')};
+%   s.clim = {[],[0 5],[1 5]};
+%	s.alpha = [NaN 0.5 0.25]
 %   s.show_crosshair = false;
 %   s.current_vols = [1 1 50]
 %   o = osleyes({[],nii_roi,nii_tstat},s);
@@ -351,18 +399,18 @@ o = osleyes({[],nii_roi,nii_tstat},'colormaps',{'jet','hsv',osl_colormap('green'
 %   close all
 %   o = osleyes({[],nii_tstat,nii_roi}); % Put the ROI layer on top
 %   o.current_point = [34  -50  -13]; % Set the coordinate for the slice
-%   o.colormaps{3} = [0 1 0]; % Make the ROI green
-%   o.layer_alpha(3) = 0.4; % Make the ROI transparent
+%   o.layer(3).colormap = [0 1 0]; % Make the ROI green
+%   o.layer(3).alpha = 0.4; % Make the ROI transparent
 %   o.active_layer = 2; % Display colorbar for the tstat layer
-%   o.colormaps{2} = osl_colormap('hot'); % Use single sided colormap
-%   o.clims{2} = [0 10]; % clip colour at upper end
+%   o.layer(2).colormap = osl_colormap('hot'); % Use single sided colormap
+%   o.layer(2).clim = [0 10]; % clip colour at upper end
 %   o.show_controls = 0; % Hide the controls
 %   o.show_crosshair = 0; % Hide the crosshair
 %   v = VideoWriter('test.mp4','MPEG-4');
 %   open(v)
 %   for j = 1:o.nvols % Iterate over volumes
 %   	o.title = sprintf('t=%d',j);
-%   	o.current_vols(2) = j;
+%   	o.layer(2).volume = j;
 %   	writeVideo(v,frame2im(getframe(o.fig)))
 %   end
 %   close(v)
