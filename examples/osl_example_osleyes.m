@@ -96,10 +96,10 @@ o.fig
 %
 % * A 1D vector with number of rows equal to voxels in a standard mask (e.g.
 %   3559x1)
-% * A 2D vector as per above (e.g. 3559x5 would have 5 volumes)
+% * A 2D matrix as per above (e.g. 3559x5 would have 5 volumes)
 % * A 3D matrix with resolution the same as one of the standard masks (e.g.
-%   23×27×23)
-% * A 4D matrix as per above (e.g. 23×27×23x5 would have 5 volumes)
+%   23x27x23)
+% * A 4D matrix as per above (e.g. 23x27x23x5 would have 5 volumes)
 %
 % In this case, a standard mask is guessed based on the size of the matrix,
 % and the xform data for that standard mask is automatically attached. A
@@ -353,28 +353,30 @@ o.active_layer = 2;
 % property of the object, and each value corresponds to what you want to
 % assign to that property after construction. For example
 close all
-o = osleyes({[],nii_roi,nii_tstat},'colormap',{'jet','hsv',osl_colormap('green')},'clim',{[],[0 5],[1 5]},'alpha',[NaN 0.5 0.25],'show_crosshair',false,'current_vols',[1 1 50]);
+o = osleyes({[],nii_roi,nii_tstat},'colormap',{'jet','hsv',osl_colormap('green')},'clim',{[],[0 5],[1 5]},'alpha',[NaN 0.5 0.25],'show_crosshair',false,'volume',[1 1 50]);
 
 %%
 % For properties of the |osleyes| object, (that is, not layer properties),
 % this is equivalent to
 %
-%   o.show_crosshair = false; o.current_vols = [1 1 50]
+%   o.show_crosshair = false; 
+%   o.current_vols = [1 1 50]
 %
 % For properties of the |layer|, you need to pass in an array or cell array
 % with the same length as |o.layer|. Each entry of the array will be assigned
 % to each layer, if it is not empty or is finite. So for example
 % 
-%	'clim',{[],[0 5],[1 5]}
+%   'clim',{[],[0 5],[1 5]}
 %
 % is equivalent to
 %
-%	o.layer(2).clim = [0 5] o.layer(3).clim = [1 5]
+%   o.layer(2).clim = [0 5] 
+%   o.layer(3).clim = [1 5]
 % 
 % and layer 1 is skipped because an empty list was present. Similarly, the use
 % of
 % 
-%	'alpha',[NaN 0.5 0.25]
+%   'alpha',[NaN 0.5 0.25]
 %
 % means to skip setting the 'alpha' property of the first layer, and to set
 % the other two.
@@ -382,13 +384,13 @@ o = osleyes({[],nii_roi,nii_tstat},'colormap',{'jet','hsv',osl_colormap('green')
 %%
 % Finally, you could also provide these options as a struct. For example
 %
-%   s = struct;
-%   s.colormap = {'jet','hsv',osl_colormap('green')};
-%   s.clim = {[],[0 5],[1 5]};
+%	s = struct;
+%	s.colormap = {'jet','hsv',osl_colormap('green')};
+%	s.clim = {[],[0 5],[1 5]};
 %	s.alpha = [NaN 0.5 0.25]
-%   s.show_crosshair = false;
-%   s.current_vols = [1 1 50]
-%   o = osleyes({[],nii_roi,nii_tstat},s);
+%	s.show_crosshair = false;
+%	s.current_vols = [1 1 50]
+%	o = osleyes({[],nii_roi,nii_tstat},s);
 %
 
 %% Putting it all together
