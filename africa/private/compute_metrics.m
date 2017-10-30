@@ -1,20 +1,9 @@
-function [metrics,tc] = compute_metrics(D,S)
+function [metrics,tc] = compute_metrics(D,do_mains,mains_frequency,do_kurt,do_cardiac,artefact_channels)
 	% Take in D object, and settings specifying which metrics to compute
 	% Return metrics and timecourse with NaNs where samples were unused
-	%
 
-	arg = inputParser();
-	arg.KeepUnmatched = true; % Allow extra fields to be provided
-	arg.addParameter('do_mains',false); 
-	arg.addParameter('mains_frequency',50); 
-	arg.addParameter('do_kurt',false); 
-	arg.addParameter('do_cardiac',false); 
-	arg.addParameter('artefact_channels',{}); % Cell array with channels
-	arg.parse(S);
-	S = arg.Results;
-
-	if S.do_cardiac
-	    if any(strcmpi(S.artefact_channels,'ECG'))
+	if do_cardiac
+	    if any(strcmpi(artefact_channels,'ECG'))
 	        do_cardiac_autocorrelation = 0;
 	    else
 	        do_cardiac_autocorrelation = 1;
@@ -46,14 +35,14 @@ function [metrics,tc] = compute_metrics(D,S)
 	metrics = struct;
 	
 	% Mains frequency
-	if S.do_mains
+	if do_mains
 	    spec_n = normalise(spec,2);
-	    inds = freq_ax > S.mains_frequency - 1 & freq_ax < S.mains_frequency + 1;
+	    inds = freq_ax > mains_frequency - 1 & freq_ax < mains_frequency + 1;
 	    metrics.mains.value = max(spec_n(:,inds),[],2);
 	end
 
 	% Kurtosis 
-	if S.do_kurt
+	if do_kurt
 	    kurt = kurtosis(tc(:,samples_of_interest),[],2);
 	    kurt_t = abs(demean(boxcox1(kurt))); % make distribution more normal to better balance low/high kurtosis
 	    metrics.kurtosis.value = kurt_t(:);
@@ -81,9 +70,9 @@ function [metrics,tc] = compute_metrics(D,S)
 	end
 
 	% Detect artefact channels related components
-	if ~isempty(S.artefact_channels)
+	if ~isempty(artefact_channels)
 
-	    for artefact_chantype = unique(S.artefact_channels)
+	    for artefact_chantype = unique(artefact_channels)
 	        if ~isfield(metrics,artefact_chantype)
 
 	            if isempty(str2num(cell2mat(artefact_chantype)))

@@ -18,32 +18,7 @@
 %
 % HL+MWW 2013
 
-function [bad_components, metrics,figs] = identify_artefactual_components_auto(D,S)
-
-    %% Set-Up
-    arg = inputParser;
-    arg.KeepUnmatched = true; % Allow extra fields to be provided
-
-    arg.addParameter('max_num_artefact_comps',10);
-    arg.addParameter('do_plots',0);
-    arg.addParameter('modality',[]);
-
-    % Mains defaults
-    arg.addParameter('do_mains',false); 
-    arg.addParameter('mains_frequency',50); 
-    arg.addParameter('mains_kurt_thresh',0.4); 
-
-    % Kurtosis defaults
-    arg.addParameter('do_kurt',false); 
-    arg.addParameter('kurtosis_thresh',20); 
-    arg.addParameter('kurtosis_wthresh',0); 
-
-    % Artefact chans
-    arg.addParameter('artefact_channels',{});
-    arg.addParameter('artefact_chans_corr_thresh',0.15);
-
-    arg.parse(S);
-    S = arg.Results;
+function [bad_components,metrics,figs] = identify_artefactual_components_auto(D,S)
 
     if isscalar(S.artefact_chans_corr_thresh)
         S.artefact_chans_corr_thresh = S.artefact_chans_corr_thresh*ones(size(S.artefact_channels));
@@ -52,11 +27,7 @@ function [bad_components, metrics,figs] = identify_artefactual_components_auto(D
     % Compute metrics
     D = D.montage('switch',0);
     
-    figs = struct('handles',[],'names',[],'titles',[]);
-    bad_components = []; 
-
-    [metrics,tc] = compute_metrics(D,S);
-
+    [metrics,tc] = compute_metrics(D,S.do_mains,S.mains_frequency,S.do_kurt,S.do_cardiac,S.artefact_channels);
     artefacts = cell(size(tc,1),1); % Record artefacts. Empty content means no artefact, otherwise string with reason for rejection
 
     modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3))));  % changed by DM
@@ -65,14 +36,6 @@ function [bad_components, metrics,figs] = identify_artefactual_components_auto(D
     samples_of_interest = ~all(badsamples(D,':',':',':'));
     samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
 
-    if strcmp(S.modality,'EEG')   % changed by DM
-        chan_inds=setdiff(find(any([strcmp(D.chantype,'EEG')],1)),D.badchannels);
-        map_inds(find(any([strcmp(D.chantype,'EEG')],1))) = 1:numel(find(any([strcmp(D.chantype,'EEG')],1)));
-    else
-        chan_inds=setdiff(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)),D.badchannels);
-        map_inds(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1))) = 1:numel(find(any([strcmp(D.chantype,'MEGMAG');strcmp(D.chantype,'MEGPLANAR');strcmp(D.chantype,'MEGGRAD')],1)));
-    end
-
     num_ics = D.ica.params.num_ics;
     abs_ft  = abs(fft(demean(tc(:,samples_of_interest),2),[],2)); % Not entirely happy about using only samples_of_interest but this is what was used previously
     freq_ax = 0:(D.fsample/2)/(floor(length(abs_ft)/2)-1):(D.fsample/2);
@@ -80,13 +43,15 @@ function [bad_components, metrics,figs] = identify_artefactual_components_auto(D
     minhz = 0.1;
     minhz_ind = min(find(freq_ax>minhz));
 
+    keyboard
+    
     %% Detect Mains components
     if S.do_mains
         spec = abs_ft(1:num_ics,1:floor(length(abs_ft)/2));
         spec(:,1:minhz_ind) = 0;
         [~, ind] = max(spec');
         fmax = freq_ax(ind);
-        
+        keyboard
         kurt = kurtosis(tc,[],2);
         kurt = abs(demean(boxcox1(kurt))); % make distribution more normal to better balance low/high kurtosis
 
