@@ -25,15 +25,19 @@ for modidx=1:nmodalities
     
     comp2view = comp(indchantype(D,cmodality),:);
     
-    if (strcmp(cmodality,'MEGPLANAR')) % Average gradiometers
+    if (strcmp(cmodality,'MEGPLANAR')) % Average gradiometers (because there are two of them at each position)
         comp2view = sqrt(comp2view(1:2:end,:).^2 + comp2view(2:2:end,:).^2);
     end
     
     if (strcmp(cmodality,'MEGMAG'))
-        cfg.channel     = {'MEGMAG'};
+        %cfg.channel     = {'MEGMAG'};
+                cfg.channel     = {'all'};
+
         cfg.layout      = fullfile(osldir,'layouts','neuromag306mag.lay');
     elseif (strcmp(cmodality,'MEGPLANAR'))
-        cfg.channel     = {'MEGMAG'};
+        %cfg.channel     = {'MEGMAG'};
+        cfg.channel     = {'all'};
+
         cfg.layout      = fullfile(osldir,'layouts','neuromag306mag.lay');
     elseif (strcmp(cmodality,'MEGGRAD'))
         cfg.channel     = {'MEG'};
@@ -49,10 +53,23 @@ for modidx=1:nmodalities
         error('Unsupported modality');
     end
     
+    
+
+    
     data.dimord    = 'chan_comp';
     data.topo      = comp2view;
-    data.topolabel = D.chanlabels(indchantype(D,cfg.channel));
+    
+    % gett
+    if (strcmp(cmodality,'MEGMAG')) || (strcmp(cmodality,'MEGPLANAR'))
+    data.topolabel = D.chanlabels(indchantype(D,'MEGMAG'));
+    else
+            data.topolabel = D.chanlabels(indchantype(D,cfg.channel));
+    end
     data.time      = {1};
+
+    %if (strcmp(cmodality,'MEGPLANAR')) % Plot every second gradiometer (because there are two of them at each position)
+    %    data.topolabel=data.topolabel(1:2:end);
+    %end
     
     %cfg = rmfield(cfg,'channel');
     %cfg.component   = 1:size(comp,2);
@@ -61,8 +78,11 @@ for modidx=1:nmodalities
     cfg.commentpos     = 'title';
 
     cfg.title       = cmodality;
+    cfg.skipscale = 'yes'
+    cfg.skipcomnt = 'yes'
     
-    %cfg.layout = ft_prepare_layout(cfg);
+    
+    cfg.layout = ft_prepare_layout(cfg);
     
     if do_plot
         ft_topoplotER(cfg,data);
