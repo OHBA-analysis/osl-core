@@ -33,7 +33,7 @@ function D = osl_africa(D,varargin)
     arg.addParameter('do_kurt',true); % Used by manual and auto
     arg.addParameter('do_cardiac',false); % Used by manual only
 
-    % Automatic-only settings
+    % AUTOMATIC-ONLY SETTINGS
     arg.addParameter('max_num_artefact_comps',10);
     arg.addParameter('mains_kurt_thresh',0.4);
     arg.addParameter('kurtosis_thresh',20); 
@@ -60,10 +60,9 @@ function D = osl_africa(D,varargin)
 
         if S.precompute_topos
             topos = [];
-            modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
-            for m = 1:numel(modalities)
-                disp(['Precomputing sensor topographies for modality ' modalities{m}]);
-                topos = [topos component_topoplot(D,D.ica.sm,modalities(m))];
+            for m = 1:numel(D.ica.modalities)
+                disp(['Precomputing sensor topographies for modality ' D.ica.modalities{m}]);
+                topos = [topos component_topoplot(D,D.ica.sm,D.ica.modalities(m))];
             end
             D.ica.topos   = topos;
         else
@@ -80,14 +79,18 @@ function D = osl_africa(D,varargin)
     end
 
     % Identify bad components, store them together with metrics in the D object
-    switch S.do_ident
-        case 'auto'
-            [D.ica.bad_components, D.ica.metrics] = identify_artefactual_components_auto(D,S);
-        case 'manual'
-            [D.ica.metrics,tc] = compute_metrics(D,S.do_mains,S.mains_frequency,S.do_kurt,S.do_cardiac,S.artefact_channels);
-            D.ica.bad_components = identify_artefactual_components_manual_gui(D,tc,D.ica.topos,D.ica.metrics,D.ica.bad_components);
-        otherwise
-            fprintf('Using existing bad_components\n')
+    if S.do_ident
+        [D.ica.metrics,tc] = compute_metrics(D,S.mains_frequency,S.artefact_channels);
+        switch S.do_ident
+            case 'auto'
+                [D.ica.bad_components, D.ica.auto_reason] = identify_artefactual_components_auto(D,S);
+            case 'manual'
+                D.ica.bad_components = identify_artefactual_components_manual_gui(D,tc,D.ica.topos,D.ica.metrics,D.ica.bad_components);
+            otherwise
+                error('Did not recognize ident type - must be auto, manual, or false/empty');
+        end
+    else
+        fprintf('Using existing bad_components\n')
     end
 
     % Remove bad components
@@ -218,6 +221,8 @@ function D = perform_sensorspace_ica(D,S)
     D.ica.topos = []; % Store topos later
     D.ica.metrics = []; % Store artefact metrics later
     D.ica.bad_components = []; % With new components, no bad components selected yet 
+    D.ica.auto_reason = {}; % Record reason for automatic rejection (if used)
+    D.ica.modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); 
 
     % The commands below expand D.ica.sm out to a full montage
     sm_full              = zeros(D.nchannels, size(sm,2));

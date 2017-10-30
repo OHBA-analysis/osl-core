@@ -1,16 +1,15 @@
-function [metrics,tc] = compute_metrics(D,do_mains,mains_frequency,do_kurt,do_cardiac,artefact_channels)
-	% Take in D object, and settings specifying which metrics to compute
-	% Return metrics and timecourse with NaNs where samples were unused
-
-	if do_cardiac
-	    if any(strcmpi(artefact_channels,'ECG'))
-	        do_cardiac_autocorrelation = 0;
-	    else
-	        do_cardiac_autocorrelation = 1;
-	    end
-	else
-	    do_cardiac_autocorrelation = 0;
-	end
+function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
+	% Take in D object, return artefact-related metrics
+	%
+	% INPUTS
+	% - D : MEEG object
+	% - mains_frequency : (Hz) mains power will be computed +-1Hz of this freq.
+	% - artefact_channels : Compute IC correlations with channels whose
+	%   					chantype is in this list
+	%
+	% OUTPUTS
+	% - metrics : struct with various metrics
+	% - tc : IC timecourses with NaNs where there were badsamples
 
 	samples_of_interest = ~all(badsamples(D,':',':',':'));
 	samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
@@ -20,54 +19,46 @@ function [metrics,tc] = compute_metrics(D,do_mains,mains_frequency,do_kurt,do_ca
 
 	num_ics = D.ica.params.num_ics;
 
-	tc_fft = fft(demean(tc(:,samples_of_interest),2),[],2);
-
-	abs_ft  = abs(tc_fft);
-	freq_ax = 0:(D.fsample/2)/(floor(length(abs_ft)/2)-1):(D.fsample/2);
-
-	minhz = 0.1;
-	minhz_ind = min(find(freq_ax>minhz));
-
-	spec = abs_ft(1:num_ics,1:floor(length(abs_ft)/2));
-	spec(:,1:minhz_ind) = 0;
-
 	%% COMPUTE METRICS 
 	metrics = struct;
 	
 	% Mains frequency
-	if do_mains
-	    spec_n = normalise(spec,2);
-	    inds = freq_ax > mains_frequency - 1 & freq_ax < mains_frequency + 1;
-	    metrics.mains.value = max(spec_n(:,inds),[],2);
-	end
+	tc_fft = fft(demean(tc(:,samples_of_interest),2),[],2);
+	abs_ft  = abs(tc_fft);
+	freq_ax = 0:(D.fsample/2)/(floor(length(abs_ft)/2)-1):(D.fsample/2);
+	minhz = 0.1;
+	minhz_ind = min(find(freq_ax>minhz));
+	spec = abs_ft(1:num_ics,1:floor(length(abs_ft)/2));
+	spec(:,1:minhz_ind) = 0;
+	[~, ind] = max(spec');
+	metrics.mains.mains_frequency = mains_frequency; % Record which mains frequency was used
+	metrics.mains.fmax = freq_ax(ind); % Peak frequency for each component
+	inds = freq_ax > mains_frequency - 1 & freq_ax < mains_frequency + 1; % Mains +- 1Hz 
+	metrics.mains.spec = max(spec(:,inds),[],2); % Maximum power within 1Hz of mains frequency
+	spec_n = normalise(spec,2);
+	metrics.mains.spec_n = max(spec_n(:,inds),[],2); % Maximum normalised power within 1Hz of mains frequency
 
 	% Kurtosis 
-	if do_kurt
-	    kurt = kurtosis(tc(:,samples_of_interest),[],2);
-	    kurt_t = abs(demean(boxcox1(kurt))); % make distribution more normal to better balance low/high kurtosis
-	    metrics.kurtosis.value = kurt_t(:);
-	end
+    kurt = kurtosis(tc(:,samples_of_interest),[],2);
+    kurt = kurt(:);
+    metrics.kurtosis.raw = kurt-3;
+    metrics.kurtosis.log = log(kurt-3); 
+    metrics.kurtosis.abs = abs(demean(boxcox1(kurt))); % make distribution more normal to better balance low/high kurtosis
 
-	% Cardiac  
-	if do_cardiac_autocorrelation
-	    disp('No ECG artefact channels specified - detecting cardiac components without ECG')
+	% Cardiac autocorrelation
+    bpm_range = [50 100]./60;
+    maxlags = 2*D.fsample;
+    [~,lags] = xcorr(tc(1,samples_of_interest),maxlags,'coeff');
+    lags = lags./D.fsample;
+    lags_range = lags>bpm_range(1) & lags<bpm_range(2);
+    ac_max = zeros(1,num_ics);
+    for ic = 1:num_ics
+        tc_bp = bandpass(tc(ic,samples_of_interest),[0 48],D.fsample);
+        ac = xcorr(tc_bp,maxlags,'coeff');
+        ac_max(ic) = max(ac(lags_range));
+    end
+    metrics.cardiac_autocorrelation.value = ac_max(:);
 
-	    bpm_range = [50 100]./60;
-	    maxlags = 2*D.fsample;
-
-	    [~,lags] = xcorr(tc(1,samples_of_interest),maxlags,'coeff');
-	    lags = lags./D.fsample;
-	    lags_range = lags>bpm_range(1) & lags<bpm_range(2);
-
-	    ac_max = zeros(1,num_ics);
-	    for ic = 1:num_ics
-	        tc_bp = bandpass(tc(ic,samples_of_interest),[0 48],D.fsample);
-	        ac = xcorr(tc_bp,maxlags,'coeff');
-	        ac_max(ic) = max(ac(lags_range));
-	    end
-
-	    metrics.cardiac_autocorrelation.value = ac_max(:);
-	end
 
 	% Detect artefact channels related components
 	if ~isempty(artefact_channels)
