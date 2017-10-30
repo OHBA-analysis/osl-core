@@ -71,10 +71,14 @@ set(metricWindow,'uicontextmenu',metricContext.menu);
 drawnow
 redraw
 
-warning off MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
-jFig = get(handle(MainFig),'JavaFrame');
-jFig.setMaximized(true);
-warning on MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
+try
+    warning off MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
+    jFig = get(handle(MainFig),'JavaFrame');
+    jFig.setMaximized(true);
+    warning on MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame
+catch
+    fprintf(2,'Could not maximize window - code may need to be updated\n')
+end
 
 set(MainFig,'Visible','on')
 uiwait(MainFig)
