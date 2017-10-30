@@ -1,149 +1,133 @@
-% Plot if required
+function h = ica(D)
+    % Returns handles to figures summarizing ICA results
 
-D.ica.modalities
+    % Couple of different ICA type plots
 
-if S.do_plots && ~isempty(bad_components)
-    for j = 1:length(bad_components)
-        figs.handles(end+1) = figure('Position',[1 1 1500 1000]);
-        figs.names{end+1} =  sprintf('IC %d - %s',bad_components(j),artefacts{bad_components(j)});
-        figs.titles{end+1} = sprintf('AFRICA: IC %d - %s',bad_components(j),artefacts{bad_components(j)});    
+    % We will plot - any ICs that were bad, and any which were at one point automatically marked bad
+    % Possible states are combinations of - auto=true/false, manual=true/false
+    h = [];
 
-        c=1;
-        ncols=max(numel(modalities),2);
-                   
-        for m =1:numel(modalities)
-            subplot(2,ncols,c); 
-            component_topoplot(D,D.ica.sm(:,bad_components(j)),modalities{m},true);
-            title(modalities{m}); 
-            axis tight;
-            %title(['IC' num2str(bad_components(j)) ', ' confirmed_artefact_names{ii} ' Artefacts' modalities(m)]);%axis tight;
-            c=c+1;
+    auto_marked = find(~cellfun(@isempty,D.ica.auto_reason));
+    to_plot = union(D.ica.bad_components,auto_marked);
+
+    % Reconstruct timecourses
+    samples_of_interest = ~all(badsamples(D,':',':',':'));
+    samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
+    sm = D.ica.sm(D.ica.chan_inds,:);
+    tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
+    t = (1:size(tc,2))./D.fsample;
+
+    % If topos not precomputed, then compute them now
+    if isempty(D.ica.topos)
+        topos = [];
+        modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); 
+        for m = 1:numel(modalities)
+            topos = [topos component_topoplot(D,sm,modalities(m))];
         end
-        
-        c=1;
-        
-        subplot(2,ncols,ncols+c);
-        plot(freq_ax,abs_ft(bad_components(j),1:floor(length(abs_ft)/2)));title('Frequency Spectrum');
-        xlabel('Frequency (Hz)');
-        ylabel('Spectrum');
-        axis tight;
-        c=c+1;
-
-        subplot(2,ncols,ncols+c);
-
-        if D.ntrials == 1
-            t = D.time;
-        else
-            t = (1:length(samples_of_interest))./D.fsample;
-        end
-        
-        plot(t,tc(bad_components(j),:));
-        title(sprintf('Component %d - %s',bad_components(j),artefacts{bad_components(j)}));
-        xlabel('Time (s)');
-        axis tight;
-            
-    end
-end
-
-
-
-
-%% RANK AND PLOT
-
-if do_plots
-    fig_handles(cc)=fig_handle;
-    fig_names{cc}=fig_name;
-    fig_titles{cc}=fig_title;
-end
-
-cc=cc+1;
-
-% if strcmp(direction,'descend'),
-%     num_comps2reject=max(comps2reject);
-% else
-%     num_comps2reject=min(comps2reject);
-% end
-% 
-% num_comps=length(comps2reject);
-%         
-% if(num_comps>max_num_artefact_comps),
-%     warning(['AFRICA detected ' num2str(num_comps) ' ICs with ' figlab ' > ' num2str(thresh) '. Only rejecting the ' num2str(max_num_artefact_comps) ' worst components.']);
-% 
-%     num_comps=max_num_artefact_comps;
-% end
-% 
-% comps2reject=comps2reject(1:num_comps);
-
-if ~do_plots
-    return
-end
-
-for i = 1:length(comps2reject),
-
-    fig_handles(cc)=sfigure; set(fig_handles(cc),'Position',[1 1 1500 1000]);
-    fig_names{length(fig_names)+1}=['artefact_high_kurtosis_ic_' num2str(comps2reject(i))];
-    fig_titles{length(fig_titles)+1}=['AFRICA: high kurtosis IC no.' num2str(comps2reject(i))];
-    
-    cc=cc+1;
-
-    ncols=max(numel(modalities),2);
-
-    for m = 1:numel(modalities)
-        subplot(2,ncols,m);
-        component_topoplot(D,sm(:,comps2reject(i)),modalities{m},true);
-        title({['Component ' num2str(comps2reject(i)) ': ' figlab ' = ' num2str(met_ord(i))] modalities{m}}); axis tight;
-    end
-    
-    if D.ntrials == 1
-        t = D.time;
     else
-        t = (1:length(samples_of_interest))./D.fsample;
+        topos = D.ica.topos;
     end
 
-    subplot(2,ncols,ncols+1); plot(t(samples_of_interest),tc(comps2reject(i),:)); title({['Component ' num2str(comps2reject(i)) ': ' figlab ' = ' num2str(met_ord(i))] 'Independent Time Course'}); xlabel('Time (s)');axis tight;
-    subplot(2,ncols,ncols+2); plot(freq_ax,abs_ft(comps2reject(i),1:floor(length(abs_ft)/2))); title({['Component ' num2str(comps2reject(i)) ': ' figlab ' = ' num2str(met_ord(i))] 'Frequency Spectrum'}); xlabel('Frequency (Hz)');axis tight;
 
-end
+    % PLOT EIGENSPECTRA
+    h(end+1) = figure;
+    semilogy(D.ica.eigs_preNorm);
+    hold on
+    semilogy(D.ica.eigs_postNorm,'r--');
+    title('Raw and normalised eigen spectra'); legend('Raw', 'Normalised');
+
+    % PLOT BAD COMPONENTS
+    n_cols = length(D.ica.modalities);
+    for j = 1:length(to_plot)
+        h(end+1) = figure;
+        pos = get(gcf,'Position');
+        set(gcf,'Position',pos.*[1 1 1 1.5])
+
+        ax = [];
+        for k = 1:n_cols
+            ax(k) = subplot(3,n_cols,k);;
+            struct2handle(topos(to_plot(j),k).children,ax(k)); ;
+            set(gca,'CLim',[-1 1]*max(abs(get(gca,'CLim'))));;
+            colormap(osl_colormap('rwb'));
+            axis equal
+            axis tight
+            axis off
+            colorbar
+        end
+
+        ax(n_cols+1) = subplot(3,2,[n_cols+1:n_cols*2]);
+        l = plot(t,tc(to_plot(j),:));
+        if any(to_plot(j)==D.ica.bad_components) % If the component was actually removed
+            set(l,'Color',[204     0     0] / 255);
+            title(sprintf('IC%d - REMOVED',to_plot(j)))
+        else
+            set(l,'Color',[ 48   128    20] / 255);
+            title(sprintf('IC%d - NOT REMOVED',to_plot(j)))
+        end
+        xlabel('Time (s)')
+        ylabel('Signal')
+        set(gca,'XLim',[min(t) max(t)]);
+
+        ax(n_cols+1) = subplot(3,2,[n_cols*2+1:n_cols*3]);
+        [P,f] = pwelch(tc(to_plot(j),~isnan(tc(to_plot(j),:))),1024,512,1024,D.fsample);
+        l = semilogy(f,P,'Color',[ 48   128    20] / 255);
+        if any(to_plot(j)==D.ica.bad_components) % If the component was actually removed
+            set(l,'Color',[204     0     0] / 255);
+        end
+        set(gca,'XLim',[min(f) max(f)]);
+        xlabel('Frequency (Hz)')
+        ylabel('Power spectral density');
+
+        if isempty(D.ica.auto_reason)
+            title('Auto rejection not performed');
+        elseif any(to_plot(j)==auto_marked)
+            title(sprintf('Automatically marked bad:%s',D.ica.auto_reason{to_plot(to_plot(j)==auto_marked)}));
+        else
+            title(sprintf('Not automatically marked bad'));
+        end
+
+    end
+
+    % PLOT REJECTION VS METRIC
+    fields = fieldnames(D.ica.metrics);
+    is_rejected = ismember(1:size(tc,1),D.ica.bad_components);
+
+    for j = 1:length(fields)
+
+        data = D.ica.metrics.(fields{j}).value;
+        dataclean=data(~is_rejected);
+        [~,ia] = sort(data,'descend');
+        ib = 1:length(data);
+        ib(ia)=1:62;
+        dataclean = sort(dataclean,'descend');
+
+        h(end+1) = figure;
+
+        subplot(2,2,1)
+        [hs hsx]=hist(data,length(data)/10);        
+        bar(hsx,hs);
+        xlabel(fields{j});
+        box on
+
+        subplot(2,2,2)
+        colormap(gca,[ 48   128    20;204     0     0] / 255);
+        scatter(ib,data,50,'*','CData',1+is_rejected);
+        xlabel(fields{j});
+        ylabel('Ordered IC')
+        box on
+
+        subplot(2,2,3)
+        [hs hsx]=hist(dataclean,length(dataclean)/10);        
+        bar(hsx,hs);
+        xlabel(fields{j});
+        box on
+
+        subplot(2,2,4)
+        scatter(dataclean,1:length(dataclean),'*','CData',[ 48   128    20] / 255);
+        xlabel(fields{j});
+        ylabel('Ordered IC')
+        box on
+    end
 
 
 
-%% Find outliers
-if(num_comps>max_num_outliers),
- warning(['AFRICA detected ' num2str(num_comps) ' ' fig_label ' ICs. Only rejecting the ' num2str(max_num_outliers) ' worst components.']);
-
- num_comps=max_num_outliers;
-end
-
-outlier_inds=outlier_inds_sorted(1:num_comps);
-
- if(do_plots)    
-    fig_handle=sfigure;
-    fig_name=['hist_' fig_label];
-    fig_title=['AFRICA: histogram of ' fig_label];
-    
-    subplot(221);        
-    [hs hsx]=hist(data,length(data)/10);        
-    bar(hsx,hs);
-    plot4paper(fig_label,'');
-    a1=axis;
-    subplot(222);
-    plot(data,1:length(data),'*g');ho;
-    plot(data(outlier_inds),outlier_inds,'or');
-    plot4paper(fig_label,'ordered IC');
-    hold off;
-    a2=axis;
-    %axis([a1(1) a1(2) a2(3) a2(4) ]);
-
-    subplot(223);     
-    dataclean=data;
-    dataclean(outlier_inds)=[];
-    [hs hsx]=hist(dataclean,length(dataclean)/10);        
-    bar(hsx,hs);
-    plot4paper(fig_label,'');
-    a1=axis;
-    subplot(224);
-    plot(dataclean,1:length(dataclean),'*g');ho;
-    plot4paper(fig_label,'ordered IC');
-    hold off;
-    a2=axis;
-end

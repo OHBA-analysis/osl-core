@@ -14,7 +14,7 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
 	samples_of_interest = ~all(badsamples(D,':',':',':'));
 	samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
 
-	sm = D.ica.sm(D.ica.chan_inds,:); % For variance, only use the chan inds 
+	sm = D.ica.sm(D.ica.chan_inds,:);
 	tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
 
 	num_ics = D.ica.params.num_ics;
@@ -100,6 +100,10 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
 	    end
 
 	end
+
+	% Assign variables for use in manual GUI
+	metrics.mains.value = metrics.mains.spec_n;
+	metrics.kurtosis.value = metrics.kurtosis.abs;
 
 	% Add variance as default metric
 	metrics.variance.value = nanvar(tc,[],2);

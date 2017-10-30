@@ -180,13 +180,6 @@ function D = perform_sensorspace_ica(D,S)
 
     eigs_postNorm = svd(cov(icadata'));
 
-    if S.do_plots
-        figure;
-        semilogy(eigs_preNorm);
-        ho;
-        semilogy(eigs_postNorm,'r--');
-        title('Raw and normalised eigen spectra'); legend('Raw', 'Normalised');
-    end
 
     %%%%%%%%%%%%%%%%%% AUTOMATIC DIMENSIONALITY ESTIMATION %%%%%%%%%%%%%%%%%%%%
     if 0 == ica_params.num_ics
@@ -212,6 +205,8 @@ function D = perform_sensorspace_ica(D,S)
 
     D.ica = struct;
     D.ica.params = ica_params;
+    D.ica.eigs_preNorm = eigs_preNorm;
+    D.ica.eigs_postNorm = eigs_postNorm;
     D.ica.chan_inds = chan_inds;
     D.ica.norm_vec = norm_vec;
     D.ica.sm = bsxfun(@times,sm,norm_vec);

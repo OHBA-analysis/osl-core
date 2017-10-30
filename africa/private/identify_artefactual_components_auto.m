@@ -8,7 +8,7 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
     metrics = D.ica.metrics;
     reason = cell(size(D.ica.sm,2),1); % Record reason for rejection
 
-    %% DETECT MAINS COMPONENTS
+    % DETECT MAINS COMPONENTS
     if S.do_mains
         mains_ind=find(metrics.mains.mains_frequency-1<metrics.mains.fmax(:) & metrics.mains.fmax(:) < metrics.mains.mains_frequency+1 & metrics.kurtosis.abs(:) < S.mains_kurt_thresh);
         [~,idx] = sort(metrics.kurtosis.abs(mains_ind));
@@ -25,6 +25,7 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
         end
 
         for j = 1:length(artefact_chantype)
+            fprintf('Checking correlations with chantype %s\n',artefact_chantype{j});
             to_reject = find(metrics.(artefact_chantype{j}).value > S.artefact_chans_corr_thresh(j));
             for k = 1:length(to_reject)
                 fprintf('Rejecting IC %d due to %s (correlation = %.2f)\n',to_reject(k),artefact_chantype{j},metrics.(artefact_chantype{j}).value(to_reject(k)));
@@ -33,7 +34,7 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
         end
     end
 
-    %% DETECT ARTEFACTS USING KURTOSIS   
+    % DETECT ARTEFACTS USING KURTOSIS   
     if S.do_kurt
         [~,stats] = robustfit(ones(length(metrics.kurtosis.abs),1),metrics.kurtosis.abs,'bisquare',4.685,'off');
         outlier_inds = find(stats.w<S.kurtosis_wthresh & metrics.kurtosis.abs>abs(S.kurtosis_thresh) );
@@ -42,7 +43,7 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
         reason = reject(reason,outlier_inds,S.max_num_artefact_comps,'kurtosis');
     end
 
-    % Compute the bad components
+    % ASSIGN THE BAD COMPONENTS
     bad_components = find(~cellfun(@isempty,reason));
 
 
