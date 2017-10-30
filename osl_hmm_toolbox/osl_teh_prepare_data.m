@@ -27,8 +27,14 @@ end
 if exist('embed','var') && embed.do,    
     
     disp('Time embedding data');
-    span=1/embed.centre_freq; %secs
-    num_embeddings=round(span/embed.tres);        
+    
+    if isfield(embed,'centre_freq')
+        span=1/embed.centre_freq; %secs    
+        num_embeddings=round(span/embed.tres); 
+    elseif isfield(embed,'num_embeddings')
+        num_embeddings=embed.num_embeddings; 
+    end
+    
     %lags=round(linspace(-num_embeddings/2,num_embeddings/2,num_embeddings));
     lags=round(-num_embeddings/2:num_embeddings/2);
     %lags=round(0:num_embeddings-1);

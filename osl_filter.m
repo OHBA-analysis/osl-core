@@ -1,16 +1,23 @@
-function D2 = osl_filter(D,fband,order)
-	% Apply temporal filter, return new MEEG object
+function D2 = osl_filter(D,fband,varargin)
+	% Apply temporal filter, to MEEG or to data array
 	% 
 	% This function applies a temporal filter based on the contents of the two-element
 	% vector 'fband'
 	%
 	% INPUTS
-	% - D - MEEG object
+	% - D - MEEG object or n_signals x n_times matrix  - so that orientation matches D(:,:) 
 	% - fband - Two-element vector of frequencies (Hz)
-	% - order (optional, otherwise will use spm_eeg_filter's default)
+	% 
+	% Optional
+	% - fs - sampling rate, must be provided if D is a matrix
+	% - order - filter order
+	% - prefix - If D is an MEEG, use this prefix. Set to empty string to operate in place
 	%
 	% OUTPUTS
-	% - A new MEEG object with filtered data from on the original MEEG object
+	% - If D is an MEEG 
+	%		- A new MEEG object with filtered data from on the original MEEG object
+	%	Otherwise
+	%		- An n_signals x n_times matrix of filtered data
 	%
 	% fband both selects the filter type and the frequencies. Suppose the input is
 	% 
@@ -30,36 +37,53 @@ function D2 = osl_filter(D,fband,order)
 	% D2 = osl_filter(D,-[48 52]) % Bandstop filter blocking frequencies 48-52Hz
 	% D2 = osl_filter(D,[8 13]) % Bandpass filter allowing 8-13Hz
 
-	if nargin < 3 || isempty(order) 
-		order = 5;
-	end
-	
-	S = struct;
+	arg = inputParser;
+	arg.addParameter('order',5); 
+	arg.addParameter('fs',[]); 
+	arg.addParameter('prefix','f'); 
+	arg.parse(varargin{:});
 
-	montage_idx = D.montage('getindex');
-	S.D = D.montage('switch',0);
+	if isnumeric(D)
 
-	if fband(1) == 0
-		S.band = 'low';
-		S.freq = fband(2);
-	elseif fband(2) == inf
-		S.band = 'high';
-		S.freq = fband(1);
-	elseif fband(1) < 0
-		S.band = 'stop';
-		S.freq = abs(fband);
+		assert(~isempty(arg.Results.fs),'Sampling rate must be specified ')
+
+		if fband(1) == 0
+			D2 = ft_preproc_lowpassfilter(D, fs, fband(2), arg.Results.order, 'but','twopass','reduce');
+		elseif fband(2) == inf
+			D2 = ft_preproc_highpassfilter(D, fs, fband(1), arg.Results.order, 'but','twopass','reduce');
+		elseif fband(1) < 0
+			D2 = ft_preproc_bandstopfilter(D,fs,abs(fband),arg.Results.order, 'but','twopass','reduce');
+		else
+			D2 = ft_preproc_bandpassfilter(D, fs, fband, arg.Results.order, 'but','twopass','reduce');
+		end
+
 	else
-		S.band = 'bandpass';
-		S.freq = fband;
-	end
 
-	S.order = order;
-	S.type  = 'butterworth';
-	S.dir   = 'twopass';
+		S = struct;
+		montage_idx = D.montage('getindex');
+		S.D = D.montage('switch',0);
 
-	D2 = spm_eeg_filter(S);
-	D2 = D2.montage('switch',montage_idx);
+		if fband(1) == 0
+			S.band = 'low';
+			S.freq = fband(2);
+		elseif fband(2) == inf
+			S.band = 'high';
+			S.freq = fband(1);
+		elseif fband(1) < 0
+			S.band = 'stop';
+			S.freq = abs(fband);
+		else
+			S.band = 'bandpass';
+			S.freq = fband;
+		end
+
+		S.order = arg.Results.order;
+		S.type  = 'butterworth';
+		S.dir   = 'twopass';
+		S.prefix = arg.Results.prefix;
+
+		D2 = spm_eeg_filter(S);
+		D2 = D2.montage('switch',montage_idx);
 	
-
-
+	end
 

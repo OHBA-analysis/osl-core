@@ -50,9 +50,9 @@ disp(['Will be designated ' source_recon_sess.session_name]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% move copy of SPM MEEG object to work on into the working directory
-warning off;
-mkdir(source_recon_sess.dirname);
-warning on;
+if ~exist(source_recon_sess.dirname,'dir')
+    mkdir(source_recon_sess.dirname);
+end
 
 % move the spm file(s), giving it a unique name in the parent directory
 S2=[];

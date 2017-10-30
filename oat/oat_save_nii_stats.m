@@ -143,9 +143,9 @@ if(size(Sin.stats.cope,4)>1 && ~isfield(Sin,'freq_bin'))
     error('Not implemented for multiple freq bins');
 end;
 
-warning off;
-mkdir(Sin.stats_dir);
-warning on;
+if ~exist(Sin.stats_dir,'dir')
+    mkdir(Sin.stats_dir);
+end
 
 % setup options for nii.quicksave calls
 options=[];

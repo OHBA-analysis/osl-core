@@ -1,4 +1,4 @@
-%% Preproc: Basic source space pipeline
+%% Preproc - Basic source space pipeline
 %
 % This example script shows how to perform basic preprocessing manually. 
 % The main input to this pipeline is an MEEG object that has already
