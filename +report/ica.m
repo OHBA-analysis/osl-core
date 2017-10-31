@@ -5,6 +5,10 @@ function h = ica(D)
 
     % We will plot - any ICs that were bad, and any which were at one point automatically marked bad
     % Possible states are combinations of - auto=true/false, manual=true/false
+    if ~isfield(D,'ica')
+        error('MEEG object is missing ICA results - make sure osl_africa has been run first');
+    end
+    
     h = [];
 
     auto_marked = find(~cellfun(@isempty,D.ica.auto_reason));
@@ -28,9 +32,8 @@ function h = ica(D)
         topos = D.ica.topos;
     end
 
-
     % PLOT EIGENSPECTRA
-    h(end+1) = figure;
+    h(end+1) = figure('name','ICA Eigenspectra','tag','ica_eigenspectra');
     semilogy(D.ica.eigs_preNorm);
     hold on
     semilogy(D.ica.eigs_postNorm,'r--');
@@ -39,7 +42,7 @@ function h = ica(D)
     % PLOT BAD COMPONENTS
     n_cols = length(D.ica.modalities);
     for j = 1:length(to_plot)
-        h(end+1) = figure;
+        h(end+1) = figure('name',sprintf('IC component %d',to_plot(j)),'tag',sprintf('ic_component_%d',to_plot(j)));
         pos = get(gcf,'Position');
         set(gcf,'Position',pos.*[1 1 1 1.5])
 
@@ -101,30 +104,30 @@ function h = ica(D)
         ib(ia)=1:62;
         dataclean = sort(dataclean,'descend');
 
-        h(end+1) = figure;
+        h(end+1) = figure('name',sprintf('ICA metric: %s',fields{j}),'tag',sprintf('ica_metric_%s',fields{j}));
 
         subplot(2,2,1)
         [hs hsx]=hist(data,length(data)/10);        
         bar(hsx,hs);
-        xlabel(fields{j});
+        xlabel(fields{j},'interpreter','none');
         box on
 
         subplot(2,2,2)
         colormap(gca,[ 48   128    20;204     0     0] / 255);
         scatter(ib,data,50,'*','CData',1+is_rejected);
-        xlabel(fields{j});
+        xlabel(fields{j},'interpreter','none');
         ylabel('Ordered IC')
         box on
 
         subplot(2,2,3)
         [hs hsx]=hist(dataclean,length(dataclean)/10);        
         bar(hsx,hs);
-        xlabel(fields{j});
+        xlabel(fields{j},'interpreter','none');
         box on
 
         subplot(2,2,4)
         scatter(dataclean,1:length(dataclean),'*','CData',[ 48   128    20] / 255);
-        xlabel(fields{j});
+        xlabel(fields{j},'interpreter','none');
         ylabel('Ordered IC')
         box on
     end
