@@ -14,3 +14,9 @@ S.plot_basetitle='MAXFILTER: ';
 
 report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
 report=osl_report_print_figs(report);
+
+
+
+
+
+line 164 of detect_artefacts, plot stats.w etc

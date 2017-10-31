@@ -282,7 +282,7 @@ uiwait(MainFig)
             r = sum(v <= metrics.(metric_names{j}).value);
             titlestr = [titlestr sprintf('%s: %i (%.2f)  ',metric_names{j},r,v)];
         end  
-        title(tICWindow,titlestr,'fontsize',FONTSIZE)
+        title(tICWindow,titlestr,'fontsize',FONTSIZE,'interpreter','none')
         
     end
 

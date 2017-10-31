@@ -185,4 +185,9 @@ function [D fname fig_handles fig_names] = osl_convert_script(Sin)
     D.save;
     fname=[D.path '/' D.fname];
 
-
+    chantypes = {'EOG','EMG','ECG'};
+    for j = 1:length(chantypes)
+        if isempty(D.indchantype(chantypes{j}))
+            fprintf(2,'No %s channels were automatically identified - you may need to specify them manually if you wish to use them e.g. in AFRICA\n',chantypes{j})
+        end
+    end

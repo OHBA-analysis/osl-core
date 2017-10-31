@@ -48,13 +48,13 @@ function D2 = osl_filter(D,fband,varargin)
 		assert(~isempty(arg.Results.fs),'Sampling rate must be specified ')
 
 		if fband(1) == 0
-			D2 = ft_preproc_lowpassfilter(D, fs, fband(2), arg.Results.order, 'but','twopass','reduce');
+			D2 = ft_preproc_lowpassfilter(D, arg.Results.fs, fband(2), arg.Results.order, 'but','twopass','reduce');
 		elseif fband(2) == inf
-			D2 = ft_preproc_highpassfilter(D, fs, fband(1), arg.Results.order, 'but','twopass','reduce');
+			D2 = ft_preproc_highpassfilter(D, arg.Results.fs, fband(1), arg.Results.order, 'but','twopass','reduce');
 		elseif fband(1) < 0
-			D2 = ft_preproc_bandstopfilter(D,fs,abs(fband),arg.Results.order, 'but','twopass','reduce');
+			D2 = ft_preproc_bandstopfilter(D,arg.Results.fs,abs(fband),arg.Results.order, 'but','twopass','reduce');
 		else
-			D2 = ft_preproc_bandpassfilter(D, fs, fband, arg.Results.order, 'but','twopass','reduce');
+			D2 = ft_preproc_bandpassfilter(D, arg.Results.fs, fband, arg.Results.order, 'but','twopass','reduce');
 		end
 
 	else

@@ -15,7 +15,7 @@ function D = osl_africa(D,varargin)
 
     % INPUT SETTINGS
     arg.addParameter('modality','MEG'); % modality to use, default = 'MEG'
-    arg.addParameter('artefact_channels',{'EOG','ECG'},@iscell); % Specify which channels are artefactual e.g. {'EOG1','ECG'}
+    arg.addParameter('artefact_channels',{'EOG','ECG'},@iscell); % Specify which channels are artefactual e.g. {'EOG1','ECG',32}. Can be chantype OR channel index number
     arg.addParameter('mains_frequency',50); 
     arg.addParameter('used_maxfilter',false); % Reduce ICA dimension if maxfilter was used, 
 
@@ -26,13 +26,14 @@ function D = osl_africa(D,varargin)
 
     %  ICA SETTINGS
     arg.addParameter('precompute_topos',true); % pre-compute and save IC spatial map topos after ica is computed for use in ident
-    arg.addParameter('ica_params',struct,@isstruct); % ICA parameters passed to run_sensorspace_ica - typically do not require changing
+    %arg.addParameter('ica_params',struct,@isstruct); % ICA parameters passed to run_sensorspace_ica - typically do not require changing
 
     % IDENTIFICATION SETTINGS
-    arg.addParameter('do_mains',true); % Used by manual and auto
-    arg.addParameter('do_kurt',true); % Used by manual and auto
+
 
     % AUTOMATIC IDENT SETTINGS
+    arg.addParameter('do_mains',true); % Used by manual and auto
+    arg.addParameter('do_kurt',true); % Used by manual and auto
     arg.addParameter('max_num_artefact_comps',10);
     arg.addParameter('mains_kurt_thresh',0.4);
     arg.addParameter('kurtosis_thresh',20); 

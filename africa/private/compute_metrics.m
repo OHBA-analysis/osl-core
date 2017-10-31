@@ -59,46 +59,35 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
     end
     metrics.cardiac_autocorrelation.value = ac_max(:);
 
+	% Convert chantypes to a list of channel indices to compare to
+	chans_to_check = [];
+	for j = 1:length(artefact_channels)
+		if ischar(artefact_channels{j}) || isstr(artefact_channels{j})
+			if isempty(D.indchantype(artefact_channels{j}))
+				fprintf(2,'Requested to check correlations with chantype %s, but no channels have this type in the data\n',artefact_channels{j});
+			else
+				chans_to_check = [chans_to_check D.indchantype(artefact_channels{j})];
+			end
+		else
+			chans_to_check = [chans_to_check artefact_channels{j}];
+		end
+	end
 
-	% Detect artefact channels related components
-	if ~isempty(artefact_channels)
+	tc_bp = osl_filter(tc,[0.1 48],'fs',D.fsample); % filtered ICs
+	artefact_data = osl_filter(D(chans_to_check,:),[0.1 48],'fs',D.fsample);
 
-	    for artefact_chantype = unique(artefact_channels)
-	        if ~isfield(metrics,artefact_chantype)
+	ac = zeros(size(tc_bp,1),size(artefact_data,1));
+	for j = 1:size(tc_bp,1)
+		for k = 1:size(artefact_data,1)
+			ac(j,k) = abs(nanmedian(osl_movcorr(tc_bp(j,samples_of_interest)',artefact_data(k,samples_of_interest)',D.fsample*10,0)));
+		end
+	end
 
-	            if isempty(str2num(cell2mat(artefact_chantype)))
-	                % We have a string, extract relevant channels matching channel type name
-	                artefact_data = D(find(strcmp(D.chantype,artefact_chantype)),:);
-	                artefact_data = reshape(artefact_data,size(artefact_data,1),[]);
-	                metric_name = cell2mat(artefact_chantype);
-	            else
-	                % We have a channel number
-	                artefact_data = D(str2num(cell2mat(artefact_chantype)),:);
-	                metric_name = ['Chan_' cell2mat(artefact_chantype)];
-	            end
-
-	            % Bandpass filter
-	            for ac = 1:size(artefact_data,1)
-	                artefact_data(ac,:) = bandpass(artefact_data(ac,:),[0.1 48],D.fsample);
-	            end
-
-	            ac_corr = zeros(1,num_ics);
-	            for ic = 1:num_ics
-	                tc_bp = bandpass(tc(ic,samples_of_interest),[0.1 48],D.fsample);
-	                %ac_corr(ic) = sum(abs(corr(tc_bp',artefact_data')));
-	                for ac = 1:size(artefact_data,1)
-	                    ac_corr(ic) = ac_corr(ic) + abs(nanmedian(osl_movcorr(tc_bp',artefact_data(ac,find(samples_of_interest))',D.fsample*10,0)));
-	                end
-	            end
-	            ac_corr = ac_corr ./size(artefact_data,1);
-	            
-	            % output correlation and timecourse
-	            metrics.(metric_name).('value')  = ac_corr(:);
-	            metrics.(metric_name).timeCourse = artefact_data.';
-	            metrics.(metric_name).timeCourse(~samples_of_interest,:) = nan;
-	        end
-	    end
-
+	for j = 1:size(artefact_data,1)
+		metric_name = sprintf('corr_chan_%d_%s',chans_to_check(j),D.chantype{chans_to_check(j)});
+		metrics.(metric_name).('value')  = ac(:,j);
+		metrics.(metric_name).timeCourse = artefact_data(j,:).';
+		metrics.(metric_name).timeCourse(~samples_of_interest,:) = nan;
 	end
 
 	% Assign variables for use in manual GUI

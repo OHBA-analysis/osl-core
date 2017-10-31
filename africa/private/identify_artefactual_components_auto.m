@@ -16,24 +16,27 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
         reason = reject(reason,mains_ind,S.max_num_artefact_comps,'mains');
     end
 
-    % CHANNEL CORRELATIONS
-    if ~isempty(S.artefact_channels) && ~isempty(S.artefact_channels)
-        artefact_chantype = unique(S.artefact_channels);
-
-        if isscalar(S.artefact_chans_corr_thresh)
-            S.artefact_chans_corr_thresh = S.artefact_chans_corr_thresh*ones(size(S.artefact_channels));
+    % Check correlations with any metrics whose name starts with
+    % 'corr_chan'
+    metric_names = fieldnames(metrics);
+    corr_metrics = metric_names(cellfun(@(x) ~isempty(x),regexp(metric_names,'^corr_chan.*')));
+    
+    if isscalar(S.artefact_chans_corr_thresh)
+        S.artefact_chans_corr_thresh = S.artefact_chans_corr_thresh*ones(size(corr_metrics));
+    end
+    
+    for j = 1:length(corr_metrics)
+        to_reject = find(metrics.(corr_metrics{j}).value > S.artefact_chans_corr_thresh(j));
+        if isempty(to_reject)
+            fprintf('No ICs correlated with Channel %s\n',strrep(corr_metrics{j},'corr_chan_',''));
         end
-
-        for j = 1:length(artefact_chantype)
-            fprintf('Checking correlations with chantype %s\n',artefact_chantype{j});
-            to_reject = find(metrics.(artefact_chantype{j}).value > S.artefact_chans_corr_thresh(j));
-            for k = 1:length(to_reject)
-                fprintf('Rejecting IC %d due to %s (correlation = %.2f)\n',to_reject(k),artefact_chantype{j},metrics.(artefact_chantype{j}).value(to_reject(k)));
-                reason{to_reject(k)} = sprintf('%s %s',reason{to_reject(k)},artefact_chantype{j});
-            end
+            
+        for k = 1:length(to_reject)
+            fprintf('Rejecting IC %d due to correlation with Channel %s (correlation = %.2f)\n',to_reject(k),strrep(corr_metrics{j},'corr_chan_',''),metrics.(corr_metrics{j}).value(to_reject(k)));
+            reason{to_reject(k)} = sprintf('%s %s',reason{to_reject(k)},corr_metrics{j});
         end
     end
-
+    
     % DETECT ARTEFACTS USING KURTOSIS   
     if S.do_kurt
         [~,stats] = robustfit(ones(length(metrics.kurtosis.abs),1),metrics.kurtosis.abs,'bisquare',4.685,'off');
