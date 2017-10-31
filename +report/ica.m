@@ -15,10 +15,12 @@ function h = ica(D)
     to_plot = union(D.ica.bad_components,auto_marked);
 
     % Reconstruct timecourses
+    D = D.montage('switch',0);
     samples_of_interest = ~all(badsamples(D,':',':',':'));
     samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
     sm = D.ica.sm(D.ica.chan_inds,:);
     tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
+    tc(:,~samples_of_interest) = NaN;
     t = (1:size(tc,2))./D.fsample;
 
     % If topos not precomputed, then compute them now
@@ -84,7 +86,7 @@ function h = ica(D)
         if isempty(D.ica.auto_reason)
             title('Auto rejection not performed');
         elseif any(to_plot(j)==auto_marked)
-            title(sprintf('Automatically marked bad:%s',D.ica.auto_reason{to_plot(to_plot(j)==auto_marked)}));
+            title(sprintf('Automatically marked bad:%s',D.ica.auto_reason{to_plot(to_plot(j)==auto_marked)}),'interpreter','none');
         else
             title(sprintf('Not automatically marked bad'));
         end
@@ -100,8 +102,7 @@ function h = ica(D)
         data = D.ica.metrics.(fields{j}).value;
         dataclean=data(~is_rejected);
         [~,ia] = sort(data,'descend');
-        ib = 1:length(data);
-        ib(ia)=1:62;
+        ib(ia)=1:length(data);
         dataclean = sort(dataclean,'descend');
 
         h(end+1) = figure('name',sprintf('ICA metric: %s',fields{j}),'tag',sprintf('ica_metric_%s',fields{j}));
