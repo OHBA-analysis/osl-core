@@ -23,7 +23,7 @@ end
 
 samples2use = samples2use(:)';
 
-samples2use = samples2use & ~any(badsamples(D,':',':',':'));
+samples2use = samples2use & ~any(D.badsamples(:,:,:));
 samples2use = find(samples2use);
 
 C = zeros(length(targetind),D.ntrials);

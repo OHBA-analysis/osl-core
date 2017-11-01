@@ -230,7 +230,7 @@ for subi=1:length(opt.sessions_to_do),
                             S.printprefix=[printprefix_mod '_outlier'];
                             S.plot_basename='double_maxfilter';
                             S.plot_basetitle='MAXFILTER: ';
-                            [res fig_names fig_handles fig_titles]=osl_check_bad_chans(S);
+                            [res fig_names fig_handles fig_titles]=osl_check_bad_chans(S); % TODO - remove this call 
 
                             report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
                             report=osl_report_print_figs(report);

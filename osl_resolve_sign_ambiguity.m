@@ -60,7 +60,7 @@ for subj=1:num_subj,
     end
     
     subjparceldata = reshape(D(chanind,:,:),[length(chanind),D.nsamples*D.ntrials]);
-    good_samples = ~all(badsamples(D,':',':',':'));
+    good_samples = ~all(D.badsamples(:,:,:));
     good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
     subjparceldata = subjparceldata(:,good_samples);        
     

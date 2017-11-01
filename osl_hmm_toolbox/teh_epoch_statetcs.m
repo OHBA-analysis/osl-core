@@ -15,7 +15,7 @@ for subnum=1:length(hmm.data_files)
     NK=size(sub_gamma,2);
     
     % select only good samples 
-    good_samples = ~all(badsamples(D,':',':',':'));
+    good_samples = ~all(D.badsamples(:,:,:));
     good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);   
     
     % insert into D (continuous) object

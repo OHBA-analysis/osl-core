@@ -26,10 +26,7 @@ function D = osl_africa(D,varargin)
 
     %  ICA SETTINGS
     arg.addParameter('precompute_topos',true); % pre-compute and save IC spatial map topos after ica is computed for use in ident
-    %arg.addParameter('ica_params',struct,@isstruct); % ICA parameters passed to run_sensorspace_ica - typically do not require changing
-
-    % IDENTIFICATION SETTINGS
-
+    arg.addParameter('ica_params',struct,@isstruct); % ICA parameters passed to run_sensorspace_ica - typically do not require changing
 
     % AUTOMATIC IDENT SETTINGS
     arg.addParameter('do_mains',true); % Used by manual and auto
@@ -61,12 +58,13 @@ function D = osl_africa(D,varargin)
             end
             D.ica.topos   = topos;
         else
-            D.ica.topos = []; % Compute in identify_artefactual_components_manual_gui.m
+            D.ica.topos = [];
         end
 
         % In general, we avoid saving the D object so that users are
         % explicitly aware when changes are made on-disk. However, ICA is very
         % time consuming, so on balance this is more user-friendly
+        fprintf(1,'** Saving changes to disk **\n');
         D.save(); 
     else
         assert(isfield(D,'ica'),'Skip running ICA was specified, but there are no precomputed results - D.ica is missing')
@@ -80,7 +78,7 @@ function D = osl_africa(D,varargin)
             case 'auto'
                 [D.ica.bad_components, D.ica.auto_reason] = identify_artefactual_components_auto(D,S);
             case 'manual'
-                D.ica.bad_components = identify_artefactual_components_manual_gui(D,tc,D.ica.topos,D.ica.metrics,D.ica.bad_components);
+                D.ica.bad_components = identify_artefactual_components_manual(D,tc,D.ica.topos,D.ica.metrics,D.ica.bad_components);
                 for j = 1:length(D.ica.bad_components)
                     fprintf('IC %d marked bad\n',D.ica.bad_components(j));
                 end
@@ -112,11 +110,9 @@ function D = perform_sensorspace_ica(D,S)
         chantype = {'MEG','MEGANY'}; % need both flags to capture MEG, MEGMAG, MEGGRAD and MEGPLANAR channel types.
     end
 
-    % Good channels:
+    % Good channels and timepoints/trials
     chan_inds = indchantype(D,chantype,'GOOD');
-
-    % Good timepoints/trials
-    good_samples = ~all(badsamples(D,':',':',':'));
+    good_samples = ~any(D.badsamples(chan_inds,:,:));
     good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
 
     % Select data:
@@ -208,6 +204,7 @@ function D = perform_sensorspace_ica(D,S)
     D.ica.params = ica_params;
     D.ica.eigs_preNorm = eigs_preNorm;
     D.ica.eigs_postNorm = eigs_postNorm;
+    D.ica.good_samples = good_samples; % These were the good timepoints that went into the ICA. i.e. use these when indexing the ICs
     D.ica.chan_inds = chan_inds;
     D.ica.norm_vec = norm_vec;
     D.ica.sm = bsxfun(@times,sm,norm_vec);

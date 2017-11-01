@@ -118,7 +118,7 @@ end
 
 if D.ntrials == 1 % can just pass in the MEEG object
     voxeldata = D(:,:,:);
-    good_samples = ~all(badsamples(D,':',':',':')); % all checks if any channels are bad then ignore those samples
+    good_samples = ~all(D.badsamples(:,:,:)); % all checks if any channels are bad then ignore those samples
     % Get time-coursess
     nodedata = ROInets.get_node_tcs(voxeldata(:,good_samples), parcellation, S.method);
     if ~strcmp(S.orthogonalisation,'none')
@@ -136,7 +136,7 @@ if D.ntrials == 1 % can just pass in the MEEG object
     data = reshape(data,[size(data,1),length(good_samples),D.ntrials]);
 
 elseif isa(D,'meeg') % work with D object in get_node_tcs
-    %good_samples = find(~all(badsamples(D,':',':',':')));
+    %good_samples = find(~all(D.badsamples(:,:,:)));
     nodedata = ROInets.get_node_tcs(D,parcellation,S.method);
     nodedata = reshape(nodedata(:,:,:),size(nodedata,1),[]);
     if ~strcmp(S.orthogonalisation,'none')
@@ -152,7 +152,7 @@ elseif isa(D,'meeg') % work with D object in get_node_tcs
     data = reshape(data,size(data,1),size(D,2),size(D,3));
 
 else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG data)
-    good_samples = ~all(badsamples(D,':',':',':'));
+    good_samples = ~all(D.badsamples(:,:,:));
     nodedata = zeros(size(parcellation,2),D.nsamples,D.ntrials);
     msg = '';
 

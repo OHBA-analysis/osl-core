@@ -15,7 +15,7 @@ function [C,M] = osl_cov(D)
 % Adam Baker 2014
 
 if isa(D,'meeg')
-    samples2use = permute(~all(badsamples(D,':',':',':')),[2 3 1]);
+    samples2use = permute(~all(D.badsamples(:,:,:)),[2 3 1]);
     nfreqs   = max([1,D.nfrequencies]);
     nchans   = D.nchannels;
     ntrials  = D.ntrials;

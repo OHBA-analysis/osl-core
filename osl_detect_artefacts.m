@@ -41,8 +41,9 @@ function D = osl_detect_artefacts(D,varargin)
     % RA 2017
     % MWW 2013
 
+    % Note - trial based detection merges across modalities i.e. an epoched MEEG marks bad trials instead of events
     arg = inputParser;
-    arg.addParameter('modalities',{},@iscell); 
+    arg.addParameter('modalities',setdiff(unique(D.chantype),{'Other'}),@iscell); % By default, detect artefacts in all modalities except 'OTHER'
     arg.addParameter('max_iter',3);
     arg.addParameter('max_bad_channels',10); % Maximum number of bad channels allowed after this function returns - including any already marked bad
     arg.addParameter('badchannels',true); % Check for bad channels
@@ -51,49 +52,36 @@ function D = osl_detect_artefacts(D,varargin)
     arg.addParameter('measure_fns',{'std'}); % list of outlier metric func names to use for bad segment marking
     arg.addParameter('event_threshold',0.3); % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
     arg.addParameter('channel_threshold',0.01); % list of robust GLM weights thresholds to use on chans for bad segment marking, the LOWER the theshold the less aggressive the rejection
-    arg.addParameter('artefact_type_name',[]); % Specify a name for the artefacts to be added. All existing artefacts with this name will be discarded
+    arg.addParameter('artefact_type_name','artefact_OSL'); 
     arg.parse(varargin{:});
     options = arg.Results;
     
     if isempty(options.modalities)
-        options.modalities = unique(D.chantype(D.indchantype({'MEG','MEGMAG','MEGGRAD','MEGPLANAR','EEG'})));
         fprintf('Detecting artefacts in channel types: %s\n',strjoin(options.modalities,','));
     end
-
-    if isempty(options.artefact_type_name) && any(~ismember(options.modalities,{'MEG','MEGMAG','MEGGRAD','MEGPLANAR','EEG'}))
-        fprintf(2,'Modalities contains non-MEG channels, automatically marking as ''OSL_non_meg_artefact'' so they will not interact with badsamples\n');
-        options.artefact_type_name = 'OSL_non_meg_artefact';
-    elseif isempty(options.artefact_type_name)
-        options.artefact_type_name = 'artefact_OSL'
-    end
-
 
     % Are we continuous and checking for bad times? If continuous, D becomes
     % a temporary copy with artificial epochs. Otherwise, D is just the
     % original input file
     continuous = strcmp(D.type,'continuous');
 
-    if continuous
-        existing_badsamples = event_to_sample(D,options.artefact_type_name); % Find samples that are already bad *based on the same event type as the new proposed badness*
-        dummy_trialsize = options.dummy_epoch_tsize*D.fsample;
-        dummy_ntrials = floor(D.nsamples/(options.dummy_epoch_tsize*D.fsample));
-        convert_to_trial = @(x) reshape(x(:,1:dummy_trialsize*dummy_ntrials),size(x,1),dummy_trialsize,dummy_ntrials); % This function 'epochs' a matrix from chans x continuous_time to chans x trial_time x trials
-        data = convert_to_trial(D(:,:));
-        badtrials = squeeze(any(convert_to_trial(existing_badsamples),2)); % Existing bad trials
-    else
-        data = D(:,:,:);
-        badtrials = ismember(1:D.ntrials,D.badtrials); % Currently bad trials
-    end
-    
-    trials_to_reject = struct; % For each modality, store which trials were rejected
-
     % For each modality, detect badness
     for mm = 1:length(options.modalities)
 
         modality=options.modalities{mm};
-        
-        chan_list = find(strcmp(D.chantype(),modality));
-        chanind = setdiff(chan_list, D.badchannels); % All currently good chans
+        chan_inds = find(strcmp(D.chantype(),modality));
+
+        if continuous
+            dummy_trialsize = options.dummy_epoch_tsize*D.fsample;
+            dummy_ntrials = floor(D.nsamples/(options.dummy_epoch_tsize*D.fsample));
+            convert_to_trial = @(x) reshape(x(:,1:dummy_trialsize*dummy_ntrials),size(x,1),dummy_trialsize,dummy_ntrials); % This function 'epochs' a matrix from chans x continuous_time to chans x trial_time x trials
+            data = convert_to_trial(D(chan_inds,:));
+            existing_badsamples = event_to_sample(D,options.artefact_type_name,modality); % Find samples that are already bad *based on the same event type as the new proposed badness*
+            badtrials = squeeze(any(convert_to_trial(existing_badsamples),2)); % Existing bad trials
+        else
+            data = D(chan_inds,:,:);
+            badtrials = ismember(1:D.ntrials,D.badtrials); % Currently bad trials - note that this is over all modalities
+        end
 
         iters = 0;
         detected_badness = true; % The while loop continues as long as something bad was found
@@ -101,11 +89,12 @@ function D = osl_detect_artefacts(D,varargin)
         while detected_badness && iters < options.max_iter
             iters = iters+1;
             detected_badness = false; % Terminate by default unless something bad is found
+            good_channels = ~ismember(chan_inds, D.badchannels); % Exclude already bad channels
 
-            if options.badchannels && length(chanind) > 1  % Do a pass for bad channels as long as >1 channel remains
+            if options.badchannels && sum(good_channels) > 1  % Do a pass for bad channels as long as >1 channel remains
                 for ii = 1:length(options.measure_fns)
 
-                    dat = data(chanind,:,~badtrials); % Only work on trials that haven't been rejected at any point
+                    dat = data(good_channels,:,~badtrials); % Only work on trials that haven't been rejected at any point
                     datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
                     
                     [b,stats] = robustfit(ones(length(datchan),1),datchan,'bisquare',4.685,'off');
@@ -128,20 +117,20 @@ function D = osl_detect_artefacts(D,varargin)
                     
                     % set bad channels in D
                     if length(sorted_bad_chan) > 0              
-                        bad_channels=chanind(sorted_bad_chan);
+                        bad_channels=chan_inds(sorted_bad_chan);
                         D = badchannels(D, bad_channels, ones(length(bad_channels),1));
                         detected_badness = true;
                     end
 
                     % correct chan inds for next bit
-                    chanind = setdiff(chan_list, D.badchannels);
+                    good_channels = ~ismember(chan_inds, D.badchannels);
                 end
             end
 
             if options.badtimes % Do a pass for bad trials
                 for ii = 1:length(options.measure_fns)
                     goodtrials = find(~badtrials);
-                    dat = data(chanind,:,goodtrials);
+                    dat = data(good_channels,:,goodtrials);
                     datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1)*size(dat,2),size(dat,3)),[],1);
                     [b,stats] = robustfit(ones(length(datchan),1),datchan,'bisquare',4.685,'off');
 
@@ -156,66 +145,47 @@ function D = osl_detect_artefacts(D,varargin)
                     badtrials(goodtrials(new_badtrials))=1;
                 end
             end
-        end
-    end
+        end % end while artefacts still being detected
 
-    if options.badtimes
+        if options.badtimes
 
-        if continuous
+            if continuous
+                % Find the onset and offset times
+                db = find(diff([0;badtrials]));
+                onset = db(1:2:end);
+                offset = db(2:2:end);
+                if length(offset)<length(onset) % This means that the state changed without an end of change
+                    offset(end+1) = length(badtrials)+1; % It overruns by 1 at the end
+                end
 
-            % Find the onset and offset times
-            db = find(diff([0;badtrials]));
-            onset = db(1:2:end);
-            offset = db(2:2:end);
-            if length(offset)<length(onset) % This means that the state changed without an end of change
-                offset(end+1) = length(badtrials)+1; % It overruns by 1 at the end
-            end
-
-            if strcmp(options.artefact_type_name,'artefact_OSL')
-                % For default artefacts, apply them to all channels. Otherwise, store each channel separately
-                % This is because spm12 does not support setting Events.value to be an array - it can only contain ONE channel
-                % Thus we implement our own solution where the artefact name stores the channel index
-                values = {'all'};
-            else
-                values = arrayfun(@(x) x,D.indchantype(options.modalities),'UniformOutput',false); % Cell array of channel indices
-            end
-
-            BadEvents = struct([]);
-            for k = 1:length(values)
+                Events = D.events;
+                BadEvents = struct([]);
                 for j = 1:length(onset)
-                    BadEvents(end+1).type     = options.artefact_type_name;
-                    BadEvents(end).value    = values{k};
+                    BadEvents(end+1).type   = options.artefact_type_name;
+                    BadEvents(end).value    = modality;
                     BadEvents(end).time     =  (onset(j)-1)*options.dummy_epoch_tsize+ 1/D.fsample;
                     BadEvents(end).duration =  (offset(j)-onset(j))*options.dummy_epoch_tsize;
                     BadEvents(end).offset = 0;
                 end
+
+                % Remove previous bad epoch events of this same type and modality
+                if isfield(Events,'type')
+                    Events(strcmp({Events.type},options.artefact_type_name) & strcmp({Events.value},modality)) = [];
+                end
+
+                % Add on new bad events
+                if ~isempty(BadEvents)
+                  Events = [Events(:); BadEvents(:)];
+                end
+
+                % Merge new events with previous
+                D = D.events(1,Events);
+            else
+                % Map directly to bad trials
+                D = D.badtrials(1:length(badtrials),badtrials);
             end
-
-            keyboard
-            
-            Events = D.events;
-
-            % Remove previous bad epoch events of this same type - they are already accounted for at the start
-            if isfield(Events,'type')
-                Events(strcmp({Events.type},options.artefact_type_name)) = [];
-            end
-
-            % Concatenate new and old events
-            if size(Events,1) < size(Events,2)
-                BadEvents = BadEvents(:);
-            end
-
-            if ~isempty(BadEvents)
-              Events = [Events(:); BadEvents(:)];
-            end
-
-            % Merge new events with previous
-            D = D.events(1,Events);
-        else
-            % Map directly to bad trials
-            D = D.badtrials(1:length(badtrials),badtrials);
         end
-        
+
     end
 
     % Display summary at the end
@@ -226,14 +196,10 @@ function D = osl_detect_artefacts(D,varargin)
 
     if continuous
         ev = D.events;
-        ev_types = unique({ev.type});
-        for j = 1:length(ev_types)
-            fprintf('BAD TIMES - EVENT TYPE "%s"\n',ev_types{j});
-            for k = 1:length(ev)
-                if strcmp(ev(k).type,ev_types{j})
-                    fprintf('Bad epoch from %.2f-%.2f\n',ev(k).time,ev(k).time + ev(k).duration)
-                end
-            end
+        modalities = unique({ev.value});
+        for modality = unique({ev.value})
+            this_modality = strcmp({ev.value},modality);
+            fprintf('Bad times - rejected %.2fs (%.0f%%) in modality %s\n',sum([ev(this_modality).duration]),100*sum([ev(this_modality).duration])/(D.time(end)-D.time(1)),modality{1});
         end
     else
         bt = D.badtrials;

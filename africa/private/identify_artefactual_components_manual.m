@@ -1,4 +1,4 @@
-function bad_components = identify_artefactual_components_manual_gui(D,tc,topos,metrics,bad_components)
+function bad_components = identify_artefactual_components_manual(D,tc,topos,metrics,bad_components)
 % Note - tc is passed in with NaNs already in place
 % But the artefact channels need to have NaNs added
 

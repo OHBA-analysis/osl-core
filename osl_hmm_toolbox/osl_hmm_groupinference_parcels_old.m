@@ -596,7 +596,7 @@ if todo.output
                         statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,state_assignment);
                     end
 
-                    good_samples = ~all(badsamples(D,':',':',':'));
+                    good_samples = ~all(D.badsamples(:,:,:));
 %                     good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
 
                     if f==1
@@ -671,7 +671,7 @@ end
 data = reshape(data,[D.nchannels,D.nsamples*D.ntrials]);
 
 % select only good data
-good_samples = ~all(badsamples(D,':',':',':'));
+good_samples = ~all(D.badsamples(:,:,:));
 good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
 data = data(:,good_samples);
 

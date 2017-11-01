@@ -47,7 +47,7 @@ function [env,phase] = osl_envelope(D,varargin)
 	end
 
     if ~isempty(arg.Results.filter)
-        D = osl_filter(D,arg.Results.filter,[],fs);
+        D = osl_filter(D,arg.Results.filter,'fs',fs);
     end
 
     % If doing Giles orthogonalization, do it after
