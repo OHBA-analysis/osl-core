@@ -63,19 +63,37 @@ if nargin < 3 || isempty(S)
     S = struct;
 end
 
-
-% Check SPM File Specification:
-try
-    if ~strcmp(class(D),'meeg'),  
-        D = char(D);
+if isa(D,'meeg')
+    % If the fullfile is relative (e.g. if the user ran `D =
+    % D.copy('./temp'))` then the paths fail later on. The solution is to
+    % reload the file e.g. D = spm_eeg_load(D.fullfile) However, this will
+    % only work properly if the user is the same directory as when they
+    % created the MEEG object. We prompt the user to do this themselves,
+    % rather than trying to automatically reload the file. If the user did
+    % change directory e.g.
+    %
+    % D = D.copy('./temp')) 
+    % cd .. 
+    % D = spm_eeg_load(D.fullfile)
+    %
+    % likely scenario is that the file won't exist and cannot be loaded. Worst
+    % case scenario is that the new folder contains an MEEG with the same
+    % filename, in which case an incorrect file would be loaded. It should
+    % definitely not be automatically reloaded
+    if strmatch('./',D.fullfile)
+        error('MEEG fullfile (''%s'') is relative - reload the file to make it absolute',D.fullfile);
+    end
+else
+    if ischar(D) || isstring(D)
         [pathstr,filestr] = fileparts(D);
         D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
         D = spm_eeg_load(D);
+    else
+        error('Unrecognized input time - must be a file name or an MEEG');
     end
-    D.check;
-catch
-    error('SPM file specification not recognised or incorrect');
 end
+
+D.check;
 D.save(); % Save the object to disk to ensure that the current online montage is used
 
 % Check Modality Specification:
