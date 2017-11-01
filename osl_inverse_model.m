@@ -266,13 +266,10 @@ matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise        
 matlabbatch{6}.spm.tools.beamforming.write.BF(1)                                = cfg_dep('Output: BF.mat file', substruct('.','val', '{}',{5}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
 matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             = S.prefix;
 
-
+obj = onCleanup(@() cd(old_dir)); % Restore the working directory
 spm_jobman('run',matlabbatch)
-
 D = spm_eeg_load(D.fullfile); % Load the file back from disk with the new online montages
-cd(old_dir); % Restore the working directory
 
-end
 
 
 
