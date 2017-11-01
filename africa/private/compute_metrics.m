@@ -1,5 +1,5 @@
 function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
-	% Take in D object, return artefact-related metrics
+	% Take in D object, return artefact-related metrics for AFRICA
 	%
 	% INPUTS
 	% - D : MEEG object
@@ -11,19 +11,15 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
 	% - metrics : struct with various metrics
 	% - tc : IC timecourses with NaNs where there were badsamples
 
-	samples_of_interest = ~all(badsamples(D,':',':',':'));
-	samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
-
 	sm = D.ica.sm(D.ica.chan_inds,:);
 	tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
-
 	num_ics = D.ica.params.num_ics;
 
 	%% COMPUTE METRICS 
 	metrics = struct;
 	
 	% Mains frequency
-	tc_fft = fft(demean(tc(:,samples_of_interest),2),[],2);
+	tc_fft = fft(demean(tc(:,D.ica.good_samples),2),[],2);
 	abs_ft  = abs(tc_fft);
 	freq_ax = 0:(D.fsample/2)/(floor(length(abs_ft)/2)-1):(D.fsample/2);
 	minhz = 0.1;
@@ -39,7 +35,7 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
 	metrics.mains.spec_n = max(spec_n(:,inds),[],2); % Maximum normalised power within 1Hz of mains frequency
 
 	% Kurtosis 
-    kurt = kurtosis(tc(:,samples_of_interest),[],2);
+    kurt = kurtosis(tc(:,D.ica.good_samples),[],2);
     kurt = kurt(:);
     metrics.kurtosis.raw = kurt-3;
     metrics.kurtosis.log = log(kurt-3); 
@@ -48,12 +44,12 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
 	% Cardiac autocorrelation
     bpm_range = [50 100]./60;
     maxlags = 2*D.fsample;
-    [~,lags] = xcorr(tc(1,samples_of_interest),maxlags,'coeff');
+    [~,lags] = xcorr(tc(1,D.ica.good_samples),maxlags,'coeff');
     lags = lags./D.fsample;
     lags_range = lags>bpm_range(1) & lags<bpm_range(2);
     ac_max = zeros(1,num_ics);
     for ic = 1:num_ics
-        tc_bp = bandpass(tc(ic,samples_of_interest),[0 48],D.fsample);
+        tc_bp = bandpass(tc(ic,D.ica.good_samples),[0 48],D.fsample);
         ac = xcorr(tc_bp,maxlags,'coeff');
         ac_max(ic) = max(ac(lags_range));
     end
@@ -78,16 +74,17 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
 
 	ac = zeros(size(tc_bp,1),size(artefact_data,1));
 	for j = 1:size(tc_bp,1)
-		for k = 1:size(artefact_data,1)
-			ac(j,k) = abs(nanmedian(osl_movcorr(tc_bp(j,samples_of_interest)',artefact_data(k,samples_of_interest)',D.fsample*10,0)));
+		for k = 1:length(chans_to_check)
+			artefact_good_samples = ~event_to_sample(D,'artefact_OSL',D.chantype(chans_to_check(1)));
+			flt = D.ica.good_samples & artefact_good_samples; % Only use times when both the ICA and the artefact channel were good
+			ac(j,k) = abs(nanmedian(osl_movcorr(tc_bp(j,flt)',artefact_data(k,flt)',D.fsample*10,0)));
 		end
 	end
 
-	for j = 1:size(artefact_data,1)
+	for j = 1:length(chans_to_check)
 		metric_name = sprintf('corr_chan_%d_%s',chans_to_check(j),D.chantype{chans_to_check(j)});
 		metrics.(metric_name).('value')  = ac(:,j);
-		metrics.(metric_name).timeCourse = artefact_data(j,:).';
-		metrics.(metric_name).timeCourse(~samples_of_interest,:) = nan;
+		metrics.(metric_name).chanind = chans_to_check(j);
 	end
 
 	% Assign variables for use in manual GUI
@@ -97,6 +94,6 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
 	% Add variance as default metric
 	metrics.variance.value = nanvar(tc,[],2);
 	metrics = orderfields(metrics);
-	tc(:,~samples_of_interest) = NaN;
+	tc(:,~D.ica.good_samples) = NaN;
 
 
