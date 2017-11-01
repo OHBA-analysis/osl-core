@@ -61,11 +61,10 @@ function D = osl_detect_artefacts(D,varargin)
     end
 
     if isempty(options.artefact_type_name) && any(~ismember(options.modalities,{'MEG','MEGMAG','MEGGRAD','MEGPLANAR','EEG'}))
-        fprintf(2,'Modalities contains non-MEG channels, so artefacts are being automatically marked as ''OSL_non_meg_artefact'' so they will not interact with badsamples, but will be used in AFRICA when computing artefact correlations\n');
-        fprintf(2,'You can set the ''artefact_type_name'' to override this.\n');
+        fprintf(2,'Modalities contains non-MEG channels, automatically marking as ''OSL_non_meg_artefact'' so they will not interact with badsamples\n');
         options.artefact_type_name = 'OSL_non_meg_artefact';
     elseif isempty(options.artefact_type_name)
-        options.artefact_type_name = 'artefact_OSL';
+        options.artefact_type_name = 'artefact_OSL'
     end
 
 
@@ -172,15 +171,28 @@ function D = osl_detect_artefacts(D,varargin)
                 offset(end+1) = length(badtrials)+1; % It overruns by 1 at the end
             end
 
-            BadEvents = struct([]);
-            for j = 1:length(onset)
-                BadEvents(j).type     = options.artefact_type_name;
-                BadEvents(j).value    = 'all';
-                BadEvents(j).time     =  (onset(j)-1)*options.dummy_epoch_tsize+ 1/D.fsample;
-                BadEvents(j).duration =  (offset(j)-onset(j))*options.dummy_epoch_tsize;
-                BadEvents(j).offset = 0;
+            if strcmp(options.artefact_type_name,'artefact_OSL')
+                % For default artefacts, apply them to all channels. Otherwise, store each channel separately
+                % This is because spm12 does not support setting Events.value to be an array - it can only contain ONE channel
+                % Thus we implement our own solution where the artefact name stores the channel index
+                values = {'all'};
+            else
+                values = arrayfun(@(x) x,D.indchantype(options.modalities),'UniformOutput',false); % Cell array of channel indices
             end
 
+            BadEvents = struct([]);
+            for k = 1:length(values)
+                for j = 1:length(onset)
+                    BadEvents(end+1).type     = options.artefact_type_name;
+                    BadEvents(end).value    = values{k};
+                    BadEvents(end).time     =  (onset(j)-1)*options.dummy_epoch_tsize+ 1/D.fsample;
+                    BadEvents(end).duration =  (offset(j)-onset(j))*options.dummy_epoch_tsize;
+                    BadEvents(end).offset = 0;
+                end
+            end
+
+            keyboard
+            
             Events = D.events;
 
             % Remove previous bad epoch events of this same type - they are already accounted for at the start
