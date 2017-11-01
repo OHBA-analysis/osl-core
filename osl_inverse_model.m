@@ -180,6 +180,7 @@ catch
         mkdir(S.dirname);
     end
 end
+fprintf(1,'BF working directory: %s\n',S.dirname);
 
 % Check prefix Specification:
 try
