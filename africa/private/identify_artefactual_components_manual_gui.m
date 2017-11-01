@@ -1,4 +1,6 @@
 function bad_components = identify_artefactual_components_manual_gui(D,tc,topos,metrics,bad_components)
+% Note - tc is passed in with NaNs already in place
+% But the artefact channels need to have NaNs added
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Create UI %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 MainFig = figure('Name',            ['AFRICA: ' D.fname], ...
@@ -10,20 +12,12 @@ MainFig = figure('Name',            ['AFRICA: ' D.fname], ...
                  'BusyAction',      'queue'            , ...
                  'Visible',         'off'               , ...
                  'ResizeFcn',       @createlayout); % ,...
-%'CloseRequestFcn', @close_fig);
 
 goodcolor    = [ 48   128    20] / 255;
 badcolor     = [204     0     0] / 255;
 currentcolor = [100   149   237] / 255;
 covcolor     = [121   121   121] / 255;
 FONTSIZE     = 14;
-
-%bad_components = ismember(1:size(tc,1),bad_components);
-
-% % Precompute tc spectra - use zeros
-% tc_zeros = tc;
-% tc_zeros(~isfinite(tc)) = 0;
-% [component_P,component_f] = pwelch(tc_zeros.',1024,512,1024,D.fsample);
 
 metric_names = fieldnames(metrics);
 current_metric = 1;
@@ -222,14 +216,15 @@ uiwait(MainFig)
         
         % redraw covariate window
         axes(covWindow);
-        isValidCovField =   isfield(metrics.(metric_names{current_metric}), 'timeCourse') && ...
-                           ~isempty(metrics.(metric_names{current_metric}).timeCourse)    && ...
-                             length(metrics.(metric_names{current_metric}).timeCourse) == length(t);
-        if isValidCovField
-            plot(t(:), metrics.(metric_names{current_metric}).timeCourse,'color',covcolor);
+        if isfield(metrics.(metric_names{current_metric}), 'chanind')
+            cov_tc = D(metrics.(metric_names{current_metric}).chanind,:,:);
+            cov_tc = reshape(cov_tc,1,D.nsamples*D.ntrials);
+            cov_tc(event_to_sample(D,'artefact_OSL',D.chantype(metrics.(metric_names{current_metric}).chanind))) = NaN;
+            plot(t(:), cov_tc,'color',covcolor);
         else
             plot(t, zeros(size(t)), 'color', covcolor);
         end%if
+        
         axis tight
         set(covWindow,'xlim',[t(1) t(end)]);
         set(covWindow,'ylim',max(abs(get(covWindow,'ylim')))*[-1 1]);
