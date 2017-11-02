@@ -29,23 +29,57 @@ function D = add_montage(D,W,name,labels,channels)
 
 	currentMontage  = D.montage('getmontage');
     
-    if isempty(currentMontage)
+    if isempty(currentMontage) % If there is currently no active montage - it's OK to set default channel information
     	newMontage = struct; 
     	newMontage.tra  = W;
     	newMontage.labelorg = D.chanlabels;
-    else
+    	if ~isempty(channels) % If no channels provided AND no existing montage, SPM's default is fine
+    		newMontage.channels = channels;
+    	end
+    else 
+    	% There are no original labels, and the tra matrix goes on top of the existing tra
+    	% The transformation is then from the currentMontage's labelorg to the new labels
+    	% But the channel types come from transforming the current montage channel types
     	newMontage      = currentMontage;
 		newMontage.tra  = W * currentMontage.tra;
+
+		if ~isempty(channels)
+			newMontage.channels = channels;
+		else % If no channels provided AND no existing montage, SPM's default doesn't work because we need to read from the previous montage
+
+			newMontage.channels = struct;
+
+			for j = 1:size(W,1) % For each new channel
+
+			    old_channels = find(W(j,:)); % Old channels in the previous montage referred to by the new channel
+
+			    newMontage.channels(j).label = labels{j};
+
+			    % Bad if any old channels were bad
+			    newMontage.channels(j).bad = any([currentMontage.channels(old_channels).bad]) 
+
+			    % If only one previous chantype, use it - otherwise, call it 'Other'
+			    old_chantypes = unique({currentMontage.channels(old_channels).type});
+			    if numel(old_chantypes)==1
+			        newMontage.channels(j).type = old_chantypes{1};
+			    else
+			        % mixing different types of channels
+			        newMontage.channels(j).type = 'Other';
+			    end
+
+			    % Same with units
+			    old_units = unique({currentMontage.channels(old_channels).units});
+			    if numel(old_units)==1
+			        newMontage.channels(j).units = old_units{1};
+			    else
+			        newMontage.channels(j).units = 'unknown';
+			    end
+			end
+
+		end
+
 	end
 
-	if isempty(channels)
-        if isfield(newMontage,'channels')
-            newMontage      = rmfield(newMontage, 'channels');
-        end
-	else
-		newMontage.channels = channels;
-	end
-	
 	newMontage.name = name;
 	newMontage.labelnew = labels;
 
