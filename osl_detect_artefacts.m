@@ -44,7 +44,7 @@ function D = osl_detect_artefacts(D,varargin)
     % Note - trial based detection merges across modalities i.e. an epoched MEEG marks bad trials instead of events
     arg = inputParser;
     arg.addParameter('modalities',setdiff(unique(D.chantype),{'Other'}),@iscell); % By default, detect artefacts in all modalities except 'OTHER'
-    arg.addParameter('max_iter',3);
+    arg.addParameter('max_iter',10);
     arg.addParameter('max_bad_channels',10); % Maximum number of bad channels allowed after this function returns - including any already marked bad
     arg.addParameter('badchannels',true); % Check for bad channels
     arg.addParameter('badtimes',true); % Check for bad events
@@ -110,14 +110,21 @@ function D = osl_detect_artefacts(D,varargin)
                     sorted_bad_chan = bad_chan(iw);
                     to_add = setdiff(sorted_bad_chan,D.badchannels); % Remove already marked bad channels
                     max_add = options.max_bad_channels-length(D.badchannels); % Maximum number of channels to add
+                    
+                    if max_add <= 0
+                        fprintf(2,'Already have more bad channels than options.max_bad_channels, not adding any more\n')
+                        sorted_bad_chan = [];
+                        to_add = [];
+                    end
+
                     if length(to_add) > max_add
                         fprintf(2,'Detected %d new bad channels, only rejecting the worst %d so there will be options.max_bad_channels=%d total\n', length(to_add), max_add,options.max_bad_channels);
-                        sorted_bad_chan = sorted_bad_chan(1:max_add);
+                        to_add = to_add(1:max_add);
                     end
                     
                     % set bad channels in D
-                    if length(sorted_bad_chan) > 0              
-                        bad_channels=chan_inds(sorted_bad_chan);
+                    if length(to_add) > 0              
+                        bad_channels=chan_inds(to_add);
                         D = badchannels(D, bad_channels, ones(length(bad_channels),1));
                         detected_badness = true;
                     end
@@ -142,9 +149,13 @@ function D = osl_detect_artefacts(D,varargin)
 
                     % For each good trial, mark that trial number as bad
                     new_badtrials = find(stats.w < event_threshold);
+                    if new_badtrials
+                        detected_badness = true;
+                    end
                     badtrials(goodtrials(new_badtrials))=1;
                 end
             end
+
         end % end while artefacts still being detected
 
         if options.badtimes
@@ -191,7 +202,7 @@ function D = osl_detect_artefacts(D,varargin)
     % Display summary at the end
     bc = D.badchannels;
     for j = 1:length(bc)
-        fprintf('Channel %d (%s) is bad\n',bc(j),D.chanlabels{bc(j)});
+        fprintf('Channel %d (%s - %s) is bad\n',bc(j),D.chantype{bc(j)},D.chanlabels{bc(j)});
     end
 
     if continuous
