@@ -1,13 +1,17 @@
 function res = good_samples(D,chanind, sampind, trialind)
 	% This is a convenience function equivalent to
 	%
-	% ~any(D.badsamples(chan_inds, sampind, trialind))
+	% ~any(D.badsamples(chanind, sampind, trialind))
+	%
+	% i.e. the outputs should match exactly. Behaviours do differ
+	% slightly though if bad channels are included in 
+	% chanind because they are ignored by D function. Similarly,
+	% bad channel types are excluded when finding good samples. Basically
+	% D function should do what you expect if you are not using the
+	% data from bad channels.
 	%
 	% However, as a modified copy of badsamples(), it is faster
 	% because it aggregates over all channels
-	%
-	% Note - bad channels are always excluded from this check
-	% because otherwise the entire timeseries would be bad
 
 	if nargin < 4 || isempty(trialind) 
 		trialind = ':';
@@ -30,26 +34,20 @@ function res = good_samples(D,chanind, sampind, trialind)
 	end
 	
 
-	res = ~badsamples(D, chanind, sampind, trialind);
+	res = true(1, nsamples(D), length(trialind));
+	chantypes = unique(D.chantype(chanind)); % Channel types to check
 
-	% ~any(D.badsamples(chan_inds,:,:))
-
-
-function res = badsamples(this, chanind, sampind, trialind)
-	% Returns an array of 0/1 marking bad data based on artefact events and bad flags
-	% FORMAT res = badsamples(this, chanind, sampind, trialind)
-	% _______________________________________________________________________
-	% Copyright (C) 2013 Wellcome Trust Centre for Neuroimaging
-
-	% Vladimir Litvak
-	% $Id: badsamples.m 6311 2015-01-21 15:44:23Z vladimir $
-	res = false(1, nsamples(this), length(trialind));
-	chantypes = unique(this.chantype(chanind)); % Channel types to check
+	% If online montage, we also need to check the constituent channels
+	if D.montage('getindex') > 0 
+		m = D.montage('getmontage');
+		Dtemp = D.montage('switch',0);
+		chantypes = union(chantypes,unique(Dtemp.chantype(find(any(m.tra,1)))));
+	end
 
 	for i = 1:length(trialind)
 
-		% Retrieve all events associated with this trial
-	    ev = events(this, trialind(i), 'samples');
+		% Retrieve all events associated with D trial
+	    ev = events(D, trialind(i), 'samples');
 	    if iscell(ev)
 	        ev = ev{1};
 	    end
@@ -58,13 +56,13 @@ function res = badsamples(this, chanind, sampind, trialind)
 
 	    if ~isempty(ev)
 	        for k = 1:numel(ev)
-	            res(1, ev(k).sample+(0:(ev(k).duration-1)), i) = true;
+	            res(1, ev(k).sample+(0:(ev(k).duration-1)), i) = false;
 	        end
 	    end
 	end
 
 	res = res(:, sampind, :);
-	res(:, :, badtrials(this, trialind))  = true;
+	res(:, :, badtrials(D, trialind))  = false;
 
 
 
