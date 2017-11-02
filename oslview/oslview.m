@@ -577,9 +577,26 @@ function D = oslview(D)
 				redraw
 			else % End previous epoch, recompute stats
 				BadEpochs.(channel_type){end}(2) = t_current;
+				BadEpochs.(channel_type){end} = sort(BadEpochs.(channel_type){end});
+
+				% Recompute the events
+				t_bad = get_bad_inds();
+
+				db = find(diff([0 t_bad]));
+				onset = db(1:2:end);
+				offset = db(2:2:end);
+				if length(offset)<length(onset) 
+				    offset(end+1) = length(t_bad); 
+				end
+
+				BadEpochs.(channel_type) = {};
+				for j = 1:length(onset)
+					BadEpochs.(channel_type){j} = D.time([onset(j),offset(j)-1]);
+				end
+				
 				calcPlotStats
 				redraw
-			end		
+			end
 		else	%	Remove existing event
 			BadEpochs.(channel_type)(cellfun(@(x) ~sum(sign(x-t_current)),BadEpochs.(channel_type))) = [];
 			calcPlotStats
@@ -739,7 +756,7 @@ function D = set_bad_events(D,BadEpochs,modality)
 	% Save bad epochs using method meeg/events
 	BadEvents = struct([]);
 	for ev = 1:numel(BadEpochs)
-		if numel(BadEpochs{ev} == 2)
+		if numel(BadEpochs{ev}) == 2
 			BadEvents(ev).type	= 'artefact_OSL';
 			BadEvents(ev).value	= modality;
 			BadEvents(ev).time	= BadEpochs{ev}(1);
