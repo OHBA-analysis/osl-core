@@ -731,7 +731,7 @@ function BadEpochs = read_bad_events(D,modality)
 
 	for j = 1:numel(ev)
 		BadEpochs{end+1}(1) = ev(j).time;
-		BadEpochs{end}(2) = ev(j).time + ev(j).duration;
+		BadEpochs{end}(2) = ev(j).time + ev(j).duration - 2/D.fsample;
 	end
 end
 
