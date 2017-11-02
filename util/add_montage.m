@@ -11,6 +11,9 @@ function D = add_montage(D,W,name,labels,channels)
 
 	% First, check proposed tra matrix is OK in terms of orientation
 	% That way, size(W,1) is guaranteed to be the new number of channels
+	%
+	% Romesh Abeysuriya 2017
+
 	assert(size(W,2)==D.nchannels,sprintf('Transformation matrix is wrong size (is %dx%d, needs to be Nx%d)',size(W,1),size(W,2),D.nchannels));
 
 	if nargin < 5 || isempty(channels) 

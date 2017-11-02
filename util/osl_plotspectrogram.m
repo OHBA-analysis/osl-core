@@ -32,10 +32,10 @@ if D.ntrials>1
     error('Only works on continuous data')
 end
 
-good_samples = find(~all(badsamples(D,':',':',1)));
+goodsamples = find(good_samples(D));
 
 if cut_badsegments
-    [S,F,T] = plotspectrogram(D(1,good_samples,1),512,512*0.75,1024,D.fsample);
+    [S,F,T] = plotspectrogram(D(1,goodsamples,1),512,512*0.75,1024,D.fsample);
 else
     [S,F,T] = plotspectrogram(D(1,:,:),512,512*0.75,1024,D.fsample);
 end
@@ -48,7 +48,7 @@ ch = chindex(find(strcmp(D.chantype,chantype)));
 S(:)=0;
 for i = 1:length(ch)
   if cut_badsegments
-    S=S+plotspectrogram(D(ch(i),good_samples,1),512,512*0.75,1024,D.fsample);
+    S=S+plotspectrogram(D(ch(i),goodsamples,1),512,512*0.75,1024,D.fsample);
   else
     S=S+plotspectrogram(D(ch(i),:,:),512,512*0.75,1024,D.fsample);
   end

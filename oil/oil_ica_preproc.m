@@ -84,7 +84,7 @@ end%if
 
 tSamples = ROInets.setdiff_pos_int(                                       ...
     find(t>=timewindow(1), 1, 'first'):find(t<=timewindow(2), 1, 'last'), ...
-    all(D.badsamples(:,:,:)));
+    ~goodsamples(D));
 
 % create a cleaned temporary object
 Dsensor     = D.montage('switch');

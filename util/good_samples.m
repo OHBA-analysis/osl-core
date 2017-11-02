@@ -12,6 +12,8 @@ function res = good_samples(D,chanind, sampind, trialind)
 	%
 	% However, as a modified copy of badsamples(), it is faster
 	% because it aggregates over all channels
+	%
+	% Romesh Abeysuriya 2017
 
 	if nargin < 4 || isempty(trialind) 
 		trialind = ':';

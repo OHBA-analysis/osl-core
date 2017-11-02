@@ -29,13 +29,13 @@ function D = osl_africa(D,varargin)
     arg.addParameter('ica_params',struct,@isstruct); % ICA parameters passed to run_sensorspace_ica - typically do not require changing
 
     % AUTOMATIC IDENT SETTINGS
-    arg.addParameter('do_mains',true); % Used by manual and auto
-    arg.addParameter('do_kurt',true); % Used by manual and auto
-    arg.addParameter('max_num_artefact_comps',10);
-    arg.addParameter('mains_kurt_thresh',0.4);
-    arg.addParameter('kurtosis_thresh',20); 
-    arg.addParameter('kurtosis_wthresh',0); 
-    arg.addParameter('artefact_chans_corr_thresh',0.15);
+    arg.addParameter('auto_max_num_artefact_comps',10); % Maximum number of new components to reject for each reason
+    arg.addParameter('auto_do_mains',true); % Used by manual and auto
+    arg.addParameter('auto_mains_kurt_thresh',0.4);
+    arg.addParameter('auto_do_kurt',true); % Used by manual and auto
+    arg.addParameter('auto_kurtosis_thresh',20); 
+    arg.addParameter('auto_kurtosis_wthresh',0); 
+    arg.addParameter('auto_artefact_chans_corr_thresh',0.15);
 
     % OUTPUT SETTINGS
     arg.addParameter('montagename','AFRICA denoised data'); % New montage will be added with this name
@@ -112,8 +112,8 @@ function D = perform_sensorspace_ica(D,S)
 
     % Good channels and timepoints/trials
     chan_inds = indchantype(D,chantype,'GOOD');
-    good_samples = ~any(D.badsamples(chan_inds,:,:));
-    good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+    ica_good_samples = good_samples(D,chan_inds);
+    ica_good_samples = reshape(ica_good_samples,1,D.nsamples*D.ntrials);
 
     % Select data:
     icadata = D(chan_inds,:,:);
@@ -122,7 +122,7 @@ function D = perform_sensorspace_ica(D,S)
     icadata = reshape(icadata,size(icadata,1),[]);
 
     % Select good timepoints
-    icadata = icadata(:,good_samples);
+    icadata = icadata(:,ica_good_samples);
 
     %%%%%%%%%%%%%%%%%%%% APPLY MAXFILTER SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%%%%
     if isfield(S,'used_maxfilter') && S.used_maxfilter
@@ -204,7 +204,7 @@ function D = perform_sensorspace_ica(D,S)
     D.ica.params = ica_params;
     D.ica.eigs_preNorm = eigs_preNorm;
     D.ica.eigs_postNorm = eigs_postNorm;
-    D.ica.good_samples = good_samples; % These were the good timepoints that went into the ICA. i.e. use these when indexing the ICs
+    D.ica.good_samples = ica_good_samples; % These were the good timepoints that went into the ICA. i.e. use these when indexing the ICs
     D.ica.chan_inds = chan_inds;
     D.ica.norm_vec = norm_vec;
     D.ica.sm = bsxfun(@times,sm,norm_vec);

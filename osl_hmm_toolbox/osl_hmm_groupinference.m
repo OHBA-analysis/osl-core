@@ -247,7 +247,7 @@ if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
             else
                 D = spm_eeg_load(filenames.envelope{subnum});
             end
-            tbad = any(D.badsamples(:,:,:));
+            tbad = ~good_samples(D);
             samples2use = find(~tbad);
             env = D(:,samples2use); %#ok - SPM doesn't like logical indexing
             if logtrans
@@ -392,7 +392,7 @@ if todo.output
                         end
                         disp(['Computing ' output_method ' maps for ' D.fname]);
                         
-                        tbad = all(D.badsamples(:,:,:));
+                        tbad = ~good_samples(D);
                         samples2use = find(~tbad);
                         env = D(:,samples2use); %#ok - SPM doesn't like logical indexing
                     catch

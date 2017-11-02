@@ -30,7 +30,7 @@ function [env,phase] = osl_envelope(D,varargin)
 
     if isa(D,'meeg')
     	fs = D.fsample;
-        clean = all(D.badsamples(:,:,:)==0,1); 
+        clean = good_samples(D);
     	D = D(:,:);
     else
     	fs = arg.Results.fs;

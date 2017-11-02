@@ -16,7 +16,7 @@ D = spm_eeg_load(S.D);
 
 trl = 1; % TODO - fix for trialwise data
 
-samples2use = find(~all(D.badsamples(:,:,:)));
+samples2use = find(goodsamples(D));
 
 % Check 
 try prcorr(1,1);

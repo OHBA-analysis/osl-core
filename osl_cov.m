@@ -15,6 +15,11 @@ function [C,M] = osl_cov(D)
 % Adam Baker 2014
 
 if isa(D,'meeg')
+    warning('This function is very slow because of the badsamples implementation, check this carefully')
+    samples2use = true(D.nchannels,D.nsamples,D.ntrials);
+    for j = 1:D.nchannels
+        samples2use(j,:) = good_samples(D,j);
+    end
     samples2use = permute(~all(D.badsamples(:,:,:)),[2 3 1]);
     nfreqs   = max([1,D.nfrequencies]);
     nchans   = D.nchannels;

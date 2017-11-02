@@ -596,12 +596,12 @@ if todo.output
                         statp  = statp + osl_hmm_statemaps(hmm_sub,datap,~envelope_do,output_method,state_assignment);
                     end
 
-                    good_samples = ~all(D.badsamples(:,:,:));
-%                     good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+                    goodsamples = good_samples(D);
+%                     goodsamples = reshape(goodsamples,1,D.nsamples*D.ntrials);
 
                     if f==1
                         sp_full = zeros(1,D.nsamples*D.ntrials);
-                        sp_full(good_samples) = hmm_sub.statepath;
+                        sp_full(goodsamples) = hmm_sub.statepath;
                         epoched_statepath_sub{subnum} = reshape(sp_full,[1,D.nsamples,D.ntrials]);
                     end;
                 end
@@ -671,9 +671,9 @@ end
 data = reshape(data,[D.nchannels,D.nsamples*D.ntrials]);
 
 % select only good data
-good_samples = ~all(D.badsamples(:,:,:));
-good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-data = data(:,good_samples);
+goodsamples = good_samples(D);
+goodsamples = reshape(goodsamples,1,D.nsamples*D.ntrials);
+data = data(:,goodsamples);
 
 % log transform
 if logtrans

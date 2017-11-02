@@ -183,6 +183,21 @@ if(do_epoching),
 end%if do_epoching
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Establish setup channels
+if strcmp(source_recon_sess.modalities{1},'EEG')
+    modality_meeg='EEG';
+else
+    modality_meeg='MEGANY';
+end
+% 
+% chanindmeg = strmatch(modality_meeg, D.chantype);
+% 
+% chanind = setdiff(chanindmeg, D.badchannels);
+% if isempty(chanind)
+%     error(['No good ' modality_meeg ' channels were found.']);
+% end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Establish time windows of interest
 
 if isempty(source_recon_sess.time_range),
@@ -191,9 +206,9 @@ end
 time_range = source_recon_sess.time_range;
 
 if(D.ntrials==1),
-    good_samples = ~all(badsamples(D,':',':',1));
+    goodsamples = good_samples(D,D.indchantype(modality_meeg));
 else
-    good_samples = true(1,D.nsamples); 
+    goodsamples = true(1,D.nsamples); 
 end
 
 samples_of_interest=zeros(1,D.nsamples);
@@ -201,7 +216,7 @@ for i=1:size(time_range,1),
     samples_of_interest(D.indsample(time_range(i, 1)):D.indsample(time_range(i, 2)))=1;
 end
 
-samples2use = samples_of_interest & good_samples;
+samples2use = samples_of_interest & goodsamples;
 woi=[D.time(find(diff([0 samples2use])==1))' D.time(find(diff([samples2use 0])==-1))'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -216,21 +231,6 @@ else
         error('No trials matched the selection, check the specified condition labels');
     end
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Establish setup channels
-if strcmp(source_recon_sess.modalities{1},'EEG')
-    modality_meeg='EEG';
-else
-    modality_meeg='MEGANY';
-end
-% 
-% chanindmeg = strmatch(modality_meeg, D.chantype);
-% 
-% chanind = setdiff(chanindmeg, D.badchannels);
-% if isempty(chanind)
-%     error(['No good ' modality_meeg ' channels were found.']);
-% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Normalise modalities using, e.g., mean or smallest eigenvalues

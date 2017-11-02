@@ -456,10 +456,10 @@ if todo.output
                 statp  = statp + tmp;
                 hmm.statemap_parcel_vectors_persubj(subnum,:,:)=tmp;
                 
-                good_samples = ~all(badsamples(Dp,':',':',':'));
+                goodsamples = good_samples(D);
 
                 sp_full = zeros(1,Dp.nsamples*Dp.ntrials);
-                sp_full(good_samples) = hmm_sub.statepath;
+                sp_full(goodsamples) = hmm_sub.statepath;
                 epoched_statepath_sub{subnum} = reshape(sp_full,[1,Dp.nsamples,Dp.ntrials]);
                 
                 if Dp.ntrials>1

@@ -16,7 +16,7 @@ function h = ica(D)
 
     % Reconstruct timecourses
     D = D.montage('switch',0);
-    samples_of_interest = ~all(D.badsamples(:,:,:));
+    samples_of_interest = good_samples(D);
     samples_of_interest = reshape(samples_of_interest,1,D.nsamples*D.ntrials);
     sm = D.ica.sm(D.ica.chan_inds,:);
     tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';

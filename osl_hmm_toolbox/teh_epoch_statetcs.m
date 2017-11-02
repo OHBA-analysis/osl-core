@@ -15,15 +15,15 @@ for subnum=1:length(hmm.data_files)
     NK=size(sub_gamma,2);
     
     % select only good samples 
-    good_samples = ~all(D.badsamples(:,:,:));
-    good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);   
+    goodsamples = good_samples(D);
+    goodsamples = reshape(goodsamples,1,D.nsamples*D.ntrials);   
     
     % insert into D (continuous) object
     hmm_class=zeros(1,size(D,2),size(D,3));
-    hmm_class(1,find(good_samples),1)=reshape(sub_statepath,[1,numel(find(good_samples)),1]);
+    hmm_class(1,find(goodsamples),1)=reshape(sub_statepath,[1,numel(find(goodsamples)),1]);
     
     hmm_class_probs=zeros(NK,size(D,2),size(D,3));
-    hmm_class_probs(:,find(good_samples),1)=reshape(sub_gamma',[NK,numel(find(good_samples)),1]);
+    hmm_class_probs(:,find(goodsamples),1)=reshape(sub_gamma',[NK,numel(find(goodsamples)),1]);
  
     % add channel
     Sc=[];
