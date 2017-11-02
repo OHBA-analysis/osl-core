@@ -6,14 +6,17 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
     % HL+MWW 2013
 
     metrics = D.ica.metrics;
+    if any(D.ica.bad_components)
+        fprintf(2,'Warning - bad components have already been marked.\nThese will be overwritten and replaced with the new run\n');
+    end
     reason = cell(size(D.ica.sm,2),1); % Record reason for rejection
 
     % DETECT MAINS COMPONENTS
-    if S.do_mains
-        mains_ind=find(metrics.mains.mains_frequency-1<metrics.mains.fmax(:) & metrics.mains.fmax(:) < metrics.mains.mains_frequency+1 & metrics.kurtosis.abs(:) < S.mains_kurt_thresh);
+    if S.auto_do_mains
+        mains_ind=find(metrics.mains.mains_frequency-1<metrics.mains.fmax(:) & metrics.mains.fmax(:) < metrics.mains.mains_frequency+1 & metrics.kurtosis.abs(:) < S.auto_mains_kurt_thresh);
         [~,idx] = sort(metrics.kurtosis.abs(mains_ind));
         mains_ind = mains_ind(idx);
-        reason = reject(reason,mains_ind,S.max_num_artefact_comps,'mains');
+        reason = reject(reason,mains_ind,S.auto_max_num_artefact_comps,'mains');
     end
 
     % Check correlations with any metrics whose name starts with
@@ -21,12 +24,12 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
     metric_names = fieldnames(metrics);
     corr_metrics = metric_names(cellfun(@(x) ~isempty(x),regexp(metric_names,'^corr_chan.*')));
     
-    if isscalar(S.artefact_chans_corr_thresh)
-        S.artefact_chans_corr_thresh = S.artefact_chans_corr_thresh*ones(size(corr_metrics));
+    if isscalar(S.auto_artefact_chans_corr_thresh)
+        S.auto_artefact_chans_corr_thresh = S.auto_artefact_chans_corr_thresh*ones(size(corr_metrics));
     end
     
     for j = 1:length(corr_metrics)
-        to_reject = find(metrics.(corr_metrics{j}).value > S.artefact_chans_corr_thresh(j));
+        to_reject = find(metrics.(corr_metrics{j}).value > S.auto_artefact_chans_corr_thresh(j));
         if isempty(to_reject)
             fprintf('No ICs correlated with Channel %s\n',strrep(corr_metrics{j},'corr_chan_',''));
         end
@@ -38,12 +41,12 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
     end
     
     % DETECT ARTEFACTS USING KURTOSIS   
-    if S.do_kurt
+    if S.auto_do_kurt
         [~,stats] = robustfit(ones(length(metrics.kurtosis.abs),1),metrics.kurtosis.abs,'bisquare',4.685,'off');
-        outlier_inds = find(stats.w<S.kurtosis_wthresh & metrics.kurtosis.abs>abs(S.kurtosis_thresh) );
+        outlier_inds = find(stats.w<S.auto_kurtosis_wthresh & metrics.kurtosis.abs>abs(S.auto_kurtosis_thresh) );
         [~,idx]=sort(stats.w(outlier_inds));
         outlier_inds = outlier_inds(idx);
-        reason = reject(reason,outlier_inds,S.max_num_artefact_comps,'kurtosis');
+        reason = reject(reason,outlier_inds,S.auto_max_num_artefact_comps,'kurtosis');
     end
 
     % ASSIGN THE BAD COMPONENTS
@@ -57,7 +60,7 @@ function auto_reason = reject(auto_reason,candidates,limit,reason)
 
     % Sort and truncate them
     if(length(candidates) > limit)
-        fprintf(2,'%d components are kurtosis outliers. been detected. Will only label the worst %d  components.',length(candidates),limit);
+        fprintf(2,'%d components are kurtosis outliers. been detected. Will only label the worst %d components.',length(candidates),limit);
     end
     candidates = candidates(1:min(length(candidates),limit));
 
