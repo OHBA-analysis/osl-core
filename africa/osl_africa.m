@@ -11,6 +11,8 @@ function D = osl_africa(D,varargin)
     % Robert Becker 2017
     % Written by Henry Luckhoo and Adam Baker (pre-2017)
 
+    assert(strcmp(D.type,'continuous'),'osl_africa is only compatible with continuous MEEG objects'); % See issue #43 on GitHub
+
     arg = inputParser;
 
     % INPUT SETTINGS
