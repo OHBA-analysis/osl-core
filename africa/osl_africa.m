@@ -32,12 +32,12 @@ function D = osl_africa(D,varargin)
 
     % AUTOMATIC IDENT SETTINGS
     arg.addParameter('auto_max_num_artefact_comps',10); % Maximum number of new components to reject for each reason
-    arg.addParameter('auto_do_mains',true); % Used by manual and auto
+    arg.addParameter('auto_do_mains',false); % Used by manual and auto
     arg.addParameter('auto_mains_kurt_thresh',0.4);
-    arg.addParameter('auto_do_kurt',true); % Used by manual and auto
+    arg.addParameter('auto_do_kurt',false); % Used by manual and auto
     arg.addParameter('auto_kurtosis_thresh',20); 
     arg.addParameter('auto_kurtosis_wthresh',0); 
-    arg.addParameter('auto_artefact_chans_corr_thresh',0.15);
+    arg.addParameter('auto_artefact_chans_corr_thresh',0.5);
 
     % OUTPUT SETTINGS
     arg.addParameter('montagename','AFRICA denoised data'); % New montage will be added with this name
