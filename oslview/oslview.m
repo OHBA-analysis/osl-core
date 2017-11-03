@@ -554,7 +554,7 @@ function D = oslview(D)
 		t_window	= get(MainWindow,'xlim');
 
 		if isempty(varargin)
-			if any(cellfun(@(x) ~sum(sign(x-t_current(1))),BadEpochs.(channel_type)))
+			if any(cellfun(@(x) ~sum(sign(x-t_current(1))),BadEpochs.(channel_type))) && ~isempty(BadEpochs.(channel_type)) && length(BadEpochs.(channel_type){end}) ~= 1
 				new_event = false;
 			else
 				new_event = true;
