@@ -1,6 +1,0 @@
-- Keras expects different classes to be in different folders 
-- Recommends holding out a set for final assessment (about 50% of the size of the training set!) and also a validation set
-- Do most of your work on a sample so you can do things quickly, before testing on the full problem. e.g. 100 or so items
-- Be aware using a pretrained model means you inherit any weaknesses from the data set it was trained from
-- Finetune replaces the output layer of the network
-- 'Batch' is the samples used to update weights via backprop at each iteration. Batch/minibatch - this is the batch size for stochastic gradient descent
