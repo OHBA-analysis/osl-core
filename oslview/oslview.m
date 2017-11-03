@@ -4,8 +4,10 @@ function D = oslview(D)
 	% ----------------------------------------------------------------
 	% D - SPM meeg object or file name
 	% ----------------------------------------------------------------
-	% AB 2012
+	%
+	% RA 2017
 	% Updated 21/10/14
+	% AB 2012
 	%
 	%
 	% TODO:
@@ -18,6 +20,8 @@ function D = oslview(D)
 	if nargout == 0
 		fprintf(2,'Warning - oslview returns an MEEG object but it is not being assigned to a variable\n');
 	end
+
+	assert(strcmp(D.type,'continuous'),'oslview is only compatible with continuous MEEG objects');
 
 	% Get directory of the viewer
 	viewer_dir = strrep(which('oslview'),'oslview.m','');
