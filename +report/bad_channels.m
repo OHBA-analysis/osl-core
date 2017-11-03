@@ -51,7 +51,7 @@ function h = bad_channels(D)
 		xlabel('std')
 		ylabel('channel index')
 	
-		badcolor     = [204     0     0] / 255;
+		badcolor = [204     0     0] / 255;
 		for j = 1:length(this_modality_bad)
 			cl = D.chanlabels(this_modality_bad(j));
 			cl = cl{1};

@@ -72,6 +72,8 @@ function D = osl_detect_artefacts(D,varargin)
     end
 
     % For each modality, detect badness
+    excess_badchans = false;
+
     for mm = 1:length(options.modalities)
 
         modality=options.modalities{mm};
@@ -91,7 +93,7 @@ function D = osl_detect_artefacts(D,varargin)
 
         iters = 0;
         detected_badness = true; % The while loop continues as long as something bad was found
-        
+
         while detected_badness && iters < options.max_iter
             iters = iters+1;
             detected_badness = false; % Terminate by default unless something bad is found
@@ -118,13 +120,13 @@ function D = osl_detect_artefacts(D,varargin)
                     max_add = options.max_bad_channels-length(D.badchannels); % Maximum number of channels to add
                     
                     if max_add <= 0
-                        fprintf(2,'Already have more bad channels than options.max_bad_channels, not adding any more\n')
+                        excess_badchans = true;
                         sorted_bad_chan = [];
                         to_add = [];
                     end
 
                     if length(to_add) > max_add
-                        fprintf(2,'Detected %d new bad channels, only rejecting the worst %d so there will be options.max_bad_channels=%d total\n', length(to_add), max_add,options.max_bad_channels);
+                        excess_badchans = true;
                         to_add = to_add(1:max_add);
                     end
                     
@@ -206,6 +208,10 @@ function D = osl_detect_artefacts(D,varargin)
     end
 
     % Display summary at the end
+    if excess_badchans
+        fprintf(2,'Additional bad channels were identified, but not marked because options.max_bad_channels was reached\n');
+    end
+
     bc = D.badchannels;
     for j = 1:length(bc)
         fprintf('Channel %d (%s - %s) is bad\n',bc(j),D.chantype{bc(j)},D.chanlabels{bc(j)});
