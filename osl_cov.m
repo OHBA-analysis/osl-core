@@ -14,6 +14,67 @@ function [C,M] = osl_cov(D)
 %
 % Adam Baker 2014
 
+
+%{
+% PROTOTYPE CODE
+% FOR FUTURE WORK
+%
+% The idea is that you can compute source space voxel covariance by getting 
+% the sensor covariance, C_s, and then transforming it by tra. That is, for M_s and C_s in source space,
+% the sensor space corresponding outputs M and C are
+% M = tra*M_s
+% C = tra*C_s*tra'
+% This is way faster and will do away with memory issues in source space. But implementation should ideally be done when
+% this function is encountered in production
+
+function [C,M] = osl_cov(D,chaninds)
+   if nargin < 2 || isempty(chaninds) 
+       chaninds = [];
+   end
+   
+   samples2use = good_samples(D,chaninds); % Check all good channels by default - this will be sensible in source space. In sensor space, probably better to just compute cov directly?
+
+
+   if D.montage('getindex')
+        montaged=true
+       mont = D.montage('getmontage');
+       D = D.montage('switch',0); 
+       M = mont.tra*q2;
+       else
+        montaged = false
+   end
+
+   dat = D(:,:,:); % Read in sensor data
+   M = zeros(D.nchannels,D.ntrials,D.nfrequencies);
+   C = zeros(D.nchannels,D.nchannels,D.ntrials,D.nfrequencies);
+
+
+
+   for j = 1:nfreqs
+       for k = 1:ntrials
+            if any(samples2use(:,k))
+                if isa(D,'meeg') && isequal(D.transformtype,'TF')
+                    C(:,:,k,f) = cov(dat(:,:,k,j)) % Or something like this, depends on what a TF MEEG looks like??
+                    M() = mean()
+                else
+                    C(:,:,k,f) = cov(dat(:,:,k)) 
+                    M() = mean()
+                end
+            end
+        end
+    end
+
+    if montaged
+        % Apply tra
+        % Need to loop this over frequencies and trials
+        M = mont.tra*M
+        C=mont.tra*C*mont.tra';
+    end
+%}
+
+
+
+
 if isa(D,'meeg')
     warning('This function is very slow because of the badsamples implementation, check this carefully')
     samples2use = true(D.nchannels,D.nsamples,D.ntrials);
