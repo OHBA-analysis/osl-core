@@ -43,7 +43,7 @@ function D = osl_detect_artefacts(D,varargin)
 
     % Note - trial based detection merges across modalities i.e. an epoched MEEG marks bad trials instead of events
     arg = inputParser;
-    arg.addParameter('modalities',setdiff(unique(D.chantype),{'Other'}),@iscell); % By default, detect artefacts in all modalities except 'OTHER'
+    arg.addParameter('modalities',{},@iscell); % By default, detect artefacts in all modalities except 'OTHER'
     arg.addParameter('max_iter',10);
     arg.addParameter('max_bad_channels',10); % Maximum number of bad channels allowed after this function returns - including any already marked bad
     arg.addParameter('badchannels',true); % Check for bad channels
@@ -56,14 +56,20 @@ function D = osl_detect_artefacts(D,varargin)
     arg.parse(varargin{:});
     options = arg.Results;
     
+
+    continuous = strcmp(D.type,'continuous');
+
     if isempty(options.modalities)
+        if continuous % Detect in all sensible modalities
+            options.modalities = setdiff(unique(D.chantype),{'Other'});
+        else
+            % Detect only in imaging modalities
+            candidate_modalities = {'EEG','MEG','MEGANY'};
+            options.modalities = unique(D.chantype(D.indchantype(candidate_modalities)));
+        end
+
         fprintf('Detecting artefacts in channel types: %s\n',strjoin(options.modalities,','));
     end
-
-    % Are we continuous and checking for bad times? If continuous, D becomes
-    % a temporary copy with artificial epochs. Otherwise, D is just the
-    % original input file
-    continuous = strcmp(D.type,'continuous');
 
     % For each modality, detect badness
     for mm = 1:length(options.modalities)
