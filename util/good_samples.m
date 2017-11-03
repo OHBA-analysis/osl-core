@@ -44,7 +44,9 @@ function res = good_samples(D,chanind, sampind, trialind)
 		m = D.montage('getmontage');
 		Dtemp = D.montage('switch',0);
 		chantypes = union(chantypes,unique(Dtemp.chantype(find(any(m.tra,1)))));
-	end
+    end
+    
+    chantypes{end+1} = 'all'; % Make sure we support modality-independent artefacts
 
 	for i = 1:length(trialind)
 
@@ -54,8 +56,9 @@ function res = good_samples(D,chanind, sampind, trialind)
 	        ev = ev{1};
 	    end
 
-	    ev = ev(cellfun(@(x) strmatch('artefact',x),{ev.type}) & ismember({ev.value},chantypes)); % These are all the artefact events that apply to the channel types we are inspecting
-
+	    ev = ev(strncmp({ev.type},'artefact',8)); % First pick out artefact types
+        ev = ev(ismember({ev.value},chantypes)); % Then filter by chantype. This prevents bugs if the trial event value is not a chantype but a number
+    
 	    if ~isempty(ev)
 	        for k = 1:numel(ev)
 	            res(1, ev(k).sample+(0:(ev(k).duration-1)), i) = false;
