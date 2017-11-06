@@ -24,7 +24,9 @@ function res = good_samples(D,chanind, sampind, trialind)
 	end
 
 	if nargin < 2 || isempty(chanind) 
-		chanind = indchantype(D,'ALL','GOOD'); % By default, check all good channels
+		chanind = D.indchantype('ALL','GOOD'); % By default, check all good channels
+	elseif ischar(chanind) && isequal(chanind, ':')
+		chanind = D.indchantype('ALL');
 	end
 
 	if ischar(sampind) && isequal(sampind, ':')
@@ -69,5 +71,9 @@ function res = good_samples(D,chanind, sampind, trialind)
 	res = res(:, sampind, :);
 	res(:, :, badtrials(D, trialind))  = false;
 
+	bad_channels = intersect(D.badchannels,chanind);
+	if any(bad_channels)
+		res(:) = false;
+	end
 
 
