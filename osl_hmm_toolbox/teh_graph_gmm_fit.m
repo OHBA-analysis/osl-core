@@ -1,10 +1,19 @@
 function [ res ] = teh_graph_gmm_fit( S )
 
 % [ res ] = teh_graph_gmm_fit( S )
+%
+% Required:
+% S.data
+%
+% Optional:
+% S.do_plots
+% S.pvalue_th
+% S.do_fischer_xform
 
-
+try tmp=S.data; catch, error('Need to specify S.data'); end
 try tmp=S.do_plots; catch, S.do_plots=1; end
 try tmp=S.pvalue_th; catch, S.pvalue_th=0.05/length(S.data); end
+try tmp=S.do_fischer_xform; catch, S.do_fischer_xform=false; end
 
 res=[];
 
