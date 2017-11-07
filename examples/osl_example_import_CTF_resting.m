@@ -65,7 +65,7 @@ d=ft_preprocessing(struct('dataset',ds_folder,'continuous','yes'))
 S = struct;
 S.fif_file = ds_folder;
 S.spm_file = fullfile(osldir,'example_Data','ctf_preprocessing','3006','3006');
-D = osl_convert_script(S)
+D = osl_import(S)
 
 %%
 % By default, only data channels (e.g. MEG, trigger, clock) will be imported.
@@ -88,7 +88,7 @@ D = osl_convert_script(S)
 % First, we need to make sure these channels are retained in the import. These
 % channels are identified by their label, so we will use |other_channels|
 S.other_channels = {'EEG060','EEG059','EEG057','EEG058'}
-D = osl_convert_script(S)
+D = osl_import(S)
 
 %%
 % Notice that we now have 280 channels instead of 276, because these 4

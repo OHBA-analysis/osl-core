@@ -156,7 +156,7 @@ for subi=1:length(opt.sessions_to_do),
             if(isfield(opt.convert,'trigger_channel_mask'))
                 S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
             end;
-            [D] = osl_convert_script(S2);
+            [D] = osl_import(S2);
 
             % delete fif file in opt dir that is no longer needed
             if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
@@ -386,7 +386,7 @@ for subi=1:length(opt.sessions_to_do),
                 if(isfield(opt.convert,'trigger_channel_mask'))
                     S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
                 end;
-                [D tmp fig_handles fig_names ] = osl_convert_script(S2);
+                [D tmp fig_handles fig_names ] = osl_import(S2);
 
                 if ~isempty(fig_handles),
                     fig_titles={}; fig_titles{1}='CONVERT: histogram of trigger codes';
@@ -1082,7 +1082,7 @@ if(isfield(opt.convert,'trigger_channel_mask'))
     S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
 end;
 
-[ D tmp fig_handles fig_names ] = osl_convert_script(S2);
+[ D tmp fig_handles fig_names ] = osl_import(S2);
 
 % test to make sure that all data is not zero-ed
 chan_list=[];
