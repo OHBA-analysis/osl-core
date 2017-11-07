@@ -1,4 +1,4 @@
-function [map, name, desc] = o(I)
+function map = osl_colormap(I)
   % OSL COLORMAPS
   % Perceptually uniform colormaps generated using COLORCET - see below
   %
