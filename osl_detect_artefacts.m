@@ -45,13 +45,13 @@ function D = osl_detect_artefacts(D,varargin)
     arg = inputParser;
     arg.addParameter('modalities',{},@iscell); % By default, detect artefacts in all modalities except 'OTHER'
     arg.addParameter('max_iter',10);
-    arg.addParameter('max_bad_channels',10); % Maximum number of bad channels allowed after this function returns - including any already marked bad
+    arg.addParameter('max_bad_channels',20); % Maximum number of bad channels to add, on top of whatever is already present
     arg.addParameter('badchannels',true); % Check for bad channels
+    arg.addParameter('channel_significance',0.05); % Significance level for GESD bad channel detection
     arg.addParameter('badtimes',true); % Check for bad events
     arg.addParameter('dummy_epoch_tsize',1); % Dummy epoch size in seconds
     arg.addParameter('measure_fns',{'std'}); % list of outlier metric func names to use for bad segment marking
     arg.addParameter('event_threshold',0.3); % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
-    arg.addParameter('channel_threshold',0.01); % list of robust GLM weights thresholds to use on chans for bad segment marking, the LOWER the theshold the less aggressive the rejection
     arg.addParameter('artefact_type_name','artefact_OSL'); 
     arg.parse(varargin{:});
     options = arg.Results;
@@ -72,7 +72,7 @@ function D = osl_detect_artefacts(D,varargin)
     end
 
     % For each modality, detect badness
-    excess_badchans = false;
+    n_new_badchans = 0;
 
     for mm = 1:length(options.modalities)
 
@@ -102,43 +102,19 @@ function D = osl_detect_artefacts(D,varargin)
             if options.badchannels && sum(good_channels) > 1  % Do a pass for bad channels as long as >1 channel remains
                 for ii = 1:length(options.measure_fns)
 
-                    dat = data(good_channels,:,~badtrials); % Only work on trials that haven't been rejected at any point
-                    datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
-                    
-                    [b,stats] = robustfit(ones(length(datchan),1),datchan,'bisquare',4.685,'off');
-
-                    if numel(options.channel_threshold) == 1
-                        channel_threshold = options.channel_threshold;
-                    else
-                        channel_threshold = options.channel_threshold(ii);
+                    if n_new_badchans < options.max_bad_channels
+                        dat = data(good_channels,:,~badtrials); % Only work on trials that haven't been rejected at any point
+                        datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
+                        to_add = find(gesd(datchan,0.05,options.max_bad_channels-n_new_badchans,1)); 
+                        if length(to_add) > 0              
+                            bad_channels=chan_inds(to_add);
+                            D = badchannels(D, bad_channels, ones(length(bad_channels),1));
+                            detected_badness = true;
+                            n_new_badchans = n_new_badchans + length(to_add);
+                        end
                     end
-
-                    bad_chan = find(stats.w < channel_threshold);
-                    [~,iw] = sort(stats.w(bad_chan));
-                    sorted_bad_chan = bad_chan(iw);
-                    to_add = setdiff(sorted_bad_chan,D.badchannels); % Remove already marked bad channels
-                    max_add = options.max_bad_channels-length(D.badchannels); % Maximum number of channels to add
-                    
-                    if max_add <= 0
-                        excess_badchans = true;
-                        sorted_bad_chan = [];
-                        to_add = [];
-                    end
-
-                    if length(to_add) > max_add
-                        excess_badchans = true;
-                        to_add = to_add(1:max_add);
-                    end
-                    
-                    % set bad channels in D
-                    if length(to_add) > 0              
-                        bad_channels=chan_inds(to_add);
-                        D = badchannels(D, bad_channels, ones(length(bad_channels),1));
-                        detected_badness = true;
-                    end
-
-                    % correct chan inds for next bit
                     good_channels = ~ismember(chan_inds, D.badchannels);
+
                 end
             end
 
@@ -208,8 +184,8 @@ function D = osl_detect_artefacts(D,varargin)
     end
 
     % Display summary at the end
-    if excess_badchans
-        fprintf(2,'Additional bad channels were identified, but not marked because options.max_bad_channels was reached\n');
+    if n_new_badchans == options.max_bad_channels
+        fprintf(2,'options.max_bad_channels was reached, there may be additional bad channels present\n');
     end
 
     bc = D.badchannels;
@@ -219,6 +195,7 @@ function D = osl_detect_artefacts(D,varargin)
 
     if continuous
         ev = D.events;
+        ev = ev(cellfun(@(x) ~isempty(strmatch('artefact',x)),{ev.type})); % Find only artefact events
         modalities = unique({ev.value});
         for modality = unique({ev.value})
             this_modality = strcmp({ev.value},modality);

@@ -37,7 +37,7 @@ function samples = event_to_sample(D,event_type,modality)
     end
 
     if ~isempty(modality) & ~isempty(ev)
-        ev = ev(ismember({ev.value},modality))
+        ev = ev(ismember({ev.value},modality));
     end
 
     for j = 1:length(ev)
