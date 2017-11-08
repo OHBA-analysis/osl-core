@@ -108,6 +108,6 @@ function D = osl_import(raw_data,varargin)
     chantypes = {'EOG','ECG'};
     for j = 1:length(chantypes)
         if isempty(D.indchantype(chantypes{j}))
-            fprintf(2,'No %s channels were automatically identified - you may need to specify them manually if you wish to use them e.g. in AFRICA\n',chantypes{j})
+            fprintf(2,'No %s channels were automatically identified - you may need to specify them manually with D=D.chantype(XXX,''%s'') if you wish to use them e.g. in AFRICA\n',chantypes{j},chantypes{j})
         end
     end
