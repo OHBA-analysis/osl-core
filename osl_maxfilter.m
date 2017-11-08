@@ -1,5 +1,11 @@
-function [fif_out,bad_times] = osl_maxfilter(fif_in,method,varargin)
-
+function [fif_out,bad_times,hpi] = osl_maxfilter(fif_in,method,varargin)
+	% OUTPUTS
+	% - fif output file
+	% - bad times matrix
+	% - hpi struct (from osl_headpos) adjusted to SPM time using the output log file
+	%
+	% Modified by Romesh Abeysuriya 2017
+	
 	if nargin < 2 || isempty(method) 
 		method = '';
 	end
@@ -102,9 +108,12 @@ function [fif_out,bad_times] = osl_maxfilter(fif_in,method,varargin)
 
 	if any(strcmp(method,{'sss','tsss'}))
 		try
-			bad_times = read_bad_times_from_maxfilter(log_out);
+			[bad_times,final_offset] = read_bad_times_from_maxfilter(log_out);
+			hpi = osl_headpos(head_out);
+			hpi.time_vect = hpi.time_vect + final_offset;
 		catch
 			fprintf(2,'Error parsing log file! This needs to be investigated, you will need to manually mark bad times');
+			fprintf(2,'Could not extract offset from log file, HPI times will not be correct!');
 		end
 	else
 		bad_times = [];
