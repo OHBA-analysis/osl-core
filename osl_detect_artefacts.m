@@ -45,7 +45,7 @@ function D = osl_detect_artefacts(D,varargin)
     arg = inputParser;
     arg.addParameter('modalities',{},@iscell); % By default, detect artefacts in all modalities except 'OTHER'
     arg.addParameter('max_iter',10);
-    arg.addParameter('max_bad_channels',20); % Maximum number of bad channels to add, on top of whatever is already present
+    arg.addParameter('max_bad_channels',10); % Maximum number of bad channels to add, on top of whatever is already present
     arg.addParameter('badchannels',true); % Check for bad channels
     arg.addParameter('channel_significance',0.05); % Significance level for GESD bad channel detection
     arg.addParameter('badtimes',true); % Check for bad events
