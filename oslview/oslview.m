@@ -747,8 +747,10 @@ function BadEpochs = read_bad_events(D,modality)
 	% Run once at initialization
 	BadEpochs = {};
 	ev = D.events;
-	% Note - using 'artefact_OSL' here means that we won't interact at all with artefacts identified separately
-	ev = ev(cellfun(@(x) strmatch('artefact_OSL',x),{ev.type}) & ismember({ev.value},{modality})); % These are all the artefact events that apply to the channel types we are inspecting
+	% Note - using 'artefact_OSL' here means that we won't interact at all with artefacts identified separately   
+    % Otherwise, this function will turn other artefact types into artefact_OSL
+	ev = ev(cellfun(@(x) strcmp('artefact_OSL',x),{ev.type}));
+    ev = ev(ismember({ev.value},{modality})); % These are all the artefact events that apply to the channel types we are inspecting
 
 	for j = 1:numel(ev)
 		BadEpochs{end+1}(1) = ev(j).time;
@@ -759,34 +761,36 @@ end
 function D = set_bad_events(D,BadEpochs,modality)
 	% Save bad epochs using method meeg/events
 	BadEvents = struct([]);
-	for ev = 1:numel(BadEpochs)
-		if numel(BadEpochs{ev}) == 2
-			BadEvents(ev).type	= 'artefact_OSL';
-			BadEvents(ev).value	= modality;
-			BadEvents(ev).time	= BadEpochs{ev}(1);
-			BadEvents(ev).duration = diff(BadEpochs{ev}) + 2/D.fsample; % Need to account for SPM12's weird rounding here
-			BadEvents(ev).offset = 0;
+	for j = 1:numel(BadEpochs)
+		if numel(BadEpochs{j}) == 2
+			BadEvents(j).type	= 'artefact_OSL';
+			BadEvents(j).value	= modality;
+			BadEvents(j).time	= BadEpochs{j}(1);
+			BadEvents(j).duration = diff(BadEpochs{j}) + 2/D.fsample; % Need to account for SPM12's weird rounding here
+			BadEvents(j).offset = 0;
 		end
 	end
 	
 	% Load events
-	Events = D.events;
+	ev = D.events;
 		
 	% Remove previous bad epoch events for this
-	if isfield(Events,'type')
-		Events(cellfun(@(x) strmatch('artefact_OSL',x),{Events.type}) & ismember({Events.value},{modality})) = [];
+	if isfield(ev,'type')
+        to_remove = false(size(ev));
+        for j = 1:length(ev)
+            if strcmp(ev(j).type,'artefact_OSL') && ismember(ev(j).value,{modality})
+                to_remove(j) = 1;
+            end
+        end
+        ev(to_remove) = [];
 	end
 	
-	% Concatenate new and old events
-	if size(Events,1) < size(Events,2)
-		BadEvents = BadEvents(:);
-	end
 	if ~isempty(BadEvents)
-		Events = [Events(:); BadEvents(:)];
+		ev = [ev(:); BadEvents(:)];
 	end
 	
 	% Save new events with previous
-	D = events(D,1,Events);
+	D = events(D,1,ev);
 end
 
 function flag = is_multiple_call()
