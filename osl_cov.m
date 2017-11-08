@@ -73,19 +73,11 @@ function [C,M] = osl_cov(D,chaninds)
 %}
 
 
-
-
 if isa(D,'meeg')
-    warning('This function is very slow because of the badsamples implementation, check this carefully')
-    samples2use = true(D.nchannels,D.nsamples,D.ntrials);
-    for j = 1:D.nchannels
-        samples2use(j,:) = good_samples(D,j);
-    end
-    samples2use = permute(~all(D.badsamples(:,:,:)),[2 3 1]);
     nfreqs   = max([1,D.nfrequencies]);
     nchans   = D.nchannels;
     ntrials  = D.ntrials;
-    if isvector(samples2use), samples2use = samples2use(:); end%if
+    samples2use = good_samples(D);
 else
     [nchans,nsamples] = size(D);
     ntrials = 1;
@@ -93,9 +85,8 @@ else
     if nchans > nsamples
         warning(['Input has ' num2str(nsamples) ' rows and ' num2str(nchans) ' columns. Consider transposing']);
     end
-    samples2use = true(nsamples,1);
+    samples2use = true(1,nsamples,1);
 end
-
 
 M = zeros(nchans,ntrials,nfreqs);
 C = zeros(nchans,nchans,ntrials,nfreqs);
@@ -103,19 +94,18 @@ C = zeros(nchans,nchans,ntrials,nfreqs);
 for f = 1:nfreqs
              
     for trl = 1:ntrials
-            
-        nsamples = sum(samples2use(:,trl));
+        nsamples = sum(samples2use(1,:,trl));
         
         if nsamples,            
             % Compute means
-            chan_blks = osl_memblocks([nchans,sum(samples2use(:,trl))],1);
+            chan_blks = osl_memblocks([nchans,sum(samples2use(1,:,trl))],1);
             for i = 1:size(chan_blks,1)
                 if isa(D,'meeg') && isequal(D.transformtype,'TF')
                     Dblk = D(chan_blks(i,1):chan_blks(i,2),f,:,trl);
-                    Dblk = Dblk(:,:,samples2use(:,trl));
+                    Dblk = Dblk(:,:,samples2use(1,:,trl));
                 else
                     Dblk = D(chan_blks(i,1):chan_blks(i,2),:,trl);
-                    Dblk = Dblk(:,samples2use(:,trl));
+                    Dblk = Dblk(:,samples2use(1,:,trl));
                 end
                 Dblk = squeeze(Dblk);
                 M(chan_blks(i,1):chan_blks(i,2),trl,f) = mean(Dblk,2);
@@ -123,10 +113,9 @@ for f = 1:nfreqs
 
             % Compute covariance
             smpl_blks = osl_memblocks([nchans,nsamples],2);
-            for i = 1:size(smpl_blks,1)
-
-                samples2use_blk = find(samples2use(:,trl));
-                samples2use_blk = samples2use_blk(smpl_blks(i,1):smpl_blks(i,2));
+            for i = 1:size(smpl_blks,1)                
+                samples2use_blk = find(samples2use(1,:,trl));
+                samples2use_blk = samples2use_blk(1,smpl_blks(i,1):smpl_blks(i,2));
 
                 if isa(D,'meeg') && isequal(D.transformtype,'TF')
                     Dblk = squeeze(D(:,f,:,trl));

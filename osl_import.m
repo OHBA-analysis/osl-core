@@ -21,6 +21,8 @@ function D = osl_import(raw_data,varargin)
     arg.addParameter('num_condition_trials_expected',[]); % number of expected trials for each condition
     arg.addParameter('condition_code',[]); % list of condition trigger codes 
     arg.addParameter('bad_segments',[]); % n x 2 matrix of bad times to add to the output MEEG object 
+    arg.addParameter('bad_segment_modalities',{}); % Cell array of modalities to apply bad segments to - default is all MEGANY modalities that are present
+
     arg.parse(varargin{:});
     S = arg.Results;
 
@@ -104,12 +106,14 @@ function D = osl_import(raw_data,varargin)
     end
 
     if ~isempty(S.bad_segments)
-        modalities = unique(D.chantype(D.indchantype('MEGANY')));
+        if isempty(S.bad_segment_modalities)
+            S.bad_segment_modalities = unique(D.chantype(D.indchantype('MEGANY')));
+        end
         BadEvents = [];
-        for j = 1:length(modalities)
+        for j = 1:length(S.bad_segment_modalities)
             for k = 1:size(S.bad_segments,1)
                 BadEvents(end+1).type   = 'artefact_OSL';
-                BadEvents(end).value  = modalities{j};
+                BadEvents(end).value  = S.bad_segment_modalities{j};
                 BadEvents(end).time   = S.bad_segments(k,1);
                 BadEvents(end).duration = diff(S.bad_segments(k,:));
                 BadEvents(end).offset = 0;
