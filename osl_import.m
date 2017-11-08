@@ -1,47 +1,43 @@
-function [D fname fig_handles fig_names] = osl_import(Sin)
-
+function D = osl_import(raw_data,varargin)
     % [D fname] = osl_import(Sin)
     % 
     % Converts .fif file to continuous spm data file
     %
-    % Mandatory Inputs:
+    % INPUTS
+    % - raw_data : file name of input .fif file or .ds folder
+    % - varargin : see below
     %
-    % Sin.fif_file : file name of input fif file
-    % Sin.spm_file : file name of outputted spm file
-    %                
-    % Optional inputs:
-    %
-    % Sin.num_condition_trials_expected : number of expected trials for each condition 
-    % Sin.condition_code : list of condition trigger codes 
-    % Sin.artefact_channels : Specify artefact channels that will be retained based on chantype
-    % Sin.other_channels : Specify other channels to retain based on chanlabel
+    % OUTPUTS
+    % - D : MEEG object
     %
     % RA 2017
     % MW
 
-    try; tmp=Sin.fif_file; catch, error('fif_file not specified');end;
-    try; tmp=Sin.spm_file; catch, error('spm_file not specified');end;
-    try; tmp=Sin.trigger_channel_mask; catch, Sin.trigger_channel_mask='0000000001111111';end;
-    %Sin.trigger_channel_mask='0000000000000111';
+    arg = inputParser;
+    arg.addParameter('outfile',[],@ischar); % Output file name
+    arg.addParameter('trigger_channel_mask','0000000001111111'); % !?!
+    arg.addParameter('artefact_channels',[]); % Specify artefact channels that will be retained based on chantype
+    arg.addParameter('other_channels',[]); % Specify other channels to retain based on chanlabel
+    arg.addParameter('num_condition_trials_expected',[]); % number of expected trials for each condition
+    arg.addParameter('condition_code',[]); % list of condition trigger codes 
+    arg.addParameter('bad_segments',[]); % n x 2 matrix of bad times to add to the output MEEG object 
+    arg.parse(varargin{:});
+    S = arg.Results;
 
-    fig_handles=[];
-    fig_names={};
+    [pathstr,fname,ext] = fileparts(raw_data);
+    is_ctf = strcmp(ext,'.ds');
 
-    S = [];
-    S.dataset = Sin.fif_file;
-    S.outfile = Sin.spm_file;
-
-
-    % Create directory if it doesn't exist
-    pathstr = fileparts(Sin.spm_file);
-    if ~isdir(pathstr)
-        mkdir(pathstr);
+    if isempty(S.outfile)
+        S.outfile = fullfile(pathstr,[fname '.mat']);
     end
 
+    % Create directory if it doesn't exist
+    output_path = fileparts(S.outfile);
+    if ~isdir(output_path)
+        mkdir(output_path);
+    end
 
-    [dir nam ext]=fileparts(Sin.fif_file);
-
-    if strcmp(ext,'.ds')
+    if is_ctf
         %S.channels=ctf_chans;     % HL Mod 1.2 - CTF channel selection
         %TC 2013 the above works only for a 275 channel ctf system
         %To make more general, we want to read stim channels, the clock channel
@@ -53,29 +49,13 @@ function [D fname fig_handles fig_names] = osl_import(Sin)
         %systems.
         S.channels='ctf_grads';    
         S.checkboundary = 0;  
-        
-        if isfield(Sin, 'artefact_channels'),
-            S.artefact_channels = Sin.artefact_channels;
-        else
-            S.artefact_channels = [];
-        end
-
-        if isfield(Sin, 'other_channels'),
-            S.other_channels = Sin.other_channels;
-        else
-            S.other_channels = [];
-        end
-
-        isctf=1;
     else
         S.channels = 'all';
         S.checkboundary = 1;
-        S.fixoxfordneuromag=Sin.trigger_channel_mask;
-        isctf=0;
+        S.fixoxfordneuromag = S.trigger_channel_mask;
     end
 
-    convertfun = @spm_eeg_convert_4osl; 
-
+    S.dataset = raw_data;
     S.usetrials = 1;
     S.datatype = 'float32-le';
     S.eventpadding = 0;
@@ -84,8 +64,7 @@ function [D fname fig_handles fig_names] = osl_import(Sin)
     S.inputformat = [];
     S.mode='continuous';
 
-    D = feval(convertfun,S);
-
+    D = spm_eeg_convert_4osl(S);
 
     %% Add coil to channel mapping in D.sensors (used later for local spheres)
     if ~isempty(D.sensors('MEG'))
@@ -94,98 +73,39 @@ function [D fname fig_handles fig_names] = osl_import(Sin)
         D = sensors(D,'MEG',sens);
     end
 
-    %%%%%%%%%%%%%%%%%%%%%
+    %% If any events have value that is not > 0, set it to 1
     %% MWW added back in from osl1.2.beta.15 - Oct 2013
-    if 1,
-        eve=events(D,1);    
+    ev = events(D,1);
+    for j = 1:length(ev)
+        if ~(ev(j).value>0)
+            ev(j).value=1;
+        end
+    end
+    D = D.events(1,ev);
 
-        if(length(eve)>0)
+    % Check to see if correct number of events have been found
+    if ~is_ctf
+        if ~isempty(ev) 
+            vals = [ev.value];
+            fprintf('Found %d events\n',length(vals));
 
-            setval=0;
-
-            for i=1:length(eve),
-
-                if(eve(i).value>0)
-                    vals(i)=eve(i).value;  
-                else
-                    eve(i).value=1;
-                    vals(i)=eve(i).value;
-                    setval=1;
-                end;
-            end;
-
-            if(setval)
-                D=events(D,1,eve);
-                D.save;
-                warning('Some events detected with no value available in D.events, so setting them to 1');
-            end;
-        end;
-    end;
-
-    %%%%%%%%%%%%%%%%%%%%%%
-
-    if ~isctf
-        eve=events(D,1);    
-
-        if(length(eve)>0)
-
-            for i=1:length(eve),                  
-                vals(i)=eve(i).value;   
-            end;
-
-            bins=unique(vals); % HL mod 1.1
-            bins=[bins(1)-1 bins bins(end)+1]; % HL mod 1.1
-            h=hist(vals,bins); % HL mod 1.1
-            fig_handles(1)=sfigure;bar(bins,h/2); % HL mod 1.1, correct by 2 due to up and down triggers
-            fig_names{1}='events_hist';
-            title('Histogram of events corrected for button presses');xlabel('Trigger codes');ylabel('# of triggers');
-
-            if(isfield(Sin,'num_condition_trials_expected'))
-                if(~isempty(Sin.num_condition_trials_expected))
-
-                    % check to see if correct number of events have been found
-                    uvals=unique(vals);
-
-                        wrong=0;
-                    for i=1:length(Sin.condition_code),
-                        ind=find(uvals==Sin.condition_code(i));
-
-                        xs(i)=ind;
-                        ys(i)=h(ind);
-
-                        if(ys(i)~=Sin.num_condition_trials_expected(i))
-                            wrong=1;
-                        end;
-                    end;
-
-                    sfigure;bar(1:4, ys-Sin.num_condition_trials_expected);
-
-                    if(wrong)
-                       warning('Wrong number of events');
-                       print('-dpng',[working_dir '/' S.outfile '_num_trials']);
-
-                       h=hist(vals,unique(vals));
-                       sfigure;bar(unique(vals),h);
-
-                       print('-dpng',[working_dir '/' S.outfile '_num_trials2']);
-
-                    else
-                       disp('Correct number of events');
-                    end;
-                end;
-            end;
+            if ~isempty(S.num_condition_trials_expected)
+                for j = 1:length(S.condition_code)
+                    n_events = sum(vals==S.condition_code(j));
+                    if n_events ~= S.num_condition_trials_expected(j)
+                        fprintf(2,'Warning - expected %d events with value %d, but found %d\n',S.num_condition_trials_expected(j),S.condition_code(j),n_events);
+                    end
+                end
+            end
 
         else
-            warning('No events detected');
-        end;
-
-        D=events(D,1,eve);
+            fprintf(2,'No events detected');
+        end
     end
 
     D.save;
-    fname=[D.path '/' D.fname];
 
-    chantypes = {'EOG','EMG','ECG'};
+    chantypes = {'EOG','ECG'};
     for j = 1:length(chantypes)
         if isempty(D.indchantype(chantypes{j}))
             fprintf(2,'No %s channels were automatically identified - you may need to specify them manually if you wish to use them e.g. in AFRICA\n',chantypes{j})
