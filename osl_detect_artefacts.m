@@ -98,6 +98,7 @@ function D = osl_detect_artefacts(D,varargin)
             iters = iters+1;
             detected_badness = false; % Terminate by default unless something bad is found
             good_channels = find(~ismember(chan_inds, D.badchannels)); % Exclude already bad channels
+            
             if options.badchannels && sum(good_channels) > 1  % Do a pass for bad channels as long as >1 channel remains
                 for ii = 1:length(options.measure_fns)
 
