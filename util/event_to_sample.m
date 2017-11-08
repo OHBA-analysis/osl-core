@@ -11,8 +11,7 @@ function samples = event_to_sample(D,event_type,modality)
 
     if nargin < 2 || isempty(event_type) 
         event_type = {};
-    end
-    
+    end    
 
     assert(strcmp(D.type,'continuous'),'This function is only meant to operate on continuous MEEGs')
     
@@ -22,24 +21,25 @@ function samples = event_to_sample(D,event_type,modality)
     	event_type = {event_type};
     end
 
+    if ischar(modality) || isstr(modality)
+        modality = {modality};
+    end
+
     ev = D.events(1,'samples');
     
     % If no events, return immediately
     if isempty(ev)
         return
     end
-    
-    keep_events = true(1,length(ev));
 
     if ~isempty(event_type)
-        keep_events = keep_events & ismember({ev.type},event_type);
+        ev = ev(ismember({ev.type},event_type));
     end
 
-    if ~isempty(modality)
-        keep_events = keep_events & ismember({ev.value},modality);
+    if ~isempty(modality) & ~isempty(ev)
+        ev = ev(ismember({ev.value},modality))
     end
 
-    ev = ev(keep_events);
     for j = 1:length(ev)
     	samples(ev(j).sample+(0:(ev(j).duration-1))) = true;
     end
