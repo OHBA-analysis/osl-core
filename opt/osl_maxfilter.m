@@ -32,34 +32,16 @@ function fif_out = osl_maxfilter(fif_in,method,varargin)
 		maxfilter_call = sprintf('%s %s',maxfilter_call,str); % Add to accumulator
 	end
 
-	switch method
-		case ''
-			fif_suffix = '_nosss'
-			add_to_call('-nosss');
-			if arg.Results.downsample_factor == 1
-				fprintf(2,'Not running SSS but also not downsampling - HPI signal may still be present in output\n');
-			end
-			fprintf('Calling maxfilter WITHOUT SSS\n');
-		case 'sss'
-			fif_suffix = '_sss'
-			fprintf('Calling maxfilter with SSS\n');
-		case 'tsss'
-			fif_suffix = '_tsss'
-			add_to_call('-st %d -corr %g',arg.Results.st_win,arg.Results.st_corr);
-			fprintf('Calling maxfilter with tSSS\n');
-		otherwise
-			error('Unrecognized method')
-	end
-
-	base_path = fullfile(dirpath,[fname fif_suffix]); % Output, with no extension
+	assert(any(strcmp(method,{'nosss','sss','tsss'})),'Method must be one of - nosss, sss, tsss')
+	
+	base_path = fullfile(dirpath,sprintf('%s_%s',method,fname)); 
 	fif_out = [base_path '.fif'];
 	log_out = [base_path '_log.txt'];
 	head_out = [base_path '_headpos.txt'];
 
 	add_to_call('-f %s',fif_in); % Specify input
 	add_to_call('-o %s',fif_out); % Specify output
-	add_to_call('-hp %s',head_out); % Always output HPI 
-
+	add_to_call('-hp %s',head_out); % Output HPI 
 
 	if ~isempty(arg.Results.badchannels)
 		% Remove MEG from channel names if present
@@ -96,12 +78,28 @@ function fif_out = osl_maxfilter(fif_in,method,varargin)
 		add_to_call(arg.Results.extra);
 	end
 
+	switch method
+		case 'nosss'
+			add_to_call('-nosss');
+			fprintf('Calling maxfilter WITHOUT SSS\n');
+		case 'sss'
+			fprintf('Calling maxfilter with SSS\n');
+		case 'tsss'
+			add_to_call('-st %d -corr %g',arg.Results.st_win,arg.Results.st_corr);
+			fprintf('Calling maxfilter with tSSS\n');
+		otherwise
+			error('Unrecognized method')
+	end
+
 	if exist(fif_out)
 		fprintf('Deleting existing file: %s\n',fif_out);
 		delete(fif_out);
 	end
 
-	runcmd('%s &> %s',maxfilter_call,log_out) % Capture log output
+	call = sprintf('%s &> %s',maxfilter_call,log_out);
+	fprintf('%s\n',call);
+	runcmd(call) % Capture log output
 	maxfilter_output = fileread(log_out);
+
 
 end
