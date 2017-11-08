@@ -97,8 +97,7 @@ function D = osl_detect_artefacts(D,varargin)
         while detected_badness && iters < options.max_iter
             iters = iters+1;
             detected_badness = false; % Terminate by default unless something bad is found
-            good_channels = ~ismember(chan_inds, D.badchannels); % Exclude already bad channels
-
+            good_channels = find(~ismember(chan_inds, D.badchannels)); % Exclude already bad channels
             if options.badchannels && sum(good_channels) > 1  % Do a pass for bad channels as long as >1 channel remains
                 for ii = 1:length(options.measure_fns)
 
@@ -107,7 +106,7 @@ function D = osl_detect_artefacts(D,varargin)
                         datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
                         to_add = find(gesd(datchan,0.05,options.max_bad_channels-n_new_badchans,1)); 
                         if length(to_add) > 0              
-                            bad_channels=chan_inds(to_add);
+                            bad_channels=chan_inds(good_channels(to_add));
                             D = badchannels(D, bad_channels, ones(length(bad_channels),1));
                             detected_badness = true;
                             n_new_badchans = n_new_badchans + length(to_add);
