@@ -103,6 +103,22 @@ function D = osl_import(raw_data,varargin)
         end
     end
 
+    if ~isempty(S.bad_segments)
+        modalities = unique(D.chantype(D.indchantype('MEGANY')));
+        BadEvents = [];
+        for j = 1:length(modalities)
+            for k = 1:size(S.bad_segments,1)
+                BadEvents(end+1).type   = 'artefact_OSL';
+                BadEvents(end).value  = modalities{j};
+                BadEvents(end).time   = S.bad_segments(k,1);
+                BadEvents(end).duration = diff(S.bad_segments(k,:));
+                BadEvents(end).offset = 0;
+            end
+        end
+        ev = D.events;
+        D = D.events(1,[ev(:); BadEvents(:)]);
+    end
+
     D.save;
 
     chantypes = {'EOG','ECG'};

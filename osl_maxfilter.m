@@ -1,4 +1,4 @@
-function fif_out = osl_maxfilter(fif_in,method,varargin)
+function [fif_out,bad_times] = osl_maxfilter(fif_in,method,varargin)
 
 	if nargin < 2 || isempty(method) 
 		method = '';
@@ -99,7 +99,15 @@ function fif_out = osl_maxfilter(fif_in,method,varargin)
 	call = sprintf('%s &> %s',maxfilter_call,log_out);
 	fprintf('%s\n',call);
 	runcmd(call) % Capture log output
-	maxfilter_output = fileread(log_out);
 
+	if any(strcmp(method,{'sss','tsss'}))
+		try
+			bad_times = read_bad_times_from_maxfilter(log_out);
+		catch
+			fprintf(2,'Error parsing log file! This needs to be investigated, you will need to manually mark bad times');
+		end
+	else
+		bad_times = [];
+	end
 
 end
