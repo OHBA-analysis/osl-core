@@ -51,7 +51,7 @@ function D = osl_detect_artefacts(D,varargin)
     arg.addParameter('badtimes',true); % Check for bad events
     arg.addParameter('dummy_epoch_tsize',1); % Dummy epoch size in seconds
     arg.addParameter('measure_fns',{'std'}); % list of outlier metric func names to use for bad segment marking
-    arg.addParameter('event_threshold',0.3); % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
+    arg.addParameter('event_significance',0.05); % Significance level for GESD bad channel detection
     arg.addParameter('artefact_type_name','artefact_OSL'); 
     arg.parse(varargin{:});
     options = arg.Results;
@@ -105,7 +105,7 @@ function D = osl_detect_artefacts(D,varargin)
                     if n_new_badchans < options.max_bad_channels
                         dat = data(good_channels,:,~badtrials); % Only work on trials that haven't been rejected at any point
                         datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
-                        to_add = find(gesd(datchan,0.05,options.max_bad_channels-n_new_badchans,1)); 
+                        to_add = find(gesd(datchan,options.channel_significance,options.max_bad_channels-n_new_badchans,0)); 
                         if length(to_add) > 0              
                             bad_channels=chan_inds(good_channels(to_add));
                             D = badchannels(D, bad_channels, ones(length(bad_channels),1));
@@ -123,16 +123,7 @@ function D = osl_detect_artefacts(D,varargin)
                     goodtrials = find(~badtrials);
                     dat = data(good_channels,:,goodtrials);
                     datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1)*size(dat,2),size(dat,3)),[],1);
-                    [b,stats] = robustfit(ones(length(datchan),1),datchan,'bisquare',4.685,'off');
-
-                    if numel(options.event_threshold) == 1
-                        event_threshold=options.event_threshold;
-                    else
-                        event_threshold=options.event_threshold(ii);
-                    end
-
-                    % For each good trial, mark that trial number as bad
-                    new_badtrials = find(stats.w < event_threshold);
+                    new_badtrials = find(gesd(datchan,options.event_significance,ceil(length(datchan)*0.2),0)); % Only up to 10% can be bad at each iteration
                     if new_badtrials
                         detected_badness = true;
                     end
@@ -197,9 +188,9 @@ function D = osl_detect_artefacts(D,varargin)
         ev = D.events;
         ev = ev(cellfun(@(x) ~isempty(strmatch('artefact',x)),{ev.type})); % Find only artefact events
         modalities = unique({ev.value});
-        for modality = unique({ev.value})
-            this_modality = strcmp({ev.value},modality);
-            fprintf('Bad times - rejected %.2fs (%.0f%%) in modality %s\n',sum([ev(this_modality).duration]),100*sum([ev(this_modality).duration])/(D.time(end)-D.time(1)),modality{1});
+        for j = 1:length(modalities)
+            this_modality = strcmp({ev.value},modalities{j});
+            fprintf('Bad times - rejected %.2fs (%.0f%%) in modality %s\n',sum([ev(this_modality).duration]),100*sum([ev(this_modality).duration])/(D.time(end)-D.time(1)),modalities{j});
         end
     else
         bt = D.badtrials;
