@@ -60,7 +60,6 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	end
 
 	fif_out = [base_path '.fif'];
-	log_out = [base_path '_log.txt'];
 	head_out = [base_path '_headpos.txt'];
 
 	add_to_call('-v'); % Enable verbose output
@@ -121,7 +120,10 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 		delete(fif_out);
 	end
 
-	call = sprintf('%s &> %s',maxfilter_call,log_out);
+	stdout = [base_path '_log.txt'];
+	stderr = [base_path '_err.txt'];
+
+	call = sprintf('%s 2> %s | %s',maxfilter_call,stderr,stdout);
 	fprintf('%s\n',call);
 	runcmd(call) % Capture log output
 
