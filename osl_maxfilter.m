@@ -125,7 +125,7 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	% Redirect output to log files and optionally stdout as well (via tee)
 	stdout_log = [base_path '_log.txt'];
 	stderr_log = [base_path '_err.txt'];
-	add_to_call('2> %s',stderr);
+	add_to_call('2> %s',stderr_log);
 	if arg.Results.verbose
 		add_to_call('| tee %s',stdout_log);
 	else
