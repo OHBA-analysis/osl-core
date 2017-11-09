@@ -63,6 +63,7 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	log_out = [base_path '_log.txt'];
 	head_out = [base_path '_headpos.txt'];
 
+	add_to_call('-v'); % Enable verbose output
 	add_to_call('-f %s',fif_in); % Specify input
 	add_to_call('-o %s',fif_out); % Specify output
 	add_to_call('-hp %s',head_out); % Output HPI 
