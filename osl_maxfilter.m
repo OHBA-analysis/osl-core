@@ -133,8 +133,12 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	end
 
 	disp(maxfilter_call);
-	system(maxfilter_call) % Capture log output
+	ret = system(maxfilter_call); % Capture log output
 
+	if ret == 0
+		fprintf(2,'Maxfilter return code was not 0 - something probably went wrong. Check %s\n',stderr_log);
+	end
+	
 	bad_times = [];
 	final_offset = 0;
 
