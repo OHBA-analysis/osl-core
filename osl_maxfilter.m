@@ -1,7 +1,17 @@
-function [fif_out,bad_times,final_offset] = osl_maxfilter(fif_in,method,varargin)
+function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method,varargin)
+	% Run MaxFilter
+	% 
+	% INPUTS
+	% - fif_in : File name of an Elekta fif file
+	% - method : One of 'nosss' (performs downsampling for bad channel detection), 'sss', or 'tsss'
+	% - varargin : Additional command line options, see inputParser below for details
+	%
+	% This function will automatically create a head position file and log file in the
+	% same directory as the output file.
+	%
 	% OUTPUTS
 	% - fif output file
-	% - bad times matrix
+	% - bad times matrix extracted from log file to 
 	% - final offset - factor to add to raw times e.g. from osl_headpos to match SPM
 	%
 	% Modified by Romesh Abeysuriya 2017
@@ -18,6 +28,7 @@ function [fif_out,bad_times,final_offset] = osl_maxfilter(fif_in,method,varargin
 	arg.addParameter('st_corr',0.98)
 	arg.addParameter('badchannels',{},@iscell); % Cell array of channel names e.g. D.chanlabels(D.badchannels)
 	arg.addParameter('downsample_factor',4)
+	arg.addParameter('fif_out',[]) % Output file name, default is in the same directory with method prepended
 	arg.addParameter('cal_file',[]) % :  full path to a fine calibration file to use
 	arg.addParameter('ctc_file',[]) % ctc_file (optional):  full path to a cross-talk matrix file to use
 	arg.addParameter('trans_ref_file',[]) % transformation to specified reference
@@ -40,7 +51,14 @@ function [fif_out,bad_times,final_offset] = osl_maxfilter(fif_in,method,varargin
 
 	assert(any(strcmp(method,{'nosss','sss','tsss'})),'Method must be one of - nosss, sss, tsss')
 	
-	base_path = fullfile(dirpath,sprintf('%s_%s',method,fname)); 
+	if isempty(arg.Results.fif_out)
+		base_path = fullfile(dirpath,sprintf('%s_%s',method,fname));
+	else
+		% Need to remove the fif extension, if present
+		[outdir,outfname] = fileparts(arg.Results.fif_out);
+		base_path = fullfile(outdir,outfname);
+	end
+
 	fif_out = [base_path '.fif'];
 	log_out = [base_path '_log.txt'];
 	head_out = [base_path '_headpos.txt'];
