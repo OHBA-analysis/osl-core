@@ -140,7 +140,7 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 
 	if any(strcmp(method,{'sss','tsss'}))
 		try
-			[bad_times,final_offset] = read_bad_times_from_maxfilter(log_out);
+			[bad_times,final_offset] = read_bad_times_from_maxfilter(stdout_log);
 		catch ME
 			fprintf(2,'Error parsing log file! This needs to be investigated, you will need to manually mark bad times\n');
 			fprintf(2,'Error was:\n%s\n',ME.message)
