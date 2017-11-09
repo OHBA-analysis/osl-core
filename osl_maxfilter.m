@@ -33,6 +33,8 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	arg.addParameter('ctc_file',[]) % ctc_file (optional):  full path to a cross-talk matrix file to use
 	arg.addParameter('trans_ref_file',[]) % transformation to specified reference
 	arg.addParameter('extra',[]) % Just stick stuff at the end
+	arg.addParameter('verbose',false) % If true, print log to stdout while maxfilter is running
+
 	arg.parse(varargin{:});
 
 	% Handle the input file
@@ -120,12 +122,18 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 		delete(fif_out);
 	end
 
-	stdout = [base_path '_log.txt'];
-	stderr = [base_path '_err.txt'];
+	% Redirect output to log files and optionally stdout as well (via tee)
+	stdout_log = [base_path '_log.txt'];
+	stderr_log = [base_path '_err.txt'];
+	add_to_call('2> %s',stderr);
+	if arg.Results.verbose
+		add_to_call('| tee %s',stdout_log);
+	else
+		add_to_call('1> %s',stdout_log);
+	end
 
-	call = sprintf('%s 2> %s | %s',maxfilter_call,stderr,stdout);
-	fprintf('%s\n',call);
-	runcmd(call) % Capture log output
+	disp(maxfilter_call);
+	system(maxfilter_call) % Capture log output
 
 	bad_times = [];
 	final_offset = 0;
@@ -133,8 +141,9 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	if any(strcmp(method,{'sss','tsss'}))
 		try
 			[bad_times,final_offset] = read_bad_times_from_maxfilter(log_out);
-		catch
-			fprintf(2,'Error parsing log file! This needs to be investigated, you will need to manually mark bad times');
+		catch ME
+			fprintf(2,'Error parsing log file! This needs to be investigated, you will need to manually mark bad times\n');
+			fprintf(2,'Error was:\n%s\n',ME.message)
 		end
 	end
 
