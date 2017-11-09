@@ -1,4 +1,4 @@
-function bad_times = read_bad_times_from_maxfilter(fname)
+function [bad_times,final_offset] = read_bad_times_from_maxfilter(fname)
 	% Parse maxfilter stdout and extract bad times
 	% Output is n x 2 matrix where row is a bad segment, 
 	% first column is start time, second column is stop time
@@ -68,5 +68,6 @@ function bad_times = read_bad_times_from_maxfilter(fname)
 
 	fclose(fid);
 
-	bad_times = bad_tags - initial_skip - computed_offset;
+	final_offset = - initial_skip - computed_offset; % Add this to raw Elekta times to get the final time
+	bad_times = bad_tags + final_offset;
 end
