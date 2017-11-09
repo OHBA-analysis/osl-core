@@ -1,17 +1,22 @@
 function [idx,x2] = gesd(x,alpha,n_out,outlier_side)
-    % [idx,x2] = gesd(x,alpha,n_out,double_sided)
-    % gesd outlier test
+    % Detect outliers using Generalized ESD test
     %
-    % Usage
-    %  idx = A logical array with TRUE wherever the outliers are
-    %  x = the data set
-    %  alpha = significance level, 0.05 by default
-    %  n_out = maximum number of outliers
-    %  x2 = The input array with outliers removed
-    % outlier_side: -1 -> minimum value is outlier?
-    %               0 -> any sample can be an outlier?
-    %               1 -> maximum value is an outlier?
-    % Now find outliers in change via Generalized ESD
+    % INPUTS
+    % - x : Data set containing outliers
+    % - alpha : Significance level to detect at (default = 0.05)
+    % - n_out : Maximum number of outliers to detect (default = 10% of data set)
+    % - outlier_side : Specify sidedness of the test
+    %       - outlier_side = -1 -> outliers are all smaller
+    %       - outlier_side = 0  -> outliers could be small/negative or large/positive (default)
+    %       - outlier_side = 1  -> outliers are all larger
+    % 
+    % OUTPUTS
+    % - idx : Logical array with TRUE wherever a sample is an outlier
+    % - x2 : Input array with outliers removed
+    %
+    % For details about the method, see
+    % B. Rosner (1983). Percentage Points for a Generalized ESD Many-Outlier Procedure. Technometrics 25(2), pp. 165-172. 
+    % http://www.jstor.org/stable/1268549?seq=1
     %
     % Romesh Abeysuriya 2013-2017
     
