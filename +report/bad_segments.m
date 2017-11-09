@@ -40,10 +40,10 @@ function h = bad_segments(D,measure_fn,dummy_epoch_tsize)
 
 
 		subplot(4,1,2);
-		plot(dat(~badtrials),1:sum(~badtrials),'og');
+		plot(dat(~badtrials),find(~badtrials),'og');
 		if any(badtrials)
 			hold on
-			plot(dat(badtrials),1:sum(badtrials),'*r');
+			plot(dat(badtrials),find(badtrials),'*r');
 		end
 		a2=axis;
 		axis([a1(1) a1(2) a2(3) a2(4) ]);

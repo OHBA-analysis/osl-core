@@ -747,9 +747,13 @@ function BadEpochs = read_bad_events(D,modality)
 	% Run once at initialization
 	BadEpochs = {};
 	ev = D.events;
-	% Note - using 'artefact_OSL' here means that we won't interact at all with artefacts identified separately   
+    if isempty(ev)
+        return
+    end
+    
+    % Note - using 'artefact_OSL' here means that we won't interact at all with artefacts identified separately   
     % Otherwise, this function will turn other artefact types into artefact_OSL
-	ev = ev(cellfun(@(x) strcmp('artefact_OSL',x),{ev.type}));
+    ev = ev(cellfun(@(x) strcmp('artefact_OSL',x),{ev.type}));
     ev = ev(ismember({ev.value},{modality})); % These are all the artefact events that apply to the channel types we are inspecting
 
 	for j = 1:numel(ev)

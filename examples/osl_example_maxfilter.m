@@ -1,6 +1,6 @@
 %% HOW TO MAXFILTER
 
-fif_file = '/home/disk3/ajquinn/Projects/lizard/raw_data/s01_lizard.fif';
+fif_file = 's01_lizard.fif';
 
 %% First, do a nosss
 nosss_fif = osl_maxfilter(fif_file,'nosss');
@@ -11,7 +11,7 @@ D = osl_detect_artefacts(D,'badtimes',false);
 
 %% Now use these to maxfilter
 % Don't forget to also capture bad times...
-[sss_fif,bad_segments] = osl_maxfilter(fif_file,'sss','badchannels',D.chanlabels(D.badchannels));
+[sss_fif,bad_segments] = osl_maxfilter(fif_file,'sss','badchannels',D.chanlabels(D.badchannels),'fif_out','awesome_sss.fif');
 
 %...and include them when importing
 D_sss = osl_import(sss_fif,'bad_segments',bad_segments);

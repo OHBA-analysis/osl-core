@@ -9,9 +9,11 @@ function [bad_times,final_offset] = read_bad_times_from_maxfilter(fname)
 	l = fgetl(fid);
 
 	initial_skip = NaN;
-	computed_offset = NaN;
-	new_block = true; % This flag lets us perform operations once per block
+	extra_offset = 0;
 	bad_tags = [];
+	this_tag = 0;
+	started_reading = false;
+	reading_tag = 0; % How many tags are currently in the buffer
 
 	while ischar(l)
 
@@ -24,50 +26,46 @@ function [bad_times,final_offset] = read_bad_times_from_maxfilter(fname)
 		end
 
 		if strfind(l,'Reading raw tag')	
-			this_tag = sscanf(l(strfind(l,'#t'):end),'#t = %f');
-			new_block = true;
+			if reading_tag == 0
+				l
+				this_tag = sscanf(l(strfind(l,'#t'):end),'#t = %f');
+			end
+			reading_tag = reading_tag + 1;
 		end
 
-		if new_block & strfind(l,'Time ') == 1
-			this_offset = this_tag - sscanf(l,'Time %f');
-
-			if ~isfinite(computed_offset)
-				computed_offset = this_offset;
-			else
-				assert(this_offset == computed_offset);
-			end
-
-			new_block = false;
-		elseif new_block & strfind(l,'#t = ') == 1
-			this_offset = this_tag - sscanf(l,'#t = %f');
-
-			if ~isfinite(computed_offset)
-				computed_offset = this_offset;
-			else
-				assert(this_offset == computed_offset);
-			end
-
-			new_block = false;
+		if ~isempty(strfind(l,'data block is skipped')) && ~started_reading
+			extra_offset = extra_offset + 1;
+		elseif ~isempty(strfind(l,'data block is skipped'))
+			error('Do not know how to handle skipped blocks in the middle of the log');
 		end
 
-		% --- Reading raw tag #b = 3/1311 (#t = 83.000) ---
-
-		% Time 81.000: cont HPI is off, data block is skipped!
-
-
-
-		if strfind(l,'Skipped 1 bad data tags')
+		if strfind(l,'Skipped') == 1
+			this_tag
+			l
 			if ~isempty(bad_tags) && this_tag == bad_tags(end,2)
-				bad_tags(end,2) = this_tag + 1;
+				bad_tags(end,2) = this_tag + reading_tag;
 			else
-				bad_tags(end+1,:) = [this_tag this_tag + 1];
+				bad_tags(end+1,:) = [this_tag this_tag + reading_tag];
 			end
+			reading_tag = 0;
+			started_reading = true;
+		elseif strfind(l,'Processed raw data buffer') == 1
+			reading_tag = 0;
+			started_reading = true;
 		end
+
+
+
+
+
 
 	end
 
+extra_offset
+initial_skip
+
 	fclose(fid);
 
-	final_offset = - initial_skip - computed_offset; % Add this to raw Elekta times to get the final time
+	final_offset = - initial_skip - extra_offset; % Add this to raw Elekta times to get the final time
 	bad_times = bad_tags + final_offset;
 end
