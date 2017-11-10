@@ -98,8 +98,12 @@ D = osl_import(S)
 % analysis
 D = D.chantype(find(strcmp(D.chanlabels,'EEG060')),'EMG');
 D = D.chantype(find(strcmp(D.chanlabels,'EEG059')),'ECG');
-D = D.chantype(find(strcmp(D.chanlabels,'EEG057')),'EOG1');
-D = D.chantype(find(strcmp(D.chanlabels,'EEG058')),'EOG2');
+D = D.chantype(find(strcmp(D.chanlabels,'EEG057')),'EOG');
+D = D.chantype(find(strcmp(D.chanlabels,'EEG058')),'EOG');
+D = D.chanlabels(find(strcmp(D.chanlabels,'EEG060')),'EMG');
+D = D.chanlabels(find(strcmp(D.chanlabels,'EEG059')),'ECG');
+D = D.chanlabels(find(strcmp(D.chanlabels,'EEG057')),'EOG1');
+D = D.chanlabels(find(strcmp(D.chanlabels,'EEG058')),'EOG2');
 
 %%
 % In order to perform coregistration, in addition to the structural MRI scan,
