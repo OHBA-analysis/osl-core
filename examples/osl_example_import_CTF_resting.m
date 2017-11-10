@@ -58,14 +58,11 @@ d=ft_preprocessing(struct('dataset',ds_folder,'continuous','yes'))
 %%
 % Although the above commands will read the data into Matlab, for OSL it is
 % more useful to read the data into an SPM MEEG object. This can be performed
-% using the |osl_convert_script| function. The |.ds| file is passed in as the
-% |fif_file| input and you also need to provide a filename for the MEEG object
+% using the |osl_import| function. The |.ds| file is passed in as the
+% first input and you can optionally provide a filename for the MEEG object
 % that will be created on disk. After conversion, the MEEG object is
 % automatically loaded and returned
-S = struct;
-S.fif_file = ds_folder;
-S.spm_file = fullfile(osldir,'example_Data','ctf_preprocessing','3006','3006');
-D = osl_import(S)
+D = osl_import(ds_folder,'outfile',spm_file)
 
 %%
 % By default, only data channels (e.g. MEG, trigger, clock) will be imported.
@@ -87,8 +84,7 @@ D = osl_import(S)
 %
 % First, we need to make sure these channels are retained in the import. These
 % channels are identified by their label, so we will use |other_channels|
-S.other_channels = {'EEG060','EEG059','EEG057','EEG058'}
-D = osl_import(S)
+D = osl_import(ds_folder,'outfile',spm_file,'other_channels',{'EEG060','EEG059','EEG057','EEG058'})
 
 %%
 % Notice that we now have 280 channels instead of 276, because these 4
