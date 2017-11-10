@@ -595,7 +595,7 @@ function D = oslview(D)
 
 				BadEpochs.(channel_type) = {};
 				for j = 1:length(onset)
-					BadEpochs.(channel_type){j} = D.time([onset(j),offset(j)-1]);
+					BadEpochs.(channel_type){j} = D.time([onset(j),offset(j)]);
 				end
 				
 				calcPlotStats
@@ -731,7 +731,7 @@ function D = oslview(D)
 		t_bad = false(1,Nsamples);
 		for b = 1:numel(BadEpochs.(channel_type))
 			if numel(BadEpochs.(channel_type){b}) == 2
-				t_bad(D.time>=BadEpochs.(channel_type){b}(1) & D.time<=BadEpochs.(channel_type){b}(2)) = true;
+				t_bad(D.time>=BadEpochs.(channel_type){b}(1) & D.time<=(BadEpochs.(channel_type){b}(2)+1e-5)) = true;
 			end
 		end
 	end
