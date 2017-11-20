@@ -283,15 +283,11 @@ if exist(scalp_file,'file')~=2
     
     % CLEAN UP
     % Use system instead of dos because an error might occur here
-    warning off                                                            %#ok<WNOFF>
-    system(['rm ' fullfile(struct_path,struct_name) '*.off']);
-    system(['rm ' fullfile(struct_path,struct_name) '_outskull*.*']);
-    system(['rm ' fullfile(struct_path,struct_name) '_inskull*.*']);
-    system(['rm ' mesh_file]);
-    warning on                                                             %#ok<WNON>
+    delete([fullfile(struct_path,struct_name) '*.off']);
+    delete([fullfile(struct_path,struct_name) '_outskull*.*']);
+    delete([fullfile(struct_path,struct_name) '_inskull*.*']);
+    delete([mesh_file]);
     
-    
-
 
 %%%%%%%%%%%%%%%   R E F I N E   S C A L P   O U T L I N E   %%%%%%%%%%%%%%%
 
