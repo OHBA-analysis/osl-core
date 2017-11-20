@@ -231,10 +231,10 @@ std_brain  = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz'];
 
 % SWITCH ORIENTATION OF SCALP FILE IF IT'S NOT THE SAME AS STD_BRAIN
 % (RADIOLOGICAL)
-std_orient  = runcmd(['fslorient -getorient ' std_brain ],1);
-smri_orient = runcmd(['fslorient -getorient ' sMRI      ],1);
+std_orient  = runcmd('fslorient -getorient %s 2>/dev/null', std_brain);
+smri_orient = runcmd('fslorient -getorient %s 2>/dev/null', sMRI);
 if ~strcmp(deblank(smri_orient),deblank(std_orient))
-    runcmd(['fslorient -swaporient ' sMRI],1);
+    runcmd('fslorient -swaporient %s',sMRI);
 end
 
 % RUN FSLREORIENT2STD
