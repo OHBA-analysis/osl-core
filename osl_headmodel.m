@@ -8,7 +8,7 @@ function D = osl_headmodel(S)
 %
 % REQUIRED INPUTS:
 %
-% S.D               - SPM MEG object filename
+% S.D               - SPM MEG object filename or MEEG
 %
 % S.mri             - structural MRI nii file name (set S.mri=[] or '' to 
 %                     use template structural)
@@ -42,19 +42,18 @@ function D = osl_headmodel(S)
 %                      .coordsys - Specify fiducial coordinate system as:
 %                                  'Native' or 'MNI' (default 'MNI')
 %
+% Romesh Abeysuriya 2017
 % Adam Baker 2014
 
 
 %%%%%%%%%%%%%%%%%%%%%%%   P A R S E   I N P U T S   %%%%%%%%%%%%%%%%%%%%%%%
 
 % Check SPM File Specification:
-try
-    S.D = char(S.D);
-    [pathstr,filestr] = fileparts(S.D);
-    S.D = fullfile(pathstr,[filestr '.mat']); % force .mat suffix
+if isa(S.D,'meeg')
+    D = S.D;
+    S.D = D.fullfile;
+else
     D = spm_eeg_load(S.D);
-catch
-    error('SPM file specification not recognised or incorrect');
 end
 
 % Check Headmodel Specification:
@@ -82,23 +81,21 @@ catch
 end
 
 % Check Structural Specification:
-try
-    S.mri = char(S.mri);
-    [pathstr,filestr,ext] = fileparts(S.mri);   
-catch
-    S.mri = ft_getopt(S,'mri','');
-    error('Structural MRI specification not recognised or incorrect');
-end
+S.mri = char(S.mri);
 if ~isempty(S.mri)
-    if isempty(ext) % force .nii suffix
-        ext = '.nii';
-    elseif strcmp(ext,'.gz') && S.use_rhino == 0
-        error('S.mri must be .nii (not .nii.gz) when using SPM coregistration')
-    else
-        tempMesh = spm_eeg_inv_mesh;
-        S.mri     = tempMesh.sMRI;
+    assert(logical(exist(S.mri,'file')),'Structural MRI %s not found',S.mri);
+    [~,~,ext] = fileparts(S.mri);   
+    if strcmp(ext,'.gz') && S.use_rhino == 0
+        % Try unzipping
+        fnames = gunzip(S.mri);
+        assert(length(fnames)==1,'Specified .gz file contained more than one file');
+        S.mri = fnames{1};
+        [~,~,ext] = fileparts(S.mri);   
     end
-    S.mri = fullfile(pathstr,[filestr,ext]);
+        
+    if ~strcmp(ext,'.nii') && S.use_rhino == 0
+        error('S.mri must be .nii (not .nii.gz) when using SPM coregistration')
+    end
 end
 
 % Check Headshape Specification:
@@ -171,6 +168,8 @@ else % ~S.use_rhino
     spm_jobman('run', matlabbatch);
     
 end % if S.use_rhino 
+
+D = spm_eeg_load(S.D); % Reload the file
 
 end%osl_headmodel
 
