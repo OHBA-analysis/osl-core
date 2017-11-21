@@ -101,7 +101,7 @@ function D = osl_import(raw_data,varargin)
             end
 
         else
-            fprintf(2,'No events detected');
+            fprintf(2,'No events detected\n');
         end
     end
 

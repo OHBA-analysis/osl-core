@@ -45,7 +45,7 @@ function D = osl_detect_artefacts(D,varargin)
     arg = inputParser;
     arg.addParameter('modalities',{},@iscell); % By default, detect artefacts in all modalities except 'OTHER'
     arg.addParameter('max_iter',10);
-    arg.addParameter('max_bad_channels',10); % Maximum number of bad channels to add, on top of whatever is already present
+    arg.addParameter('max_bad_channels',10); % Maximum number of new bad channels in each modality to add
     arg.addParameter('badchannels',true); % Check for bad channels
     arg.addParameter('channel_significance',0.05); % Significance level for GESD bad channel detection
     arg.addParameter('badtimes',true); % Check for bad events
@@ -72,7 +72,7 @@ function D = osl_detect_artefacts(D,varargin)
     end
 
     % For each modality, detect badness
-    n_new_badchans = 0;
+    n_new_badchans = zeros(size(options.modalities));
 
     for mm = 1:length(options.modalities)
 
@@ -101,16 +101,15 @@ function D = osl_detect_artefacts(D,varargin)
             
             if options.badchannels && sum(good_channels) > 1  % Do a pass for bad channels as long as >1 channel remains
                 for ii = 1:length(options.measure_fns)
-
-                    if n_new_badchans < options.max_bad_channels
+                    if n_new_badchans(mm) < options.max_bad_channels
                         dat = data(good_channels,:,~badtrials); % Only work on trials that haven't been rejected at any point
                         datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
-                        to_add = find(gesd(datchan,options.channel_significance,options.max_bad_channels-n_new_badchans,0)); 
-                        if length(to_add) > 0              
+                        to_add = find(gesd(datchan,options.channel_significance,options.max_bad_channels-n_new_badchans(mm),0)); 
+                        if ~isempty(to_add)       
                             bad_channels=chan_inds(good_channels(to_add));
                             D = badchannels(D, bad_channels, ones(length(bad_channels),1));
                             detected_badness = true;
-                            n_new_badchans = n_new_badchans + length(to_add);
+                            n_new_badchans(mm) = n_new_badchans(mm) + length(to_add);
                         end
                     end
                     good_channels = ~ismember(chan_inds, D.badchannels);
@@ -175,8 +174,10 @@ function D = osl_detect_artefacts(D,varargin)
     end
 
     % Display summary at the end
-    if n_new_badchans == options.max_bad_channels
-        fprintf(2,'options.max_bad_channels was reached, there may be additional bad channels present\n');
+    for mm = 1:length(options.modalities)
+        if n_new_badchans(mm) == options.max_bad_channels
+            fprintf(2,'options.max_bad_channels was reached for %s, there may be additional bad channels present\n',options.modalities{mm});
+        end
     end
 
     bc = D.badchannels;
@@ -186,11 +187,15 @@ function D = osl_detect_artefacts(D,varargin)
 
     if continuous
         ev = D.events;
-        ev = ev(cellfun(@(x) ~isempty(strmatch('artefact',x)),{ev.type})); % Find only artefact events
-        modalities = unique({ev.value});
-        for j = 1:length(modalities)
-            this_modality = strcmp({ev.value},modalities{j});
-            fprintf('Bad times - rejected %.2fs (%.0f%%) in modality %s\n',sum([ev(this_modality).duration]),100*sum([ev(this_modality).duration])/(D.time(end)-D.time(1)),modalities{j});
+        if isempty(ev)
+            fprintf('Bad times - none\n');
+        else
+            ev = ev(cellfun(@(x) ~isempty(strmatch('artefact',x)),{ev.type})); % Find only artefact events
+            modalities = unique({ev.value});
+            for j = 1:length(modalities)
+                this_modality = strcmp({ev.value},modalities{j});
+                fprintf('Bad times - rejected %.2fs (%.0f%%) in modality %s\n',sum([ev(this_modality).duration]),100*sum([ev(this_modality).duration])/(D.time(end)-D.time(1)),modalities{j});
+            end
         end
     else
         bt = D.badtrials;

@@ -52,6 +52,32 @@ D.inv{1}.mesh
 D = osl_update_inv_dir(D,data_dir);
 D.inv{1}.mesh
 
+%% Setting chantypes and labels
+% It's important that you set the channel types and labels correctly in your file, for two reasons
+%
+% * Bad samples are identified on a per-chantype basis. For example, you
+%   detect artefacts separately in MEGMAG, MEGPLANAR, EMG and EOG. This works
+%   best if the channel types are correct
+% * Non-MEG channel types are recognized as such in AFRICA, as long as the chantype is not 'OTHER'
+%
+% Setting the labels and chantype correctly makes it easier for you and other users to work with the
+% data further down the line, so it is always worth setting them correctly. In this case, suppose we know that
+% the following channel labels correspond to artefact channels:
+%
+% * |EEG060| - EMG
+% * |EEG059| - ECG
+% * |EEG057| - EOG1
+% * |EEG058| - EOG2
+%
+% At this point, we should make sure that these channel types are set correctly, and that the channel labels are informative
+D = D.chantype(find(strcmp(D.chanlabels,'EEG060')),'EMG');
+D = D.chantype(find(strcmp(D.chanlabels,'EEG059')),'ECG');
+D = D.chantype(find(strcmp(D.chanlabels,'EEG057')),'EOG');
+D = D.chantype(find(strcmp(D.chanlabels,'EEG058')),'EOG');
+D = D.chanlabels(find(strcmp(D.chanlabels,'EEG060')),'EMG');
+D = D.chanlabels(find(strcmp(D.chanlabels,'EEG059')),'ECG');
+D = D.chanlabels(find(strcmp(D.chanlabels,'EEG057')),'EOG1');
+D = D.chanlabels(find(strcmp(D.chanlabels,'EEG058')),'EOG2');
 
 %% Initial filtering
 % For filtering, we will use the |osl_filter| function. This function applies a basic Butterworth filter. You specify both 

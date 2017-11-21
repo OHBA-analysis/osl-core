@@ -27,7 +27,7 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	arg.addParameter('st_win',4)
 	arg.addParameter('st_corr',0.98)
 	arg.addParameter('badchannels',{},@iscell); % Cell array of channel names e.g. D.chanlabels(D.badchannels)
-	arg.addParameter('downsample_factor',4)
+	arg.addParameter('downsample_factor',[])
 	arg.addParameter('fif_out',[]) % Output file name, default is in the same directory with method prepended
 	arg.addParameter('cal_file',[]) % :  full path to a fine calibration file to use
 	arg.addParameter('ctc_file',[]) % ctc_file (optional):  full path to a cross-talk matrix file to use
@@ -71,7 +71,7 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 
 	if ~isempty(arg.Results.badchannels)
 		% Remove MEG from channel names if present
-		badchans = cellfun(@(x) strrep(x,'MEG',''),arg.Results.badchannels,'UniformOutput',false);
+		badchans = regexp(arg.Results.badchannels,'[0-9]*','match','once'); % Extract the channel numbers
 		badchans = sprintf('%s ',badchans{:}); % Join them
 		add_to_call('-bad %s',badchans);
 	end
@@ -82,10 +82,6 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 
 	if ~arg.Results.autobad
 		add_to_call('-autobad off');
-	end
-
-	if arg.Results.downsample_factor ~= 1
-		add_to_call('-ds %d',arg.Results.downsample_factor);
 	end
 
 	if ~isempty(arg.Results.cal_file)
@@ -108,6 +104,9 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 		case 'nosss'
 			add_to_call('-nosss');
 			fprintf('Calling maxfilter WITHOUT SSS\n');
+            if isempty(arg.Results.downsample_factor)
+                add_to_call('-ds %d',4); % By default, do downsampling with nosss
+            end
 		case 'sss'
 			fprintf('Calling maxfilter with SSS\n');
 		case 'tsss'
@@ -115,8 +114,12 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 			fprintf('Calling maxfilter with tSSS\n');
 		otherwise
 			error('Unrecognized method')
-	end
+    end
 
+    if arg.Results.downsample_factor ~= 1
+		add_to_call('-ds %d',arg.Results.downsample_factor);
+    end
+    
 	if exist(fif_out)
 		fprintf('Deleting existing file: %s\n',fif_out);
 		delete(fif_out);
