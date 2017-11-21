@@ -126,21 +126,20 @@ D = osl_detect_artefacts(D);
 %
 
 %% AFRICA - ICA artefact removal
-% Most of the information on how to perform ICA artefact removal is provided in the AFRICA example. Here, we are mainly concerned with
-% how to perform automatic artefact rejection. The key settings that we will use are provided below
-S = struct;
-S.artefact_channels = {'EOG1','ECG','EMG','EOG2'};
-S.precompute_topos = false;
-S.ident_func = @identify_artefactual_components_auto;
-S.ident_params = struct('artefact_chans_corr_thresh',0.4); 
-
-%%
-% We set |artefact_channels| to correspond to the |chantypes| of all the channels whose correlations we want to check. |precompute_topos| is slow
-% and generates large files, and is only mainly necessary if you are performing manual artefact rejection. So we can save time by
-% skipping that step here. We set the |ident_func| to the automatic classification function. Lastly, if you examine |identify_artefactual_components_auto.m|
-% you can see what options are available to control the rejection process. One common setting you might want to change is the correlation threshold for rejection.
-% You might also want to enable or disable other types of ICA component rejection. Finally, call |osl_africa|
-D = osl_africa(D,S);
+% Most of the information on how to perform ICA artefact removal is provided
+% in the AFRICA example. Here, we are mainly concerned with how to perform
+% automatic artefact rejection.  We set |artefact_channels| to correspond to
+% the |chantypes| of all the channels whose correlations we want to check.
+% |precompute_topos| is slow and generates large files, and is only mainly
+% necessary if you are performing manual artefact rejection. So we can save
+% time by skipping that step here. We set the |ident_func| to the automatic
+% classification function. Lastly, if you examine
+% |identify_artefactual_components_auto.m| you can see what options are
+% available to control the rejection process. One common setting you might
+% want to change is the correlation threshold for rejection. You might also
+% want to enable or disable other types of ICA component rejection. Finally,
+% call |osl_africa|
+D = osl_africa(D,'artefact_channels',{'EOG1','ECG','EMG','EOG2'},'precompute_topos',false);
 has_montage(D)
 
 %%

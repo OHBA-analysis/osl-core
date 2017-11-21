@@ -62,6 +62,7 @@ d=ft_preprocessing(struct('dataset',ds_folder,'continuous','yes'))
 % first input and you can optionally provide a filename for the MEEG object
 % that will be created on disk. After conversion, the MEEG object is
 % automatically loaded and returned
+spm_file = fullfile(osldir,'example_Data','ctf_preprocessing','3006','3006');
 D = osl_import(ds_folder,'outfile',spm_file)
 
 %%
