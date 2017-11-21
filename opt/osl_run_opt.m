@@ -77,7 +77,7 @@ for subi=1:length(opt.sessions_to_do),
 
         % set session specific diagnostic report up
         report_dir=fullfile(opt.results.plotsdir,['session' num2str(subnum)]);
-        report=osl_report_setup(report_dir,['Session ' num2str(subnum) ' (Input file:' input_file  ')']);
+        opt_report=osl_report_setup(report_dir,['Session ' num2str(subnum) ' (Input file:' input_file  ')']);
 
         if(opt.maxfilter.do)
 
@@ -232,8 +232,8 @@ for subi=1:length(opt.sessions_to_do),
                             S.plot_basetitle='MAXFILTER: ';
                             [res fig_names fig_handles fig_titles]=osl_check_bad_chans(S); % TODO - remove this call 
 
-                            report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
-                            report=osl_report_print_figs(report);
+                            opt_report=osl_report_set_figs(opt_report,fig_names,fig_handles,fig_titles);
+                            opt_report=osl_report_print_figs(opt_report);
 
                             %%%%%%%%%%%%%%%
                         end;
@@ -312,7 +312,7 @@ for subi=1:length(opt.sessions_to_do),
 
                 % check if Maxfilter has worked
                 spm_files_basenames{subnum}=['sss' opt.convert.spm_files_basenames{subnum}];
-                [maxfilter_failed D report]=opt_maxfilter_check_output(opt, fif_sss, spm_files_basenames{subnum}, report);
+                [maxfilter_failed D opt_report]=opt_maxfilter_check_output(opt, fif_sss, spm_files_basenames{subnum}, opt_report);
 
                 if maxfilter_failed,
                     warning('Maxfilter has FAILED. Will retry with no bad channels set and autobad off!!! Results may be suspect.');
@@ -333,7 +333,7 @@ for subi=1:length(opt.sessions_to_do),
                     type([fif_sss '_log.txt']);
 
                     % check if Maxfilter has worked
-                    [maxfilter_failed D report]=opt_maxfilter_check_output(opt, fif_sss, spm_files_basenames{subnum}, report);
+                    [maxfilter_failed D opt_report]=opt_maxfilter_check_output(opt, fif_sss, spm_files_basenames{subnum}, opt_report);
 
                     if maxfilter_failed,
                         error('Maxfilter has still FAILED. Can not continue with this subject.');
@@ -366,7 +366,7 @@ for subi=1:length(opt.sessions_to_do),
 
                 [p spmname e] = fileparts(opt.convert.spm_files_basenames{subnum});
                 spm_files_basenames{subnum}=[spmname '.mat'];
-                S2.spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
+                S2.outfile=[opt.dirname filesep spm_files_basenames{subnum}];
 
                 [p fifname e] = fileparts(opt.input_files{subnum});
 
@@ -381,18 +381,17 @@ for subi=1:length(opt.sessions_to_do),
                     end;
                 end;
 
-                S2.fif_file=[p filesep fifname e];
-
                 if(isfield(opt.convert,'trigger_channel_mask'))
                     S2.trigger_channel_mask=opt.convert.trigger_channel_mask;
                 end;
-                [D tmp fig_handles fig_names ] = osl_import(S2);
-
-                if ~isempty(fig_handles),
+                D = osl_import([p filesep fifname e],S2);
+                fig_handles = report.events(D);
+               
+                if ~isempty(fig_handles)
                     fig_titles={}; fig_titles{1}='CONVERT: histogram of trigger codes';
-                    report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
-                    report=osl_report_print_figs(report);
-                end;
+                    opt_report=osl_report_set_figs(opt_report,{get(fig_handles,'tag')},fig_handles,fig_titles);
+                    opt_report=osl_report_print_figs(opt_report);
+                end
 
                 close all
             else
@@ -431,8 +430,8 @@ for subi=1:length(opt.sessions_to_do),
             S2.modalities=opt.modalities;
             S2.BadEpochs=BadEpochs2;
             [fig_handles fig_names fig_titles] = plot_bad(D, S2);
-            report=osl_report_set_figs(report, fig_names, fig_handles, fig_titles);
-            report=osl_report_print_figs(report);
+            opt_report=osl_report_set_figs(opt_report, fig_names, fig_handles, fig_titles);
+            opt_report=osl_report_print_figs(opt_report);
         end;
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -527,14 +526,21 @@ for subi=1:length(opt.sessions_to_do),
             S.do_remove = opt.africa.todo.remove;
             S.precompute_topos = opt.africa.precompute_topos;
             S.used_maxfilter = opt.africa.used_maxfilter;
-            S.ident_params = opt.africa.ident;
-            S.artefact_channels = S.ident_params.artefact_chans;
-            S.ident_func = S.ident_params.func;
-            S.do_plots = true;
+            S.mains_frequency = opt.africa.ident.mains_frequency;
+            S.artefact_channels = opt.africa.ident.artefact_chans;
+            S.auto_max_num_artefact_comps = opt.africa.ident.max_num_artefact_comps;
+            S.auto_do_mains = opt.africa.ident.do_mains
+            S.auto_mains_kurt_thresh = opt.africa.ident.mains_kurt_thresh
+            S.auto_do_kurt = opt.africa.ident.do_kurt
+            S.auto_kurtosis_thresh = opt.africa.ident.kurtosis_thresh
+            S.auto_kurtosis_wthresh = opt.africa.ident.kurtosis_wthresh
+            S.auto_artefact_chans_corr_thresh = opt.africa.ident.artefact_chans_corr_thresh
 
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             D = spm_eeg_load(D);
-            [D, figs]=osl_africa(D,S);
+            D=osl_africa(D,S);
+            figs = report.ica(D);
+            
             D.save()
 
             % If we removed artefacts, then we want to use the denoised data going forward
@@ -552,104 +558,36 @@ for subi=1:length(opt.sessions_to_do),
                 warning('AFRICA has been run, but bad components have not been removed');
             end
 
-            report=osl_report_set_figs(report,figs.names,figs.handles,figs.titles);
-            report=osl_report_print_figs(report);
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) get(x,'tag'),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            opt_report=osl_report_print_figs(opt_report);
 
         end
             
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Mark bad segments
         if(opt.bad_segments.do)
-            % do temporary artifical epoching
+
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  MARK BAD SEGMENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
-
-            %%%%
-            % define the trials we want from the event information
-            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             D_continuous=spm_eeg_load(spm_file);
-
-            tind_tsize=opt.bad_segments.dummy_epoch_tsize*D.fsample;
-            start_tinds=1:tind_tsize:(D.nsamples);
-            Ndummytrials=length(start_tinds);
-
-            epochinfo.conditionlabels=cell(Ndummytrials-1,1);
-            epochinfo.trl=zeros(Ndummytrials-1, 3);
-
-            for ii=1:Ndummytrials-1,
-                epochinfo.conditionlabels{ii}='Dummy';
-                % trl is in time indices
-                epochinfo.trl(ii,1)=start_tinds(ii);
-                epochinfo.trl(ii,2)=min(start_tinds(ii)+tind_tsize-1);
-                epochinfo.trl(ii,3)=0;
-            end
-
-            %%%%
-            % do dummy epoching
-            S3=[];
-            S3 = epochinfo;
-            S3.D = D_continuous;
-            D_dummy = osl_epoch(S3);
-
-            %%%%
-            % detect outliers
-            S = [];
-            S.D = D_dummy;
+            S = struct();
             S.modalities=opt.modalities;
-            S.do_plot=1;
-            S.max_iter=5;
-            S.outlier_measure_fns=opt.bad_segments.outlier_measure_fns;%{'min','std'};
-            S.outlier_wthresh_ev=opt.bad_segments.wthresh_ev;%[0.5 0.5];
-            S.outlier_wthresh_chan=opt.bad_segments.wthresh_chan;%[0.01 0.01];
-            S.just_chans=0;
-            S.plot_basename='bad_segments';
-            S.plot_basetitle='BAD SEGMENTS: ';
+            S.dummy_epoch_tsize    = opt.bad_segments.dummy_epoch_tsize   
+            S.measure_fns  = opt.bad_segments.outlier_measure_fns 
+            S.event_significance   = opt.bad_segments.event_significance  
+            S.channel_significance = opt.bad_segments.channel_significance
+            D_continuous = osl_detect_artefacts(D_continuous,S);
+            D_continuous.save();
 
-            [D_dummy fig_names fig_handles fig_titles]=osl_detect_badevent(S);
+            figs = [report.bad_channels(D_continuous) report.bad_segments(D_continuous)];
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) get(x,'tag'),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            opt_report=osl_report_print_figs(opt_report);
 
-            report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
-            report=osl_report_print_figs(report);
-
-            %%%%
-            % mark bad chans
-            bad_channels=D_dummy.badchannels;
-            if ~isempty(bad_channels)
-                idx = D_continuous.montage('getindex');
-                D_continuous = D_continuous.montage('switch',0);
-                D_continuous = D_continuous.badchannels(bad_channels,1);
-                D_continuous = D_continuous.montage('switch',idx);
-            end;
-
-            %%%%
-            % mark bad segments
-            BadEpochs={};
-            badtrialstmp=D_dummy.badtrials;
-            badtrials=zeros(1,D_dummy.ntrials);
-            badtrials(badtrialstmp)=1;
-
-            diffbadtrials=diff([0 badtrials]);
-            ups=find(diffbadtrials==1);
-            downs=find(diffbadtrials==-1);
-            if ~isempty(ups),
-                if(badtrials(end)), downs(end+1)=length(badtrials); end;
-                for jj=1:length(ups),
-                    BadEpochs{jj}(1)=D_continuous.time(epochinfo.trl(ups(jj),1));
-                    BadEpochs{jj}(2)=D_continuous.time(epochinfo.trl(downs(jj),2));
-                end;
-
-                D_continuous=set_bad(D_continuous,BadEpochs);
-
-            end;
-
-            D_continuous.save;
-
-            S2=[];
-            S2.outlier_measure_fns=S.outlier_measure_fns;
-            S2.modalities=S.modalities;
-            S2.BadEpochs=BadEpochs;
-            [fig_handles fig_names fig_titles] = plot_bad(D_continuous, S2);
-            report=osl_report_set_figs(report, fig_names, fig_handles, fig_titles);
-            report=osl_report_print_figs(report);
-
+            ev = D_continuous.events;
+            if isempty(ev)
+                BadEpochs = [];
+            else
+                BadEpochs = ev(cellfun(@(x) ~isempty(strmatch('artefact',x)),{ev.type})); % Find only artefact events
+            end
             opt_results.bad_segments.bad_segments=BadEpochs;
 
         else
@@ -671,8 +609,8 @@ for subi=1:length(opt.sessions_to_do),
 
                     plot4paper('time(s)',[S.outlier_measure_fns{ss} '(' S.modalities{mm} ')']);
                 end;
-                report=osl_report_set_figs(report,[S.outlier_measure_fns{ss} '_chans_with_bad_epochs_tc'],fig_handles,['DATA: ' S.outlier_measure_fns{ss} ' over chans']);
-                report=osl_report_print_figs(report);
+                opt_report=osl_report_set_figs(opt_report,[S.outlier_measure_fns{ss} '_chans_with_bad_epochs_tc'],fig_handles,['DATA: ' S.outlier_measure_fns{ss} ' over chans']);
+                opt_report=osl_report_print_figs(opt_report);
             end
         end
 
@@ -681,6 +619,8 @@ for subi=1:length(opt.sessions_to_do),
         disp(['%%%%%%%%%%%%%%%%%%%%%%%  PLOT SPECTOGRAMS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
         D_continuous=spm_eeg_load(spm_file);
+        S.modalities=opt.modalities;
+
         for mm=1:length(S.modalities),
             fig_handles=sfigure;
             set(fig_handles,'Position',[1 1 1300 450]);
@@ -697,8 +637,8 @@ for subi=1:length(opt.sessions_to_do),
             set(gca,'ydir','normal');
             plot4paper('time (s)','freq (hz)');
 
-            report=osl_report_set_figs(report,['spectogram_' opt.modalities{mm}],fig_handles,['DATA: spectogram for ' opt.modalities{mm}]);
-            report=osl_report_print_figs(report);
+            opt_report=osl_report_set_figs(opt_report,['spectogram_' opt.modalities{mm}],fig_handles,['DATA: spectogram for ' opt.modalities{mm}]);
+            opt_report=osl_report_print_figs(opt_report);
         end
 
         %%%%%%%%%%%%%%%%%%%
@@ -752,23 +692,23 @@ for subi=1:length(opt.sessions_to_do),
             view(130,18)
             title(['Session ' num2str(subnum)]);
             %%
-            report=osl_report_set_figs(report,'Coregistration_spm_view',coregfig1);
-            report=osl_report_print_figs(report);
+            opt_report=osl_report_set_figs(opt_report,'Coregistration_spm_view',coregfig1);
+            opt_report=osl_report_print_figs(opt_report);
 
             %% now do rhino displays
             coregfig2 = sfigure;
             rhino_display(Dcheck,coregfig2);
             view(45,5)
             title(['Session ' num2str(subnum)]);
-            report=osl_report_set_figs(report,'Coregistration_rhino_view1',coregfig2);
-            report=osl_report_print_figs(report);
+            opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view1',coregfig2);
+            opt_report=osl_report_print_figs(opt_report);
 
             coregfig3 = sfigure;
             rhino_display(Dcheck,coregfig3);
             view(90,-10)
             title(['Session ' num2str(subnum)]);
-            report=osl_report_set_figs(report,'Coregistration_rhino_view2',coregfig3);
-            report=osl_report_print_figs(report);
+            opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view2',coregfig3);
+            opt_report=osl_report_print_figs(opt_report);
 
             %%
 
@@ -858,24 +798,26 @@ for subi=1:length(opt.sessions_to_do),
             end;
             spm_file=[opt.dirname filesep spm_files_epoched_basenames{subnum}];
 
-            D2=spm_eeg_load(spm_file);
-
-            S = [];
-            S.D = D2;
+            S = struct();
             S.modalities=opt.modalities;
-            S.do_plot=1;
-            S.max_iter=5;
-            S.outlier_measure_fns=opt.outliers.outlier_measure_fns;%{'min','std'};
-            S.outlier_wthresh_ev=opt.outliers.wthresh_ev;%[0.5 0.5];
-            S.outlier_wthresh_chan=opt.outliers.wthresh_chan;%[0.01 0.01];
-            S.just_chans=0;
-            S.plot_basename='outliers';
-            S.plot_basetitle='OUTLIERS: ';
+            S.measure_fns  = opt.outliers.outlier_measure_fns 
+            S.event_significance   = opt.outliers.event_significance  
+            S.channel_significance = opt.outliers.channel_significance
+            S.max_iter = 5;
 
-            [D2 fig_names fig_handles fig_titles]=osl_detect_badevent(S);
+            Dold=spm_eeg_load(spm_file);
+            S2=[];
+            S2.D=Dold;
+            fname=fnamedat(Dold);
+            [pth nm]=fileparts(fname);
+            S2.outfile=[pth filesep 'S' nm '.mat'];
+            D2=spm_eeg_copy(S2);
+            D2 = osl_detect_artefacts(D2,S);
+            D2.save();
 
-            report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);
-            report=osl_report_print_figs(report);
+            figs = [report.bad_channels(D2) report.bad_trials(D2)];
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) sprintf('epoched_%s',get(x,'tag')),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            opt_report=osl_report_print_figs(opt_report);
 
             % delete obsolete spm file
             spm_file_old=[opt.dirname filesep spm_files_epoched_basenames{subnum}];
@@ -905,8 +847,8 @@ for subi=1:length(opt.sessions_to_do),
 
         %%%%%%%%%%%%%%%%%%%
         %% generate source recon web report for this session
-        report=osl_report_write(report);
-        opt_report=osl_report_add_sub_report(opt_report, report);
+        opt_report=osl_report_write(opt_report);
+        opt_report=osl_report_add_sub_report(opt_report, opt_report);
 
         %%%%%%%%%%%%%%%%%%%
         %% save opt results

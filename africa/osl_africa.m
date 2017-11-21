@@ -37,7 +37,7 @@ function D = osl_africa(D,varargin)
     arg.addParameter('auto_do_kurt',false); % Used by manual and auto
     arg.addParameter('auto_kurtosis_thresh',20); 
     arg.addParameter('auto_kurtosis_wthresh',0); 
-    arg.addParameter('auto_artefact_chans_corr_thresh',0.5);
+    arg.addParameter('auto_artefact_chans_corr_thresh',0.5,@isscalar);
 
     % OUTPUT SETTINGS
     arg.addParameter('montagename','AFRICA denoised data'); % New montage will be added with this name

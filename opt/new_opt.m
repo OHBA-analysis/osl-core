@@ -112,10 +112,10 @@ end
 %% Copy the inverse model from the no-sss ones to the sss
 
 %% Copy and downsample
-wd = 'no_maxfilter_analysis';
+wd = 'maxfilter_downsampled';
 mkdir(wd);
 
-s = study('no_maxfilter')
+s = study('maxfilter')
 parfor j = 1:s.n
 	if use_existing && exist(fullfile(wd,s.fnames{j}),'file')
 		fprintf('Already downsampled %s\n',s.fnames{j});

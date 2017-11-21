@@ -23,13 +23,9 @@ function [bad_components,reason] = identify_artefactual_components_auto(D,S)
     % 'corr_chan'
     metric_names = fieldnames(metrics);
     corr_metrics = metric_names(cellfun(@(x) ~isempty(x),regexp(metric_names,'^corr_chan.*')));
-    
-    if isscalar(S.auto_artefact_chans_corr_thresh)
-        S.auto_artefact_chans_corr_thresh = S.auto_artefact_chans_corr_thresh*ones(size(corr_metrics));
-    end
-    
+        
     for j = 1:length(corr_metrics)
-        to_reject = find(metrics.(corr_metrics{j}).value > S.auto_artefact_chans_corr_thresh(j));
+        to_reject = find(metrics.(corr_metrics{j}).value > S.auto_artefact_chans_corr_thresh);
         if isempty(to_reject)
             fprintf('No ICs correlated with Channel %s\n',strrep(corr_metrics{j},'corr_chan_',''));
         end

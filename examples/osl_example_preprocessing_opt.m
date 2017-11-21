@@ -337,7 +337,7 @@ opt.results.report.html_fname
 % Last but not least you might want to look at your actual data to check
 % whether OPT gives your good results: We will now load the M/EEG object created by OPT (analogous to our
 % resulting D objects in the manual preproc practical).
-D=spm_eeg_load(fullfile(osldir,'example_data','preproc_example','automatic_opt','practical_singlesubject.opt','Seffdspm_meg1.mat'));
+D=spm_eeg_load(fullfile(osldir,'example_data','preproc_example','automatic_opt','practical_singlesubject.opt','SeAffdspm_meg1.mat'));
 
 % Then define some trials to look at:
 %good_stimresp_trls = [D.indtrial('StimLRespL','good') D.indtrial('StimLRespR','good')];
