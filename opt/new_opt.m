@@ -16,8 +16,6 @@ for j = 1:length(subject_ids)
 		S(end).meeg = sprintf('%s_%s.mat',subject_ids{j},conditions{k});
 
 		% Now we create subfolders for each stage of the pipeline 
-		S(end).import = 'maxfiltered';
-
 	end
 end
 
@@ -32,48 +30,60 @@ end
 S(failed) = [];
 
 use_existing = true;
-if ~exist(S(j).import,'dir')
-    mkdir(S(j).import)
+if ~exist(S(1).import,'dir')
+    mkdir(S(1).import)
 end
 
     
     
-%% DOUBLE MAXFILTER AND IMPORT
-for j = 1:length(S)
+%% TRIPLE MAXFILTER AND IMPORT
+import_dir = 'maxfilter';
+D = cell(length(S),1);
+parfor j = 1:length(S)
 
-	if use_existing && exist(fullfile(S(j).import,S(j).meeg))
-		fprintf('Already imported %s\n',S(j).meeg);
-		D{j} = spm_eeg_load(fullfile(S(j).import,S(j).meeg));
-		continue
-	end
-
-	nosss_fif = osl_maxfilter(S(j).raw,'nosss','verbose',true,'fif_out',fullfile(S(j).import,['nosss_',S(j).raw]));
-	D_temp = osl_import(nosss_fif);
-	D_temp = osl_detect_artefacts(D_temp,'badtimes',false);
-    h = report.bad_channels(D_temp);
-	report.save_figs(h,S(j).import,D_temp.fname);
-    close(h);
-	[sss_fif,bad_segments] = osl_maxfilter(S(j).raw,'sss','badchannels',D_temp.chanlabels(D_temp.badchannels),'verbose',true,'fif_out',fullfile(S(j).import,['sss_',S(j).raw]));
-	D{j} = osl_import(sss_fif,'bad_segments',bad_segments,'outfile',fullfile(S(j).import,S(j).meeg));
+% 	if use_existing && exist(fullfile(import_dir,S(j).meeg),'file')
+% 		fprintf('Already imported %s\n',S(j).meeg);
+% 		D{j} = spm_eeg_load(fullfile(import_dir,S(j).meeg));
+% 		continue
+% 	end
+% 
+% 	nosss_fif = osl_maxfilter(S(j).raw,'nosss','verbose',true,'fif_out',fullfile(import_dir,['nosss_',S(j).raw]));
+% 	D_temp = osl_import(nosss_fif);
+% 	D_temp = osl_detect_artefacts(D_temp,'badtimes',false);
+%     h = report.bad_channels(D_temp);
+% 	report.save_figs(h,import_dir,D_temp.fname);
+%     close(h);
+% 	[sss_fif,bad_segments,headpos_file] = osl_maxfilter(S(j).raw,'sss','badchannels',D_temp.chanlabels(D_temp.badchannels),'verbose',true,'fif_out',fullfile(import_dir,['sss_',S(j).raw]));
+	
+    sss_fif = fullfile(import_dir,['sss_',S(j).raw]);
+    headpos_file = fullfile(import_dir,['sss_',S(j).raw(1:end-4),'_headpos.txt']);
+    h = report.headpos(headpos_file); % Check the events have been read in
+	report.save_figs(h,import_dir,D{j}.fname);
+    
+    [ds_fif,bad_segments] = osl_maxfilter(sss_fif,'nosss','verbose',true,'fif_out',fullfile(import_dir,['ds_',S(j).raw]));
+    D{j} = osl_import(ds_fif,'bad_segments',bad_segments,'outfile',fullfile(S(j).import,S(j).meeg));
     h = report.events(D{j}); % Check the events have been read in
-	report.save_figs(h,S(j).import,D{j}.fname);
+	report.save_figs(h,import_dir,D{j}.fname);
 	close(h);
     delete(D_temp); % Delete the temporary nosss MEEG
     delete(nosss_fif); % Delete the nosss FIF file
 end
 
-%% OR JUST IMPORT
-for j = 1:length(S)
+%% SINGLE MAXFILTER AND IMPORT
+import_dir = 'no_maxfilter';
+D = cell(length(S),1);
+parfor j = 1:length(S)
 
-	if use_existing & exist(fullfile(S(j).import,S(j).meeg))
+	if use_existing && exist(fullfile(import_dir,S(j).meeg),'file')
 		fprintf('Already imported %s\n',S(j).meeg);
-		D{j} = spm_eeg_load(fullfile(S(j).import,S(j).meeg));
+		D{j} = spm_eeg_load(fullfile(import_dir,S(j).meeg));
 		continue
 	end
 
-	D{j} = osl_import(S(j).raw,'outfile',fullfile(S(j).import,S(j).meeg));
+    nosss_fif = osl_maxfilter(S(j).raw,'nosss','verbose',true,'fif_out',fullfile(import_dir,['nosss_',S(j).raw]));
+	D{j} = osl_import(nosss_fif,'outfile',fullfile(import_dir,S(j).meeg));
 	h = report.events(D{j}); % Check the events have been read in
-	report.save_figs(h,S(j).import,D{j}.fname);
+	report.save_figs(h,import_dir,D{j}.fname);
 	close(h);
 end
 
