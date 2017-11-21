@@ -53,7 +53,7 @@ for j = 1:length(S)
     h = report.bad_channels(D_temp);
 	report.save_figs(h,S(j).import,D_temp.fname);
     close(h);
-	[sss_fif,bad_segments] = osl_maxfilter(S(j).raw,'sss','badchannels',D_temp.chanlabels(D_temp.badchannels),'verbose',true,'fif_out',fullfile(S(j).import,['sss_',S(j).raw]));
+	[sss_fif,bad_segments,headpos_file] = osl_maxfilter(S(j).raw,'sss','badchannels',D_temp.chanlabels(D_temp.badchannels),'verbose',true,'fif_out',fullfile(S(j).import,['sss_',S(j).raw]));
 	D{j} = osl_import(sss_fif,'bad_segments',bad_segments,'outfile',fullfile(S(j).import,S(j).meeg));
     h = report.events(D{j}); % Check the events have been read in
 	report.save_figs(h,S(j).import,D{j}.fname);
@@ -100,7 +100,43 @@ for j = 1:length(S)
 	close(h);
 end
 
-%% Now do the hard work in the pipeline
+%% NOW WE ARE DONE WITH IMPORTING AND WORKING WITH RAW FILES
+
+%% Copy the inverse model from the no-sss ones to the sss
+
+%% Copy and downsample
+wd = 'no_maxfilter_analysis';
+mkdir(wd);
+
+s = study('no_maxfilter')
+parfor j = 1:s.n
+	if use_existing && exist(fullfile(wd,s.fnames{j}),'file')
+		fprintf('Already downsampled %s\n',s.fnames{j});
+		continue
+	end
+
+	D = s.read(j);
+	fprintf('Downsampling %s\n',D.fname)
+	spm_eeg_downsample(struct('D',D,'fsample_new',250,'prefix',[wd '/'])); % Note - downsampling cannot be done in-place using prefix='', it just fails
+end
+
+s = study(wd)
+%% Do some filtering
+D = osl_filter(D,[0.1 inf],'prefix',''); % Remove slow drift
+D = osl_filter(D,-1*(50+[-2 2])); % Remove 50Hz with notch filter
+D = osl_filter(D,-1*(2*100+[-2 2])); % Remove 100Hz with notch filter
+D = osl_detect_artefacts(D);
+
+S = struct;
+S.artefact_channels = {'EOG1','ECG','EMG','EOG2'};
+S.precompute_topos = false;
+S.ident_func = @identify_artefactual_components_auto;
+S.ident_params = struct('artefact_chans_corr_thresh',0.4); 
+% You might also want to enable or disable other types of ICA component rejection. Finally, call |osl_africa|
+D = osl_africa(D,S);
+has_montage(D)
+
+
 
 S = study('')
 
