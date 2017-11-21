@@ -253,18 +253,115 @@ p.osleyes(p.binarize)
 p.savenii(p.weight_mask,'filename')
 
 %%
-% this will create a file 'filename.nii.gz'. The weight mask is written directly into the .nii file,
-% so it may only make sense if you pass in a volume. For example, to make a .nii file with the
-% XYZ x 1 representation of the parcellation (value indices parcel membership) you could use
+% this will create a file 'filename.nii.gz'. The weight mask is written
+% directly into the .nii file, so it may only make sense if you pass in a
+% volume. For example, to make a .nii file with the XYZ x 1 representation of
+% the parcellation (value indices parcel membership) you could use
 p.savenii(p.to_vol(1:38),'filename');
 
 %%
 % which will first expand the parcel assignments to each voxel.
 % 
-% Importantly, the |savenii()| method also copies the qform/xform portion of the header from the
-% template mask into the newly saved file. This is important, partly because it specifies whether 
-% not the .nii file is saved in radiological orientation or not. Note that if the .nii file is 
-% missing  this information, it may not be usable for some purposes. 
+% Importantly, the |savenii()| method also copies the qform/xform portion of
+% the header from the template mask into the newly saved file. This is
+% important, partly because it specifies whether not the .nii file is saved in
+% radiological orientation or not. Note that if the .nii file is missing  this
+% information, it may not be usable for some purposes.
+
+%% Making surface plots
+% You can also use the |parcellation| class to render surface plots. This is 
+% performed via a call to Workbench. In order to use this functionality, you 
+% need to 
+% 
+% * Download Workbench (<https://www.humanconnectome.org/software/connectome-workbench>)
+% * Specify the path where you installed Workbench in |osl.conf|
+%
+% If you have done both steps and run |osl_startup|, you should be able to type
+% |!wb_command| in the command window, and see the usage information for the program.
+% If not, you will need to fix your configuration before proceeding to make surface plots.
+%
+% Making a surface plot is done using the |plot_surface| method of the |parcellation| object.
+% Allowed inputs are the same as for |osleyes|, |fsleyes|, |savenii| etc. which means
+% you can pass in voxel or parcel data in any supported matrix size. The data is automatically
+% projected onto the cortical surface and rendered.
+fig = p.plot_surface(1:38);
+
+%%
+% Note that the |plot_surface| method returns a handle to the figure.
+% By default, the cortical surface is not inflated. You can select the inflation level by 
+% setting the second argument of |plot_surface|. The default value, 0, corresponds to no inflation. Otherwise,
+% 1 corresponds to inflated, and 2 corresponds to very inflated.
+p.plot_surface(1:38,2);
+
+%%
+% By default, the two hemispheres are shown separately. You can combine them into a single brain by setting the 
+% third option to true
+p.plot_surface(1:38,[],true);
+set(gca,'View',[-135 20]);
+
+%%
+% It's also possible to display multiple volumes. If your image contains an extra dimension (if you pass in a 2D
+% or 4D matrix, such that |to_vol| would return a 4D matrix) then the plot will be generated with all volumes 
+% on the surface.  
+fig = p.plot_surface(randn(38,5));
+
+%%
+% Notice that the count on the bottom left shows how many volumes are present. You can change the volume by using the buttons
+% at the top of the window, or by setting the 'current_vol' property of the figure
+fig.current_vol = 2;
+
+%%
+% Let's put it together by rendering a time-varying tstat on the cortical surface. First, we need will take our voxelwise
+% tstat and compute it at the parcel level. 
+%
+%
+%   nii_tstat = fullfile(osldir,'example_data','osleyes_example','tstat1_gc1_8mm.nii.gz');
+%   d = nii.load(nii_tstat); % Load the data
+%   d = p.to_matrix(d); % Convert to matrix form required by |ROInets|
+%   d = ROInets.get_node_tcs(d,p.parcelflag,'SpatialBasis'); % Convert to parcel timecourses
+%   fig = p.plot_surface(d,[],true); % Render on the surface
+%   set(gca,'View',[-30 30]);
+%   v = VideoWriter('parcellated_tstat.mp4','MPEG-4');
+%   open(v)
+%   for j = 1:size(d,2) % Iterate over volumes
+%       fig.current_vol = j;
+%       writeVideo(v,frame2im(getframe(fig)))
+%   end
+%   close(v)
+%
+
+%%
+% <html>
+% <video vspace="5" hspace="5" src="osl_example_parcellation_animation_parcel_surface.mp4" alt="" autoplay loop> 
+% </html>
+
+%%
+% Notice that the surface data is automatically interpolated by Workbench, so it is somewhat smoothed. You can set the
+% interpolation type to any that is supported by |wb_command| by passing an additional argument to |plot_surface|.
+
+%%
+% Of course, we could do the same thing with the original voxel data without parcellating it. However, we
+% would need to use a parcellation object for the original standard mask (i.e. with only one ROI encompassing
+% all voxels). You could do this by just setting the parcel's weight mask to be the volume-version of the template
+% mask, but for OSL standard masks, it's easiest just to specify the resolution you want.
+%
+%   p2 = parcellation(8);
+%   d = nii.load(nii_tstat); % Load the data
+%   fig = p2.plot_surface(d,[],true); % Render on the surface
+%   set(gca,'View',[-30 30]);
+%   v = VideoWriter('voxel_tstat.mp4','MPEG-4');
+%   open(v)
+%   for j = 1:size(d,4) % Iterate over volumes
+%       fig.current_vol = j;
+%       writeVideo(v,frame2im(getframe(fig)))
+%   end
+%   close(v)
+%
+
+%%
+% <html>
+% <video vspace="5" hspace="5" src="osl_example_parcellation_animation_voxel_surface.mp4" alt="" autoplay loop> 
+% </html>
 
 %% Modifying parcellations
 % You can modify the parcellation simply by changing the weight matrix. For example

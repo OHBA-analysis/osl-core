@@ -95,7 +95,7 @@ if(length(fif_files)>0),
         
         % The conversion to SPM will show a histogram of the event codes
         % and correspond to those listed below in the epoching section
-        [D spm_files{i}] = osl_convert_script(S2);
+        [D spm_files{i}] = osl_import(S2);
     end;
 end;
 

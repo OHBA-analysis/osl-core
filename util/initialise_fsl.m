@@ -39,10 +39,11 @@ function fsl_initialise()
 	if isempty(strfind(getenv('LD_LIBRARY_PATH'),s.FSLLIB))
 		setenv('LD_LIBRARY_PATH',sprintf('%s%s%s',s.FSLLIB,pathsep,getenv('LD_LIBRARY_PATH')));
 	end
-	addpath(fullfile(s.FSLDIR,'etc','matlab'));
 
-	% Test FSL
-	if ~exist(getenv('FSLDIR'))
+	% Add FSLDIR to path, if it exists - otherwise, print warning
+	if exist(getenv('FSLDIR'))
+    	addpath(fullfile(s.FSLDIR,'etc','matlab'));
+    else
         fprintf(2,'FSLDIR does not exist. Check that it is set correctly in osl.conf\n');
     end
     

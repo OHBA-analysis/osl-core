@@ -4,8 +4,10 @@ function D = oslview(D)
 	% ----------------------------------------------------------------
 	% D - SPM meeg object or file name
 	% ----------------------------------------------------------------
-	% AB 2012
+	%
+	% RA 2017
 	% Updated 21/10/14
+	% AB 2012
 	%
 	%
 	% TODO:
@@ -18,6 +20,8 @@ function D = oslview(D)
 	if nargout == 0
 		fprintf(2,'Warning - oslview returns an MEEG object but it is not being assigned to a variable\n');
 	end
+
+	assert(strcmp(D.type,'continuous'),'oslview is only compatible with continuous MEEG objects');
 
 	% Get directory of the viewer
 	viewer_dir = strrep(which('oslview'),'oslview.m','');
@@ -43,7 +47,6 @@ function D = oslview(D)
 	badevents_patch = [];
 	PanWindow_line = [];
 	PanWindow_box = [];
-	BadEpochs = read_bad_events(D);
 
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Create UI %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -81,6 +84,7 @@ function D = oslview(D)
 	channel_types = unique(D.chantype);
 	for chtype = 1:length(channel_types)
 		uimenu(uitools.menu_channels,'label',channel_types{chtype},'Callback',@switch_chantype);
+		BadEpochs.(channel_types{chtype}) = read_bad_events(D,channel_types{chtype});
 	end
 		
 
@@ -146,7 +150,10 @@ function D = oslview(D)
 
 	uiwait(MainFig) % Wait for user to close window
 
-	D = set_bad_events(D,BadEpochs);
+	for chtype = 1:length(channel_types)
+		D = set_bad_events(D,BadEpochs.(channel_types{chtype}),channel_types{chtype});
+	end
+
 	return
 
 	function createlayout(varargin)
@@ -254,7 +261,12 @@ function D = oslview(D)
 
 		%% PAN WINDOW
 		set(PanWindow_line,'XData',t,'YData',PanWindowData);
-        ylim = [0 max(PanWindowData)];
+		if max(PanWindowData) == 0
+			ylim = [0 1];
+		else
+        	ylim = [0 max(PanWindowData)];
+        end
+
         set(PanWindow,'YLim',ylim);
         
 		box_x = [t(xs(1)) t(xs(end)) t(xs(end)) t(xs(1))];
@@ -276,7 +288,11 @@ function D = oslview(D)
 		end
 		
 		set(SideWindow,'ylim',[0 length(offsets)])
-		set(SideWindow,'xlim',[min(SideWindowData_plot) max(SideWindowData_plot)])
+		if length(SideWindowData_plot) == 1
+			set(SideWindow,'xlim',[0 1])
+		else
+			set(SideWindow,'xlim',[min(SideWindowData_plot) max(SideWindowData_plot)])
+		end
 		set(SideWindow,'xTick',[],'xTicklabel',[],'yTick',[],'yTicklabel',[]);
 
 		if strcmp(get(ContextMenuS.Variance,'Checked'),'on')
@@ -296,13 +312,13 @@ function D = oslview(D)
 		patch_x = [];
 		patch_y = [];
 
-		for j = 1:length(BadEpochs)
-			green_x = [green_x BadEpochs{j}(1) BadEpochs{j}(1) NaN];
+		for j = 1:length(BadEpochs.(channel_type))
+			green_x = [green_x BadEpochs.(channel_type){j}(1) BadEpochs.(channel_type){j}(1) NaN];
 			green_y = [green_y yl NaN];
-			if numel(BadEpochs{j}) == 2
-				red_x = [red_x BadEpochs{j}(2) BadEpochs{j}(2) NaN];
+			if numel(BadEpochs.(channel_type){j}) == 2
+				red_x = [red_x BadEpochs.(channel_type){j}(2) BadEpochs.(channel_type){j}(2) NaN];
 				red_y = [red_y yl NaN];
-				patch_x(:,end+1) = [BadEpochs{j}(1);BadEpochs{j}(2);BadEpochs{j}(2);BadEpochs{j}(1)];
+				patch_x(:,end+1) = [BadEpochs.(channel_type){j}(1);BadEpochs.(channel_type){j}(2);BadEpochs.(channel_type){j}(2);BadEpochs.(channel_type){j}(1)];
 				patch_y(:,end+1) = [yl(1);yl(1);yl(2);yl(2)];
 			end
 		end
@@ -402,7 +418,7 @@ function D = oslview(D)
 		end
 		
 		% Change context menu depending on whether time point with bad epoch
-		if any(cellfun(@(x) ~sum(sign(x-cp(1))),BadEpochs))
+		if any(cellfun(@(x) ~sum(sign(x-cp(1))),BadEpochs.(channel_type)))
 			set(ContextMenuM.MarkEvent,'label','Remove Event');
 		else
 			set(ContextMenuM.MarkEvent,'label','Mark Event');
@@ -538,7 +554,7 @@ function D = oslview(D)
 		t_window	= get(MainWindow,'xlim');
 
 		if isempty(varargin)
-			if any(cellfun(@(x) ~sum(sign(x-t_current(1))),BadEpochs))
+			if any(cellfun(@(x) ~sum(sign(x-t_current(1))),BadEpochs.(channel_type))) && ~isempty(BadEpochs.(channel_type)) && length(BadEpochs.(channel_type){end}) ~= 1
 				new_event = false;
 			else
 				new_event = true;
@@ -560,16 +576,33 @@ function D = oslview(D)
 				t_current = t_window(2);
 			end
 
-			if isempty(BadEpochs) || length(BadEpochs{end}) == 2 % Start a new epoch
-				BadEpochs{end+1}(1) = t_current;
+			if isempty(BadEpochs.(channel_type)) || length(BadEpochs.(channel_type){end}) == 2 % Start a new epoch
+				BadEpochs.(channel_type){end+1}(1) = t_current;
 				redraw
 			else % End previous epoch, recompute stats
-				BadEpochs{end}(2) = t_current;
+				BadEpochs.(channel_type){end}(2) = t_current;
+				BadEpochs.(channel_type){end} = sort(BadEpochs.(channel_type){end});
+
+				% Recompute the events
+				t_bad = get_bad_inds();
+
+				db = find(diff([0 t_bad]));
+				onset = db(1:2:end);
+				offset = db(2:2:end);
+				if length(offset)<length(onset) 
+				    offset(end+1) = length(t_bad); 
+				end
+
+				BadEpochs.(channel_type) = {};
+				for j = 1:length(onset)
+					BadEpochs.(channel_type){j} = D.time([onset(j),offset(j)]);
+				end
+				
 				calcPlotStats
 				redraw
-			end		
+			end
 		else	%	Remove existing event
-			BadEpochs(cellfun(@(x) ~sum(sign(x-t_current)),BadEpochs)) = [];
+			BadEpochs.(channel_type)(cellfun(@(x) ~sum(sign(x-t_current)),BadEpochs.(channel_type))) = [];
 			calcPlotStats
 			redraw
 		end
@@ -626,7 +659,7 @@ function D = oslview(D)
 		% For the PanWindow, display the variability across the good channels
 		stat_inds = 1:D.nsamples; 
 		stat_inds = stat_inds(1:20:end);
-		tmp = std(D(chan_inds(~ch_bad),stat_inds,1));
+		tmp = std(D(chan_inds(~ch_bad),stat_inds,1),[],1);
 		PanWindowData = interp1(linspace(0,1,length(tmp)),tmp,linspace(0,1,D.nsamples));
 		PanWindowData(t_bad) = NaN;
 
@@ -696,9 +729,9 @@ function D = oslview(D)
 		% Return bad time based solely on the BadEpochs variable
 		% A kind of stripped-down meeg.badsamples()
 		t_bad = false(1,Nsamples);
-		for b = 1:numel(BadEpochs)
-			if numel(BadEpochs{b}) == 2
-				t_bad(D.time>=BadEpochs{b}(1) & D.time<=BadEpochs{b}(2)) = true;
+		for b = 1:numel(BadEpochs.(channel_type))
+			if numel(BadEpochs.(channel_type){b}) == 2
+				t_bad(D.time>=BadEpochs.(channel_type){b}(1) & D.time<=(BadEpochs.(channel_type){b}(2)+1e-5)) = true;
 			end
 		end
 	end
@@ -709,50 +742,59 @@ function D = oslview(D)
 
 end % OSLview
 
-function BadEpochs = read_bad_events(D)
+function BadEpochs = read_bad_events(D,modality)
 	% Set BadEpochs by reading artefact_OSL artefacts from the D object
 	% Run once at initialization
 	BadEpochs = {};
-	Events = D.events;
-	for ev = 1:numel(Events)
-		if isfield(Events,'type') && strcmp(Events(ev).type,'artefact_OSL')
-			BadEpochs{end+1}(1) = Events(ev).time;
-			BadEpochs{end}(2) = Events(ev).time + Events(ev).duration;
-		end
+	ev = D.events;
+    if isempty(ev)
+        return
+    end
+    
+    % Note - using 'artefact_OSL' here means that we won't interact at all with artefacts identified separately   
+    % Otherwise, this function will turn other artefact types into artefact_OSL
+    ev = ev(cellfun(@(x) strcmp('artefact_OSL',x),{ev.type}));
+    ev = ev(ismember({ev.value},{modality})); % These are all the artefact events that apply to the channel types we are inspecting
+
+	for j = 1:numel(ev)
+		BadEpochs{end+1}(1) = ev(j).time;
+		BadEpochs{end}(2) = ev(j).time + ev(j).duration - 2/D.fsample;
 	end
 end
 
-function D = set_bad_events(D,BadEpochs)
+function D = set_bad_events(D,BadEpochs,modality)
 	% Save bad epochs using method meeg/events
 	BadEvents = struct([]);
-	for ev = 1:numel(BadEpochs)
-		if numel(BadEpochs{ev} == 2)
-			BadEvents(ev).type	= 'artefact_OSL';
-			BadEvents(ev).value	= 'all';
-			BadEvents(ev).time	= BadEpochs{ev}(1);
-			BadEvents(ev).duration = diff(BadEpochs{ev}) + 2/D.fsample; % Need to account for SPM12's weird rounding here
-			BadEvents(ev).offset = 0;
+	for j = 1:numel(BadEpochs)
+		if numel(BadEpochs{j}) == 2
+			BadEvents(j).type	= 'artefact_OSL';
+			BadEvents(j).value	= modality;
+			BadEvents(j).time	= BadEpochs{j}(1);
+			BadEvents(j).duration = diff(BadEpochs{j}) + 2/D.fsample; % Need to account for SPM12's weird rounding here
+			BadEvents(j).offset = 0;
 		end
 	end
 	
 	% Load events
-	Events = D.events;
+	ev = D.events;
 		
-	% Remove previous bad epoch events
-	if isfield(Events,'type')
-		Events(strcmp({Events.type},'artefact_OSL')) = [];
+	% Remove previous bad epoch events for this
+	if isfield(ev,'type')
+        to_remove = false(size(ev));
+        for j = 1:length(ev)
+            if strcmp(ev(j).type,'artefact_OSL') && ismember(ev(j).value,{modality})
+                to_remove(j) = 1;
+            end
+        end
+        ev(to_remove) = [];
 	end
 	
-	% Concatenate new and old events
-	if size(Events,1) < size(Events,2)
-		BadEvents = BadEvents(:);
-	end
 	if ~isempty(BadEvents)
-		Events = [Events(:); BadEvents(:)];
+		ev = [ev(:); BadEvents(:)];
 	end
 	
 	% Save new events with previous
-	D = events(D,1,Events);
+	D = events(D,1,ev);
 end
 
 function flag = is_multiple_call()

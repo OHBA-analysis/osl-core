@@ -118,9 +118,9 @@ end
 
 if D.ntrials == 1 % can just pass in the MEEG object
     voxeldata = D(:,:,:);
-    good_samples = ~all(badsamples(D,':',':',':')); % all checks if any channels are bad then ignore those samples
+    goodsamples = good_samples(D);; % all checks if any channels are bad then ignore those samples
     % Get time-coursess
-    nodedata = ROInets.get_node_tcs(voxeldata(:,good_samples), parcellation, S.method);
+    nodedata = ROInets.get_node_tcs(voxeldata(:,goodsamples), parcellation, S.method);
     if ~strcmp(S.orthogonalisation,'none')
         
         if ~strcmp(S.orthogonalisation, 'innovations_mar')
@@ -130,13 +130,13 @@ if D.ntrials == 1 % can just pass in the MEEG object
         end
     end
 
-    data = zeros(size(nodedata,1),length(good_samples));
-    data(:,good_samples) = nodedata;
+    data = zeros(size(nodedata,1),length(goodsamples));
+    data(:,goodsamples) = nodedata;
 
-    data = reshape(data,[size(data,1),length(good_samples),D.ntrials]);
+    data = reshape(data,[size(data,1),length(goodsamples),D.ntrials]);
 
 elseif isa(D,'meeg') % work with D object in get_node_tcs
-    %good_samples = find(~all(badsamples(D,':',':',':')));
+    %goodsamples = find(good_samples(D));
     nodedata = ROInets.get_node_tcs(D,parcellation,S.method);
     nodedata = reshape(nodedata(:,:,:),size(nodedata,1),[]);
     if ~strcmp(S.orthogonalisation,'none')
@@ -152,7 +152,7 @@ elseif isa(D,'meeg') % work with D object in get_node_tcs
     data = reshape(data,size(data,1),size(D,2),size(D,3));
 
 else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG data)
-    good_samples = ~all(badsamples(D,':',':',':'));
+    goodsamples = good_samples(D);
     nodedata = zeros(size(parcellation,2),D.nsamples,D.ntrials);
     msg = '';
 
@@ -162,7 +162,7 @@ else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG d
         fprintf(repmat(char(8),1,length(msg)));
         msg = sprintf('Orthoganalising trial: %d of %d',idx,D.ntrials);
         fprintf(msg);
-        if good_samples(1,1,idx) == 1
+        if goodsamples(1,1,idx) == 1
             try
                 voxeldata = D(:,:,idx);
                 nodedata(:,:,idx) = ROInets.get_node_tcs(voxeldata, parcellation, S.method,0);
@@ -175,7 +175,7 @@ else % reshape the data first (or fix get_node_tcs to work with trialwise MEEG d
                 end
             catch,
                 % This trial is probably low rank, ignore it
-                good_samples(:,:,idx) = 0;
+                goodsamples(:,:,idx) = 0;
                 disp('Skipping low rank trial');
             end
 

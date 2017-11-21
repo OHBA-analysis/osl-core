@@ -64,7 +64,7 @@ for i=1:length(fif_files), % iterates over subjects
     
     % The conversion to SPM will show a histogram of the event codes
     % and correspond to those listed below in the epoching section
-    D = osl_convert_script(S2);
+    D = osl_import(S2);
     close;
     Fs=fsample(D);
     

@@ -40,8 +40,9 @@ if ~isempty(S.bad_event_type)
     Badtrials = false(1,D_epoched.ntrials);
     for trl = 1:D_epoched.ntrials
         tpts = D_epoched.trialonset(trl) + [0:length(D_epoched.time)-1]/D.fsample;
-        bs = badsamples(D,':',round(tpts*D.fsample),1);
-        Badtrials(trl) = any(all(bs));
+        bs = ~good_samples(D,[],round(tpts*D.fsample),1);
+        Badtrials(trl) = any(bs);
+        warning('Check good_samples implementation here is behaving correctly')
     end
     
     if 0

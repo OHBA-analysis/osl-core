@@ -174,15 +174,15 @@ try, opt.mains.do=optin.mains.do; optin.mains = rmfield(optin.mains,'do'); catch
 try, opt.bad_segments.do=optin.bad_segments.do; optin.bad_segments = rmfield(optin.bad_segments,'do'); catch, opt.bad_segments.do=1; end; % flag to indicate if bad_segment marking should be done
 try, opt.bad_segments.dummy_epoch_tsize=optin.bad_segments.dummy_epoch_tsize; optin.bad_segments = rmfield(optin.bad_segments,'dummy_epoch_tsize'); catch, opt.bad_segments.dummy_epoch_tsize=2; end; % size of dummy epochs (in secs) to do outlier bad segment marking
 try, opt.bad_segments.outlier_measure_fns=optin.bad_segments.outlier_measure_fns; optin.bad_segments = rmfield(optin.bad_segments,'outlier_measure_fns'); catch, opt.bad_segments.outlier_measure_fns={'std'}; end; % list of outlier metric func names to use for bad segment marking
-try, opt.bad_segments.wthresh_ev=optin.bad_segments.wthresh_ev; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_ev'); catch, opt.bad_segments.wthresh_ev=0.3*ones(length(opt.bad_segments.outlier_measure_fns),1); end; % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
-try, opt.bad_segments.wthresh_chan=optin.bad_segments.wthresh_chan; optin.bad_segments = rmfield(optin.bad_segments,'wthresh_chan'); catch, opt.bad_segments.wthresh_chan=0.01*ones(length(opt.bad_segments.outlier_measure_fns),1); end;% list of robust GLM weights thresholds to use on chans for bad segment marking, the LOWER the theshold the less aggressive the rejection
+try, opt.bad_segments.event_significance=optin.bad_segments.event_significance; optin.bad_segments = rmfield(optin.bad_segments,'event_significance'); catch, opt.bad_segments.event_significance=0.05; end; 
+try, opt.bad_segments.channel_significance=optin.bad_segments.channel_significance; optin.bad_segments = rmfield(optin.bad_segments,'channel_significance'); catch, opt.bad_segments.channel_significance=0.05; end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% africa settings
 
 try, do_africa=optin.africa.do; optin.africa = rmfield(optin.africa,'do'); catch, do_africa=1; end; % flag to do or not do africa
 try, opt.africa.todo.ica=optin.africa.todo.ica; optin.africa.todo = rmfield(optin.africa.todo,'ica'); catch, opt.africa.todo.ica=do_africa; end; % flag to do or not do ica decomposition
-try, opt.africa.todo.ident=optin.africa.todo.ident; optin.africa.todo = rmfield(optin.africa.todo,'ident'); catch, opt.africa.todo.ident=do_africa; end; % flag to do or not do artefact rejection
+try, opt.africa.todo.ident=optin.africa.todo.ident; optin.africa.todo = rmfield(optin.africa.todo,'ident'); catch, opt.africa.todo.ident='auto'; end; % flag to do or not do artefact rejection
 try, opt.africa.todo.remove=optin.africa.todo.remove; optin.africa.todo = rmfield(optin.africa.todo,'remove'); catch, opt.africa.todo.remove=do_africa; end; % flag to do or not do artefactual component removal
 try, opt.africa.precompute_topos=optin.africa.precompute_topos; optin.africa = rmfield(optin.africa,'precompute_topos'); catch, opt.africa.precompute_topos=1; end; % flag to do or not do precomputation of topos of IC spatial maps after ica has been computed for future use in ident
 
@@ -204,7 +204,7 @@ end; % flag to indicate if SSS Maxfilter has been done
 % africa.ident settings (used in identifying which artefacts are bad):
 opt.africa.ident=[];
 try, opt.africa.ident.artefact_chans=optin.africa.ident.artefact_chans; optin.africa.ident = rmfield(optin.africa.ident,'artefact_chans'); catch, opt.africa.ident.artefact_chans={'ECG','EOG'}; end; % list of names of artefact channels
-try, opt.africa.ident.artefact_chans_corr_thresh=optin.africa.ident.artefact_chans_corr_thresh; optin.africa.ident = rmfield(optin.africa.ident,'artefact_chans_corr_thresh'); catch, opt.africa.ident.artefact_chans_corr_thresh=ones(length(opt.africa.ident.artefact_chans),1)*0.15; end; % vector setting the correlation threshold to use for each of the artefact chans
+try, opt.africa.ident.artefact_chans_corr_thresh=optin.africa.ident.artefact_chans_corr_thresh; optin.africa.ident = rmfield(optin.africa.ident,'artefact_chans_corr_thresh'); catch, opt.africa.ident.artefact_chans_corr_thresh=0.15; end; % vector setting the correlation threshold to use for each of the artefact chans
 try, opt.africa.ident.do_kurt=optin.africa.ident.do_kurt; optin.africa.ident = rmfield(optin.africa.ident,'do_kurt'); catch, opt.africa.ident.do_kurt=1; end; % flag to do detection of bad ICA components based on high kurtosis
 try, opt.africa.ident.kurtosis_wthresh=optin.africa.ident.kurtosis_wthresh; optin.africa.ident = rmfield(optin.africa.ident,'kurtosis_wthresh'); catch, opt.africa.ident.kurtosis_wthresh=0.4; end; % threshold to use on robust GLM weights. Set to zero to not use. Set between 0 and 1, where a value closer to 1 gives more aggressive rejection
 try, opt.africa.ident.kurtosis_thresh=optin.africa.ident.kurtosis_thresh; optin.africa.ident = rmfield(optin.africa.ident,'kurtosis_thresh'); catch, opt.africa.ident.kurtosis_thresh=0; end; % threshold to use on kurtosis. Set to zero to not use. Both the thresh and wthresh conditions must be met to reject 
@@ -231,8 +231,8 @@ try, opt.epoch.trialdef=optin.epoch.trialdef; optin.epoch = rmfield(optin.epoch,
 
 try, opt.outliers.do=optin.outliers.do; optin.outliers = rmfield(optin.outliers,'do'); catch, opt.outliers.do=1; end; % flag to indicate if outliersing should be done
 try, opt.outliers.outlier_measure_fns=optin.outliers.outlier_measure_fns; optin.outliers = rmfield(optin.outliers,'outlier_measure_fns'); catch, opt.outliers.outlier_measure_fns={'min','std'}; end; % list of outlier metric func names to use
-try, opt.outliers.wthresh_ev=optin.outliers.wthresh_ev; optin.outliers = rmfield(optin.outliers,'wthresh_ev'); catch, opt.outliers.wthresh_ev=0.4*ones(length(opt.outliers.outlier_measure_fns),1); end; % list of robust GLM weights thresholds to use on EVs
-try, opt.outliers.wthresh_chan=optin.outliers.wthresh_chan; optin.outliers = rmfield(optin.outliers,'wthresh_chan'); catch, opt.outliers.wthresh_chan=0.01*ones(length(opt.outliers.outlier_measure_fns),1); end;% list of robust GLM weights thresholds to use on chans
+try, opt.outliers.event_significance=optin.outliers.event_significance; optin.outliers = rmfield(optin.outliers,'event_significance'); catch, opt.outliers.event_significance=0.05; end; 
+try, opt.outliers.channel_significance=optin.outliers.channel_significance; optin.outliers = rmfield(optin.outliers,'channel_significance'); catch, opt.outliers.channel_significance=0.05; end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% coreg settings

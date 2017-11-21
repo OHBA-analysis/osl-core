@@ -73,6 +73,8 @@ for mm  = 1:numel(modalities)
             old_montage = D.montage('getmontage');
             [~,chans_to_keep] = intersect(old_montage.labelnew,S1.montage.labelorg);
             S1.montage.tra = S1.montage.tra*old_montage.tra(chans_to_keep,chans_to_keep);
+            keyboard
+            
         end
 
         if m == 1
@@ -86,6 +88,10 @@ for mm  = 1:numel(modalities)
         
         S1.D = Dnew;
         Dnew = spm_eeg_montage(S1);
+
+        keyboard
+
+
         Dnew.save;
 
     end

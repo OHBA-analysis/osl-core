@@ -1,48 +1,51 @@
-function [D,figs,S] = osl_africa(D,varargin)
+function D = osl_africa(D,varargin)
     % AfRICA - ArteFact Rejection using Independent Component Analysis
     % performs ICA denoising of MEG data using either semi-manual or automated
     % identification artefact components.
     %
     % INPUTS:
-    % - D           - SPM MEG object filename
+    % - D           - SPM MEG object
     % - varargin    - key-value pairs, see inputParser below
     %
     % Romesh Abeysuriya 2017
     % Robert Becker 2017
     % Written by Henry Luckhoo and Adam Baker (pre-2017)
 
+    assert(strcmp(D.type,'continuous'),'osl_africa is only compatible with continuous MEEG objects'); % See issue #43 on GitHub
+
     arg = inputParser;
+
+    % INPUT SETTINGS
     arg.addParameter('modality','MEG'); % modality to use, default = 'MEG'
-    arg.addParameter('montagename','AFRICA denoised data'); % New montage will be added with this name
-    arg.addParameter('do_plots',false); % produce diagnostic plots, default = 0
-    arg.addParameter('precompute_topos',true); % pre-compute and save IC spatial map topos after ica is computed for use in ident
-    arg.addParameter('do_ica',~isfield(D,'ica')); % Do ICA decomposition step
-    arg.addParameter('do_ident',true); % Do identification step
-    arg.addParameter('do_remove',true); % Do removal step
-    arg.addParameter('artefact_channels',{},@iscell); % Passed to ident_func
-    arg.addParameter('ident_func',@identify_artefactual_components_manual);
-    arg.addParameter('ident_params',struct,@isstruct); % Extra parameters for ident_func
+    arg.addParameter('artefact_channels',{'EOG','ECG'},@iscell); % Specify which channels are artefactual e.g. {'EOG1','ECG',32}. Can be chantype OR channel index number
+    arg.addParameter('mains_frequency',50); 
     arg.addParameter('used_maxfilter',false); % Reduce ICA dimension if maxfilter was used, 
-    arg.addParameter('ica_params',struct,@isstruct); % ICA parameters passed to run_sensorspace_ica
+
+    % STAGE SETTINGS
+    arg.addParameter('do_ica',~isfield(D,'ica')); % Do ICA decomposition step
+    arg.addParameter('do_ident','auto'); % Do identification step - options are: false/empty to skip,'auto' or 'manual'
+    arg.addParameter('do_remove',true); % Do removal step
+
+    %  ICA SETTINGS
+    arg.addParameter('precompute_topos',true); % pre-compute and save IC spatial map topos after ica is computed for use in ident
+    arg.addParameter('ica_params',struct,@isstruct); % ICA parameters passed to run_sensorspace_ica - typically do not require changing
+
+    % AUTOMATIC IDENT SETTINGS
+    arg.addParameter('auto_max_num_artefact_comps',10); % Maximum number of new components to reject for each reason
+    arg.addParameter('auto_do_mains',false); % Used by manual and auto
+    arg.addParameter('auto_mains_kurt_thresh',0.4);
+    arg.addParameter('auto_do_kurt',false); % Used by manual and auto
+    arg.addParameter('auto_kurtosis_thresh',20); 
+    arg.addParameter('auto_kurtosis_wthresh',0); 
+    arg.addParameter('auto_artefact_chans_corr_thresh',0.5,@isscalar);
+
+    % OUTPUT SETTINGS
+    arg.addParameter('montagename','AFRICA denoised data'); % New montage will be added with this name
+
     arg.parse(varargin{:});
     S = arg.Results; % Result of parsing arguments is essentially the settings struct
 
-    % Pass some of the options on to the identification function
-    if ~isfield(S.ident_params,'artefact_channels')
-        S.ident_params.artefact_channels = S.artefact_channels;
-    end
-    
-    if ~isfield(S.ident_params,'modality')
-        S.ident_params.modality = S.modality;
-    end
-
-    if ~isfield(S.ident_params,'do_plots')
-        S.ident_params.do_plots = S.do_plots;
-    end
-
-
-    figs = struct('handles',[],'names',[],'titles',[]);
-
+    original_montage_index = D.montage('getindex'); % If do_remove=False then the returned MEEG will have the original montage
     D = D.montage('switch',0);
 
     % Do ICA decomposition
@@ -51,33 +54,48 @@ function [D,figs,S] = osl_africa(D,varargin)
 
         if S.precompute_topos
             topos = [];
-            modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
-            for m = 1:numel(modalities)
-                disp(['Precomputing sensor topographies for modality ' modalities{m}]);
-                topos = [topos component_topoplot(D,D.ica.sm,modalities(m))];
+            for m = 1:numel(D.ica.modalities)
+                disp(['Precomputing sensor topographies for modality ' D.ica.modalities{m}]);
+                topos = [topos component_topoplot(D,D.ica.sm,D.ica.modalities(m))];
             end
             D.ica.topos   = topos;
         else
-            D.ica.topos = []; % Compute in identify_artefactual_components_manual_gui.m
+            D.ica.topos = [];
         end
 
-        D.save(); % Consider taking this out - but ICA is so time consuming it might be worth it
+        % In general, we avoid saving the D object so that users are
+        % explicitly aware when changes are made on-disk. However, ICA is very
+        % time consuming, so on balance this is more user-friendly
+        fprintf(1,'** Saving changes to disk **\n');
+        D.save(); 
     else
-        assert(isfield(D,'ica'),'No precomputed results - D.ica is missing')
+        assert(isfield(D,'ica'),'Skip running ICA was specified, but there are no precomputed results - D.ica is missing')
         fprintf('Using existing ICA decomposition\n')
     end
 
     % Identify bad components, store them together with metrics in the D object
     if S.do_ident
-        [D.ica.bad_components, D.ica.metrics, figs] = S.ident_func(D,S.ident_params);
+        [D.ica.metrics,tc] = compute_metrics(D,S.mains_frequency,S.artefact_channels);
+        switch S.do_ident
+            case 'auto'
+                [D.ica.bad_components, D.ica.auto_reason] = identify_artefactual_components_auto(D,S);
+            case 'manual'
+                D.ica.bad_components = identify_artefactual_components_manual(D,tc,D.ica.topos,D.ica.metrics,D.ica.bad_components);
+                for j = 1:length(D.ica.bad_components)
+                    fprintf('IC %d marked bad\n',D.ica.bad_components(j));
+                end
+            otherwise
+                error('Did not recognize ident type - must be auto, manual, or false/empty');
+        end
     else
         fprintf('Using existing bad_components\n')
     end
 
     % Remove bad components
-    %%%%%%%%%%%%%%%%%% REMOVE BAD COMPONENTS FROM THE DATA %%%%%%%%%%%%%%%%%%%%
     if S.do_remove
         D = remove_bad_components(D,S);
+    else
+        D = D.montage('switch',original_montage_index);
     end
 
 end % MAIN FUNCTION
@@ -94,12 +112,10 @@ function D = perform_sensorspace_ica(D,S)
         chantype = {'MEG','MEGANY'}; % need both flags to capture MEG, MEGMAG, MEGGRAD and MEGPLANAR channel types.
     end
 
-    % Good channels:
+    % Good channels and timepoints/trials
     chan_inds = indchantype(D,chantype,'GOOD');
-
-    % Good timepoints/trials
-    good_samples = ~all(badsamples(D,':',':',':'));
-    good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
+    ica_good_samples = good_samples(D,chan_inds);
+    ica_good_samples = reshape(ica_good_samples,1,D.nsamples*D.ntrials);
 
     % Select data:
     icadata = D(chan_inds,:,:);
@@ -108,7 +124,7 @@ function D = perform_sensorspace_ica(D,S)
     icadata = reshape(icadata,size(icadata,1),[]);
 
     % Select good timepoints
-    icadata = icadata(:,good_samples);
+    icadata = icadata(:,ica_good_samples);
 
     %%%%%%%%%%%%%%%%%%%% APPLY MAXFILTER SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%%%%
     if isfield(S,'used_maxfilter') && S.used_maxfilter
@@ -163,13 +179,6 @@ function D = perform_sensorspace_ica(D,S)
 
     eigs_postNorm = svd(cov(icadata'));
 
-    if S.do_plots
-        figure;
-        semilogy(eigs_preNorm);
-        ho;
-        semilogy(eigs_postNorm,'r--');
-        title('Raw and normalised eigen spectra'); legend('Raw', 'Normalised');
-    end
 
     %%%%%%%%%%%%%%%%%% AUTOMATIC DIMENSIONALITY ESTIMATION %%%%%%%%%%%%%%%%%%%%
     if 0 == ica_params.num_ics
@@ -195,12 +204,17 @@ function D = perform_sensorspace_ica(D,S)
 
     D.ica = struct;
     D.ica.params = ica_params;
+    D.ica.eigs_preNorm = eigs_preNorm;
+    D.ica.eigs_postNorm = eigs_postNorm;
+    D.ica.good_samples = ica_good_samples; % These were the good timepoints that went into the ICA. i.e. use these when indexing the ICs
     D.ica.chan_inds = chan_inds;
     D.ica.norm_vec = norm_vec;
     D.ica.sm = bsxfun(@times,sm,norm_vec);
     D.ica.topos = []; % Store topos later
     D.ica.metrics = []; % Store artefact metrics later
     D.ica.bad_components = []; % With new components, no bad components selected yet 
+    D.ica.auto_reason = {}; % Record reason for automatic rejection (if used)
+    D.ica.modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); 
 
     % The commands below expand D.ica.sm out to a full montage
     sm_full              = zeros(D.nchannels, size(sm,2));

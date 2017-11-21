@@ -15,9 +15,9 @@ end
 data = reshape(data,[D.nchannels,D.nsamples*D.ntrials]);
 
 % select only good data
-good_samples = ~all(badsamples(D,':',':',':'));
-good_samples = reshape(good_samples,1,D.nsamples*D.ntrials);
-data = data(:,good_samples);
+goodsamples = good_samples(D);
+goodsamples = reshape(goodsamples,1,D.nsamples*D.ntrials);
+data = data(:,goodsamples);
 
 % log transform
 if logtrans

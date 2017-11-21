@@ -22,7 +22,7 @@ for file = spmfiles
     % Compute session-level moments
     D = spm_eeg_load(char(file));
     [c,mu] = osl_cov(D);
-    n = sum(~all(badsamples(D,':',':',':')));
+    n = sum(good_samples(D));
 
     % Update group-level moments:
     C = C + c*(n-1) + (Mu-mu)*(Mu-mu)'*(N*n)/(N+n);

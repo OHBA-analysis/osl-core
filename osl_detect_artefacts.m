@@ -41,238 +41,165 @@ function D = osl_detect_artefacts(D,varargin)
     % RA 2017
     % MWW 2013
 
+    % Note - trial based detection merges across modalities i.e. an epoched MEEG marks bad trials instead of events
     arg = inputParser;
-    arg.addParameter('modalities',{},@iscell); 
-    arg.addParameter('max_iter',3);
-    arg.addParameter('max_bad_channels',10); % Maximum number of bad channels to identify at this stage 
+    arg.addParameter('modalities',{},@iscell); % By default, detect artefacts in all modalities except 'OTHER'
+    arg.addParameter('max_iter',10);
+    arg.addParameter('max_bad_channels',10); % Maximum number of new bad channels in each modality to add
     arg.addParameter('badchannels',true); % Check for bad channels
+    arg.addParameter('channel_significance',0.05); % Significance level for GESD bad channel detection
     arg.addParameter('badtimes',true); % Check for bad events
     arg.addParameter('dummy_epoch_tsize',1); % Dummy epoch size in seconds
     arg.addParameter('measure_fns',{'std'}); % list of outlier metric func names to use for bad segment marking
-    arg.addParameter('event_threshold',0.3); % list of robust GLM weights thresholds to use on EVs for bad segment marking, the LOWER the theshold the less aggressive the rejection
-    arg.addParameter('channel_threshold',0.01); % list of robust GLM weights thresholds to use on chans for bad segment marking, the LOWER the theshold the less aggressive the rejection
+    arg.addParameter('event_significance',0.05); % Significance level for GESD bad channel detection
+    arg.addParameter('artefact_type_name','artefact_OSL'); 
     arg.parse(varargin{:});
     options = arg.Results;
-
-    D_original = D;
     
+
+    continuous = strcmp(D.type,'continuous');
+
     if isempty(options.modalities)
-        options.modalities = unique(D.chantype(D.indchantype({'MEG','MEGGRAD','MEGPLANAR','EEG'})));
-        fprintf('Detecting artefacts in channel types: %s\n',strjoin(options.modalities,','));
-    end
-        
-    % Are we continuous and checking for bad timess? If continuous, D becomes
-    % a temporary copy with artificial epochs. Otherwise, D is just the
-    % original input file
-    continuous = strcmp(D_original.type,'continuous');
-    if continuous && options.badtimes
-
-        tind_tsize = options.dummy_epoch_tsize*D_original.fsample;
-        start_tinds=1:tind_tsize:(D_original.nsamples);
-        Ndummytrials=length(start_tinds);
-
-        epochinfo.conditionlabels=cell(Ndummytrials-1,1);
-        epochinfo.trl=zeros(Ndummytrials-1, 3);
-
-        for ii=1:Ndummytrials-1,
-            epochinfo.conditionlabels{ii}='Dummy';
-            epochinfo.trl(ii,1)=start_tinds(ii); % trl is in time indices
-            epochinfo.trl(ii,2)=min(start_tinds(ii)+tind_tsize-1);
-            epochinfo.trl(ii,3)=0;
+        if continuous % Detect in all sensible modalities
+            options.modalities = setdiff(unique(D.chantype),{'Other'});
+        else
+            % Detect only in imaging modalities
+            candidate_modalities = {'EEG','MEG','MEGANY'};
+            options.modalities = unique(D.chantype(D.indchantype(candidate_modalities)));
         end
 
-        S = epochinfo;
-        S.D = D_original;
-        D = osl_epoch(S);
-        D = D.montage('switch',D_original.montage('getindex'));
-    else
-        D = D_original;
+        fprintf('Detecting artefacts in channel types: %s\n',strjoin(options.modalities,','));
     end
-    
-    
+
     % For each modality, detect badness
+    n_new_badchans = zeros(size(options.modalities));
+
     for mm = 1:length(options.modalities)
 
         modality=options.modalities{mm};
-        
-        chan_list = find(strcmp(D.chantype(),modality));
-        chanind = setdiff(chan_list, D.badchannels); % All currently good chans
+        chan_inds = find(strcmp(D.chantype(),modality));
+
+        if continuous
+            dummy_trialsize = options.dummy_epoch_tsize*D.fsample;
+            dummy_ntrials = floor(D.nsamples/(options.dummy_epoch_tsize*D.fsample));
+            convert_to_trial = @(x) reshape(x(:,1:dummy_trialsize*dummy_ntrials),size(x,1),dummy_trialsize,dummy_ntrials); % This function 'epochs' a matrix from chans x continuous_time to chans x trial_time x trials
+            data = convert_to_trial(D(chan_inds,:));
+            existing_badsamples = event_to_sample(D,options.artefact_type_name,modality); % Find samples that are already bad *based on the same event type as the new proposed badness*
+            badtrials = squeeze(any(convert_to_trial(existing_badsamples),2)); % Existing bad trials
+        else
+            data = D(chan_inds,:,:);
+            badtrials = ismember(1:D.ntrials,D.badtrials); % Currently bad trials - note that this is over all modalities
+        end
 
         iters = 0;
         detected_badness = true; % The while loop continues as long as something bad was found
-        
+
         while detected_badness && iters < options.max_iter
             iters = iters+1;
             detected_badness = false; % Terminate by default unless something bad is found
-
-            if options.badchannels % Do a pass for bad channels
+            good_channels = find(~ismember(chan_inds, D.badchannels)); % Exclude already bad channels
+            
+            if options.badchannels && sum(good_channels) > 1  % Do a pass for bad channels as long as >1 channel remains
                 for ii = 1:length(options.measure_fns)
-
-                    dat = D(chanind,:,D.indtrial(D.condlist,'good')); % Only work on trials that haven't been rejected at any point
-                    datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
-                    
-                    [b,stats] = robustfit(ones(length(datchan),1),datchan,'bisquare',4.685,'off');
-
-                    if numel(options.channel_threshold) == 1
-                        channel_threshold = options.channel_threshold;
-                    else
-                        channel_threshold = options.channel_threshold(ii);
+                    if n_new_badchans(mm) < options.max_bad_channels
+                        dat = data(good_channels,:,~badtrials); % Only work on trials that haven't been rejected at any point
+                        datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1),size(dat,2)*size(dat,3)),[],2);
+                        to_add = find(gesd(datchan,options.channel_significance,options.max_bad_channels-n_new_badchans(mm),0)); 
+                        if ~isempty(to_add)       
+                            bad_channels=chan_inds(good_channels(to_add));
+                            D = badchannels(D, bad_channels, ones(length(bad_channels),1));
+                            detected_badness = true;
+                            n_new_badchans(mm) = n_new_badchans(mm) + length(to_add);
+                        end
                     end
+                    good_channels = ~ismember(chan_inds, D.badchannels);
 
-                    [bad_chan] = find(stats.w < channel_threshold);
-                    bad_chan_w = stats.w(bad_chan);
-                    [sorted_w iw] = sort(bad_chan_w);
-                    sorted_bad_chan = bad_chan(iw);
-
-                    if length(badchannels(D))+length(sorted_bad_chan) > options.max_bad_channels
-                        warning(['More than options.max_bad_channels=' num2str(options.max_bad_channels) ' have been detected. But only marking the worst ' num2str(options.max_bad_channels) ' as bad']);
-                    end
-
-                    num_to_add=min(length(sorted_bad_chan),options.max_bad_channels-length(badchannels(D)));
-                    
-                    if num_to_add > 0
-                        sorted_bad_chan = sorted_bad_chan(1:num_to_add);
-                    else
-                        sorted_bad_chan = [];
-                    end
-                    
-                    % set bad channels in D
-                    if length(sorted_bad_chan) > 0              
-                        bad_channels=chanind(sorted_bad_chan);
-                        D = badchannels(D, bad_channels, ones(length(bad_channels),1));
-                        detected_badness = true;
-                    end
-
-                    % correct chan inds for next bit
-                    chanind = setdiff(chan_list, D.badchannels);
                 end
             end
 
             if options.badtimes % Do a pass for bad trials
                 for ii = 1:length(options.measure_fns)
-                    trials = D.indtrial(D.condlist,'good');
-                    dat = D(chanind,:,trials);
+                    goodtrials = find(~badtrials);
+                    dat = data(good_channels,:,goodtrials);
                     datchan = feval(options.measure_fns{ii},reshape(dat,size(dat,1)*size(dat,2),size(dat,3)),[],1);
-                    [b,stats] = robustfit(ones(length(trials),1),datchan,'bisquare',4.685,'off');
-
-                    if numel(options.event_threshold) == 1
-                        event_threshold=options.event_threshold;
-                    else
-                        event_threshold=options.event_threshold(ii);
-                    end
-
-                    bad_ev = find(stats.w < event_threshold);
-
-                    if length(bad_ev) > 0
-                        rej = zeros(1,D.ntrials);
-                        rej(D.badtrials) = 1;
-                        rej(trials(bad_ev)) = 1;
-                        D = D.badtrials(1:length(rej), rej);  
+                    new_badtrials = find(gesd(datchan,options.event_significance,ceil(length(datchan)*0.2),0)); % Only up to 10% can be bad at each iteration
+                    if new_badtrials
                         detected_badness = true;
                     end
-
-                    % Mark bad trials for exclusion at the next iteration
-                    trials = D.indtrial(D.condlist,'good');
+                    badtrials(goodtrials(new_badtrials))=1;
                 end
             end
+
+        end % end while artefacts still being detected
+
+        if options.badtimes
+
+            if continuous
+                % Find the onset and offset times
+                db = find(diff([0;badtrials]));
+                onset = db(1:2:end);
+                offset = db(2:2:end);
+                if length(offset)<length(onset) % This means that the state changed without an end of change
+                    offset(end+1) = length(badtrials)+1; % It overruns by 1 at the end
+                end
+
+                Events = D.events;
+                BadEvents = struct([]);
+                for j = 1:length(onset)
+                    BadEvents(end+1).type   = options.artefact_type_name;
+                    BadEvents(end).value    = modality;
+                    BadEvents(end).time     =  (onset(j)-1)*options.dummy_epoch_tsize+ 1/D.fsample;
+                    BadEvents(end).duration =  (offset(j)-onset(j))*options.dummy_epoch_tsize;
+                    BadEvents(end).offset = 0;
+                end
+
+                % Remove previous bad epoch events of this same type and modality
+                if isfield(Events,'type')
+                    Events(strcmp({Events.type},options.artefact_type_name) & strcmp({Events.value},modality)) = [];
+                end
+
+                % Add on new bad events
+                if ~isempty(BadEvents)
+                  Events = [Events(:); BadEvents(:)];
+                end
+
+                % Merge new events with previous
+                D = D.events(1,Events);
+            else
+                % Map directly to bad trials
+                D = D.badtrials(1:length(badtrials),badtrials);
+            end
+        end
+
+    end
+
+    % Display summary at the end
+    for mm = 1:length(options.modalities)
+        if n_new_badchans(mm) == options.max_bad_channels
+            fprintf(2,'options.max_bad_channels was reached for %s, there may be additional bad channels present\n',options.modalities{mm});
         end
     end
 
-    % If we made a temporary epoched file, need to write the bad
-    % segments back to the original file for output
-    if continuous && options.badtimes
-        % Initialize output MEEG
-        D_out = D_original;
-
-        % Copy bad channels from temporary D 
-        bad_channels = D.badchannels;
-        if ~isempty(bad_channels)
-            D_out = D_out.badchannels(bad_channels,1);
-        end
-
-        % Copy bad segments from temporary D
-        BadEpochs = {};
-        badtrialstmp = D.badtrials;
-        badtrials = zeros(1,D.ntrials);
-        badtrials(badtrialstmp)=1;
-
-        diffbadtrials = diff([0 badtrials]);
-        ups=find(diffbadtrials == 1);
-        downs=find(diffbadtrials == -1);
-        if ~isempty(ups)
-
-            if(badtrials(end))
-                downs(end+1) = length(badtrials);
-            end
-
-            for jj = 1:length(ups)
-                BadEpochs{jj}(1) = D_out.time(epochinfo.trl(ups(jj),1));
-                BadEpochs{jj}(2) = D_out.time(epochinfo.trl(downs(jj),2));
-            end
-
-            D_out = set_bad(D_out,BadEpochs);
-
-        end
-
-        % Remove the temporary epoched D
-        % DANGER - Fix this - command below is only safe if the if condition in this 
-        % block is exactly the same as the one that makes the dummy MEEG at the start
-        % of the file!
-        D.delete();
-    else
-        D_out = D;
-    end
-
-    bc = D_out.badchannels;
+    bc = D.badchannels;
     for j = 1:length(bc)
-        fprintf('Channel %d (%s) is bad\n',bc(j),D.chanlabels{bc(j)});
+        fprintf('Channel %d (%s - %s) is bad\n',bc(j),D.chantype{bc(j)},D.chanlabels{bc(j)});
     end
 
     if continuous
-        ev = D_out.events;
-        for j = 1:numel(ev)
-            if isfield(ev,'type') && strcmp(ev(j).type,'artefact_OSL')
-                fprintf('Bad epoch from %.2f-%.2f\n',ev(j).time,ev(j).time + ev(j).duration)
+        ev = D.events;
+        if isempty(ev)
+            fprintf('Bad times - none\n');
+        else
+            ev = ev(cellfun(@(x) ~isempty(strmatch('artefact',x)),{ev.type})); % Find only artefact events
+            modalities = unique({ev.value});
+            for j = 1:length(modalities)
+                this_modality = strcmp({ev.value},modalities{j});
+                fprintf('Bad times - rejected %.2fs (%.0f%%) in modality %s\n',sum([ev(this_modality).duration]),100*sum([ev(this_modality).duration])/(D.time(end)-D.time(1)),modalities{j});
             end
         end
     else
-        bt = D_out.badtrials;
+        bt = D.badtrials;
         for j = 1:length(bt)
             fprintf('Trial %d is bad\n',bt(j));
         end
     end
-
-    D = D_out;
-    
-function D = set_bad(D,BadEpochs)
-    % Save bad epochs using method meeg/events
-    BadEvents = struct([]);
-    for ev = 1:numel(BadEpochs)
-        if numel(BadEpochs{ev} == 2)
-            BadEvents(ev).type     = 'artefact_OSL';
-            BadEvents(ev).value    = 'all';
-            BadEvents(ev).time     =  BadEpochs{ev}(1);
-            BadEvents(ev).duration = diff(BadEpochs{ev});
-            BadEvents(ev).offset = 0;
-        end
-    end
-
-    % Load events
-    Events = D.events;
-
-    % Remove previous bad epoch events
-    if isfield(Events,'type')
-        Events(strcmp({Events.type},'artefact_OSL')) = [];
-    end
-
-    % Concatenate new and old events
-    if size(Events,1) < size(Events,2)
-        BadEvents = BadEvents(:);
-    end
-
-    if ~isempty(BadEvents)
-      Events = [Events(:); BadEvents(:)];
-    end
-
-    % Merge new events with previous
-    D = events(D,1,Events);
