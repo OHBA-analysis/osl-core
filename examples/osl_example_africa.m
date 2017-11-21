@@ -52,7 +52,7 @@ D = spm_eeg_load(fullfile(osldir,'example_data','preproc_example','manual','subj
 % will be used. As we are working with Elekta data , make sure that
 % |used_maxfilter| is set. To run only the first stage, use
 
-D = osl_africa(D,'do_ident',false,'do_remove',false,'used_maxfilter',true);
+D = osl_africa(D,'do_ica',true,'do_ident',false,'do_remove',false,'used_maxfilter',true);
 
 %%
 % For the example data, this should take on the order of 2 minutes, depending
@@ -87,18 +87,20 @@ D.ica
 % generator in Matlab (e.g. |rng(0)|) before running |osl_africa|.
 %
 % If ICA results are present, |osl_africa| will not rerun the ICA stage by
-% default unless you set |do_ica| to |true|. To examine the components, we can
-% thus use
+% default unless you set |do_ica| to |true|. There are two artefact rejection
+% modes - automatic, which will classify the ICA components based on various
+% criteria, and manual. The manual mode opens a GUI that you can use to inspect
+% and classify artefacts with. To display it, use:
 
-D = osl_africa(D,'do_remove',false);
+D = osl_africa(D,'do_ident','manual','do_remove',false);
 
 %%
 % This opens the ICA component identification GUI. Often you will want to
-% compare the ICA components to other sensor data such as EOG and EMG. You can
-% specify which channels in the data you want to correlate the components
-% with:
+% compare the ICA components to other sensor data such as EOG and EMG. These
+% are the defaults, but you can specify the chantypes for the channels you
+% want to correlate the components with explicitly:
 
-D = osl_africa(D,'do_remove',false,'artefact_channels',{'EOG','ECG'});
+D = osl_africa(D,'do_ident','manual','do_remove',false,'artefact_channels',{'EOG','ECG'});
 
 %%
 % Mark a component as bad using the red cross button  toolbar, and then close
@@ -110,19 +112,19 @@ has_montage(D);
 D = osl_africa(D,'do_ident',false,'do_remove',true);
 
 %%
-% This will run the removal step and make an online montage with the bad
-% components removed.
+% Note that with |do_ident=false| the classification step will be skipped, and the rejection
+% will proceed with whatever is already marked in |D.ica.bad_components|. 
 
 has_montage(D);
 
 %%
-% Remember that these are only in memory, and you need to use |D.save()| to
+% Remember that these changes are only in memory, and you need to use |D.save()| to
 % write the changes to disk. Normally you would run both the identification
 % and the component removal in a single step, using
 %
 %   D = osl_africa(D)
 %
-% Note that this will result in two online montages
+% Note that if you run this now, you will have two online montages
 %
 %   has_montage(D)
 %
@@ -135,22 +137,28 @@ has_montage(D);
 
 %% Automatic component removal
 %
-% Set the |ident_func| option to use automatic artefact removal
+% You can use automatic rejection by setting 'do_ident' to 'auto' (which is the default). 
+% For example
 
-D_automatic = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto)
+D_automatic = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'})
 
 %%
 % This will automatically assign the bad components. If you redo the manual
 % artefact selection, you can make changes to the assignment if you like.
-D_touchup = osl_africa(D_automatic,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'});
+D_touchup = osl_africa(D_automatic,'do_ident','manual','used_maxfilter',1,'artefact_channels',{'EOG','ECG'});
 
 %%
-% You can set the |ident_params| option to a struct that gets passed to the
-% identification function. For example, you can enable mains and kurtosis
-% artefact rejection, and extra plotting
+% There are a number of additional options available for the automatic rejection. These are
 %
-%   D_extra = osl_africa(D,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto,'ident_params',struct('do_mains',true,'do_kurt',true,'do_plots',true));
+% * |auto_max_num_artefact_comps| - Maximum number of new components to reject for each reason
+% * |auto_do_mains| - whether to identify mains components (false by default)
+% * |auto_mains_kurt_thresh| - Reject components where the highest power in near the mains frequency and the kurtosis exceeds this threshold
+% * |auto_do_kurt| - Reject components based on kurtosis
+% * |auto_kurtosis_thresh| - Reject components where the kurtosis exceeds this value
+% * |auto_kurtosis_wthresh| - Detect outliers in kurtosis - raise this to detect more outliers
+% * |auto_artefact_chans_corr_thresh| - Reject components whose correlation with one of the artefact channels exceeds this value
 %
+% The default values are generally a good starting point.
 
 %% Effect of including artefacts in the data
 % As discussed above, it is important that bad epochs are excluded prior to running AFRICA. There are actually two problems that can occur if you don't remove
@@ -182,7 +190,7 @@ D_automatic = events(D_automatic,1,ev);
 
 %%
 % Now we will rerun the ICA by setting |do_ica=true|
-D_automatic = osl_africa(D_automatic,'do_ica',true,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'},'ident_func',@identify_artefactual_components_auto)
+D_automatic = osl_africa(D_automatic,'do_ica',true,'used_maxfilter',1,'artefact_channels',{'EOG','ECG'})
 
 %%
 % Now we can go back to the time series and verify that the ICA component is now correctly removed
