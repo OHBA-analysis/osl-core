@@ -783,7 +783,7 @@ function [BadEpochs,InheritedBadEpochs] = read_bad_events(D,modality)
     if D.montage('getindex')
         m = D.montage('getmontage');
         Dtemp = D.montage('switch',0);
-        inherited_chantypes = unique(Dtemp.chantype(find(any(m.tra,1))));
+        inherited_chantypes = unique(Dtemp.chantype(find(any(m.tra(D.indchantype(modality),:),1))));
         ev2 = ev(ismember({ev.value},inherited_chantypes)); % These are all the artefact events that apply to the channel types we are inspecting
 
         for j = 1:numel(ev2)
