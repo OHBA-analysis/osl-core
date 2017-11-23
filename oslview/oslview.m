@@ -778,17 +778,19 @@ function [BadEpochs,InheritedBadEpochs] = read_bad_events(D,modality)
 	for j = 1:numel(ev2)
 		BadEpochs{end+1}(1) = ev2(j).time;
 		BadEpochs{end}(2) = ev2(j).time + ev2(j).duration - 2/D.fsample;
-	end
+    end
 
-	m = D.montage('getmontage');
-	Dtemp = D.montage('switch',0);
-	inherited_chantypes = unique(Dtemp.chantype(find(any(m.tra,1))));
-	ev2 = ev(ismember({ev.value},inherited_chantypes)); % These are all the artefact events that apply to the channel types we are inspecting
-	
-	for j = 1:numel(ev2)
-		InheritedBadEpochs{end+1}(1) = ev2(j).time;
-		InheritedBadEpochs{end}(2) = ev2(j).time + ev2(j).duration - 2/D.fsample;
-	end
+    if D.montage('getindex')
+        m = D.montage('getmontage');
+        Dtemp = D.montage('switch',0);
+        inherited_chantypes = unique(Dtemp.chantype(find(any(m.tra,1))));
+        ev2 = ev(ismember({ev.value},inherited_chantypes)); % These are all the artefact events that apply to the channel types we are inspecting
+
+        for j = 1:numel(ev2)
+            InheritedBadEpochs{end+1}(1) = ev2(j).time;
+            InheritedBadEpochs{end}(2) = ev2(j).time + ev2(j).duration - 2/D.fsample;
+        end
+    end
 
 end
 
