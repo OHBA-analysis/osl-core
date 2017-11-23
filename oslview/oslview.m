@@ -11,7 +11,6 @@ function D = oslview(D)
 	%
 	%
 	% TODO:
-	% - zeros marked/detected
 	% - go to channel
 	% - epoched data?
 	% - Have a reset view button or right click option always available.
@@ -84,7 +83,7 @@ function D = oslview(D)
 	channel_types = unique(D.chantype);
 	for chtype = 1:length(channel_types)
 		uimenu(uitools.menu_channels,'label',channel_types{chtype},'Callback',@switch_chantype);
-		BadEpochs.(channel_types{chtype}) = read_bad_events(D,channel_types{chtype});
+		[BadEpochs.(channel_types{chtype}),InheritedBadEpochs.(channel_types{chtype})] = read_bad_events(D,channel_types{chtype});
 	end
 		
 
@@ -123,7 +122,7 @@ function D = oslview(D)
 	% Handle for zoom control
 	hz = zoom(MainFig);
 
-	% Set channel type
+	% Set initial channel type
 	if any(strcmp(D.chantype,'MEGMAG')) && any(strcmp(D.chantype,'MEGPLANAR')) % ELEKTA
 		channel_type = 'MEGPLANAR';
 	elseif any(strcmp(D.chantype,'MEGMAG')) % 4D
@@ -133,7 +132,7 @@ function D = oslview(D)
 	elseif any(strcmp(D.chantype,'MEG'))
 		channel_type = 'MEG';
 	else % catch unrecognised case
-		channel_type = D.chantype(1);
+		channel_type = D.chantype{1};
 	end
 	channel_setup; % will also call redraw & redraw_Sidewindow
 
@@ -319,6 +318,13 @@ function D = oslview(D)
 				red_x = [red_x BadEpochs.(channel_type){j}(2) BadEpochs.(channel_type){j}(2) NaN];
 				red_y = [red_y yl NaN];
 				patch_x(:,end+1) = [BadEpochs.(channel_type){j}(1);BadEpochs.(channel_type){j}(2);BadEpochs.(channel_type){j}(2);BadEpochs.(channel_type){j}(1)];
+				patch_y(:,end+1) = [yl(1);yl(1);yl(2);yl(2)];
+			end
+		end
+
+		for j = 1:length(InheritedBadEpochs.(channel_type))
+			if numel(InheritedBadEpochs.(channel_type){j}) == 2
+				patch_x(:,end+1) = [InheritedBadEpochs.(channel_type){j}(1);InheritedBadEpochs.(channel_type){j}(2);InheritedBadEpochs.(channel_type){j}(2);InheritedBadEpochs.(channel_type){j}(1)];
 				patch_y(:,end+1) = [yl(1);yl(1);yl(2);yl(2)];
 			end
 		end
@@ -645,7 +651,7 @@ function D = oslview(D)
 		ch_bad = get_bad_channels;
 		
 		% Bad Sample indices
-		t_bad = get_bad_inds;
+		t_bad = get_bad_inds(false) | get_bad_inds(true); % Exclude both direct and inherited times from the stats
 
 		Dsig_inds = 1:20:D.nsamples; Dsig_inds(t_bad(Dsig_inds)) = [];
 % 		Dsig = std(D(:,Dsig_inds,:),[],2);
@@ -725,15 +731,26 @@ function D = oslview(D)
 		end
 	end
 
-	function t_bad = get_bad_inds
+	function t_bad = get_bad_inds(inherited)
 		% Return bad time based solely on the BadEpochs variable
 		% A kind of stripped-down meeg.badsamples()
+		if nargin < 1 || isempty(inherited) 
+			inherited = false;
+		end
+
+		if inherited
+			Bad = InheritedBadEpochs;
+		else
+			Bad = BadEpochs;
+		end
+		
 		t_bad = false(1,Nsamples);
-		for b = 1:numel(BadEpochs.(channel_type))
-			if numel(BadEpochs.(channel_type){b}) == 2
-				t_bad(D.time>=BadEpochs.(channel_type){b}(1) & D.time<=(BadEpochs.(channel_type){b}(2)+1e-5)) = true;
+		for b = 1:numel(Bad.(channel_type))
+			if numel(Bad.(channel_type){b}) == 2
+				t_bad(D.time>=Bad.(channel_type){b}(1) & D.time<=(Bad.(channel_type){b}(2)+1e-5)) = true;
 			end
 		end
+
 	end
 
 	function ylims = get_ylims
@@ -742,10 +759,12 @@ function D = oslview(D)
 
 end % OSLview
 
-function BadEpochs = read_bad_events(D,modality)
+function [BadEpochs,InheritedBadEpochs] = read_bad_events(D,modality)
 	% Set BadEpochs by reading artefact_OSL artefacts from the D object
 	% Run once at initialization
 	BadEpochs = {};
+	InheritedBadEpochs = {};
+
 	ev = D.events;
     if isempty(ev)
         return
@@ -754,12 +773,23 @@ function BadEpochs = read_bad_events(D,modality)
     % Note - using 'artefact_OSL' here means that we won't interact at all with artefacts identified separately   
     % Otherwise, this function will turn other artefact types into artefact_OSL
     ev = ev(cellfun(@(x) strcmp('artefact_OSL',x),{ev.type}));
-    ev = ev(ismember({ev.value},{modality})); % These are all the artefact events that apply to the channel types we are inspecting
+    ev2 = ev(ismember({ev.value},{modality})); % These are all the artefact events that apply to the channel types we are inspecting
 
-	for j = 1:numel(ev)
-		BadEpochs{end+1}(1) = ev(j).time;
-		BadEpochs{end}(2) = ev(j).time + ev(j).duration - 2/D.fsample;
+	for j = 1:numel(ev2)
+		BadEpochs{end+1}(1) = ev2(j).time;
+		BadEpochs{end}(2) = ev2(j).time + ev2(j).duration - 2/D.fsample;
 	end
+
+	m = D.montage('getmontage');
+	Dtemp = D.montage('switch',0);
+	inherited_chantypes = unique(Dtemp.chantype(find(any(m.tra,1))));
+	ev2 = ev(ismember({ev.value},inherited_chantypes)); % These are all the artefact events that apply to the channel types we are inspecting
+	
+	for j = 1:numel(ev2)
+		InheritedBadEpochs{end+1}(1) = ev2(j).time;
+		InheritedBadEpochs{end}(2) = ev2(j).time + ev2(j).duration - 2/D.fsample;
+	end
+
 end
 
 function D = set_bad_events(D,BadEpochs,modality)
