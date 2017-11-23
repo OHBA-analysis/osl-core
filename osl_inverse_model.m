@@ -80,8 +80,8 @@ if isa(D,'meeg')
     % case scenario is that the new folder contains an MEEG with the same
     % filename, in which case an incorrect file would be loaded. It should
     % definitely not be automatically reloaded
-    if strmatch('./',D.fullfile)
-        error('MEEG fullfile (''%s'') is relative - reload the file to make it absolute',D.fullfile);
+    if ~strcmp(D.fullfile,getfullpath(D.fullfile))
+        error('MEEG fullfile (''%s'') is relative - reload the file (e.g. ''D = spm_eeg_load(D.fullfile)'')to make it absolute',D.fullfile);
     end
 else
     if ischar(D) || isstring(D)

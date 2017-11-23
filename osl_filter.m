@@ -75,7 +75,7 @@ function D2 = osl_filter(D,fband,varargin)
 		else
 			S.band = 'bandpass';
 			S.freq = fband;
-		end
+        end
 
 		S.order = arg.Results.order;
 		S.type  = 'butterworth';

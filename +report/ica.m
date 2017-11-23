@@ -26,7 +26,7 @@ function h = ica(D)
     % If topos not precomputed, then compute them now
     if isempty(D.ica.topos)
         topos = [];
-        modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); 
+        modalities = D.ica.modalities; 
         for m = 1:numel(modalities)
             topos = [topos component_topoplot(D,sm,modalities(m))];
         end
