@@ -26,7 +26,7 @@ nchans  = length(S.channels);
 
 samples = S.samples{1};
 
-bad  = badsamples(D, S.channels, samples, 1);
+bad = repmat(~good_samples(D, S.channels, samples, 1),length(S.channels),1);
 
 chngpnt = [1 find(any(diff(bad, [], 2)))+1];
 
