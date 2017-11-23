@@ -194,7 +194,7 @@ wd = 'maxfilter_processed';
 mkdir(wd);
 s = study('maxfilter')
 for j = 1:s.n
-	D = s.read(1);
+	D = s.read(j);
 
 	%% Do some filtering
 	D = osl_filter(D,[0.1 inf],'prefix',fullfile(pwd,[wd '/'])); % Remove slow drift. Note the use of fullfile(pwd,...) to specify an absolute path, as required by |osl_inverse_model|

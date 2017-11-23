@@ -84,7 +84,7 @@ function D = osl_detect_artefacts(D,varargin)
             dummy_ntrials = floor(D.nsamples/(options.dummy_epoch_tsize*D.fsample));
             convert_to_trial = @(x) reshape(x(:,1:dummy_trialsize*dummy_ntrials),size(x,1),dummy_trialsize,dummy_ntrials); % This function 'epochs' a matrix from chans x continuous_time to chans x trial_time x trials
             data = convert_to_trial(D(chan_inds,:));
-            existing_badsamples = ~good_samples(D,chan_inds) | event_to_sample(D,options.artefact_type_name,modality); % Find samples that are already bad *based on the same event type as the new proposed badness*
+            existing_badsamples = ~good_samples(D,setdiff(chan_inds,D.badchannels)) | event_to_sample(D,options.artefact_type_name,modality); % Find samples that are already bad *based on the same event type as the new proposed badness*
             badtrials = squeeze(any(convert_to_trial(existing_badsamples),2)); % Existing bad trials
         else
             data = D(chan_inds,:,:);

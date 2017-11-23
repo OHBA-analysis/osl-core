@@ -63,24 +63,31 @@ for mm  = 1:numel(modalities)
         S1.keepothers   = false;
         S1.mode         = 'switch';
 
+
         if D.montage('getindex') ~= 0
             % If a montage is already active, then we need to chain its tra matrix
             % This functionality should not be required if using OAT because OAT only supports
             % beamforming with no online montages active. It will be encountered if directly
             % calling osl_inverse_model() after running osl_africa(). This block has been
             % tested with CTF data and could possibly throw an error with Elekta data
+
             fprintf('An online montage is already active, applying beamformer tra to it\n')
             old_montage = D.montage('getmontage');
-            [~,chans_to_keep] = intersect(old_montage.labelnew,S1.montage.labelorg);
-            S1.montage.tra = S1.montage.tra*old_montage.tra(chans_to_keep,chans_to_keep);
-            keyboard
-            
+            chans_to_keep = zeros(size(S1.montage.labelorg));
+
+            for j = 1:length(chans_to_keep)
+                chans_to_keep(j) = find(strcmp(old_montage.labelnew,S1.montage.labelorg{j}));
+            end
+
+            S1.montage.tra = S1.montage.tra*old_montage.tra(chans_to_keep,:);
+            S1.montage.labelorg = old_montage.labelorg;
+            S1.montage = rmfield(S1.montage,{'chantypeorg','chanunitorg'});
         end
 
         if m == 1
             % Write a new MEEG object if a prefix is given
             if ~isempty(S.prefix)             
-                Dnew = copy(D, [S.prefix D.fname]);            
+                Dnew = copy(D.montage('switch',0), [S.prefix D.fname]);            
             else
                 Dnew = D;
             end
@@ -88,10 +95,6 @@ for mm  = 1:numel(modalities)
         
         S1.D = Dnew;
         Dnew = spm_eeg_montage(S1);
-
-        keyboard
-
-
         Dnew.save;
 
     end
