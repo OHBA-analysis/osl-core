@@ -59,7 +59,7 @@ function D = add_montage(D,W,name,labels,channels)
 			    newMontage.channels(j).label = labels{j};
 
 			    % Bad if any old channels were bad
-			    newMontage.channels(j).bad = any([currentMontage.channels(old_channels).bad]) 
+			    newMontage.channels(j).bad = any([currentMontage.channels(old_channels).bad]); 
 
 			    % If only one previous chantype, use it - otherwise, call it 'Other'
 			    old_chantypes = unique({currentMontage.channels(old_channels).type});
