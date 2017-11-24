@@ -56,9 +56,18 @@ function res = good_samples(D,chanind, sampind, trialind)
 	    ev = events(D, trialind(i), 'samples');
 	    if iscell(ev)
 	        ev = ev{1};
-	    end
-
+        end
+        
+        if isempty(ev)
+            continue
+        end
+        
 	    ev = ev(strncmp({ev.type},'artefact',8)); % First pick out artefact types
+
+	    if isempty(ev)
+	        continue
+	    end
+	    
         ev = ev(ismember({ev.value},chantypes)); % Then filter by chantype. This prevents bugs if the trial event value is not a chantype but a number
     
 	    if ~isempty(ev)
