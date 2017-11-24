@@ -20,8 +20,10 @@ function D = osl_inverse_model(D,mni_coords,S)
 % S.modalities     - Sensor modalities to use (e.g. MEG,MEGPLANAR, or both) 
 %                    (default MEGPLANAR for Neuromag, MEG for CTF)
 % 
-% S.fuse           - fuse modalities or not
-%                     (default 'no')
+% S.fuse           - fuse modalities or not. Note that it will only use
+%                    modalities set in S.modalities so to fuse MEGMAG and
+%                    MEGPLANAR, you need to set S.modalities =
+%                    {'MEGMAG','MEGPLANAR'} as well (default 'no')
 %
 % S.type           - Beamformer type to use {'Scalar' or 'Vector'}
 %                     (default 'Scalar')

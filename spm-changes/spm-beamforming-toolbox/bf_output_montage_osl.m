@@ -92,18 +92,18 @@ for m  = 1:numel(modalities)
         switch S.normalise
             case {'no'}
                 montage.tra = tra_w;
-                montage.name = ['without weights normalisation, class ' num2str(kk)];
+                montage.name = sprintf('Source space (%s) without weights normalisation, class %d',modalities{m},kk);
                 mont.(modalities{m})(kk) = montage;
             case {'yes'}
                 montage.tra = tra_wnorm;
-                montage.name = ['with weights normalisation, class ' num2str(kk)];
+                montage.name = sprintf('Source space (%s) with weights normalisation, class %d',modalities{m},kk);
                 mont.(modalities{m})(kk) = montage;
             case {'both'} % Save two montages, weights and weights normalised
                 montage.tra = tra_w;
-                montage.name = ['without weights normalisation, class ' num2str(kk)];
+                montage.name = sprintf('Source space (%s) without weights normalisation, class %d',modalities{m},kk);
                 mont.(modalities{m})(kk) = montage;
                 montage.tra = tra_wnorm;
-                montage.name = ['with weights normalisation, class ' num2str(kk)];
+                montage.name = sprintf('Source space (%s) with weights normalisation, class %d',modalities{m},kk);
                 mont.(modalities{m})(nclasses+kk) = montage;    
         end
     end;

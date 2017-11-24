@@ -6,23 +6,26 @@ function D_epoched = osl_epoch(S)
 %
 % S                 - struct containing arguments to pass to spm_eeg_epochs(S)
 %
-% S.bad_event_type  - string containing event type to remove 
-%                     (default artefact_OSL')
-%                     OR leave empty to keep all trials
+% S.mark_bad_trials - Use continuous bad samples (e.g. 'artefact_OSL' events)
+%                     to mark affected trials as bad (default = True)
 %
+% Romesh Abeysuriya 2017
 % Adam Baker 2015
 
-D = spm_eeg_load(S.D);
-
-if ~(D.montage('getindex')==0)
-        warning('Montage will be switched to zero for epoching and current montage index will be saved.')
-        D=D.montage('switch',0);
-        D.save;
-        S.D = D;
+if ischar(S.D)
+    S.D = spm_eeg_load(S.D);
 end
+
+if ~(S.D.montage('getindex')==0)
+    warning('Montage is being switched to zero for epoching')
+    S.D = S.D.montage('switch',0);
+end
+
+fprintf(1,'** Saving MEEG to disk for epoching **\n');
+S.D.save;
     
-if ~isfield(S,'bad_event_type')
-    S.bad_event_type = 'artefact_OSL';
+if ~isfield(S,'mark_bad_trials')
+    S.mark_bad_trials = true;
 end
 
 D_epoched = spm_eeg_epochs(S);
@@ -33,33 +36,14 @@ else
     D_epoched.epochinfo = S;
 end
 
-D_epoched.epochinfo.time_continuous = D.time;
+D_epoched.epochinfo.time_continuous = S.D.time;
 
-if ~isempty(S.bad_event_type)
-    
-    Badtrials = false(1,D_epoched.ntrials);
-    for trl = 1:D_epoched.ntrials
-        tpts = D_epoched.trialonset(trl) + [0:length(D_epoched.time)-1]/D.fsample;
-        bs = ~good_samples(D,[],round(tpts*D.fsample),1);
-        Badtrials(trl) = any(bs);
-        warning('Check good_samples implementation here is behaving correctly')
-    end
-    
-    if 0
-        %%debug stuff:
-        trl=1
-        tpts = D_epoched.trialonset(trl) + [0:length(D_epoched.time)-1]/D.fsample;
-        inds=round(tpts*D.fsample);
-
-        figure;
-        plot(D.time(inds),D(1,inds,1));ho;
-        plot(D.time(inds),D_epoched(1,:,trl),'r--');
-    end
-    
-    D_epoched = badtrials(D_epoched,find(Badtrials),1);
-    
+if S.mark_bad_trials
+    Badtrials = squeeze(~all(good_samples(D_epoched,D_epoched.indchantype('MEEG','GOOD')),2)); % This is True if a trial contains a bad sample in any imaging modality
+    fprintf('%d of %d trials contained bad samples and were marked bad\n',sum(Badtrials),length(Badtrials));
+    D_epoched = D_epoched.badtrials(find(Badtrials),1);
 end
 
+fprintf(1,'** Saving epoched MEEG to disk **\n');
 D_epoched.save;
 
-end

@@ -203,6 +203,29 @@ for j = 1:s.n
 	D = osl_detect_artefacts(D);
 	D = osl_africa(D,'precompute_topos',false,'used_maxfilter',true);
 
+	%% Do epoching
+	trialdef = struct('conditionlabel',{},'eventtype',{},'eventvalue',{});
+	if strfind(D.fname,'MMN')
+		% Want to label the eventtype-eventvalue pair as a particular condition
+		trialdef(end+1) = struct('conditionlabel' , 'Dur25_500'        , 'eventtype' , 'STI101_down' , 'eventvalue' , 1);
+		trialdef(end+1) = struct('conditionlabel' , 'Freq_450'         , 'eventtype' , 'STI101_down' , 'eventvalue' , 2);
+		trialdef(end+1) = struct('conditionlabel' , 'Freq_550'         , 'eventtype' , 'STI101_down' , 'eventvalue' , 3);
+		trialdef(end+1) = struct('conditionlabel' , 'Gap_500'          , 'eventtype' , 'STI101_down' , 'eventvalue' , 4);
+		trialdef(end+1) = struct('conditionlabel' , 'intensity_10_500' , 'eventtype' , 'STI101_down' , 'eventvalue' , 5);
+		trialdef(end+1) = struct('conditionlabel' , 'intensity10_500'  , 'eventtype' , 'STI101_down' , 'eventvalue' , 6);
+		trialdef(end+1) = struct('conditionlabel' , 'LocLeft_500'      , 'eventtype' , 'STI101_down' , 'eventvalue' , 7);
+		trialdef(end+1) = struct('conditionlabel' , 'LocRight_500'     , 'eventtype' , 'STI101_down' , 'eventvalue' , 8);
+		trialdef(end+1) = struct('conditionlabel' , 'typical'          , 'eventtype' , 'STI101_down' , 'eventvalue' , 11);
+	elseif strfind(D.fname, '_SC')
+		trialdef(end+1) = struct('conditionlabel' , 'Novel'            , 'eventtype' , 'STI101_down' , 'eventvalue' , 101);
+		trialdef(end+1) = struct('conditionlabel' , 'Repeat'           , 'eventtype' , 'STI101_down' , 'eventvalue' , 102);
+		trialdef(end+1) = struct('conditionlabel' , 'Moon'             , 'eventtype' , 'STI101_down' , 'eventvalue' , 104);
+	end
+
+	if isempty(strfind(D.fname,'_RS'))
+		D = osl_epoch(struct('prefix','','D',D,'trialdef',trialdef,'timewin',[-200 1000]))
+	end
+
 	p = parcellation('dk_cortical.nii.gz');
 	D = osl_inverse_model(D,p.template_coordinates);
 end
@@ -211,23 +234,7 @@ end
 
 
 
-%% Do epoching
-if strfind(D.fname,'MMN')
-	% Want to label the eventtype-eventvalue pair as a particular condition
-	trialdef(end+1) = struct('label','Dur25_500','type','STI101_down','value',1);
-	trialdef(end+1) = struct('label','Freq_450','type','STI101_down','value',2);
-	trialdef(end+1) = struct('label','Freq_550','type','STI101_down','value',3);
-	trialdef(end+1) = struct('label','Gap_500','type','STI101_down','value',4);
-	trialdef(end+1) = struct('label','intensity_10_500','type','STI101_down','value',5);
-	trialdef(end+1) = struct('label','intensity10_500','type','STI101_down','value',6);
-	trialdef(end+1) = struct('label','LocLeft_500','type','STI101_down','value',7);
-	trialdef(end+1) = struct('label','LocRight_500','type','STI101_down','value',8);
-	trialdef(end+1) = struct('label','typical','type','STI101_down','value',11);
-else
-	trialdef(end+1) = struct('label','Novel','type','STI101_down','value',101);
-	trialdef(end+1) = struct('label','Repeat','type','STI101_down','value',102);
-	trialdef(end+1) = struct('label','Moon','type','STI101_down','value',104);
-end
+
 
 
 

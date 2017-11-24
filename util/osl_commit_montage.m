@@ -34,6 +34,12 @@ function D2 = osl_commit_montage(D,new_filename)
 	for j = 1:D2.ntrials 
 
 		ev = D.events(j);
+        
+        if iscell(ev)
+            assert(length(ev)==1,'Unexpected event length?')
+            ev = ev{1};
+        end
+        
 		if ~isempty(ev)
 			is_artefact_event = cellfun(@(x) strcmp('artefact_OSL',x),{ev.type});
 			new_events = ev(~is_artefact_event); % Retain old non-artefacts
