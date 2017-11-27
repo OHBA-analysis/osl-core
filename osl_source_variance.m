@@ -18,7 +18,7 @@ C = osl_cov(D);
 if currentMontage ~= 0
     tra = D.montage('getmontage',currentMontage).tra;
 else
-    tra = eye(size(C));
+    tra = eye(size(C(:,:,1)));
 end
 
 if D.ntrials > 1, ft_progress('init', 'etf'); end
