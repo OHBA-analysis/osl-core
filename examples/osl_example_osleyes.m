@@ -109,15 +109,15 @@ o = osleyes(randn(3559,1));
 
 %%
 % Alternative, you can specify the xform matrix by using a struct, with fields
-% |img| and |xform|. Note that in this case, |img| must be 3D or 4D, because
+% |img|, |res|, and |xform|. Note that in this case, |img| must be 3D or 4D, because
 % without a standard mask, you cannot reshape a matrix into a volume.
-[nii_data,~,nii_xform] = nii.load(nii_tstat);
-o = osleyes(struct('img',nii_data,'xform',nii_xform));
+[nii_data,nii_res,nii_xform] = nii.load(nii_tstat);
+o = osleyes(struct('img',nii_data,'res',nii_res,'xform',nii_xform));
 
 %%
 % You can optionally include a |name| field that will be used in the dropdown
 % list.
-o = osleyes(struct('img',nii_data,'xform',nii_xform,'name','tstat'));
+o = osleyes(struct('img',nii_data,'res',nii_res,'xform',nii_xform,'name','tstat'));
 
 %% Selecting layers 
 % Each image is a layer/overlay in the viewer. The order of

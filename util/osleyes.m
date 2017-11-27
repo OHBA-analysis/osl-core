@@ -47,8 +47,7 @@ classdef osleyes < handle
 		contextmenu % Handle for the context menu
 		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
 
-		img = {} % The image data
-		xform = {} % xform data for the image
+		img = struct('vol',{},'res',{},'xform',{}) % The image data
 		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
 		coord = {} % Axis coordinates for each image
 
@@ -89,7 +88,7 @@ classdef osleyes < handle
 			%	  to guess the standard mask. If no mask is found, an error
 			%	  will be raised. The matrix will automatically be reshaped if possible
 			% 	- A struct can be used instead of strings, containing fields
-			% 	  'img' and 'xform'. Can optionally also contain 'label'
+			% 	  'img' and 'res', and 'xform'. Can optionally also contain 'label'
 			%
 			% 	This aims to provide a high degree of flexibility. For example, you could use
 			% 	
@@ -144,15 +143,15 @@ classdef osleyes < handle
 
 			for j = 1:length(self.images)
 
-				[self.img{j},self.xform{j},self.layer(j).name] = load_image(self.images{j});
-				self.coord{j} = get_coords(self.img{j},self.xform{j});
-				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img{j}(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
-				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img{j}(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
-				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.img{j}(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
+				[self.img(j).vol,self.img(j).res,self.img(j).xform,self.layer(j).name] = load_image(self.images{j});
+				self.coord{j} = get_coords(self.img(j).vol,self.img(j).xform);
+				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img(j).vol(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
+				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img(j).vol(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
+				self.h_img{j}(3) = image(self.coord{j}.x,self.coord{j}.y,permute(self.img(j).vol(:,:,1,1),[1 2 3])','Parent',self.ax(3),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				
-				self.layer(j).clim = [0,max(self.img{j}(:))]; % Default color range
+				self.layer(j).clim = [0,max(self.img(j).vol(:))]; % Default color range
 
-				if min(self.img{j}(:)) < 0
+				if min(self.img(j).vol(:)) < 0
 					self.layer(j).colormap = {osl_colormap('hot'),osl_colormap('cold')};
 				elseif j == 1
 					self.layer(j).colormap = osl_colormap('grey');
@@ -261,7 +260,7 @@ classdef osleyes < handle
 			self.ts_warning = uicontrol(fig,'style','text','String','ONLY ONE VOLUME PRESENT IN ACTIVE LAYER','Units','normalized','Position',[0.25 0.25 0.5 0.5],'HitTest','off','FontSize',20,'BackgroundColor','w');
 			set(self.ts_ax,'ButtonDownFcn',@(~,~) set_volume(self.ts_ax,self));
 			self.active_layer = self.active_layer; % Reset the data in h_bar via set.current_vols
-
+			xlabel(self.ts_ax,'Volume/Time (s)');
 		end
 
 		function set.layer(self,val)
@@ -302,7 +301,7 @@ classdef osleyes < handle
 
 				% Check volume indices
 				assert(isscalar(val(j).volume) && isnumeric(val(j).volume) && isfinite(val(j).volume))
-				assert(val(j).volume>0 && val(j).volume <= size(self.img{j},4),'Volume index out of bounds');
+				assert(val(j).volume>0 && val(j).volume <= size(self.img(j).vol,4),'Volume index out of bounds');
 
 				% Check name
 				assert(ischar(val(j).name) || isstring(val(j).name))
@@ -404,7 +403,7 @@ classdef osleyes < handle
 		end
 
 		function n = get.nvols(self)
-			n = size(self.img{self.active_layer},4);
+			n = size(self.img(self.active_layer).vol,4);
 		end
 
 	end
@@ -432,12 +431,12 @@ classdef osleyes < handle
 				[~,idx(3)] = min(abs(self.coord{j}.z-p(3)));
 
 				% These are the slice maps - need to convert them to color values now
-				d1 = permute(self.img{j}(idx(1),:,:,self.layer(j).volume),[2 3 1])';
-				d2 = permute(self.img{j}(:,idx(2),:,self.layer(j).volume),[1 3 2])';
-				d3 = permute(self.img{j}(:,:,idx(3),self.layer(j).volume),[1 2 3])';
+				d1 = permute(self.img(j).vol(idx(1),:,:,self.layer(j).volume),[2 3 1])';
+				d2 = permute(self.img(j).vol(:,idx(2),:,self.layer(j).volume),[1 3 2])';
+				d3 = permute(self.img(j).vol(:,:,idx(3),self.layer(j).volume),[1 2 3])';
 
 				if j == self.active_layer
-					set(self.controls.marker(4),'String',sprintf('Value = %+ 7.2f',self.img{j}(idx(1),idx(2),idx(3),self.layer(j).volume)));
+					set(self.controls.marker(4),'String',sprintf('Value = %+ 7.2f',self.img(j).vol(idx(1),idx(2),idx(3),self.layer(j).volume)));
                 end
 
                 % If bidirectional colormap, then hide abs(x)<clim(1), otherwise hide x<clim(1)
@@ -462,9 +461,10 @@ classdef osleyes < handle
 				[~,idx(1)] = min(abs(self.coord{self.active_layer}.x-p(1)));
 				[~,idx(2)] = min(abs(self.coord{self.active_layer}.y-p(2)));
 				[~,idx(3)] = min(abs(self.coord{self.active_layer}.z-p(3)));
-				set(self.ts_line,'XData',1:self.nvols,'YData',squeeze(self.img{self.active_layer}(idx(1),idx(2),idx(3),:)));
+				set(self.ts_line,'XData',1:self.nvols,'YData',squeeze(self.img(self.active_layer).vol(idx(1),idx(2),idx(3),:)));
 				title(get(self.ts_line,'Parent'),sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)),'Interpreter','none')
-				set(self.ts_ax,'YLim',[min(self.img{self.active_layer}(:)) max(self.img{self.active_layer}(:)) ]);
+				set(self.ts_ax,'YLim',[min(self.img(self.active_layer).vol(:)) max(self.img(self.active_layer).vol(:)) ]);
+				set(self.ts_ax,'XTickLabel',get(self.ts_ax,'XTick')*self.img(self.active_layer).res(4)); % Set time axis appropriately
 				set(self.ts_bar,'XData',[1 1]*self.layer(self.active_layer).volume,'YData',get(get(self.ts_bar,'Parent'),'YLim'));
 				if self.nvols==1
 					set(self.ts_warning,'Visible','on');
@@ -802,7 +802,7 @@ function KeyPressFcn(self,~,KeyData)
 	end
 end
 
-function [img,xform,name] = load_image(x)
+function [img,res,xform,name] = load_image(x)
 	% Load an input image
     % If name is not provided, it will be empty
     % This function is guaranteed to produce sensible outputs except
@@ -811,20 +811,21 @@ function [img,xform,name] = load_image(x)
     % is impossible and a hard error will be thrown
 	name = '';
 
-	if ischar(x) || isstring(x)
-		[img,~,xform] = nii.load(x);
+	if ischar(x) || isstring(x) % Load a NIFTI file
+		[img,res,xform] = nii.load(x);
 		[~,fname,ext] = fileparts(x);
 		name = [fname '.' ext];
 	elseif isstruct(x)
 		img = x.img;
 		xform = x.xform;
+		res = x.res;
 		if isfield(x,'name')
 			name = x.name;
 		end
 	else
 		try % Try to guess template
 			[~,mask_fname] = parcellation.guess_template(x);
-			[mask,~,xform] = nii.load(mask_fname);
+			[mask,res,xform] = nii.load(mask_fname);
 			if ndims(x) < 3 % Can only reshape if we successfully guessed the template
 				img = matrix2vols(x,mask);
             else
@@ -836,6 +837,7 @@ function [img,xform,name] = load_image(x)
 				case 'osl:parcellation:no_matching_mask'
 					fprintf(2,'No matching mask found - could not guess xform!\n')
 					xform = eye(4);
+					res = ones(4,1);
 				otherwise
 					rethrow(ME)
             end
