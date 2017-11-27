@@ -321,8 +321,6 @@ if todo.prepare
     save(filenames.prepare,'lags','M','C','hmmT','hmmdata','fsample','subj_inds','-v7.3');   
     save(filenames.prepared_data,'X','-v7.3');
       
-    hmm.subj_inds=subj_inds;
-
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -337,7 +335,6 @@ if todo.hmm
     if ~todo.prepare
         load(filenames.prepared_data,'X'); 
         load(filenames.prepare,'subj_inds');  
-        hmm.subj_inds=subj_inds;
     end
     
     % setup default options for hmm
@@ -383,6 +380,8 @@ if todo.hmm
     hmm.data_files = data_files;
     hmm.fsample = fsample;
     hmm.fehist = fehist;
+    hmm.subj_inds=subj_inds;
+
     %hmm.gamma = gamma;
     %hmm.statepath = vpath;
     
@@ -411,13 +410,11 @@ end
 %                       O U T P U T   R E S U L T S                       %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 if todo.output
     
     % load in what's needed
     if ~todo.prepare
         load(filenames.prepare); 
-        hmm.subj_inds=subj_inds;
     end
     if ~todo.hmm
         load(filenames.hmm);
