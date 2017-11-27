@@ -117,11 +117,7 @@ classdef osleyes < handle
                 images = {[],images};
             end
 
-            if isempty(images{1});
-                [d n s]=fileparts(images{2});
-                if isempty(s)
-                    images{2}=fullfile(d,[n '.nii.gz']);
-                end
+            if isempty(images{1})
             	vol = load_image(images{2});
             	try
             		[~,images{1},~] = parcellation.guess_template(vol);
@@ -818,7 +814,11 @@ function [img,res,xform,name] = load_image(x)
 	if ischar(x) || isstring(x) % Load a NIFTI file
 		[img,res,xform] = nii.load(x);
 		[~,fname,ext] = fileparts(x);
-		name = [fname '.' ext];
+		if isempty(ext)
+			name = fname;
+		else
+			name = [fname '.' ext];
+		end
 	elseif isstruct(x)
 		img = x.img;
 		xform = x.xform;
