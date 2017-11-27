@@ -119,6 +119,10 @@ classdef osleyes < handle
             end
 
             if isempty(images{1});
+                [d n s]=fileparts(images{2});
+                if isempty(s)
+                    images{2}=fullfile(d,[n '.nii.gz']);
+                end
             	vol = load_image(images{2});
             	try
             		[~,images{1},~] = parcellation.guess_template(vol);
