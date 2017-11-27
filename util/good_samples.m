@@ -53,8 +53,9 @@ function res = good_samples(D,chanind, sampind, trialind)
 	for i = 1:length(trialind)
 
 		% Retrieve all events associated with D trial
-	    ev = events(D, trialind(i), 'samples');
-	    if iscell(ev)
+                
+	    ev = events(D, trialind(i), 'samples');	            
+        if iscell(ev)
 	        ev = ev{1};
         end
         
@@ -75,6 +76,7 @@ function res = good_samples(D,chanind, sampind, trialind)
 	            res(1, ev(k).sample+(0:(ev(k).duration-1)), i) = false;
 	        end
 	    end
+
 	end
 
 	res = res(:, sampind, :);
