@@ -53,19 +53,23 @@ function res = good_samples(D,chanind, sampind, trialind)
 	for i = 1:length(trialind)
 
 		% Retrieve all events associated with D trial
-	    ev = events(D, trialind(i), 'samples');
-	    if iscell(ev)
+                
+	    ev = events(D, trialind(i), 'samples');	            
+        if iscell(ev)
 	        ev = ev{1};
-	    end
+        end
 
-	    ev = ev(strncmp({ev.type},'artefact',8)); % First pick out artefact types
-        ev = ev(ismember({ev.value},chantypes)); % Then filter by chantype. This prevents bugs if the trial event value is not a chantype but a number
-    
-	    if ~isempty(ev)
-	        for k = 1:numel(ev)
-	            res(1, ev(k).sample+(0:(ev(k).duration-1)), i) = false;
-	        end
-	    end
+        if ~isempty(ev)
+        
+            ev = ev(strncmp({ev.type},'artefact',8)); % First pick out artefact types
+            ev = ev(ismember({ev.value},chantypes)); % Then filter by chantype. This prevents bugs if the trial event value is not a chantype but a number
+
+            if ~isempty(ev)
+                for k = 1:numel(ev)
+                    res(1, ev(k).sample+(0:(ev(k).duration-1)), i) = false;
+                end
+            end
+        end
 	end
 
 	res = res(:, sampind, :);
