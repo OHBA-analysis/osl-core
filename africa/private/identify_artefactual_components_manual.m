@@ -37,12 +37,16 @@ topoWindow = [];
 
 % If topos not precomputed, then compute them now
 if isempty(topos)
+    fprintf('No precomputed topos present, computing them now...\n')
     topos = [];
-    modalities = unique(D.chantype(find(strncmpi(S.modality,D.chantype,3)))); %#ok
+    modalities = D.ica.modalities; 
     for m = 1:numel(modalities)
-        topos = [topos component_topoplot(D,sm,modalities(m))];
+        topos = [topos component_topoplot(D,D.ica.sm,modalities(m))];
     end
+else
+    topos = D.ica.topos;
 end
+
 
 for m = 1:size(topos,2)
     topoWindow(m) = axes('parent',MainFig, 'units','pixels');

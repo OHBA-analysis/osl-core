@@ -29,7 +29,7 @@ function h = ica(D)
         topos = [];
         modalities = D.ica.modalities; 
         for m = 1:numel(modalities)
-            topos = [topos component_topoplot(D,sm,modalities(m))];
+            topos = [topos component_topoplot(D,D.ica.sm,modalities(m))];
         end
     else
         topos = D.ica.topos;
