@@ -36,7 +36,6 @@ function initialise_spm
 	% OSL on a cluster with a shared OSL folder
 	bf_path = fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox');
 	if exist(bf_path,'dir')
-		rmpath(bf_path); % Avoid warning about removing folder from path
 		rmdir(bf_path,'s');
 	end
 	copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),bf_path);
