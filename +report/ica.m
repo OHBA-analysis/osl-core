@@ -25,6 +25,7 @@ function h = ica(D)
 
     % If topos not precomputed, then compute them now
     if isempty(D.ica.topos)
+        fprintf('No precomputed topos present, computing them now...\n')
         topos = [];
         modalities = D.ica.modalities; 
         for m = 1:numel(modalities)
