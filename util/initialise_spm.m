@@ -34,9 +34,11 @@ function initialise_spm
 	% The current code makes it possible that someone has an old copy of this toolbox
 	% However, if the folder is deleted every time, this makes it very unreliable to use
 	% OSL on a cluster with a shared OSL folder
-	if ~exist(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'))
-		copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'));
+	bf_path = fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox');
+	if exist(bf_path,'dir')
+		delete(bf_path);
 	end
+	copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),bf_path);
 
 	filelist{end+1}  = fullfile('osl-core','spm-changes','ft_read_event_4osl.m');
 	targetdir{end+1} = fullfile('external','fieldtrip','fileio');
