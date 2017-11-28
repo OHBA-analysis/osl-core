@@ -15,7 +15,7 @@ function samples = event_to_sample(D,event_type,modality)
 
     assert(strcmp(D.type,'continuous'),'This function is only meant to operate on continuous MEEGs')
     
-    samples = false(size(D.time));
+    samples = false(1,D.nsamples);
 
     if ischar(event_type) || isstr(event_type)
     	event_type = {event_type};
@@ -44,5 +44,5 @@ function samples = event_to_sample(D,event_type,modality)
     	samples(ev(j).sample+(0:(ev(j).duration-1))) = true;
     end
 
-
+    samples = samples(1:D.nsamples);
 
