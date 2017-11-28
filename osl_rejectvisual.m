@@ -1,18 +1,14 @@
-function D = osl_rejectvisual(S);
-
+function D = osl_rejectvisual(D,time_range);
 % D = osl_rejectvisual(S)
 %
 % Visual artefact rejection script
 %
-% Input:
-% S.D : filename for SPM MEEG object
-% 
+% Input
+% - D : SPM MEEG object
+% - time_range : Latency argument for spm_eeg_ft_artefact_visual
+%
+% RA 2017 
 % MWW and LH
-
-
-fname=S.D;
-D=spm_eeg_load(fname);
-S2=S;
 
 %% spit out some info about what has already been rejected in this file
 
@@ -38,12 +34,11 @@ if ~isempty(find(ismember(D.chantype,'EOG')))
     S = [];
     S.D = D;
     S.method = 'summary';
-    S.latency = S2.time_range*1000;
+    S.latency = time_range*1000;
     S.channel = D.chanlabels(find(ismember(D.chantype,'EOG')));
     S.metric = 'kurtosis';
-
+    S.save = false;
     D = spm_eeg_ft_artefact_visual(S)
-    D.save;
 else
     warning('No EOG channel found.');
 end
@@ -59,11 +54,11 @@ if ~isempty(find(ismember(D.chantype,'MEGMAG')))
     S.D = D;
     S.method = 'summary';
     S.channel = D.chanlabels(find(ismember(D.chantype,'MEGMAG')));
-    S.latency = S2.time_range*1000;
+    S.latency = time_range*1000;
     S.metric = 'var';
+    S.save = false;
 
     D = spm_eeg_ft_artefact_visual(S)
-    D.save;
 else
     warning('No magnetometers found.');
 end
@@ -79,11 +74,11 @@ if ~isempty(find(ismember(D.chantype,'MEGPLANAR')))
     S.D = D;
     S.method = 'summary';
     S.channel = D.chanlabels(find(ismember(D.chantype,'MEGPLANAR')));
-    S.latency = S2.time_range*1000;
+    S.latency = time_range*1000;
     S.metric = 'var';
+    S.save = false;
 
     D = spm_eeg_ft_artefact_visual(S)
-    D.save;    
 else
     warning('No planar gradiometers found.');
 end
@@ -99,11 +94,11 @@ if ~isempty(find(ismember(D.chantype,'MEGGRAD')))
     S.D = D;
     S.method = 'summary';
     S.channel = D.chanlabels(find(ismember(D.chantype,'MEGGRAD')));
-    S.latency = S2.time_range*1000;
+    S.latency = time_range*1000;
     S.metric = 'var';
+    S.save = false;
 
     D = spm_eeg_ft_artefact_visual(S)
-    D.save;
 else
     warning('No axial gradiometers found.');
 end
@@ -119,11 +114,11 @@ if ~isempty(find(ismember(D.chantype,'EEG')))
     S.D = D;
     S.method = 'summary';
     S.channel = D.chanlabels(find(ismember(D.chantype,'EEG')));
-    S.latency = S2.time_range*1000;
+    S.latency = time_range*1000;
     S.metric = 'var';
+    S.save = false;
 
     D = spm_eeg_ft_artefact_visual(S);
-    D.save;
 else
     warning('No EEG channels found.');
 end
@@ -141,7 +136,7 @@ else
 end
 
 if length(D.badtrials)>0
-    disp([num2str(length(D.badtrials)) ' trials of ' num2str(D.ntrials) ' are now been marked as bad.']);
+    disp([num2str(length(D.badtrials)) ' trials of ' num2str(D.ntrials) ' are marked as bad.']);
 else
     disp('No bad trials identified.');
 end
