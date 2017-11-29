@@ -83,3 +83,22 @@ D = oslview(D);
 % object is returned when you close the |oslview| window. However, the changes
 % are not automatically written to disk until you call |D.save()|.
 
+%% Why can I sometimes not edit bad segments? 
+% When you specify bad segments, you are specifying a time period belonging to
+% a specific modality. If artefacts apply to a channel, but do not share the
+% same modality type, then they will not be editable in |oslview|. There are
+% two ways this can happen
+%
+% * If you have an artefact whose type is 'all', then it will show up as not
+%   editable in |oslview|
+% * If you have an online montage active and artefacts are inherited from
+%   another modality, then they will not be editable. For example, if you run
+%   ICA and have an online montage that includes both MEGPLANAR and MEGMAG,
+%   then when you view the MEGPLANAR modality, you will have editable
+%   artefacts for MEGPLANAR and non-editable artefacts from MEGMAG. If you
+%   switch to MEGMAG, it will be the other way round.
+%
+% In terms of consistency, this means you can be confident when you add or
+% remove an artefact in |oslview|, you are only operating on the modality that
+% you are looking at (notwithstanding propagation into other online montages).
+
