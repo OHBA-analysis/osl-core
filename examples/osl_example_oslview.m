@@ -101,4 +101,7 @@ D = oslview(D);
 % In terms of consistency, this means you can be confident when you add or
 % remove an artefact in |oslview|, you are only operating on the modality that
 % you are looking at (notwithstanding propagation into other online montages).
+% That is, if an artefact is editable in |oslview| then that means that the
+% artefact channel is be an exact match for the modality currently being
+% displayed.
 

@@ -170,9 +170,7 @@ dat = dat(:,good_samples(D,chans)); % Keep only the good samples
 %   functions there should not be any discrepancies. If in doubt, check if the
 %   artefacts are visible in |oslview| - if you can see them in |oslview| then
 %   |good_samples| will use them
-
-
-
+%
 % It is recommended to always use |good_samples| instead of |D.badsamples|.
 
 
