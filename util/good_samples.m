@@ -69,7 +69,7 @@ function res = good_samples(D,chanind, sampind, trialind)
 	        continue
 	    end
 	    
-        ev = ev(ismember({ev.value},chantypes)); % Then filter by chantype. This prevents bugs if the trial event value is not a chantype but a number
+        ev = ev(ismember(upper({ev.value}),upper(chantypes))); % Then filter by chantype. This prevents bugs if the trial event value is not a chantype but a number
     
 	    if ~isempty(ev)
 	        for k = 1:numel(ev)
