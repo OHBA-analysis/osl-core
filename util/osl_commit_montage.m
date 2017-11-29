@@ -41,7 +41,7 @@ function D2 = osl_commit_montage(D,new_filename)
         end
         
 		if ~isempty(ev)
-			is_artefact_event = cellfun(@(x) strcmp('artefact_OSL',x),{ev.type});
+			is_artefact_event = strncmp({ev.type},'artefact',8); % First pick out artefact types - match all possible artefacts
 			new_events = ev(~is_artefact_event); % Retain old non-artefacts
 			ev = ev(is_artefact_event); % Old artefacts
 		end
@@ -57,7 +57,7 @@ function D2 = osl_commit_montage(D,new_filename)
 			tmp = m.tra(strcmp(new_modalities{k},new_chantypes),:); % These are all the rows of tra for the new modality
 			old_channel_present = any(tmp,1); % This is whether the old channel contributes to the new modality
 			old_modalities = unique(original_chantypes(old_channel_present)); % These are the old modalities
-			this_ev = ev(ismember({ev.value},old_modalities)); % Get all corresponding events
+			this_ev = ev(ismember({ev.value},[old_modalities new_modalities{k} 'all'])); % Get all events that match all channels, the new channel, or one of the old channels
 			for l = 1:length(this_ev)
 				this_ev(l).value = new_modalities{k};
 			end
