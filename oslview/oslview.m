@@ -344,6 +344,16 @@ function D = oslview(D)
 
 	function switch_chantype(src,~)
 		channel_type = get(src,'label');
+
+		% Update bad segments so that inherited artefacts are correctly displayed
+		for chtype = 1:length(channel_types)
+			D = set_bad_events(D,BadEpochs.(channel_types{chtype}),channel_types{chtype});
+		end		
+		for chtype = 1:length(channel_types)
+			[BadEpochs.(channel_types{chtype}),InheritedBadEpochs.(channel_types{chtype})] = read_bad_events(D,channel_types{chtype});
+		end
+
+		% Update the display
 		channel_setup;
 	end
 
@@ -790,6 +800,12 @@ function [BadEpochs,InheritedBadEpochs] = read_bad_events(D,modality)
             InheritedBadEpochs{end+1}(1) = ev2(j).time;
             InheritedBadEpochs{end}(2) = ev2(j).time + ev2(j).duration - 2/D.fsample;
         end
+    end
+
+    ev3 = ev(strcmp({ev.value},'all')); % These are all the artefact events that apply to the channel types we are inspecting
+    for j = 1:numel(ev3)
+        InheritedBadEpochs{end+1}(1) = ev3(j).time;
+        InheritedBadEpochs{end}(2) = ev3(j).time + ev3(j).duration - 2/D.fsample;
     end
 
 end
