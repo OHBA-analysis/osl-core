@@ -139,17 +139,40 @@ dat = dat(:,good_samples(D,chans)); % Keep only the good samples
 
 %% good_samples vs badsamples
 % Both the |good_samples| function and |D.badsamples| read events whose type starts with 'artefact' and returns a matrix
-% with whether or not the artefact was present. However, there are three key differences between the |good_samples| function and |D.badsamples|
+% with whether or not the artefact was present. However, there are four key differences between the |good_samples| function and |D.badsamples|
 %
-% * |good_samples| returns |True| for good samples, whereas |badsamples| returns |True| for bad samples - so they are logically inverted.
-% * |good_samples| aggregates over channels, whereas |D.badsamples| does not. This means that |D.good_samples| returns a single vector for all channels, whereas
-% |D.badsamples| returns a matrix with one row for each channel. This aggregation makes |good_samples| considerably faster than |D.badsamples|
-% * |good_samples| automatically maps modalities across online montages, whereas |D.badsamples| does not. For example, if you perform beamforming, the sensor data
-% channel type might be |MEGPLANAR| but the beamformed channels will have channel type |LFP|. Artefacts marked in sensor-space will apply to |MEGPLANAR| but because this 
-% modality is different to |LFP|, |D.badsamples| will not recognize any of them as applying to the beamformed data. *This is an extremely serious issue, because it results in
-% artefacts remaining in the analysis*. In contrast, |good_samples| will read the online montage, and see that the |LFP| channels are computed from |MEGPLANAR|, so it will
-% account for artefacts in both |LFP| and |MEGPLANAR|.
-%
+% * |good_samples| returns |True| for good samples, whereas |badsamples|
+%   returns |True| for bad samples - so they are logically inverted.
+% * |good_samples| aggregates over channels, whereas |D.badsamples| does not.
+%   This means that |D.good_samples| returns a single vector for all channels,
+%   whereas |D.badsamples| returns a matrix with one row for each channel.
+%   This aggregation makes |good_samples| considerably faster than
+%   |D.badsamples|
+% * |good_samples| automatically maps modalities across online montages,
+%   whereas |D.badsamples| does not. For example, if you perform beamforming,
+%   the sensor data channel type might be |MEGPLANAR| but the beamformed
+%   channels will have channel type |LFP|. Artefacts marked in sensor-space
+%   will apply to |MEGPLANAR| but because this modality is different to |LFP|,
+%   |D.badsamples| will not recognize any of them as applying to the
+%   beamformed data. *This is an extremely serious issue, because it results
+%   in artefacts remaining in the analysis*. In contrast, |good_samples| will
+%   read the online montage, and see that the |LFP| channels are computed from
+%   |MEGPLANAR|, so it will account for artefacts in both |LFP| and
+%   |MEGPLANAR|.
+% * |good_samples| only matches events whose type is either 'all' or an exact
+%   match for the channel type. For example, if you have an event whose type
+%   is 'MEGANY', then |good_samples| will ignore it whereas |D.badsamples|
+%   will not. This is a simplification that makes it much easier to work with
+%   the artefacts, because given a channel type like 'MEGPLANAR' it is not
+%   trivial to determine which other strings (like 'MEGANY') will match that
+%   modality. In OSL, the event value is always set to the exact channel type,
+%   and previous versions used 'all', so if you are working only with OSL
+%   functions there should not be any discrepancies. If in doubt, check if the
+%   artefacts are visible in |oslview| - if you can see them in |oslview| then
+%   |good_samples| will use them
+
+
+
 % It is recommended to always use |good_samples| instead of |D.badsamples|.
 
 
