@@ -37,10 +37,9 @@ function osl_mlg_plot
 
 	set(ax,'YLim',[-105 80])
 	s1 = surface(-[-50,50;-50,50],80*ones(2),[20,20;0,0]);
-	set(s1,'CData',front,'alphadata',0*front_a,'facecolor','texture','edgealpha',0,'facealpha','texturemap');
-
-	s2 = surface([50 60;50 60],[80 0;80 0],[20,20;14,14],'FaceAlpha',1);
-	s3 = surface(-[50 60;50 60],[80 0;80 0],[20,20;14,14],'FaceAlpha',1);
+	set(s1,'CData',front,'alphadata',0*front_a,'facecolor','texture','edgealpha',0,'facealpha','texturemap','alphadatamapping','none');
+	s2 = surface([50 60;50 60],[80 0;80 0],[20,20;14,14],'FaceAlpha',1,'alphadatamapping','none');
+	s3 = surface(-[50 60;50 60],[80 0;80 0],[20,20;14,14],'FaceAlpha',1,'alphadatamapping','none');
 	set([s2 s3],'CData',zeros(2,2,3));
 
 	s = [s1 s2 s3];
