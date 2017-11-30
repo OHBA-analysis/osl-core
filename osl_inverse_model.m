@@ -1,4 +1,4 @@
-function D = osl_inverse_model(D,mni_coords,S)
+function D = osl_inverse_model(D,mni_coords,varargin)
 % OSL_INVERSE_MODEL runs MEG forward model in SPM12
 %
 % This function passes a limited set of parameters to SPM batch and returns
@@ -20,10 +20,6 @@ function D = osl_inverse_model(D,mni_coords,S)
 % S.modalities     - Sensor modalities to use (e.g. MEG,MEGPLANAR, or both) 
 %                    (default MEGPLANAR for Neuromag, MEG for CTF)
 % 
-% S.fuse           - fuse modalities or not. Note that it will only use
-%                    modalities set in S.modalities so to fuse MEGMAG and
-%                    MEGPLANAR, you need to set S.modalities =
-%                    {'MEGMAG','MEGPLANAR'} as well (default 'no')
 %
 % S.type           - Beamformer type to use {'Scalar' or 'Vector'}
 %                     (default 'Scalar')
@@ -53,11 +49,21 @@ function D = osl_inverse_model(D,mni_coords,S)
 %
 % AB 2014, MWW 2014
 
+arg = inputParser;
+arg.addParameter('modalities',[],@(x) ischar(x) || iscell(x)); % Sensor modalities to use
+arg.addParameter('fuse','no',@(x) any(strcmp(x,{'no','all','meg'}))); % fuse modalities listed in 'modalities' - e.g. set modalities to {'MEGMAG','MEGPLANAR'} to fuse them (does not work with MEGANY)
+arg.addParameter('type','Scalar',@(x) any(strcmp(x,{'Scalar','Vector'})));
+arg.addParameter('timespan',[0 Inf]); % Time range to use in seconds [start end]
+arg.addParameter('pca_order',[],@(x) isnumeric(x) && isscalar(x) && x>0 && ~mod(x,1)); % PCA dimensionality to use for covariance matrix inversion (defaults to full rank)
+arg.addParameter('use_class_channel',false); % flag indicating whether or not to use the class channel to determine the time samples to be used for
+arg.addParameter('inverse_method','beamform',@(x) any(strcmp(x,{'beamform','beamform_bilateral','mne_eye','mne_diag_datacov','mne_adaptive'}))); % inverse method to use
+arg.addParameter('conditions','all',@(x) ischar(x) || iscell(x)); % Should be a cell array of conditions
+arg.addParameter('dirname','',@ischar); % dir to output results to - default/empty makes a temporary folder alongside the D object
+arg.addParameter('prefix',''); % write new SPM file by prepending this prefix
+arg.parse(varargin{:});
+S = arg.Results;
 
 %%%%%%%%%%%%%%%%%%%%%%%   P A R S E   I N P U T S   %%%%%%%%%%%%%%%%%%%%%%%
-if nargin == 1
-    error('For clarity, new function syntax makes requires inputs positional. See function definition at top of file - changes required should be trivial');
-end
 
 old_dir = pwd; % Back up the original working directory
 
@@ -99,97 +105,46 @@ D.check;
 D.save(); % Save the object to disk to ensure that the current online montage is used
 
 % Check Modality Specification:
-try
-    S.modalities = cellstr(S.modalities);
-    S.modalities = S.modalities(:);
-    S = ft_checkopt(S,'modalities','cell',{{'MEG'},{'MEGMAG'},{'MEGPLANAR'},{'MEGMAG';'MEGPLANAR'},{'MEGPLANAR';'MEGMAG'},{'EEG'}});
-catch
+if isempty(S.modalities)
     if any(strcmp(unique(D.chantype),'MEGPLANAR'))
         default_modality = {'MEGPLANAR'};
     else
         default_modality = {'MEG'};
     end
-    warning(['Modalities specification not recognised or incorrect, assigning default: ' char(default_modality)])
-    S = ft_setopt(S,'modalities',default_modality);
+    S.modalities = default_modality;
+elseif ischar(S.modalities)
+    S.modalities = {S.modalities};
 end
 
-% Check Vector/Scalar Specification:
-try
-    S = ft_checkopt(S,'type','char',{'Scalar','Vector'});
-catch 
-    warning('Beamformer type not recognised or incorrect, assigning default: "Scalar"')
-    S = ft_setopt(S,'type','Scalar');
+for j = 1:length(S.modalities)
+    assert(~isempty(D.indchantype(S.modalities{j},'GOOD')),'No good channels found for modality %s',S.modalities{j});
 end
 
-% Check Timespan Specification:
-try
-    S.timespan = ft_getopt(S,'timespan',[0 Inf]); % For [] case
-    S = ft_checkopt(S,'timespan',{'ascendingdoublebivector'});
-catch 
-    warning('Timespan specification not recognised or incorrect, using entire time window')
-    S = ft_setopt(S,'timespan',[0 Inf]);
-end
-
-% Check PCA Order Specification:
-try
-    S = ft_checkopt(S,'pca_order',{'single','double'});
-catch 
-    warning('PCA order specification not recognised or incorrect, assuming full rank for now')
-    S = ft_setopt(S,'pca_order',D.nchannels);
-end
-
-% Check fuse Specification:
-try
-    S = ft_checkopt(S,'fuse','char',{'no','all','meg'});
-catch 
-    warning('fuse specification not recognised or incorrect, assuming fuse=''no'' for now')
-    S = ft_setopt(S,'fuse','no');
-end
-
-% Check inverse_method Specification:
-try
-    S = ft_checkopt(S,'inverse_method','char',{'beamform','beamform_bilateral','mne_eye','mne_diag_datacov','mne_adaptive'});
-catch 
-    warning('inverse_method specification not recognised or incorrect, assuming beamform for now')
-    S = ft_setopt(S,'inverse_method','beamform');
-end
-
-% Check use_class_channel Specification:
-try
-    S = ft_checkopt(S,'use_class_channel',{'logical','doublescalar'});
-catch 
-    S.use_class_channel = false;
+% Check PCA order
+if isempty(S.pca_order)
+    S.pca_order = D.nchannels;
+    fprintf('Setting PCA order to %d (full rank)\n',D.nchannels);
 end
 
 % Check conditions Specification:
-try
-    cond = setdiff(S.conditions,D.condlist);
-    if ~isempty(cond),
-        error(['Condition "' cond{1} '" is not a valid condition']);
-    end
-catch 
-    warning('conditions specification not recognised or incorrect, assuming conditions=all for now')
-    S.conditions = {'all'};
+if ischar(S.conditions)
+    S.conditions = {S.conditions};
 end
+assert(any(strcmp(D.condlist,'all')) || ~isempty(setdiff(S.conditions,D.condlist)),'Not all requested conditions are present in the MEEG object');
 
 % Check dirname Specification:
-try
-    S = ft_checkopt(S,'dirname','char');
-catch
+if isempty(S.dirname)
     [~,tn] = fileparts(tempname(D.path));
     S.dirname = fullfile(D.path,sprintf('osl_bf_temp_%s',tn(3:3+7))); 
-    if ~exist(S.dirname,'dir')
-        mkdir(S.dirname);
-    end
+else
+    S.dirname = getfullpath(S.dirname);
 end
-fprintf(1,'BF working directory: %s\n',S.dirname);
 
-% Check prefix Specification:
-try
-    S = ft_checkopt(S,'prefix','char');
-catch 
-    S = ft_setopt(S,'prefix','');
+if ~exist(S.dirname,'dir')
+    mkdir(S.dirname);
 end
+
+fprintf(1,'BF working directory: %s\n',S.dirname);
 
 %%%%%%%%%%%%%%%%%%   R U N   I N V E R S E   M O D E L   %%%%%%%%%%%%%%%%%%
 
@@ -289,7 +244,12 @@ matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             
 
 obj = onCleanup(@() cd(old_dir)); % Restore the working directory
 spm_jobman('run',matlabbatch)
-D = spm_eeg_load(D.fullfile); % Load the file back from disk with the new online montages
+
+if ~isempty(S.prefix)
+    D = spm_eeg_load(fullfile(D.path,[S.prefix D.fname]))
+else
+    D = spm_eeg_load(D.fullfile); % Load the file back from disk with the new online montages
+end
 
 
 
