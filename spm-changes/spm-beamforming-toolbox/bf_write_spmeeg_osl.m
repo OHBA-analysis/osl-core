@@ -82,12 +82,13 @@ for mm  = 1:numel(modalities)
             S1.montage.tra = S1.montage.tra*old_montage.tra(chans_to_keep,:);
             S1.montage.labelorg = old_montage.labelorg;
             S1.montage = rmfield(S1.montage,{'chantypeorg','chanunitorg'});
+            S1.montage.name = sprintf('%s - %s',S1.montage.name,old_montage.name);
         end
 
         if m == 1 && mm == 1
             % Write a new MEEG object if a prefix is given
             if ~isempty(S.prefix)             
-                Dnew = copy(D.montage('switch',0), [S.prefix D.fname]);            
+                Dnew = copy(D.montage('switch',0), fullfile(D.path,[S.prefix D.fname]));            
             else
                 Dnew = D;
             end
