@@ -11,7 +11,6 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
 	% - metrics : struct with various metrics
 	% - tc : IC timecourses with NaNs where there were badsamples
 
-	sm = D.ica.sm(D.ica.chan_inds,:);
 	tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
 	num_ics = D.ica.params.num_ics;
 
