@@ -137,6 +137,7 @@ else
     time_indices=1:length(tim);   
 end;
 
+toffset = tim(time_indices(1));
 clear tim;
 
 if(size(Sin.stats.cope,4)>1 && ~isfield(Sin,'freq_bin'))
@@ -153,6 +154,7 @@ options.interp='cubic';
 options.mask_fname=stdbrainmask_fname;
 options.output_spat_res=resamp_gridstep;
 options.tres=tres;
+options.toffset = toffset;
 
 nii_parcel_settings            = [];
 nii_parcel_settings.interp     = 'nearest';

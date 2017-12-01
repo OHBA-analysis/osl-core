@@ -84,7 +84,7 @@ D.save()
 % * |forward_meg| - This specifies the forward model used.
 % * |modalities| - Defines which types of sensor to use.
 % * |do_source_variance_maps| - If set to 1, this outputs an optional sanity check
-
+%
 % These options are the same as the sensorspace OAT and define input-data,
 % conditions, filtering and windowing.
 oat=[];
@@ -95,6 +95,7 @@ oat.source_recon.conditions={'Motorbike','Neutral face','Happy face','Fearful fa
 oat.source_recon.freq_range=[3 40]; % frequency range in Hz
 oat.source_recon.time_range=[-0.2 0.4]; % time range in secs
 
+%%
 % These options specify the source reconstruction that will take place.
 oat.source_recon.method='beamform';
 oat.source_recon.normalise_method='mean_eig';
@@ -146,7 +147,7 @@ oat = osl_check_oat(oat);
 
 oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
-
+close all
 
 %% VIEW OAT  REPORT
 %
@@ -221,46 +222,40 @@ S2.resamp_gridstep=oat.source_recon.gridstep;
 [statsdir,times,count]=oat_save_nii_stats(S2);
 
 %% OPEN NIFTII RESULTS IN FSLVIEW
-% We can now view the nifti images containing our GLM results in FSL, here
-% we are running fslview from the matlab command line, but you do not need
-% to - you can run it from the UNIX command line instead.
+% We can now view the nifti images containing our GLM results using |osleyes|. 
+o = osleyes(fullfile(statsdir,'tstat1_8mm.nii.gz'));
 
-mni_brain=fullfile(osldir,'std_masks',['MNI152_T1_' num2str(S2.resamp_gridstep) 'mm_brain.nii.gz']);
+%%
+% We need to tweak the viewing settings to see the results well.
+%
+% Firstly, set the 'Min' and 'Max' colour limits to 15 and 25, respectively. 
+o.layer(2).clim = [15 25];
 
-% Inspect the results of an OAT contrast in FSLVIEW
-% contrast=;
-% runcmd(['fslview ' mni_brain ' ' [statsdir '/tstat' num2str(contrast) '_' num2str(S2.resamp_gridstep) 'mm'] ' &']);
+%%
+% We are currently looking at the first time-point in the source_recon window
+% which corresponds to -100ms, in which not much is happening. Change the 'Volume' to 49, which corresponds to around 100ms
+% after stimulus onset. You should see a response in early visual cortex at
+% the back of the brain. The time value now shows around 200ms, which is 100ms
+% after stimulus onset.
+o.layer(2).volume = 53;
+o.current_point = [-9 -90 -18]; % set the location of the crosshair
 
-%% VIEW RESULTS IN FLSVIEW
-%
-% The previous command should have opened FSLVIEW with the t-stats for the
-% faces contrast. We need to tweat the viewing settings to see the results
-% well.
-%
-% Firstly, make sure the 'tstat2_8mm' image in selected by clicking on it
-% once in the bottom window. Next set the 'Min' and 'Max' to 15 and 25
-% respectively in the two boxes in the middel at the top of the screen.
-%
-% We are currently looking at the first time-point in the source_recon
-% window which corresponds to -100ms, in which not much is happening.
-%
-% Change the 'Volume' in the bottom left to 49, this corresponds to around
-% 100ms after stimulus onset. You should see a response in early visual
-% cortex at the back of the brain. You can cross-check the times referred
-% to in the Volumes with the 'times' variable returned by
-% 'oat_save_nii_stats' above (Note that FSLVIEW indexes Volumes from 0 and
-% Matlab indexes times from 1)
-%
-% Now change the 'Volume' to 59, corresponding to around 140ms after
+%%
+% Now change the 'Volume' to 62, corresponding to around 140ms after
 % stimulus onset. The peak of activation jumps to the right hemiphere
 % visual cortex.
-%
-% You can futher investigate the results by clicking on the
-% 'Tools->Timeseries' option in the top menu. This will bring up and new
-% window showing the t-value across time for the voxel under the green
-% curser. You can navigate across space by clicking on a part of the brain
+o.layer(2).volume = 62;
+
+%%
+% You can futher investigate the results by plotting the time series, by right
+% clicking on the plot and selecting 'plot_timeseries' or using the 'plot_timeseries'
+% method on the |osleyes| object. This will bring up a new
+% window showing the t-value across time for the voxel under crosshair. The MNI coordinates are also
+% displayed in the title of the plot. You can navigate across space by clicking on a part of the brain
 % and time by clicking at a time-point on the timeseries.
-%
+o.plot_timeseries
+
+%%
 % Try changing to code in the previous cell to bring up the tstats for
 % contrast 3 'Face-Motorbikes'. Following the same visualisation
 % instructions you should be able to see that the early time-window (Volume
@@ -268,9 +263,6 @@ mni_brain=fullfile(osldir,'std_masks',['MNI152_T1_' num2str(S2.resamp_gridstep) 
 % (Volume 59) still occurs. This indicates that there are no large
 % differences between Faces and Motorbikes in the the early response,
 % whereas the later response does differ.
-
-% Display the vector of times associated with Volumes in the Nifti output.
-disp(times)
 
 %% INVESTIGATING LOCATION OF INTEREST USING AN MNI COORDINATE
 %
@@ -300,6 +292,15 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 
 [vox_ind_used] = oat_plot_vox_stats(S2);
 
+%%
+% Note that this output is a combination of all of the NIFTI files that could otherwise be viewed individually
+% using |osleyes|. For example, to plot just the faces tstat for the same voxel shown above, we could use
+o = osleyes(fullfile(statsdir,'tstat2_8mm.nii.gz'));
+o.current_point = mni_coord;
+o.plot_timeseries;
+close(o.fig); % Close the volume viewer, because we only want the time series plot
+
+
 %% INVESTIGATING REGIONS OF INTEREST USING AN MNI MASK
 %
 % In this section we will interrogate the wholebrain OAT (run above) using an
@@ -310,7 +311,6 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 % Unlike the virtual electrode, the results from many voxels (all defined in
 % the binary mask in |S2.mask_fname|) are extracted and the average results across these points presented.
 %
-
 % Apply a mask and spatially average the results over an ROI
 S2=[];
 S2.oat=oat;
@@ -318,14 +318,13 @@ S2.stats_fname=oat.first_level.results_fnames{1};
 S2.mask_fname=fullfile(osldir,'example_data','faces_singlesubject','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
 [stats,times,mni_coords_used]=oat_output_roi_stats(S2);
 
+%%
 % Plot the COPEs and t-stats within the ROI
 S2=[];
 S2.stats=stats;
 S2.oat=oat;
 S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots all of these contrasts
 [vox_ind_used] = oat_plot_vox_stats(S2);
-
-
 
 %% TIME-FREQUENCY ANALYSIS ACROSS A SOURCE-SPACE PARCELLATION
 %
@@ -351,8 +350,9 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 % We just need to define which parcellation should be applied and add the time-frequency
 % decomposition parameters in the first level.
 %
-% We are going to use the wholebrain OAT (which was run above), to make use of the settings and source_recon results already in there.
-% The new time-frequency parameters are:
+% We are going to use the wholebrain OAT (which was run above), to make use of
+% the settings and source_recon results already in there. The new time-
+% frequency parameters are:
 %
 % * |tf_freq_range| - The lower and upper bounds on the frequency range of interest
 % * |tf_num_freqs| - The number of frequency bands to estimate within the bounds in |tf_freq_range|
@@ -369,8 +369,9 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 % will not apply correction
 % * |method| - method for reconstructing parcel time-course. Options are
 % |PCA|, |mean|, |peakVoxel| and |spatialBasis|.
+%
 
-% LOAD PREVIOUSLY RUN OAT
+%% LOAD PREVIOUSLY RUN OAT
 % We are going to use the wholebrain OAT (which was run above for the ERF
 % analysis), to make use of the settings already in there
 oat.source_recon.dirname=fullfile(workingdir,'beamformer_erf'); % Make sure this matches the dirname used above

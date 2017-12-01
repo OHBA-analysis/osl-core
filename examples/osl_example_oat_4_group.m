@@ -216,37 +216,38 @@ S2.group_level_contrasts=[1]; % we want to isolate the group average response
 S2.resamp_gridstep=8;
 [statsdir,times]=oat_save_nii_stats(S2);
 
-%% VIEW NIFTII RESULTS IN FSLVIEW
+%% VIEW NIFTII RESULTS IN OSLEYES
 %
-% Run the code below to open FSLVIEW with the group-level results for the
+% Run the code below to open OSLEYES with the group-level results for the
 % faces-motorbikes contrast along with a structural image and a mask of the
 % right hemisphere fusiform cortex.
-%
-% Once FSLVIEW is open, explore the volume to find the green Fusiform Mask.
+tstat = fullfile( oat.source_recon.dirname,'first_level_none_sub_level_group_level_dir','tstat3_gc1_8mm.nii.gz' );
+fusiform = fullfile(osldir,'example_data','faces_group_data','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
+o = osleyes({[],tstat,fusiform},'clim',{[],[5 8],[0 5]},'colormap',{[],osl_colormap('hot'),osl_colormap('green')})
+
+%%
+% Explore the volume to find the green Fusiform Mask.
 % This is brain region which is closely associated with the processing of
 % visual information and is particularly specialised for processing faces.
 %
-% Make sure the |tstat3_gc1_8mm| volume is highlighted by clicking on it in
-% the white box at the bottom of the FSLVIEW window.
-%
-% Change the Volume in the bottom left to 52, this corresponds to 100ms
+% Make sure the |tstat3_gc1_8mm| layer is selected in the dropdown menu. We will make the ROI translucent so that
+% it can be viewed at the same time as the activation.
+o.active_layer = 2; % Select tstat layer
+o.layer(3).alpha = 0.5; % Make ROI transparent
+o.current_point = [36.1579 -52.1053 -12.7368]; % Position the image at the ROI
+
+%%
+% Change the Volume in the bottom left to 52, this corresponds to about 100ms
 % after stimulus onset. We can see a very strong response in primary visual
 % cortex in the medial part of the occipital lobes.
-%
+o.layer(2).volume = 52;
+
+%%
 % Now change the Volume to 63, this corresponds to ~150ms after stimulus
 % onset. The primary visual response has finished and now the region
 % highlighted by the Green fusiform mask has a much stronger response.
-%
+o.layer(2).volume = 63;
 
-% display the times associated with each volume in the nifti output.
-disp(times)
-
-% Find the paths to the relevant results
-tstat = fullfile( oat.source_recon.dirname,'first_level_none_sub_level_group_level_dir','tstat3_gc1_8mm.nii.gz' );
-fusiform = fullfile(osldir,'example_data','faces_group_data','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
-
-% Display the results in OSLEYES
-osleyes({[],fusiform,tstat},'clims',{[],[0 5],[5 8]},'colormaps',{[],osl_colormap('green'),osl_colormap('hot')})
 
 %% INVESTIGATING LOCATIONS OF INTEREST USING AN MNI COORDINATE
 %
@@ -287,8 +288,7 @@ oat_plot_vox_stats(S2);
 % to be used.  This spatially averages over the ROI, and plots the timecourses 
 % of the statistics for the different contrasts.
 %
-% We will use the right hemisphere Fusiform Cortex mask which we used in
-% FSLVIEW in a previous section.
+% We will use the right hemisphere Fusiform Cortex mask which we used previouly.
 %
 % <<osl_example_group_oat_gc1_roistats.png>>
 

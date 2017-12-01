@@ -28,6 +28,8 @@ classdef osleyes < handle
 		show_controls = 1;
 		show_crosshair = 1;
 		title = ''; % String of title for plot
+		img = struct('vol',{},'res',{},'xform',{},'toffset',{},'tunits',{}); % The image data
+
 	end
 
 	% Dependent properties the user might want to use in their code
@@ -47,7 +49,6 @@ classdef osleyes < handle
 		contextmenu % Handle for the context menu
 		lims = nan(3,2); % Axis limits for each MNI dimension (used in plots)
 
-		img = struct('vol',{},'res',{},'xform',{}) % The image data
 		colormap_resolution = 255; % Number of colors in each colormap (if not specified as matrix)
 		coord = {} % Axis coordinates for each image
 
@@ -61,6 +62,7 @@ classdef osleyes < handle
 		ts_line  % Handle to line in timeseries plot
 		ts_bar  % Handle to marker bar in timeseries plot
 		ts_warning % Text object saying only one volume present
+		ts_xlabel % Handle to xlabel on time series plot
 
 		colormap_matrices = {}; % Cached colormaps - could be at higher resolution than input colormap
 		under_construction = true; % Don't render anything while this is true
@@ -118,9 +120,9 @@ classdef osleyes < handle
             end
 
             if isempty(images{1})
-            	vol = load_image(images{2});
+            	tmp_img = load_image(images{2});
             	try
-            		[~,images{1},~] = parcellation.guess_template(vol);
+            		[~,images{1},~] = parcellation.guess_template(tmp_img.vol);
             	catch ME
             		switch ME.identifier
             			case 'osl:parcellation:no_matching_mask'
@@ -143,7 +145,7 @@ classdef osleyes < handle
 
 			for j = 1:length(self.images)
 
-				[self.img(j).vol,self.img(j).res,self.img(j).xform,self.layer(j).name] = load_image(self.images{j});
+				[self.img(j),self.layer(j).name] = load_image(self.images{j});
 				self.coord{j} = get_coords(self.img(j).vol,self.img(j).xform);
 				self.h_img{j}(1) = image(self.coord{j}.y,self.coord{j}.z,permute(self.img(j).vol(1,:,:,1),[2 3 1])','Parent',self.ax(1),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
 				self.h_img{j}(2) = image(self.coord{j}.x,self.coord{j}.z,permute(self.img(j).vol(:,1,:,1),[1 3 2])','Parent',self.ax(2),'HitTest','off','AlphaDataMapping','none','AlphaData',1);
@@ -258,9 +260,10 @@ classdef osleyes < handle
 			hold(self.ts_ax,'on')
 			self.ts_bar = plot(self.ts_ax,1,1,'r','HitTest','off');
 			self.ts_warning = uicontrol(fig,'style','text','String','ONLY ONE VOLUME PRESENT IN ACTIVE LAYER','Units','normalized','Position',[0.25 0.25 0.5 0.5],'HitTest','off','FontSize',20,'BackgroundColor','w');
-			set(self.ts_ax,'ButtonDownFcn',@(~,~) set_volume(self.ts_ax,self));
+			ax = self.ts_ax; % Store axis in a bare variable so that it can be closed in set_volume below 
+			set(self.ts_ax,'ButtonDownFcn',@(~,~) set_volume(ax,self));
+            self.ts_xlabel = xlabel(self.ts_ax,'Volume/Time');
 			self.active_layer = self.active_layer; % Reset the data in h_bar via set.current_vols
-			xlabel(self.ts_ax,'Volume/Time (s)');
 		end
 
 		function set.layer(self,val)
@@ -301,7 +304,7 @@ classdef osleyes < handle
 
 				% Check volume indices
 				assert(isscalar(val(j).volume) && isnumeric(val(j).volume) && isfinite(val(j).volume))
-				assert(val(j).volume>0 && val(j).volume <= size(self.img(j).vol,4),'Volume index out of bounds');
+				assert(val(j).volume>0 && val(j).volume <= size(self.img(j).vol,4),'Volume index out of bounds - this layer only has %d volumes',size(self.img(j).vol,4));
 
 				% Check name
 				assert(ischar(val(j).name) || isstring(val(j).name))
@@ -378,6 +381,13 @@ classdef osleyes < handle
 				set(self.controls.volume,'Enable','on');
 			end
 
+			% Hide time if time units are not defined
+			if isempty(self.img(self.active_layer).tunits)
+				set(self.controls.marker(5),'Visible','off');
+			else
+				set(self.controls.marker(5),'Visible','on');
+			end
+
 			self.resize(); % Update sizes of colorbars
 			self.refresh_slices();
 		end
@@ -422,6 +432,8 @@ classdef osleyes < handle
 			set(self.controls.marker(1),'String',sprintf('X = %+06.1f',p(1)));
 			set(self.controls.marker(2),'String',sprintf('Y = %+06.1f',p(2)));
 			set(self.controls.marker(3),'String',sprintf('Z = %+06.1f',p(3)));
+			set(self.controls.marker(5),'String',sprintf('Time = %+03.3f%s',self.img(self.active_layer).toffset+(self.layer(self.active_layer).volume-1)*self.img(self.active_layer).res(4),self.img(self.active_layer).tunits)); 
+
 			set(self.controls.volume,'String',sprintf('%d',self.layer(self.active_layer).volume));
 
 			% Now update each slice
@@ -464,8 +476,14 @@ classdef osleyes < handle
 				set(self.ts_line,'XData',1:self.nvols,'YData',squeeze(self.img(self.active_layer).vol(idx(1),idx(2),idx(3),:)));
 				title(get(self.ts_line,'Parent'),sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)),'Interpreter','none')
 				set(self.ts_ax,'YLim',[min(self.img(self.active_layer).vol(:)) max(self.img(self.active_layer).vol(:)) ]);
-				set(self.ts_ax,'XTickLabel',get(self.ts_ax,'XTick')*self.img(self.active_layer).res(4)); % Set time axis appropriately
+				set(self.ts_ax,'XTickLabel',(get(self.ts_ax,'XTick')-1)*self.img(self.active_layer).res(4)+self.img(self.active_layer).toffset); % Set time axis appropriately
 				set(self.ts_bar,'XData',[1 1]*self.layer(self.active_layer).volume,'YData',get(get(self.ts_bar,'Parent'),'YLim'));
+				if isempty(self.img(self.active_layer).tunits)
+					set(self.ts_xlabel,'String','Volume');
+				else
+					set(self.ts_xlabel,'String',sprintf('Time (%s)',self.img(self.active_layer).tunits));
+				end
+
 				if self.nvols==1
 					set(self.ts_warning,'Visible','on');
 					set(self.ts_bar,'Visible','off')
@@ -533,7 +551,8 @@ classdef osleyes < handle
 			self.controls.marker(1) = uicontrol(self.controls.panel,'style','text','String','X = +000.0','Units','characters','Position',[0 2 11 1],'HorizontalAlignment','left');
 			self.controls.marker(2) = uicontrol(self.controls.panel,'style','text','String','Y = +000.0','Units','characters','Position',[0 1 11 1],'HorizontalAlignment','left');
 			self.controls.marker(3) = uicontrol(self.controls.panel,'style','text','String','Z = +000.0','Units','characters','Position',[0 0 11 1],'HorizontalAlignment','left');
-			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +0000.0','Units','characters','Position',[0 0.9 18 1],'HorizontalAlignment','left');
+			self.controls.marker(4) = uicontrol(self.controls.panel,'style','text','String','Value = +0000.0','Units','characters','Position',[0 1 18 1],'HorizontalAlignment','left');
+			self.controls.marker(5) = uicontrol(self.controls.panel,'style','text','String','(Time = +000.0s)','Units','characters','Position',[0 2 18 1],'HorizontalAlignment','left','Visible','off'); % Start invisible to avoid flicker
 
 			% Put b to the right of a with given padding
 			next_to = @(b,a,padding) 	set(b,'Position',sum(get(a,'Position').*[1 0 1 0]).*[1 0 0 0]  + [padding 0 0 0] + [0 1 1 1].*get(b,'Position'));
@@ -554,6 +573,7 @@ classdef osleyes < handle
 			next_to(self.controls.marker(2),self.controls.clim(2),2);
 			next_to(self.controls.marker(3),self.controls.clim(2),2);
 			next_to(self.controls.marker(4),self.controls.marker(3),0.5);
+			next_to(self.controls.marker(5),self.controls.marker(3),0.5);
 
 		end
 
@@ -786,7 +806,7 @@ function set_volume(ax,h_osleyes)
 	% - ax (axes of the timeseries plot)
 	% - h_bar (vertical red line showing which time was clicked)
 	% - h_osleyes (handle to osleyes object that created and is thus bound to this plot)
-	if h_osleyes.nvols > 1
+	if isvalid(h_osleyes) && h_osleyes.nvols > 1
 		p = get(ax,'CurrentPoint');
 		h_osleyes.layer(h_osleyes.active_layer).volume = round(p(1,1));
 	end
@@ -802,17 +822,23 @@ function KeyPressFcn(self,~,KeyData)
 	end
 end
 
-function [img,res,xform,name] = load_image(x)
-	% Load an input image
-    % If name is not provided, it will be empty
-    % This function is guaranteed to produce sensible outputs except
+function [img,name] = load_image(x)
+	% Load an input image, return img struct
+	% Supported input formats are
+	% - string - load NII file
+	% - struct - populate fields img, xform (mandatory), name='', res=[1 1 1 1], tunits = '', toffset=0 (optional),
+	% - matrix - try and guess the standard mask and use that to retrieve xform etc.
+	%
+    % This function should produce sensible outputs except
     % if the input image is a 2D matrix whose row count does not match
     % any standard mask - in which case, turning into a 3D matrix 
     % is impossible and a hard error will be thrown
 	name = '';
 
+	img = struct();
+
 	if ischar(x) || isstring(x) % Load a NIFTI file
-		[img,res,xform] = nii.load(x);
+		[img.vol,img.res,img.xform,~,img.toffset,img.tunits] = nii.load(x);
 		[~,fname,ext] = fileparts(x);
 		if isempty(ext)
 			name = fname;
@@ -820,20 +846,39 @@ function [img,res,xform,name] = load_image(x)
 			name = [fname '.' ext];
 		end
 	elseif isstruct(x)
-		img = x.img;
-		xform = x.xform;
-		res = x.res;
+		img.vol = x.img;
+		img.xform = x.xform;
+
+		if ~isfield(x,'res')
+			img.res = [1 1 1 1];
+		else
+			img.res = x.res;
+		end
+
+		if ~isfield(x,'tunits')
+			img.tunits = '';
+		else
+			img.tunits = x.tunits;
+		end
+
+		if ~isfield(x,'toffset')
+			img.toffset = 0;
+		else
+			img.toffset = x.toffset;
+		end
+
 		if isfield(x,'name')
 			name = x.name;
-		end
+        end
+                
 	else
 		try % Try to guess template
 			[~,mask_fname] = parcellation.guess_template(x);
-			[mask,res,xform] = nii.load(mask_fname);
+			[mask,img.res,img.xform,~,img.toffset,img.tunits] = nii.load(mask_fname);
 			if ndims(x) < 3 % Can only reshape if we successfully guessed the template
-				img = matrix2vols(x,mask);
+				img.vol = matrix2vols(x,mask);
             else
-                img = x;
+                img.vol = x;
 			end
 			fprintf(2,'Guessing template: %s\n',mask_fname);
 		catch ME
@@ -845,10 +890,10 @@ function [img,res,xform,name] = load_image(x)
 				otherwise
 					rethrow(ME)
             end
-            img = x;
+            img.vol = x;
 		end
 
-		assert(ndims(img)>=3,'Input image must be a 3D or 4D matrix, or have the same number of rows as a standard mask')
+		assert(ndims(img.vol)>=3,'Input image must be a 3D or 4D matrix, or have the same number of rows as a standard mask')
 	end
-	img = double(img);
+	img.vol = double(img.vol);
 end
