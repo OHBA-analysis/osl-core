@@ -63,7 +63,7 @@ else
     end
 end
 
-o = osleyes(fname,'show_controls',false,'show_crosshair',false,'title',S.title,'current_point',S.mni_coord,'clims',{[],[low high]});
+o = osleyes(fname,'show_controls',false,'show_crosshair',false,'title',S.title,'current_point',S.mni_coord,'clim',{[],[low high]});
 
 if isfield(S,'vol_index')
     o.current_vols(2) = S.vol_index;
