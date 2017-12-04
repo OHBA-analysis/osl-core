@@ -45,7 +45,10 @@ function res = good_samples(D,chanind, sampind, trialind)
 	if D.montage('getindex') > 0 
 		m = D.montage('getmontage');
 		Dtemp = D.montage('switch',0);
-		chantypes = union(chantypes,unique(Dtemp.chantype(find(any(m.tra(chanind,:),1)))));
+        old_chantypes = unique(Dtemp.chantype(find(any(m.tra(chanind,:),1))));
+        if ~isempty(old_chantypes)
+            chantypes = union(chantypes,old_chantypes);
+        end
     end
     
     chantypes{end+1} = 'all'; % Make sure we support modality-independent artefacts
