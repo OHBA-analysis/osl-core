@@ -403,7 +403,7 @@ else
                 S2.fname=[statsdir '/cope' num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm.nii.gz'];                              
                 o = ortho_overlay_act( S2 );
                 fig_handle(gconi)= o.fig; 
-                setpixelposition(fig_handle(coni),[1 1 1300 450]);
+                setpixelposition(fig_handle(gconi),[1 1 1300 450]);
             end;
             con_report=osl_report_set_figs(con_report,fig_name,fig_handle,fig_title);        
             con_report=osl_report_print_figs(con_report);
@@ -423,7 +423,7 @@ else
                 S2.fname=[statsdir '/tstat' num2str(con) '_gc' num2str(gcon) '_' num2str(resamp_gridstep) 'mm.nii.gz'];                              
                 o = ortho_overlay_act( S2 );
                 fig_handle(gconi)= o.fig; 
-                setpixelposition(fig_handle(coni),[1 1 1300 450]);
+                setpixelposition(fig_handle(gconi),[1 1 1300 450]);
             end;
             con_report=osl_report_set_figs(con_report,fig_name,fig_handle,fig_title);        
             con_report=osl_report_print_figs(con_report);

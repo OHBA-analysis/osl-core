@@ -109,15 +109,54 @@ o = osleyes(randn(3559,1));
 
 %%
 % Alternative, you can specify the xform matrix by using a struct, with fields
-% |img|, |res|, and |xform|. Note that in this case, |img| must be 3D or 4D, because
+% |img| and |xform|. Note that in this case, |img| must be 3D or 4D, because
 % without a standard mask, you cannot reshape a matrix into a volume.
 [nii_data,nii_res,nii_xform] = nii.load(nii_tstat);
-o = osleyes(struct('img',nii_data,'res',nii_res,'xform',nii_xform));
+o = osleyes(struct('img',nii_data,'xform',nii_xform));
 
 %%
 % You can optionally include a |name| field that will be used in the dropdown
 % list.
-o = osleyes(struct('img',nii_data,'res',nii_res,'xform',nii_xform,'name','tstat'));
+o = osleyes(struct('img',nii_data,'xform',nii_xform,'name','tstat'));
+
+%% Displaying times
+% Some NIFTI files have multiple volumes that correspond to parcels, while others correspond to time. 
+% NIFTI files carry additional information in their header about the time dimension. The three 
+% important pieces are
+%
+% * resolution, which specifies how much the value of time changes between volumes
+% * units, which specifies the units of the time dimension
+% * offset, which is a constant that is added to the time
+%
+% Thus, given a volume index, resolution, time offset, and units, the time corresponding to a particular 
+% volume is |(volume_index - 1)*resolution+offset|. These quantities are returned by |nii.load| e.g.
+[~,res,~,~,t_offset,t_units]=nii.load(nii_tstat);
+res(4) % time resolution
+t_offset % time offset
+t_units % time units
+
+%%
+% Whether a nii file corresponds to time or parcels is determined by the time units. If it is an empty string, 
+% then the volume dimension is considered not to correspond to time, whereas if it is one of |s|, |ms|, or |us|, then
+% it is considered to be time.
+%
+% If the volume axis corresponds to time, then |osleyes|:
+%
+% * Displays an additional text field |Time| in the main viewer
+% * When you plot the time series, the time axis will be labelled 'Time' and computed as described above
+%
+% The time information is read from the NIFTI file, and is optionally specified as struct fields. For instance
+o = osleyes(struct('img',nii_data,'xform',nii_xform,'name','tstat'));
+o.plot_timeseries
+
+%%
+% Note that above there are 100 volumes, but there is no time information, so no Time value is shown in the main window, 
+% and the X-axis on the series plot is labelled 'Volume'. If we know that each volume corresponds to 4ms and the first 
+% volume is at -100ms, we can provide this information in the struct. Note that the time resolution is specified as part
+% of the variable 'res' which encodes the X, Y, Z, and time resolutions.
+res = [8 8 8 4e-3];
+o = osleyes(struct('img',nii_data,'xform',nii_xform,'name','tstat','res',res,'toffset',-100e-3,'tunits','s'));
+o.plot_timeseries
 
 %% Selecting layers 
 % Each image is a layer/overlay in the viewer. The order of
@@ -295,6 +334,15 @@ o.title = 'My Plot';
 o.active_layer = 3;
 o.layer(3).visible = 1;
 o.layer(3).volume = 5;
+
+%%
+% A resolution for each each dimension is stored in the NIFTI file. For time-varying data, 
+% this resolution typically corresponds to the time between volumes. Thus, multiplying the 
+% volume index by the temporal resolution converts the volume index to a time. This value is
+% shown in brackets because this dimension is not always time - for example, if you look at a 
+% parcellation, the volume number corresponds to a parcel index, not to a time. The units in the
+% NIFTI file are often not set correctly, so |osleyes| will always display a value in the Time field
+% but it may not be sensible to interpret it as a time, depending on the file you are looking at. 
 
 %%
 % With the GUI as the active window, you can use the up and down arrow keys to

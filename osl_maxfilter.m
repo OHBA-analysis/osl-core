@@ -138,8 +138,8 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	disp(maxfilter_call);
 	ret = system(maxfilter_call); % Capture log output
 
-	if ret == 0
-		fprintf(2,'Maxfilter return code was not 0 - something probably went wrong. Check %s\n',stderr_log);
+	if ~exist(fif_out,'file')
+		fprintf(2,'Maxfilter did not generate the output file - something probably went wrong. Check %s\n',stderr_log);
 	end
 	
 	bad_times = [];
