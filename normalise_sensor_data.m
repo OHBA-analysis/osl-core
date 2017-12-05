@@ -1,4 +1,4 @@
-function [ Dnew, pcadims, pcadim_all, norm_vec, normalisation_used, fig_handles fig_names ] = normalise_sensor_data( S )
+function [ D, pcadims, pcadim_all, norm_vec, normalisation_used, fig_handles fig_names ] = normalise_sensor_data( S )
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% normalise modalities using smallest eigenvalues or mean of eigs (i.e. the overall variance)
@@ -179,45 +179,15 @@ end;
 
 normalisation_used=normalisation;
 
-% setup montage to do normalisation (using a montage will ensure that the
-% leadfield will also receive the same normalisation)
-if 0
-    montage=[];
-    montage.labelorg = D.chanlabels;
-    montage.tra = diag(norm_vec);
-    montage.labelnew = montage.labelorg;
-    montage.name = 'normalised_sensors';
-    montage.chanunitnew = D.units;
-else
-
-    % Apply normalisation via SPM montage:
-    montage             =  [];
-    montage.tra         =  diag(norm_vec(indchantype(D,S.modalities)));
-    montage.labelnew    =  D.chanlabels(indchantype(D,S.modalities));
-    montage.labelorg    =  D.chanlabels(indchantype(D,S.modalities));
-
-    [~,indx] = ismember(montage.labelnew,D.sensors('MEG').label);
-
-    montage.chanunitnew =  D.sensors('MEG').chanunit(indx);
-    montage.chanunitorg =  D.sensors('MEG').chanunit(indx);
-    montage.chantypenew =  lower(D.sensors('MEG').chantype(indx));
-    montage.chantypeorg =  lower(D.sensors('MEG').chantype(indx));
-
-    montage.name = 'normalised_sensors';
-end;
-
-S1 = [];
-S1.D = D;
-S1.montage = montage;
-S1.keepothers = true;
-S1.updatehistory  = 0;
-Dnew = osl_montage(S1);
+tra = zeros(length(indchantype(D,S.modalities)),D.nchannels);
+tra(:,indchantype(D,S.modalities)) = diag(norm_vec(indchantype(D,S.modalities)));
+D = add_montage(D,tra,'normalised_sensors');
 
 %% establish dim of ALL normalised data
 
-badind = indchantype(Dnew,modality_meeg,'BAD');
+badind = indchantype(D,modality_meeg,'BAD');
 
-chanindall = setdiff(find(strncmpi(Dnew.chantype,modality_meeg,3)), badind);
+chanindall = setdiff(find(strncmpi(D.chantype,modality_meeg,3)), badind);
 
 % recalc chaninds
 clear chanind;
@@ -225,15 +195,15 @@ clear chanind;
 for ff=1:length(S.modalities),
     
     % get good channels
-    chanind{ff} = strmatch(S.modalities{ff}, Dnew.chantype);
-    chanind{ff} = setdiff(chanind{ff}, Dnew.badchannels);
+    chanind{ff} = strmatch(S.modalities{ff}, D.chantype);
+    chanind{ff} = setdiff(chanind{ff}, D.badchannels);
     if isempty(chanind{ff})
         error(['No good ' S.modalities{ff} ' channels were found.']);
     end    
 end;
 
 %dat=reshape(Dnew(chanindall,find(samples2use),trials),length(chanindall),(numel(find(samples2use))*length(trials)))';
-tmpdat=Dnew(chanindall,find(samples2use),trials);
+tmpdat=D(chanindall,find(samples2use),trials);
 
 %remove epoch means
 tmpdat=permute(tmpdat,[1 3 2]);
@@ -257,7 +227,7 @@ disp(['Overall dimensionality is: ' num2str(pcadim_all)]);
 for ff=1:length(S.modalities),
     
     % calc normalisation
-    tmpdat=Dnew(chanind{ff},find(samples2use),trials);
+    tmpdat=D(chanind{ff},find(samples2use),trials);
     %remove epoch means
     tmpdat=permute(tmpdat,[1 3 2]);
     tmpdat=tmpdat-repmat(mean(tmpdat,3),[1,1,sum(samples2use)]);
@@ -282,9 +252,9 @@ end;
 
 %%%%%
 % look at eigenspectrum over all good channels and trials
-chanindall = setdiff(find(strncmpi(Dnew.chantype,modality_meeg,3)), badind);
+chanindall = setdiff(find(strncmpi(D.chantype,modality_meeg,3)), badind);
 
-tmpdat=Dnew(chanindall,find(samples2use),trials);
+tmpdat=D(chanindall,find(samples2use),trials);
 %remove epoch means
 tmpdat=permute(tmpdat,[1 3 2]);
 tmpdat=tmpdat-repmat(mean(tmpdat,3),[1,1,sum(samples2use)]);
@@ -316,7 +286,7 @@ Apca_mods=[];
 clear Apca_mods2;
 for ff=1:length(S.modalities),
     
-    tmpdat=Dnew(chanind{ff},find(samples2use),trials);
+    tmpdat=D(chanind{ff},find(samples2use),trials);
     %remove epoch means
     tmpdat=permute(tmpdat,[1 3 2]);
     tmpdat=tmpdat-repmat(mean(tmpdat,3),[1,1,sum(samples2use)]);
