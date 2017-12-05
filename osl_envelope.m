@@ -34,7 +34,10 @@ function [env,phase] = osl_envelope(D,varargin)
     	D = D(:,:);
     else
     	fs = arg.Results.fs;
-        if ~isempty(arg.Results.clean)
+        if isempty(fs)
+            error('If D is a matrix, the sampling rate must be specified to ensure filtering and downsample work properly');
+        end
+        if isempty(arg.Results.clean)
             clean = ones(1,size(D,2));
         else
             clean = arg.Results.clean;
