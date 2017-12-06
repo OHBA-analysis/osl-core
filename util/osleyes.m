@@ -897,8 +897,10 @@ function [img,name] = load_image(x)
 			switch ME.identifier
 				case 'osl:parcellation:no_matching_mask'
 					fprintf(2,'No matching mask found - could not guess xform!\n')
-					xform = eye(4);
-					res = ones(4,1);
+					img.xform = eye(4);
+					img.res = ones(4,1);
+                    img.toffset = 0;
+                    img.tunits = '';
 				otherwise
 					rethrow(ME)
             end
