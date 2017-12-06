@@ -130,7 +130,7 @@ end
 if ischar(S.conditions)
     S.conditions = {S.conditions};
 end
-assert(any(strcmp(D.condlist,'all')) || isempty(setdiff(S.conditions,D.condlist)),'Not all requested conditions are present in the MEEG object');
+assert(any(strcmp(S.conditions,'all')) || isempty(setdiff(S.conditions,D.condlist)),'Not all requested conditions are present in the MEEG object');
 
 % Check dirname Specification:
 if isempty(S.dirname)
