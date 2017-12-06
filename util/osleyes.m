@@ -28,8 +28,6 @@ classdef osleyes < handle
 		show_controls = 1;
 		show_crosshair = 1;
 		title = ''; % String of title for plot
-		img = struct('vol',{},'res',{},'xform',{},'toffset',{},'tunits',{}); % The image data
-
 	end
 
 	% Dependent properties the user might want to use in their code
@@ -44,6 +42,8 @@ classdef osleyes < handle
 	end
 
 	properties(GetAccess=private,SetAccess=private)
+		img = struct('vol',{},'res',{},'xform',{},'toffset',{},'tunits',{}); % The image data
+
 		ax % Handles of the three display axes
 		controls % Handles for control panel and associated controls
 		contextmenu % Handle for the context menu
@@ -260,8 +260,7 @@ classdef osleyes < handle
 			hold(self.ts_ax,'on')
 			self.ts_bar = plot(self.ts_ax,1,1,'r','HitTest','off');
 			self.ts_warning = uicontrol(fig,'style','text','String','ONLY ONE VOLUME PRESENT IN ACTIVE LAYER','Units','normalized','Position',[0.25 0.25 0.5 0.5],'HitTest','off','FontSize',20,'BackgroundColor','w');
-			ax = self.ts_ax; % Store axis in a bare variable so that it can be closed in set_volume below 
-			set(self.ts_ax,'ButtonDownFcn',@(~,~) set_volume(ax,self));
+			set(self.ts_ax,'ButtonDownFcn',@(~,~) self.ts_set_volume());
             self.ts_xlabel = xlabel(self.ts_ax,'Volume/Time');
 			self.active_layer = self.active_layer; % Reset the data in h_bar via set.current_vols
 		end
@@ -492,6 +491,15 @@ classdef osleyes < handle
 					set(self.ts_bar,'Visible','on')
 				end
 			end
+		end
+
+		function ts_set_volume(self)
+			% This callback runs when the user clicks on the timeseries to change the volume
+			if isvalid(self) && self.nvols > 1
+				p = get(self.ts_ax,'CurrentPoint');
+				self.layer(self.active_layer).volume = round(p(1,1));
+			end
+
 		end
 
 		function activate_motion(self)	
@@ -800,18 +808,6 @@ function orientation_letters(ax,labels)
 	%text(mean(xl),max(yl),labels{4},'Parent',ax,'Color','w','FontWeight','bold','HorizontalAlignment','center','VerticalAlignment','top','HitTest','off','FontSize',10)
 end
 
-function set_volume(ax,h_osleyes)
-	% This is the callback for the axis object in the timeseries plot
-	% It is wrapped in an anonymous function closure that contains
-	% - ax (axes of the timeseries plot)
-	% - h_bar (vertical red line showing which time was clicked)
-	% - h_osleyes (handle to osleyes object that created and is thus bound to this plot)
-	if isvalid(h_osleyes) && h_osleyes.nvols > 1
-		p = get(ax,'CurrentPoint');
-		h_osleyes.layer(h_osleyes.active_layer).volume = round(p(1,1));
-	end
-
-end
 
 function KeyPressFcn(self,~,KeyData)
 	switch KeyData.Key
