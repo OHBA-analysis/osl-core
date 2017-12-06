@@ -63,11 +63,16 @@ classdef osleyes < handle
 		ts_bar  % Handle to marker bar in timeseries plot
 		ts_warning % Text object saying only one volume present
 		ts_xlabel % Handle to xlabel on time series plot
+		ts_title % Handle to timeseries title
 
 		colormap_matrices = {}; % Cached colormaps - could be at higher resolution than input colormap
 		under_construction = true; % Don't render anything while this is true
 		motion_active = 0; % If this flag is true, then the slices will be updated when the mouse is moved
 
+	end
+
+	properties(GetAccess=private,SetAccess=private,Dependent)
+		time % time values for the active layer
 	end
 
 	methods
@@ -262,7 +267,9 @@ classdef osleyes < handle
 			self.ts_warning = uicontrol(fig,'style','text','String','ONLY ONE VOLUME PRESENT IN ACTIVE LAYER','Units','normalized','Position',[0.25 0.25 0.5 0.5],'HitTest','off','FontSize',20,'BackgroundColor','w');
 			set(self.ts_ax,'ButtonDownFcn',@(~,~) self.ts_set_volume());
             self.ts_xlabel = xlabel(self.ts_ax,'Volume/Time');
-			self.active_layer = self.active_layer; % Reset the data in h_bar via set.current_vols
+			self.ts_title = title(self.ts_ax,'Timeseries','Interpreter','none');
+			self.active_layer = self.active_layer; % Reset the data in h_bar via set.current_vols and set axis limits
+
 		end
 
 		function set.layer(self,val)
@@ -387,6 +394,11 @@ classdef osleyes < handle
 				set(self.controls.marker(5),'Visible','on');
 			end
 
+			if ishandle(self.ts_line)
+				set(self.ts_line,'XData',self.time,'YData',nan(1,self.nvols));
+				set(self.ts_ax,'XLim',[self.time(1) self.time(end)+1e-5*(self.time(1)==self.time(end))],'YLim',[min(self.img(self.active_layer).vol(:)) max(self.img(self.active_layer).vol(:)) ]);
+			end
+
 			self.resize(); % Update sizes of colorbars
 			self.refresh_slices();
 		end
@@ -413,6 +425,10 @@ classdef osleyes < handle
 
 		function n = get.nvols(self)
 			n = size(self.img(self.active_layer).vol,4);
+		end
+
+		function t = get.time(self)
+			t = (0:self.nvols-1)*self.img(self.active_layer).res(4)+self.img(self.active_layer).toffset;
 		end
 
 	end
@@ -472,11 +488,10 @@ classdef osleyes < handle
 				[~,idx(1)] = min(abs(self.coord{self.active_layer}.x-p(1)));
 				[~,idx(2)] = min(abs(self.coord{self.active_layer}.y-p(2)));
 				[~,idx(3)] = min(abs(self.coord{self.active_layer}.z-p(3)));
-				set(self.ts_line,'XData',1:self.nvols,'YData',squeeze(self.img(self.active_layer).vol(idx(1),idx(2),idx(3),:)));
-				title(get(self.ts_line,'Parent'),sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)),'Interpreter','none')
-				set(self.ts_ax,'YLim',[min(self.img(self.active_layer).vol(:)) max(self.img(self.active_layer).vol(:)) ]);
-				set(self.ts_ax,'XTickLabel',(get(self.ts_ax,'XTick')-1)*self.img(self.active_layer).res(4)+self.img(self.active_layer).toffset); % Set time axis appropriately
-				set(self.ts_bar,'XData',[1 1]*self.layer(self.active_layer).volume,'YData',get(get(self.ts_bar,'Parent'),'YLim'));
+				set(self.ts_line,'YData',squeeze(self.img(self.active_layer).vol(idx(1),idx(2),idx(3),:)));
+				set(self.ts_bar,'XData',[1 1]*self.time(self.layer(self.active_layer).volume),'YData',get(get(self.ts_bar,'Parent'),'YLim'));
+				set(self.ts_title,'String',sprintf('%s - MNI (%.2f,%.2f,%.2f)',self.controls.image_list.String{self.active_layer},p(1),p(2),p(3)));
+
 				if isempty(self.img(self.active_layer).tunits)
 					set(self.ts_xlabel,'String','Volume');
 				else
@@ -497,7 +512,8 @@ classdef osleyes < handle
 			% This callback runs when the user clicks on the timeseries to change the volume
 			if isvalid(self) && self.nvols > 1
 				p = get(self.ts_ax,'CurrentPoint');
-				self.layer(self.active_layer).volume = round(p(1,1));
+				idx = (p(1,1)-self.img(self.active_layer).toffset)/self.img(self.active_layer).res(4);
+				self.layer(self.active_layer).volume = ceil(idx);
 			end
 
 		end
