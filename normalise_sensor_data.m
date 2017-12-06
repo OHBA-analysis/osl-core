@@ -175,13 +175,14 @@ for ff=1:length(S.modalities),
     
     disp(['Modality ' S.modalities{ff} ' has data normalisation ' num2str(normalisation(ff))]);
     
-end;
+end
 
 normalisation_used=normalisation;
 
 tra = zeros(length(indchantype(D,S.modalities)),D.nchannels);
 tra(:,indchantype(D,S.modalities)) = diag(norm_vec(indchantype(D,S.modalities)));
-D = add_montage(D,tra,'normalised_sensors');
+D = add_montage(D,tra,'normalised_sensors',D.chanlabels(indchantype(D,S.modalities)));
+
 
 %% establish dim of ALL normalised data
 

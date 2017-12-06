@@ -24,7 +24,7 @@ function [env,phase] = osl_envelope(D,varargin)
     arg.addParameter('filter',[]); % specify range of frequencies to filter at prior to enveloping (e.g. [8 12], default: no filter)
     arg.addParameter('downsample_env',[]); % Resample the envelope at this frequency
     arg.addParameter('downsample_phase',[]); % Resample the phase at this frequency
-    arg.addParameter('orthogonalize',false); % Orthogonalize time series after filtering but before enveloping 
+    arg.addParameter('orthogonalise',false); % Orthogonalise time series after filtering but before enveloping 
     arg.addParameter('orthog_method','symmetric'); % If string, can be 'symmetric' or 'closest'. Or, use a number to specify PM filter order
     arg.parse(varargin{:});
 
@@ -45,7 +45,7 @@ function [env,phase] = osl_envelope(D,varargin)
     end
 
     % If doing PM orthogonalization, do it before filtering
-    if arg.Results.orthogonalize && isnumeric(arg.Results.orthog_method)
+    if arg.Results.orthogonalise && isnumeric(arg.Results.orthog_method)
     	D = leakcorr(D.',size(D,2),arg.Results.orthog_method).';
 	end
 
@@ -54,7 +54,7 @@ function [env,phase] = osl_envelope(D,varargin)
     end
 
     % If doing Giles orthogonalization, do it after
-    if arg.Results.orthogonalize && ~isnumeric(arg.Results.orthog_method)
+    if arg.Results.orthogonalise && ~isnumeric(arg.Results.orthog_method)
     	D = ROInets.remove_source_leakage(D,arg.Results.orthog_method);
     end
 
