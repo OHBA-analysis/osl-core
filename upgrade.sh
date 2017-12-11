@@ -6,10 +6,10 @@ retrieve_repo () {
 	REPONAME=$1
 	curl -L -k https://github.com/OHBA-analysis/$REPONAME/tarball/master --output $REPONAME.tar.gz
 	echo $REPONAME = `tar -tf $REPONAME.tar.gz | grep -o '^[^/]\+' | sort -u | rev | cut -d'-' -f1 | rev` >> version.txt
-	rm -rf ../$REPONAME
-	mkdir ./$REPONAME 
-	tar -xvf ./$REPONAME.tar.gz --strip 1 -C ./$REPONAME 
-	rm -rf ./$REPONAME.tar.gz
+	rm -rf "$REPONAME"/*
+	mkdir $REPONAME 
+	tar -xvf $REPONAME.tar.gz --strip 1 -C $REPONAME 
+	rm -rf $REPONAME.tar.gz
 } 
 
 echo "This script will upgrade your OSL code to the latest version on GitHub"
