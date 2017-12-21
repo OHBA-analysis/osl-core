@@ -34,9 +34,14 @@ trisurf(mesh.faces,mesh.vertices(:,1),mesh.vertices(:,2),mesh.vertices(:,3),'fac
 if ~isempty(G)
   G(logical(eye(size(G)))) = 0;
 
-  if exist('thresh','var') && ~isempty(thresh)
-    Gt = G(~tril(ones(size(G))));
-    G(abs(G)<prctile(abs(Gt),thresh))=nan;
+  if islogical(G)
+      G = single(G);
+      G(G==0) = nan;
+  else
+      if exist('thresh','var') && ~isempty(thresh)
+          Gt = G(~tril(ones(size(G))));
+          G(abs(G)<prctile(abs(Gt),thresh))=nan;
+      end
   end
   
   if isempty(Glims)
