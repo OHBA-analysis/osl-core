@@ -54,7 +54,7 @@ for subnum=1:length(hmm.data_files)
     S2.bc=0; 
     disp('Doing no within-trial baseline correction at the point of epoching');
 
-    Dnew_epoched = spm_eeg_epochs(S2);   
+    Dnew_epoched = spm_eeg_epochs_osl(S2);   
     
     %% get bad channels and trials from passed in D_epoched    
     if(~isempty(D_epoched) && ~isfield(Dnew_epoched, 'parcellation')),
