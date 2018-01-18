@@ -33,9 +33,9 @@ end
 
 if(size(Sc.newdata,4)==1)
     %TF    
-    D2=clone(D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,2),size(Sc.newdata,3)],0);
+    D2=clone(D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,2),size(Sc.newdata,3)],2);
 else
-    D2=clone(D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,4),size(Sc.newdata,2),size(Sc.newdata,3)],0);
+    D2=clone(D,Sc.newname,[size(Sc.newdata,1),size(Sc.newdata,4),size(Sc.newdata,2),size(Sc.newdata,3)],2);
 end
 
 D2=timeonset(D2,Sc.time(1));
@@ -88,6 +88,10 @@ elseif ~isempty(modalities)
 else
     % We are completely changing the channels, change type to LFP
     D2=D2.chantype(chanind, chantype);
+end
+
+if size(D2,3)==1
+    D2=type(D2,'continuous')
 end
 
 D2.save;
