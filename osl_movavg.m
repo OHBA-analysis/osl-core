@@ -1,6 +1,6 @@
 function [data_avg,t_avg] = osl_movavg(data,t,winsize,overlap,resamp,robust)
 % Moving window averaging
-% [data_avg,t_avg] = OSL_MOVAVG(data,t,winsize,overlap)
+% [data_avg,t_avg] = OSL_MOVAVG(data,t,winsize,overlap,resamp,robust)
 % -----------------------------------------------------------------
 % data    - data to average
 % t       - vector of sample times

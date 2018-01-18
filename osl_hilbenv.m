@@ -9,6 +9,9 @@ function Denv = osl_hilbenv(S)
 %                 i.e. {[f1_low f1_high],[f2_low f2_high]}
 % S.logtrans  - apply log transform [0/1] (default 0)
 % S.demean    - remove mean from envelope (default 0)
+% S.downsample- downsample envelope (default 1)
+% S.remove_edge_effects- remove_edge_effects (default 1)
+
 %
 % Adam Baker 2014
 
@@ -31,7 +34,8 @@ S.prefix = ft_getopt(S,'prefix','h');
 
 S.logtrans = ft_getopt(S,'logtrans',0);
 S.demean   = ft_getopt(S,'demean',0);
-
+S.downsample = ft_getopt(S,'downsample',1);
+S.remove_edge_effects = ft_getopt(S,'remove_edge_effects',1);
 
 S.winsize = ft_getopt(S,'winsize');
 if isempty(S.winsize)
@@ -45,7 +49,7 @@ if ~iscell(S.freqbands)
 end
   
 % Set up new MEEG object to hold downsampled envelope
-[~,t_env] = hilbenv(D.time,D.time,round(S.winsize*D.fsample));
+[~,t_env] = hilbenv(D.time,D.time,round(S.winsize*D.fsample),S.downsample,S.remove_edge_effects);
 
 if numel(S.freqbands) < 2
     % Create Nchannels x Nsamples x Ntrials object
@@ -57,7 +61,12 @@ else
     Denv = timeonset(Denv,t_env(1));
 end
 
-fsampleNew = 1./(diff(t_env([1,end]))/length(t_env));
+if S.downsample
+    fsampleNew = 1./(diff(t_env([1,end]))/length(t_env));
+else
+    fsampleNew = D.fsample;
+end
+
 Denv = fsample(Denv,fsampleNew);
 
 % Loop over blocks and voxels and apply envelope averaging
@@ -73,7 +82,7 @@ for iblk = 1:size(blks,1)
             % Filter and compute envelope for each band
             for f = 1:numel(S.freqbands)
                 dat_blk = bandpass(D(blks(iblk,1):blks(iblk,2),:,trl),S.freqbands{f},D.fsample);
-                env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample));
+                env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample),S.downsample,S.remove_edge_effects);
                 env = permute(env,[1 3 2]);
                 if S.logtrans
                     env = log10(env);
@@ -86,7 +95,7 @@ for iblk = 1:size(blks,1)
         else
             % Compute wideband envelope
             dat_blk = D(blks(iblk,1):blks(iblk,2),:,trl); 
-            env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample));
+            env = hilbenv(dat_blk,D.time,round(S.winsize*D.fsample),S.downsample,S.remove_edge_effects);
             if S.logtrans
                 env = log10(env);
             end
