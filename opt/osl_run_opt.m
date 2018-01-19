@@ -567,6 +567,8 @@ for subi=1:length(opt.sessions_to_do),
         %% Mark bad segments
         if(opt.bad_segments.do)
 
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
+            
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  MARK BAD SEGMENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             D_continuous=spm_eeg_load(spm_file);
             S = struct();
