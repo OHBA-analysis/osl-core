@@ -451,7 +451,7 @@ Sc.D=D;
 Sc.newchandata=[hmm_class; hmm_class_probs];
 Sc.newchanlabels{1}='Class';
 Sc.newchantype{1}='CLASS';
-
+Sc.newname=D.fullfile;
 for kk=1:NK,
     Sc.newchanlabels{kk+1}=['ClassPr' num2str(kk)];
     Sc.newchantype{kk+1}='CLASSPR';
@@ -459,7 +459,7 @@ end;
 
 [ Dnew ] = osl_concat_spm_eeg_chans( Sc );
 
-D.delete;
+%D.delete;
 D=Dnew;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
