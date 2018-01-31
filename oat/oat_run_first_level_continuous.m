@@ -258,12 +258,13 @@ for subi_todo=1:length(first_level.sessions_to_do),
         %% setup time and frequency windows/indices for using later
 
         % setup result time dimension        
-        %        tf_time_indices_into_D_times = find( ( out.tf_times >= first_level.time_range(1) ) & ( out.tf_times <= first_level.time_range(2) ));
+        tf_time_indices_into_D_times = find( ( out.tf_times >= first_level.time_range(1) ) & ( out.tf_times <= first_level.time_range(2) ));
         
-        tf_time_indices_into_D_times = false(1,numel(out.tf_times));
-        for i=1:size(first_level.time_range,1)
-             tf_time_indices_into_D_times(( out.tf_times >= first_level.time_range(i,1) ) & ( out.tf_times < first_level.time_range(i,2) )) = true;
-        end
+%         tf_time_indices_into_D_times = false(1,numel(out.tf_times));
+%         for i=1:size(first_level.time_range,1)
+%              tf_time_indices_into_D_times(( out.tf_times >= first_level.time_range(i,1) ) & ( out.tf_times < first_level.time_range(i,2) )) = true;
+%         end
+
         %tf_time_indices_into_D_times=find(tf_time_indices_into_D_times);
         tf_out_times=out.tf_times(tf_time_indices_into_D_times);        
         
