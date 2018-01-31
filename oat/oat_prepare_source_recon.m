@@ -275,7 +275,7 @@ elseif ~strcmp(source_recon_sess.normalise_method,'none'),
         report=osl_report_print_figs(report);
     end;
 
-    D.delete;
+%    D.delete;
     D=Dnew;
 else
     chanind=indchantype(D,modality_meeg,'GOOD');
