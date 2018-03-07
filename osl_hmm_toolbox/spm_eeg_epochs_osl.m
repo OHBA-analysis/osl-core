@@ -118,9 +118,9 @@ elseif isfield(S, 'trl')
         end
     end
 elseif isfield(S, 'trialength')
-    %trl = 1:round(1e-3*S.trialength*D.fsample):D.nsamples;
-    trl = 0:round(1e-3*S.trialength*D.fsample):D.nsamples; %MWW
-    trl = [trl(1:(end-1))' trl(2:end)' 0*trl(2:end)'];
+    trl = 0:round(1e-3*S.trialength*D.fsample):D.nsamples;
+    %trl = [trl(1:(end-1))' trl(2:end)' 0*trl(2:end)'];
+    trl = [1+trl(1:(end-1))' trl(2:end)' 0*trl(2:end)']; %MWW
     
     if isfield(S, 'conditionlabels')
         conditionlabels = S.conditionlabels;
