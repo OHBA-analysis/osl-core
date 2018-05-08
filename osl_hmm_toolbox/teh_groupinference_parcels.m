@@ -453,7 +453,7 @@ if todo.output
                 statp  = statp + tmp;
                 hmm.statemap_parcel_vectors_persubj(subnum,:,:)=tmp;
                 
-                goodsamples = good_samples(D);
+                goodsamples = good_samples(Dp);
 
                 sp_full = zeros(1,Dp.nsamples*Dp.ntrials);
                 sp_full(goodsamples) = hmm_sub.statepath;
