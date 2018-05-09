@@ -108,6 +108,9 @@ for subi=1:length(current_level.subjects_to_do),
                 current_level_results.mask_indices_in_lower_level = 1:(size(lower_level_results.D_sensor_data,1) - 1);
                 current_level_results.mni_coords = lower_level_results.D_sensor_data.parcellation.mni_coords;
 
+                % need to also pass D through to group leve results so that
+                % parcellation info is available
+                current_level_results.D_sensor_data=lower_level_results.D_sensor_data;
             else
                 
                 current_level_results.gridstep=lower_level_results.gridstep;
@@ -531,7 +534,10 @@ end;
 
 %%%%%%%%%%%%%%%%%%%
 %% create report
-current_level_results.report = oat_group_level_stats_report(oat,current_level_results);
+try
+    current_level_results.report = oat_group_level_stats_report(oat,current_level_results);
+catch   
+end
 
 %%%%%%%%%%%%%%%%%%%
 %% save results to file
