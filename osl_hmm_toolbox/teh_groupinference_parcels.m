@@ -371,7 +371,15 @@ if todo.hmm
     end    
     
     % call hmmmar
-    [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options);
+    
+    switch hmmoptions.dynamic_model_type
+        case 'hmm'
+            [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options);
+        case 'vbrt'
+            options.workingdir=hmmdir;
+            hmm = vbrt_infer_dynamic_model(X,options);
+    end    
+        
     
     % save('/Users/woolrich/for_diego','X','hmmT','options'); !scp /Users/woolrich/for_diego.mat $WS12HD
     % Error running [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options); You can get the data from: hbaws12.ohba.ox.ac.uk:/home/mwoolrich/homedir/for_diego.mat
