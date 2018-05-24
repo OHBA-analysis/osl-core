@@ -39,9 +39,6 @@ templateFile = fullfile(templateDir, 'new250_eo_session1');
 % save simulated object
 saveFile = '/Users/woolrich/tmpsim/simulatedMEGdata';
 
-% allow for saving the source recon output
-saveReconFile = '/Users/gilesc/tmpsim/sourceReconResults.mat';
-
 % allow for loading back in the source recon output, for multiple re-runs
 % BFresults = load(saveReconFile, 'ReconResultsOut');
 % BFresults = BFresults.ReconResultsOut;
