@@ -1,8 +1,5 @@
-function [Dsimulated, ...
-          SimulationSpace, ...
-          ReconResultsOut, ...
-          beamformedOil, ...
-          DebugResults,data] = osl_simulate_MEG_data(varargin)
+function [Dsimulated, dipoleSignals] = osl_simulate_MEG_data(varargin)
+
 %OSL_SIMULATE_MEG_DATA simulates MEG sensor data
 %
 % Simulates MEG data using an exisiting MEEG object as template. Allows
@@ -114,9 +111,12 @@ function [Dsimulated, ...
 %                           will also be used to save any debugging plots. 
 %
 %    'rndSeed'            - Seed for the random number generator [random]
+%    'modalities'         - Sensor modalities to use (e.g. MEG,MEGPLANAR, or both) 
+%                           (default MEGPLANAR for Neuromag, MEG for CTF)
+
 %
 % Example:
-% [Dsimulated, SimulationSpace, ReconResults, bfOil, DebugResults] = ...
+% [Dsimulated] = ...
 %     OSL_SIMULATE_MEG_DATA([  26 -94 -8; ...   % R V1 Visual cortex
 %                            -22 -94 -8]; ...  % L V1 visual cortex
 %                          signals, ...
@@ -128,41 +128,6 @@ function [Dsimulated, ...
 %                          'dipoleOrientations',  []);
 %
 % See also: MEEG, FT_DIPOLESIMULATION. 
-
-
-% ADDITIONAL SETTINGS - NOT IN HELP TEXT
-%
-% [DSIMULATED, SIMULATIONSPACE, RECONRESULTSOUT, BEAMFORMEDOIL] = 
-%                          OSL_SIMULATE_MEG_DATA(..., 'runBeamformer', TRUE)
-%   runs DSIMULATED through the oil source reconstruction pipeline,
-%   performing source reconstruction and enveloping. The resulting oil
-%   structure is returned in BEAMFORMEDOIL. 
-%
-% [DSIMULATED, SIMULATIONSPACE, RECONRESULTSOUT, BEAMFORMEDOIL, DEBUGRESULTS] = 
-%                              OSL_SIMULATE_MEG_DATA(..., 'debugMode', TRUE)
-%   runs the simulation in debug mode. 
-%   If beamforming is being run on the simulated data, a simple LCMV 
-%   beamformer will also be run for comparison. The dipole magnitudes and 
-%   neural activity index over the simulation grid are returned in 
-%   DEBUGRESULTS. 
-%   Further, plots will be made of power over each channel in a topoplot, a
-%   view of the simulated channel data is generated, a 3D plot of the brain
-%   grid, dipole locations and sensor locations is produced, a couple of 
-%   lead fields are displayed, the fit between simulated and reconstructed 
-%   signals is assessed and the neural activity index over the simulation 
-%   grid returned by both the LCMV beamformer and the oil beamformer are 
-%   saved as nifti files and compared. 
-%
-% [...] = OSL_SIMULATE_MEG_DATA(..., 'Parameter', 'Value') further options:
-%    'matchTemplateExactly' - All channels in the template are reproduced
-%                             in the simulated object, rather than 
-%                             stripping out channels not holding simulated 
-%                             data. [false]
-%                             This can be useful when debugging. 
-%
-%    'sourceReconSaveFile'  - file name for saving the source 
-%                             reconstruction results structure 
-%                             RECONRESULTSOUT to disc. 
 
 
 % FUNCTION ALGORITHM:
@@ -240,13 +205,6 @@ function [Dsimulated, ...
 %	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%	$LastChangedBy: GilesColclough $
-%	$Revision: 317 $
-%	$LastChangedDate: 2014-02-19 16:11:13 +0000 (Wed, 19 Feb 2014) $
-%	Contact: giles.colclough 'at' magd.ox.ac.uk
-%	Originally written on: GLNXA64 by Giles Colclough, 25-Oct-2013 12:43:45
-
-
 %% Parse inputs
 InputParams = MEGsim.assign_inputs(varargin{:});
 
@@ -288,8 +246,27 @@ else % user-specified channels
     P.nChannels = length(P.channels);
 end
 
+% Check Modality Specification:
+if isempty(P.modalities)
+    if any(strcmp(unique(Dtemplate.chantype),'MEGPLANAR'))
+        default_modality = {'MEGPLANAR'};
+    else
+        default_modality = {'MEG'};
+    end
+    P.modalities = default_modality;
+elseif ischar(P.modalities)
+    P.modalities = {P.modalities};
+end
+
 % copy across with user-desired changes to fiducials & sensors etc.
 Dtmp = MEGsim.create_new_meeg_object(Dtemplate, tmpFile, P);
+
+% make sure we are in sensor space
+Dtmp=montage(Dtmp,'switch', 0);
+
+% clear any bad channels
+Dtmp = badchannels(Dtmp, 1:Dtmp.nchannels, zeros(Dtmp.nchannels,1));
+Dtmp.save;
 
 % cleanup at function return
 cleanUp = onCleanup(@() delete(Dtmp));
@@ -306,7 +283,7 @@ if isBFprovided,
     % user-suplied beamforming results - included to speed up re-runs
     ReconResults = P.beamformerResults;
 else
-    % we will use oil source recon, using user-input parameters, to extract
+    % we will use osl source recon, using user-input parameters, to extract
     % the simulation grid and head model. 
     % 
     % Doing it this way ensures that dipoles are simlated using exactly the
@@ -316,18 +293,23 @@ else
              'for simulation. \n\n']);
 
     % run reconstruction on empty meeg object
-    doEnveloping        = false;
-    oil                 = MEGsim.setup_source_recon_params_for_blank_recon(P);
-    [ReconResults, oil] = MEGsim.do_source_recon_using_osl(oil, tmpFile, ...
-                                                    doEnveloping);
+
+    % Beamform:
+    S                   = [];
+    S.modalities        = P.modalities;
+    S.timespan          = [0 Inf];
+    %S.pca_order         = 250;
+    S.type              = 'Scalar';
+    S.inverse_method    = 'beamform';
+    S.prefix            = '';
+    S.dirname           = saveDir;
+    mni_coords          = osl_mnimask2mnicoords(fullfile(osldir,['/std_masks/MNI152_T1_' num2str(P.spatialRes) 'mm_brain.nii.gz']));
+    osl_inverse_model(tmpFile,mni_coords,S);
+
+    D=spm_eeg_load(tmpFile);
     
-    % remove directory
-    [status, res] = system(['rm -r ' oil.source_recon.dirname]);
-    if status,
-        error([mfilename ':DirCleanupFail'], ...
-              ['Failed to remove source_recon directory. Message: \n ', ...
-               res '\n']);
-    end%if
+    ReconResults.BF=load(fullfile(saveDir,'BF.mat'));
+
 end%if BF_provided
 
 % extract co-ordinates and relevant data
@@ -421,139 +403,8 @@ assert(~any(strncmpi('MEG', unusedChanTypes, 3)), ...
        ['There are some data channels for which data have ', ...
         'not been simulated. \n']);
 
-%% Run beamformer on simulated data?
-if doBeamformer,    
-    fprintf('Beamforming the simulated data. \n\n');
-    
-    % use mostly the same settings from above - taken care of in this
-    % subfunction
-    oil = MEGsim.setup_source_recon_params(P);
-    
-    % Run the source reconstruction (yes, again!), and envelope
-    doEnveloping = true;
-    [simDataReconResults, beamformedOil] = ...
-        MEGsim.do_source_recon_using_osl(oil, outFileName, doEnveloping);
-        
-    
-    % make nifti of neural activity index (NAI)
-    sourceResults    = MEGsim.AB_get_source_timecourses(simDataReconResults, ...
-                                                        'norecon');
-    sourceVariance   = cell2mat(sourceResults.variance);
-    
-    varNiftiFileName = fullfile(saveDir, 'OILbeamformedNAI');
-    nii.quicksave(sourceVariance, varNiftiFileName, P.spatialRes);
-    
-else
-    beamformedOil       = [];
-    simDataReconResults = [];
-end%if
-
-%% Run an LCMV beamformer for comparison
-if doBeamformer && DEBUG,
-    fprintf('  DEBUG: beamforming using LCMV. \n\n');
-    
-    NAIniftiFileName = fullfile(saveDir, 'LCMVbeamformedNAI');
-    % just use first trial. It's easier. We're debugging here.
-    iTrial = 1;
-    
-    % pull meg data from simulated object
-    meegInd = MEGsim.megchannels(Dsimulated);
-    Y       = Dsimulated(meegInd, :, iTrial);
-    
-    % zero phase iir filter to extract band of interest
-    fBand       = beamformedOil.source_recon.freq_range;
-    filterOrder = 5;
-    filterType  = 'but'; % butterworth
-    Y = ft_preproc_bandpassfilter(Y, ...
-                                  P.fSample, ...
-                                  fBand, ...
-                                  filterOrder, ...
-                                  filterType);
-    % demean
-    Y = bsxfun(@minus, Y, mean(Y,2));
-    
-    % beamform
-    [LCMVdipoleMag, LCMVNAI] = MEGsim.LCMV_beamformer(Y, ...
-                                                      leadFields, ...
-                                                      P.spatialRes, ...
-                                                      NAIniftiFileName, ...
-                                                      true);
-else
-    LCMVdipoleMag = [];
-    LCMVNAI       = [];
-end%if
-
-%% Make DEBUGGING PLOTS
-if DEBUG,
-    % we've put these in a subfunction
-    MEGsim.make_debugging_plots(Dsimulated, ...
-                                varNiftiFileName, ...
-                                dipLocNiftiFileName, ...
-                                beamformedOil, ...
-                                ReconResults, ...
-                                P, ...
-                                brainCoords, ...
-                                simulatedDipolePositions, ...
-                                NAIniftiFileName, ...
-                                simDataReconResults, ...
-                                iTrial, ...
-                                dipoleSignals, ...
-                                LCMVdipoleMag, ...
-                                dipMeshInd, ...
-                                leadFields, ...
-                                doBeamformer);
-end%if DEBUG
-%% Tidy output
-              
-% copy ReconResults from blank source recon into output, purely to
-% allow easier re-runs of function.
-if doBeamformer
-    ReconResultsOut = simDataReconResults;
-else
-    ReconResultsOut = ReconResults;
-end%if
-
-% save BF results
-if ~isempty(reconResFileName),
-    if exist(fileparts(reconResFileName), 'dir');
-        save(reconResFileName, 'ReconResultsOut', '-mat');
-    else
-        warning([mfilename ':ReconResDirDoesNotExist'], ...
-                ['The directory specified for saving the source recon ', ...
-                 'results does not exist. \n', ...
-                 'The structure has not been saved. \n']);
-    end%if
-end
-
-% transform mesh and dipole positions to MNI space
-SimulationSpace.MNIbrainMesh = spm_eeg_inv_transform_points(...
-                                   ReconResults.BF.data.transforms.toMNI, ...
-                                   brainCoords);
-                               
-SimulationSpace.dipoleIndicesOnMesh   = dipMeshInd;
-SimulationSpace.simulatedMNIdipolePos = spm_eeg_inv_transform_points(...
-                           ReconResults.BF.data.transforms.toMNI, ...
-                           simulatedDipolePositions);
-
-% transform dipole orientations to MNI space
-if isempty(InputParams.dipoleOrientations),
-    MNIdipoleOrientations = MEGsim.transform_dipole_orientation( ...
-                                 ReconResults.BF.data.transforms.toMNI, ...
-                                 dipoleOrientations, ...
-                                 simulatedDipolePositions, ...
-                                 P.spatialRes / 2.0);
-else % already in MNI space
-    MNIdipoleOrientations = InputParams.dipoleOrientations;
-end%if 
-
-SimulationSpace.MNIdipoleOrientations = MNIdipoleOrientations;
-
-% output debugging options
-if nargout > 4,
-    DebugResults.LCMVdipoleMag           = LCMVdipoleMag;
-    DebugResults.LCMVNeuralActivityIndex = LCMVNAI;
-end%if  
-
 fprintf('\nSIMULATE_MEG_DATA: Simulation complete. \n\n');
+
 end%OSL_simulate_MEG_data
+
 % [EOF]

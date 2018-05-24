@@ -169,7 +169,7 @@ for iTrial = 1:nTrials,
                           (dataPower / (roomNoiseSNR * roomNoisePower));
     else
         scaledRoomNoise = zeros(size(dataraw));
-    end%if using room noise        
+    end %if using room noise        
     
     % add noise
     dataraw = dataraw + chanNoise + scaledRoomNoise;

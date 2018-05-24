@@ -1,79 +1,4 @@
-function [Dtemplate, ...
-          Dsimulated, ...
-          SimulationSpace, ...
-          ReconResultsOut, ...
-          beamformedOil, ...
-          DebugResults] = osl_example_simulate_MEG_data()
-%OSL_EXAMPLE_SIMULATE_MEG_DATA
-% example use of MEG data simulation function 
-
-% Giles Colclough 2013
-
-% set dipole positions in MNI coordinates
-pos = [- 8,    66,    6  ; ... % frontal lobe
-        16,   -94,   13 ]; ... % visual cortex
-ori = [];
-
-% generate oscillatory signals for signal definition
-Fs       = 250; %Hz
-nDipoles = size(pos, 1);
-duration = 15; %s
-time     = 0:1.0/Fs:duration; % s
- 
-signalDef = get_uncorrelated_node_signals(time, Fs, nDipoles, 'oscillating');
-
-% set template and mri files
-templateDir  = '/Users/gilesc/data/faces_subject1_data/';
-templateFile = fullfile(templateDir, 'subject1_spm_meeg');
-sMRI         = fullfile(templateDir, 'structurals/struct1.nii');
-
-% save simulated object
-saveFile = '/Users/gilesc/testMegSim/simulatedMEGdata';
-
-% allow for saving the source recon output
-saveReconFile = '/Users/gilesc/testMegSim/sourceReconResults.mat';
-
-% allow for loading back in the source recon output, for multiple re-runs
-% BFresults = load(saveReconFile, 'ReconResultsOut');
-% BFresults = BFresults.ReconResultsOut;
-
-% load template
-Dtemplate = spm_eeg_load(templateFile);
-
-% load structured noise
-noiseMat = load('/Users/gilesc/OSL-Repo/osl/+MEGsim/neuromag_empty_room_noise_covariance.mat', 'emptyRoomNoiseCovariance');
-
-% simulate data
-[Dsimulated, ...
- SimulationSpace, ...
- ReconResultsOut, ...
- beamformedOil, ...
- DebugResults] = osl_simulate_MEG_data(...
-                      pos, ...
-                      signalDef, ...
-                      templateFile, ...
-                      'fSample',                      Fs, ...
-                      'spatialResolution',            12, ...  % mm
-                      'whiteSignalToNoiseRatio',      0.2, ...
-                      'structuredSignalToNoiseRatio', 0.1, ...
-                      'emptyRoomNoiseCovariance',     noiseMat.emptyRoomNoiseCovariance, ...
-                      'runBeamformer',                true, ...
-                      'fileName',                     saveFile, ...
-                      'structuralFile',               sMRI, ...
-                      'dipoleOrientations',           ori, ...
-                      'sourceReconSaveFile',          saveReconFile);
-%                       'beamformerResults',            BFresults);
-end
-
-
-
-
-
-
-
-
-
-function signals = get_uncorrelated_node_signals(time, Fs, nDipoles, method)
+function signals = gen_uncorrelated_signals(time, Fs, nDipoles, method)
 % wraps up several different methods for generating uncorrelated signals. 
 
 % generate dipole signals
@@ -100,7 +25,7 @@ switch lower(method)
     case 'oscillating'
         assert(nDipoles<=2, ...
                'Not done for more that 2 dips yet!\n');
-        freqs = [10; 25];
+        freqs = [0.2; 1];
         phase = [0; pi/4];
         for iDip = nDipoles:-1:1,
             signals(iDip, :) = cos(2*pi*freqs(iDip)*time + phase(iDip));

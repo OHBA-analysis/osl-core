@@ -165,6 +165,12 @@ else
     % Checkmeeg will fill in the rest. 
 end%if    
 
+%% copy inv 
+if isfield(Dtemplate, 'inv'),
+    D.inv = Dtemplate.inv;
+    D.save;
+end
+
 %% Set sensors
 % set properties of MEG sensors. This should correspond to the output of
 % ft_datatype_sens. The 'sensors' structure is also commonly called 'grad'. 
@@ -228,7 +234,6 @@ end%if
 if isempty(fiducials(D)) && isNewDataSpecified,
     D = fiducials(D, fiducials(Dtemplate));
 end%if
-
 
 %% Check object is ok
 if isfield(P, 'noCheckSens') && P.noCheckSens, % e.g. helpful if have used EEG box to record artefact channels. EEG channels with no EEG sens information will cause errors in checkmeeg. 

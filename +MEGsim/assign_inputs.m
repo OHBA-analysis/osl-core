@@ -145,6 +145,8 @@ addParamValue(Inputs, 'beamformerResults', blankDef, ...
               @(x) isstruct(x) || isempty(x)); % BF structure from running source recon
 addParamValue(Inputs, 'sourceReconSaveFile', blankDef, ...
               @(x) ischar(x) || isempty(x));   % file to save BF results to
+addParamValue(Inputs, 'modalities', blankDef, ...
+              @(x) ischar(x) || isempty(x));   % 
           
 addParamValue(Inputs, 'structuralFile', '', isNiftiFcn)
           
@@ -299,5 +301,6 @@ out.reconResFileName    = Inputs.Results.sourceReconSaveFile;
 out.DEBUG               = Inputs.Results.debugMode;
 out.matchAllChannels    = Inputs.Results.matchTemplateExactly;
 out.rndSeed             = Inputs.Results.randomNumberSeed;
+out.modalities             = Inputs.Results.modalities;
 end%assign_inputs
 % [EOF]
