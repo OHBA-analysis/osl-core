@@ -1,7 +1,6 @@
 function [ results ] = vbrt_infer_dynamic_model( X,options )
 
 % [ results ] = vbrt_infer_dynamic_model( X,T,options )
-% 
 
     results = [];
     
@@ -14,18 +13,21 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
         save(fname, 'data');
     end
     
-    % call python from matlab
-    python_cmd=['setup_tools.setup_dictionary(\"' options.workingdir '\", Q=' num2str(size(data,2)) ', ndicts=' num2str(size(data,2)) ', use_off_diags=False, use_greens_fns=False)'];
-    python_cmd=['examples'];
+    % call python from matlab   
     
-    [~,pyversion_old]=pyversion();
-    
-    pyversion('/Users/woolrich/anaconda/bin/python');
+    %[~,pyversion_old]=pyversion();
+    %pyversion('/Users/woolrich/anaconda/bin/python');
     
     conda.setenv('tensorflow')
     
+    %%%%%%%
+    % make the calls
+    python_cmd=['setup_tools.setup_dictionary(\"' options.workingdir '\", Q=' num2str(size(data,2)) ', ndicts=' num2str(size(data,2)) ', use_off_diags=False, use_greens_fns=False)'];  
     runcmd(['python /Users/woolrich/Dropbox/vols_scripts/dynamic_network_recon/dynamic_network_recon/call_python.py --cmd="' python_cmd '"'])
     
-    pyversion(pyversion_old);
+    
+    %%%%%%%
+    
+    %pyversion(pyversion_old);
 end
 
