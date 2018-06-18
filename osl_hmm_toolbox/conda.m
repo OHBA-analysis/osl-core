@@ -25,7 +25,7 @@ methods (Static)
 
 	function varargout = getenv()
 		conda.addBaseCondaPath;
-		[~,envs] = system(['conda env list']);
+		[~,envs] = system(['/Users/woolrich/anaconda/bin/conda env list']);
 		envs = strsplit(envs,'\n');
 
 		p = strsplit(getenv('PATH'),pathsep);
