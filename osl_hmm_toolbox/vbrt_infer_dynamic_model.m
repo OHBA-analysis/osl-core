@@ -25,19 +25,19 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     %[~,pyversion_old]=pyversion();
     %pyversion('/Users/woolrich/anaconda/bin/python');
     
-    envset='tensorflow14';
+    envset='tensorflow';
     
     disp(['Setting conda env: ' envset]);
-    conda.setenv('tensorflow14')
+    conda.setenv(envset)
     
     %%%%%%%
     % make the calls
     %python_cmd=['setup_tools.setup_dictionary(\"' options.workingdir '\", Q=' num2str(size(data,2)) ', ndicts=' num2str(size(data,2)) ', use_off_diags=False, use_greens_fns=False)'];  
     
     options.vbrt=[];
-    options.vbrt.n_training=400;
+    options.vbrt.n_training=100;
     options.vbrt.n_portions=10;
-    options.vbrt.subportion_length=400;
+    options.vbrt.subportion_length=20;
     options.vbrt.npcs=10;
     options.vbrt.nfactors=options.K;
     options.vbrt.model_mode='\"lstm\"';
@@ -59,10 +59,24 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
      
     disp('Calling cmd:');
     disp(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"']);
+            
+    runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"'])   
     
-    runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"'])
+    python_cmd=['plot_tools.plot_results(\"' ...
+        options.workingdir '\", \"' options.workingdir '\"' ...
+        ];
+        
+    runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"'])   
     
+    hmm=[];
+    hmm.gamma=[];
     
+    for ii=1:length(fnames)
+        tmp=load([options.workingdir '/nonlin_alpha_mean_store' num2str(ii-1) ]);
+        
+        hmm.gamma=[hmm.gamma; tmp.nonlin_alpha_mean_store]
+    end
+        
     %%%%%%%
     
     %pyversion(pyversion_old);
