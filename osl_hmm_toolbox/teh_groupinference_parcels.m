@@ -149,6 +149,7 @@ try whiten        = options.prepare.whiten;        catch, whiten         = 1;   
 try normalisation = options.prepare.normalisation; catch, normalisation  = 'global'; end
 try savePCmaps    = options.prepare.savePCmaps;    catch, savePCmaps     = 0;        end
 logtrans=0;
+try max_ntpts    = options.prepare.max_ntpts;    catch, max_ntpts     = -1;        end
 
 embed=[];
 try embed.do      = options.prepare.embed.do; catch, embed.do  = 0; end
@@ -224,7 +225,12 @@ if todo.prepare
         embed.tres=1/D.fsample;
 
         data = osl_teh_prepare_data(D,normalisation,logtrans,f,embed);
-
+        
+        if max_ntpts>0
+            ntpts=min(max_ntpts,size(data,2));
+            data = data(:,1:ntpts);
+        end
+        
         % compute covariance (assuming zero mean data then global (over
         % all sessions) covariance matrix is:
         % (N1*C1 + N2*C2 + ... + Nk*Ck) / (N1 + N2 + ... + Nk)
@@ -232,7 +238,7 @@ if todo.prepare
 
         % keep track of number of samples
         Csamples = Csamples + size(data,2);
-
+        
         dat_concat = [dat_concat, data];
         subj_inds  = [subj_inds, subnum*ones(1,size(data,2))];
         
@@ -264,6 +270,7 @@ if todo.prepare
     hmmdata = [hmmdata (M * dat_concat)'];
     %MixingMatrix = blkdiag(MixingMatrix,M);
     
+    
     % Apply PC dim to each subj separately 
     clear X;
     for subnum = 1:length(data_files)
@@ -273,8 +280,14 @@ if todo.prepare
         embed.tres=1/D.fsample;
 
         [data, lags] = osl_teh_prepare_data(D,normalisation,logtrans,f,embed);
+        
+        if max_ntpts>0
+            ntpts=min(max_ntpts,size(data,2));
+            data = data(:,1:ntpts);
+        end
     
         X{subnum}=(M * data)';          
+        
     end
     
     if 0
@@ -456,6 +469,13 @@ if todo.output
                 Dp = spm_eeg_load(data_files{subnum});
                 datap = osl_teh_prepare_data(Dp,normalisation,logtrans,f,embed);
                 
+                if max_ntpts>0
+                    ntpts=min(max_ntpts,size(datap,2));
+                    datap = datap(:,1:ntpts);
+                else
+                    max_ntpts=size(datap,2);
+                end
+
                 tmp=osl_hmm_statemaps(hmm_sub,datap,true,output_method,state_assignment);            
 
                 statp  = statp + tmp;
@@ -464,7 +484,7 @@ if todo.output
                 goodsamples = good_samples(Dp);
 
                 sp_full = zeros(1,Dp.nsamples*Dp.ntrials);
-                sp_full(goodsamples) = hmm_sub.statepath;
+                sp_full(goodsamples(1:max_ntpts)) = hmm_sub.statepath;
                 epoched_statepath_sub{subnum} = reshape(sp_full,[1,Dp.nsamples,Dp.ntrials]);
                 
                 if Dp.ntrials>1
