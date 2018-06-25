@@ -126,9 +126,10 @@ if save_images
     clustimg_fname = [dirname '/clust4d.nii.gz'];
     pVimg_fname = [dirname '/clust4d_corrp.nii.gz'];
     
+    xform = [-gridstep 0 0 90; 0 gridstep 0 -126; 0 0 gridstep -72; 0 0 0 1]; 
     tres=1;
-    nii.save(clustimg,[gridstep gridstep gridstep tres],[],clustimg_fname);
-    nii.save(pVimg,[gridstep gridstep gridstep tres],[],pVimg_fname);
+    nii.save(clustimg,[gridstep gridstep gridstep tres],xform,clustimg_fname);
+    nii.save(pVimg,[gridstep gridstep gridstep tres],xform,pVimg_fname);
     
 end
 
