@@ -74,7 +74,7 @@ for r = 1:nP/100;
         permdir = sprintf('%s/%s/%04.0f',dirname,subdirname,t);
         for p = 1:100;
             if fsl_version_4p1
-                fprintf(fid,['cluster -i %s/stats%04.0f_rawstat_tstat1_%05.0f -t %1.2f -o %s/cindex%05.0f; '],...
+                fprintf(fid,['cluster -i %s/stats%04.0f_clustere_tstat1_perm%05.0f -t %1.2f -o %s/cindex%05.0f; '],... %Lars
                     permdir,t,p,thresh,permdir,(r-1)*100+p); % -c means cluster-based thresholding
             else
                 fprintf(fid,['cluster -i %s/stats%04.0f_vox_tstat1_perm%05.0f -t %1.2f -o %s/cindex%05.0f; '],...
@@ -92,7 +92,7 @@ for r = 1:nP/100;
         fprintf(fid,'rm ');
         for p = 1:100
             if fsl_version_4p1
-                fprintf(fid,'%s/stats%04.0f_rawstat_tstat1_%05.0f.nii.gz ',permdir,t,p);
+                fprintf(fid,'%s/stats%04.0f_clustere_tstat1_perm%05.0f.nii.gz ',permdir,t,p);
             else
                 fprintf(fid,'%s/stats%04.0f_*_tstat1_perm%05.0f.nii.gz ',permdir,t,p);
             end;
@@ -129,13 +129,15 @@ for r = 1:nP/fsl_sub_rsize;
     fprintf(fid,['addpath(''%s'');\n addpath(''%s/etc/matlab'');\n' ...
         'S.dirname = ''%s''; S.subdirname = ''%s''; S.distfile_save = ''%s''; S.np = %0.0f:%0.0f;'],...
         tmp(1:end-17),getenv('FSLDIR'),dirname,subdirname,distfile_save,(r-1)*fsl_sub_rsize+1,r*fsl_sub_rsize);
+    fprintf(fid,['addpath(''%sohba-external/ohba_utils'');'], tmp(1:end-25));
+    fprintf(fid,['addpath(''%sohba-external/nifti_tools'');'], tmp(1:end-25));
     fprintf(fid,['S.tp = ',mat2str(tp) ';']);
     fprintf(fid,['S.times = ',mat2str(times) ';']);
-    fprintf(fid,'S.save_images = 0;\n S.gridstep = %0.0f; \n cluster4d_dist(S);',gridstep);
+    fprintf(fid,'S.save_images = 1;\n S.gridstep = %0.0f; \n cluster4d_dist(S);',gridstep); 
     fclose(fid);
 
     if(~write_cluster_script),
-        fprintf(fidM,'%s -nojvm -nodisplay -nosplash -singleCompThread \\< %s \n',S.matlab_exe_name,mfile);
+        fprintf(fidM,'%s -nodisplay -nosplash -singleCompThread \\< %s \n',S.matlab_exe_name,mfile);
     else,
         fprintf(fidM,'jid4=`fsl_sub -q long.q -j $jid3 -l %s %s -nojvm -nodisplay -nosplash -singleCompThread \\< %s > %s/log_cluster4d_dist.log  2>&1` \n',lfname,S.matlab_exe_name,mfile,lfname);
     end;
@@ -166,7 +168,8 @@ fprintf(fid,['save(''' distfile_save ''', ''-struct'', ''clusterstats'');']);
 fclose(fid);
     
 if(~write_cluster_script),
-    fprintf(fidM,'%s -nojvm -nodisplay -nosplash -singleCompThread \\< %s \n',S.matlab_exe_name,mfile);
+    fprintf(fidM,'%s -nodisplay -nosplash -singleCompThread \\< %s \n',S.matlab_exe_name,mfile);
+    
 else,
     fprintf(fidM,'fsl_sub -q long.q -j $jid4 -l %s %s -nojvm -nodisplay -nosplash -singleCompThread \\< %s > %s/log_cluster4d_dist.log  2>&1 \n',lfname,S.matlab_exe_name,mfile,lfname);
 end;
