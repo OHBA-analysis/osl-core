@@ -224,6 +224,8 @@ for coni=1:length(S.first_level_copes_to_do),
             Sb.matlab_exe_name=S.matlab_exe_name;
             gstats.clusterstats{con,gcon}=cluster4d_batch(Sb);
             
+            gstats.dir=Sb.dirname;
+            
             disp('Saving cluster stats.');
             
             oat_save_results(S.oat,gstats);
