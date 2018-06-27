@@ -271,6 +271,6 @@ end;
 report=osl_report_write(report);
 disp(['View first level report at:']);
 disp([report.html_fname]);
-
+close all
 end
 
