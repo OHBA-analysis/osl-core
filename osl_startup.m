@@ -18,9 +18,11 @@ function osl_startup( osl_root )
         osl_shutdown();
     end
     setenv('OSLDIR',osl_root);
+    fprintf(1,'[OSL] Starting up from folder: %s\n',getenv('OSLDIR'));
 
     % Check for manually specified OSLCONF, otherwise set default
     setenv('OSLCONF', find_oslconf() );
+    fprintf(1,'[OSL] Using configuration file: %s\n',getenv('OSLCONF'));
 
     % Save current path
     % JH: use separate file for path backup

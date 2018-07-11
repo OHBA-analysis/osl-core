@@ -30,6 +30,7 @@ function osl_shutdown
 
 	% Done - clear OSLDIR
 	setenv('OSLDIR');
+	fprintf(1,'[OSL] Cleaned up the path. Bye now!\n');
 
 end
 
