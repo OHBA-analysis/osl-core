@@ -2,19 +2,32 @@ function osl_startup( osl_root )
     % Initialize OSL
     % osl_root is the folder containing 'osl-core'
     
+    osl_core = fileparts(mfilename('fullpath')); % folder where this script is
     if nargin < 1 || isempty(osl_root) 
-        f = fileparts(mfilename('fullpath'));
-        osl_root = fileparts(f);
+        osl_root = fileparts(osl_core);
+    else
+        osl_core = fullfile(osl_root,'osl-core');
     end
     
-    if ~exist(osl_root,'dir')
-        error(sprintf('Specified OSL directory does not exist: %s',osl_root));
+    assert( isdir(osl_root), 'Specified OSL directory does not exist: %s', osl_root );
+    assert( isdir(osl_core), 'Could not find OSL core directory: %s', osl_core );
+
+    % Check that OSL hasn't already started
+    if ~isempty(getenv('OSLDIR'))
+        warning('Found OSLDIR environment variable; shutting down before starting up again...');
+        osl_shutdown();
+    end
+    setenv('OSLDIR',osl_root);
+
+    % Check for manually specified OSLCONF, otherwise set default
+    if isempty(getenv('OSLCONF'))
+        setenv('OSLCONF',fullfile(osl_core,'osl.conf') );
     end
 
-    % Back up original path
-    path_backup = path;
-
-    setenv('OSLDIR',osl_root)
+    % Save current path
+    % JH: use separate file for path backup
+    % JH: DO NOT move this above
+    oldpaths = backup_path();
 
     % does no path-changing if running in deployed mode (gw '13).
     if ~isdeployed 
@@ -22,25 +35,26 @@ function osl_startup( osl_root )
         % Check and remove toolboxes that are supplied internally as part of OSL
         % TODO - add ROInets etc. to this list
         checklist={'fieldtrip', 'spm', 'osl', 'mne', 'netlab', 'fsl', 'fmt'};
-        oldpaths = strsplit(path,pathsep);
         restoredefaultpath;
 
         % If anything goes wrong, osl_startup.m should still be left on the path
-        addpath(fullfile(osl_root,'osl-core'))
-        addpath(fullfile(osl_root,'osl-core','util'))
-        addpath(fullfile(osl_root,'osl-core','util','jh'))
+        addpath(osl_core);
+        addpath(fullfile(osl_core,'util'));
+        addpath(fullfile(osl_core,'util','jh'));
 
+        % add old paths back, as long as they don't conflict with internal dependencies
+        mpath = matlabroot;
         for j = 1:length(oldpaths)
-            if strfind(oldpaths{j},matlabroot)
-                continue
+            % skip matlab paths
+            if ~isempty(strfind(oldpaths{j},mpath))
+                continue; 
+            end
+            % if none of the words in the checklist is found in the current token, add old path back
+            if all(cellfun( @(x) isempty(strfind(oldpaths{j},x)), checklist ))
+                addpath(oldpaths{j});
             else
-                % if none of the words in the checklist is found in the current token, add it back
-                if all(cellfun( @(x) isempty(strfind(oldpaths{j},x)), checklist ))
-                    addpath(oldpaths{j});
-                else
-                    if ~strfind(oldpaths{j},'osl') % Don't warn about OSL
-                        fprintf(2,'Found and removed conflicting toolbox: %s\n',oldpaths{j});
-                    end
+                if ~strfind(oldpaths{j},'osl') % Don't warn about OSL
+                    fprintf(2,'Found and removed conflicting toolbox: %s\n',oldpaths{j});
                 end
             end
         end
@@ -69,14 +83,9 @@ function osl_startup( osl_root )
     addpath(genpath_exclude(fullfile(osl_root,'HMM-MAR'),{'.git','.svn'}));
     addpath(fullfile(osl_root,'MEG-ROI-nets'));
 
-    % Ensure osl-core directories gets priority in path by adding it last
-    addpath(genpath_exclude(fullfile(osl_root,'osl-core'),{'.git','.svn','spm-changes'}))
-    addpath(osl_root)
-
-    % Save backed up path
-    s = osl_conf.read();
-    s.PATH_BACKUP = path_backup;
-    osl_conf.write(s);
+    % Ensure osl-core directories get priority in path by adding it last
+    addpath(genpath_exclude(osl_core,{'.git','.svn','spm-changes'}));
+    addpath(osl_root);
 
 end
 
@@ -97,6 +106,19 @@ function pathstr = genpath_exclude(pathstr,excludes)
 
     paths = paths(retain);
     pathstr = strjoin(paths,pathsep);
+
 end
 
+function p = backup_path()
 
+    p = path(); 
+
+    fname = fullfile( getenv('OSLDIR'), 'tmp_path-backup' );
+    setenv('OSL_PATH_BACKUP', fname);
+    fh = fopen(fname,'w+');
+    fwrite(fh,p);
+    fclose(fh);
+
+    p = strsplit(p,pathsep);
+
+end

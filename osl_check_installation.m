@@ -19,7 +19,7 @@ function osl_check_installation(do_log,test_fslview)
 	section = @(x) log(sprintf('\n------------------ %s ------------------',upper(x)));
 
 	if do_log
-		logfile = fullfile(pwd,'osl_debug_log.txt');
+		logfile = fullfile(osldir,'osl_debug_log.txt');
 		if exist(logfile)
 			delete(logfile);
 		end

@@ -2,11 +2,10 @@ classdef (Abstract) osl_conf
 
 	methods(Static)
 
-		function s = read(fname)
+		function s = read()
 	
-			if nargin < 1 || isempty(fname) 
-				fname = fullfile(osldir,'osl.conf');
-			end
+			fname = getenv('OSLCONF');
+			assert( ~isempty(fname), 'Missing path to config file (env:OSLCONF).' );
 
 			if ~isfile(fname)
 				s = struct();
@@ -19,8 +18,10 @@ classdef (Abstract) osl_conf
 			s = struct();
 			while l ~= -1
 		        if ~isempty(strtrim(l))
-		            [name,value] = strtok(l,'=');
-		            s.(strtrim(name)) = strtrim(value);
+					parts = strsplit(l,'=');
+					name  = strtrim(parts{1});
+					value = strjoin(parts(2:end),'=');
+		            s.(name) = strtrim(value);
 		        end
 		        l = fgetl(f);    
 			end
@@ -28,27 +29,22 @@ classdef (Abstract) osl_conf
 
 		end
 
-		function write(t,fname)
+		function write(s)
 		
 			if ~isempty(getCurrentTask)
 				fprintf('Running on parallel worker, not writing to osl.conf to avoid corrupting it\n');
 				return
 			end
 
-			if nargin < 2 || isempty(fname) 
-				fname = fullfile(osldir,'osl.conf');
-			end
+			fname = getenv('OSLCONF');
+			assert( ~isempty(fname), 'Missing path to config file (env:OSLCONF).' );
 
-			assert( isstruct(t) && isscalar(t), 'First input to osl_conf.write() must be a struct.' );
-			assert( all(structfun( @ischar, t )), 'Config values must be strings.' );
+			assert( isstruct(s) && isscalar(s), 'First input to osl_conf.write() must be a struct.' );
+			assert( all(structfun( @ischar, s )), 'Config values must be strings.' );
 			
-			% load existing config and overwrite fields
-			s = osl_conf.read(fname);
-			s = structmerge( s, t );
-			
-			f = fopen(fname,'w+');
-			structkvfun( @(k,v) fprintf(f,'%s = %s\n',k,v), s );
-			fclose(f);
+			% overwrite config file
+			txt = structkvfun( @(k,v) sprintf('%s = %s',k,v), s, false );
+			filewrite( fname, txt );
 
 		end
 
