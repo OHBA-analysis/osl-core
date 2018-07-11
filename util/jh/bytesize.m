@@ -4,9 +4,8 @@ function [bsize,scale] = bytesize( b, unit )
 % Format input bytesize as a struct with conversions to kB, MB, GB, TB and PB
 % If it is a BITsize (not BYTEsize), you can set the unit symbol to 'b' instead.
 %
-% If the input is not a scalar number, but rather:
-%   a string        We search for a variable with that name.
-%   otherwise       We compute the size of the input itself.
+% If the input is not a scalar number, then we compute the bytesize of the argument 
+% itself using whos.
 %
 % NOTE: Due to limitations of Matlab's whos function, bytesize estimation for 
 % instances of handle classes is not accurate.
@@ -22,10 +21,7 @@ function [bsize,scale] = bytesize( b, unit )
 
     if nargin < 2, unit='B'; end
 
-    if ischar(b)
-        w = whos(b);
-        b = w.bytes;
-    elseif ~isnumeric(b) || ~isscalar(b) 
+    if ~isnumeric(b) || ~isscalar(b) 
         w = whos('b');
         b = w.bytes;
     end
