@@ -20,9 +20,7 @@ function osl_startup( osl_root )
     setenv('OSLDIR',osl_root);
 
     % Check for manually specified OSLCONF, otherwise set default
-    if isempty(getenv('OSLCONF'))
-        setenv('OSLCONF',fullfile(osl_core,'osl.conf') );
-    end
+    setenv('OSLCONF', find_oslconf() );
 
     % Save current path
     % JH: use separate file for path backup
@@ -120,5 +118,27 @@ function p = backup_path()
     fclose(fh);
 
     p = strsplit(p,pathsep);
+
+end
+
+function f = find_oslconf()
+
+    p = fullfile( getenv('OSLDIR'), 'osl.conf' );
+    c = fullfile( getenv('OSLDIR'), 'osl-core', 'osl.conf' );
+
+    % manually set
+    if ~isempty(getenv('OSLCONF'))
+        f = getenv('OSLCONF');
+        return;
+    end
+
+    % in the osl-core directory
+    if exist(c,'file') == 2
+        f = c; 
+        return;
+    end 
+
+    % otherwise, default to osl/osl.conf
+    f = p;
 
 end
