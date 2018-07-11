@@ -28,7 +28,7 @@ function osl_shutdown
 
 	% It's concievable that the backup path still contains OSL directories, if osl_startup
 	% was run twice. Remove them just in case
-	p = regexp(path,':','split');
+	p = strsplit(path,pathsep);
 	for j = 1:length(p)
 		if strfind(p{j},osl_root)
 			rmpath(p{j});
