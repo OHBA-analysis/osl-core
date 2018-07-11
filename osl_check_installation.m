@@ -33,7 +33,7 @@ function osl_check_installation(do_log,test_fslview)
 	section('OSL version')
 	log(sprintf('osldir = %s',osldir))
 	version_file = fullfile(osldir,'version.txt');
-	if exist(version_file,'file')
+	if isfile(version_file)
 		type(version_file)
 	else
 		log('Version file missing')

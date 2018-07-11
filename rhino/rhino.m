@@ -104,7 +104,7 @@ else
 end
 [~,~,ext] = fileparts(sMRI);   
 assert(strcmp(ext,'.nii'),'Unexpected extension - perhaps the .gz file did not contain a .nii file?'); % We can assume after this point we are working with a .nii file
-assert(logical(exist(sMRI)),'MRI file %s not found',sMRI)
+assert(isfile(sMRI),'MRI file %s not found',sMRI)
 
 % Check Headshape Specification:
 try
@@ -229,22 +229,22 @@ assert(strcmp(deblank(smri_orient),deblank(std_orient)),'fslreorient2std seemed 
 
 
 % CHECK IF SCALP EXTRACTION ALREADY DONE
-if exist(scalp_file,'file')~=2
+if ~isfile(scalp_file)
     
     % RUN FLIRT - get the transformation to take the input image into standard MNI space
-    if exist(trans_file,'file')~=2
+    if ~isfile(trans_file)
         disp('Running FLIRT...')
         flirtCommand = runcmd('flirt -in %s -ref %s -omat %s -o %s',sMRI, std_brain, trans_file,fullfile(struct_path,[struct_name,'_MNI']));
     end
     
     % RUN BET - get the surface mesh in the scanner space
-    if exist(mesh_file,'file')~=2
+    if ~isfile(mesh_file)
         disp('Running BET...')
         runcmd('bet2 %s %s -n --mesh ',sMRI,fullfile(struct_path,struct_name)); % This generates the mesh file
     end
     
     % RUN BETSURF - get the head surfaces in scanner space, using FLIRTs trans_file as part of the extraction (see betsurf documentation)
-    if exist(bet_file,'file')~=2
+    if ~isfile(bet_file)
         disp('Running BETSURF...')
         runcmd('betsurf --t1only -o %s %s %s %s',sMRI,mesh_file,trans_file,fullfile(struct_path,struct_name))
     end
@@ -264,7 +264,7 @@ if exist(scalp_file,'file')~=2
     % READ IN VOLUME & OUTLINE
     
     % check it has been created properly
-    assert(logical(exist(bet_file, 'file')),    ...
+    assert( isfile(bet_file),    ...
            [mfilename ':BET_FILEDoesNotExist'], ...
            ['bet_file does not exist. '         ...
             'Maybe it failed to create earlier in Rhino?\n']);

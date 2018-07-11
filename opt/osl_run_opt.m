@@ -107,7 +107,7 @@ for subi=1:length(opt.sessions_to_do),
             Smf.fif_out=[opt.dirname filesep fifname_out];
             Smf.logfile=1;
 
-            if ~(exist([Smf.fif '.fif'],'file')==2),
+            if ~isfile([Smf.fif '.fif']),
                 error(['opt.raw_fif_files{' num2str(subnum) '} file ' [Smf.fif '.fif'] ' does not exist']);
             end;
 
@@ -136,7 +136,7 @@ for subi=1:length(opt.sessions_to_do),
 
             type([fif_sss '_log.txt']);
 
-            if(~exist([fif_sss '.fif'],'file'))
+            if ~isfile([fif_sss '.fif'])
                 warning([fif_sss '.fif does not exist. Can not continue with this subject.']);
                 break;
             end;
@@ -1008,7 +1008,7 @@ function  [maxfilter_failed D report]=opt_maxfilter_check_output(opt, fif_sss, s
 D=[];
 
 maxfilter_failed=false;
-if ~exist([fif_sss '.fif'],'file'),
+if ~isfile([fif_sss '.fif']),
     maxfilter_failed=true;
     return;
 end;

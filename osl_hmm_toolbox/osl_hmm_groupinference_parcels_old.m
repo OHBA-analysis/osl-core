@@ -325,7 +325,7 @@ end;
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if todo.concat || (todo.infer && ~exist(filenames.concat,'file'))
+if todo.concat || (todo.infer && ~isfile(filenames.concat))
             
     MixingMatrix = [];
     hmmdata      = [];

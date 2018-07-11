@@ -26,7 +26,7 @@ num_sessions=length(Ds);
 oat.source_recon.results_fnames=cell(num_sessions,1);
 for ii=1:num_sessions,
     oat.source_recon.results_fnames{ii}=['session' num2str(ii) '_recon'];
-    if ~exist([oat.source_recon.dirname '/' oat.source_recon.results_fnames{ii} '.mat'],'file')
+    if ~isfile([oat.source_recon.dirname '/' oat.source_recon.results_fnames{ii} '.mat'])
         oat.source_recon.results_fnames{ii}=[];
     end;    
 end
@@ -37,7 +37,7 @@ end
 oat.first_level.results_fnames=cell(num_sessions,1);
 for ii=1:num_sessions,
     oat.first_level.results_fnames{ii}=['session' num2str(ii) '_' oat.first_level.name];
-    if ~exist([oat.source_recon.dirname '/' oat.first_level.results_fnames{ii} '.mat'],'file')
+    if ~isfile([oat.source_recon.dirname '/' oat.first_level.results_fnames{ii} '.mat'])
         oat.first_level.results_fnames{ii}=[];
     end;    
 end
@@ -49,7 +49,7 @@ num_subjects=length(oat.subject_level.session_index_list);
 oat.subject_level.results_fnames=cell(num_subjects,1);
 for ii=1:num_subjects,
     oat.subject_level.results_fnames{ii}=['subject' num2str(ii) '_' oat.first_level.name '_' oat.subject_level.name];
-    if ~exist([oat.source_recon.dirname '/' oat.subject_level.results_fnames{ii} '.mat'],'file')
+    if ~isfile([oat.source_recon.dirname '/' oat.subject_level.results_fnames{ii} '.mat'])
         oat.subject_level.results_fnames{ii}=[];
     end;    
 end
@@ -58,6 +58,6 @@ end
 %% group_level stage
 
 oat.group_level.results_fnames=[oat.first_level.name '_' oat.subject_level.name '_' oat.group_level.name];
-if ~exist([oat.source_recon.dirname '/' oat.group_level.results_fnames '.mat'],'file')
+if ~isfile([oat.source_recon.dirname '/' oat.group_level.results_fnames '.mat'])
     oat.group_level.results_fnames=[];
 end;    

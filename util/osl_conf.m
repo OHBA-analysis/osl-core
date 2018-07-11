@@ -8,7 +8,7 @@ classdef (Abstract) osl_conf
 				fname = fullfile(osldir,'osl.conf');
 			end
 
-			if exist(fname,'file') ~= 2
+			if ~isfile(fname)
 				s = struct();
 				return
 			end

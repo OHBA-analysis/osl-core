@@ -9,7 +9,7 @@ function varargout = osl_pref(key,val)
 
 	fname = fullfile(osldir,'preferences.txt');
 
-	if ~exist(fname,'file')
+	if ~isfile(fname)
 		if strcmp(operation,'get')
 			varargout{1} = [];
 			return

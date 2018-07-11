@@ -29,7 +29,7 @@ end
 % and check whether the files are actually there or not.
 failed = false(size(S));
 for j = 1:length(S)
-	if ~exist(S(j).raw) && ~exist(fullfile(import_dir,S(j).meeg))
+	if ~isfile(S(j).raw) && ~isfile(fullfile(import_dir,S(j).meeg))
 		fprintf(2,'%s not found\n',S(j).raw);
 		failed(j) = 1;
 	end
@@ -58,7 +58,7 @@ S(failed) = [];
 %
 % First, create the output directory
 import_dir = 'maxfilter_raw';
-if ~exist(import_dir,'dir')
+if ~isdir(import_dir)
     mkdir(import_dir)
 end
 
@@ -78,7 +78,7 @@ D = cell(length(S),1);
 use_existing = true;
 for j = 1:length(S)
 
-	if use_existing && exist(fullfile(import_dir,S(j).meeg),'file')
+	if use_existing && isfile(fullfile(import_dir,S(j).meeg))
 		fprintf('Already imported %s\n',S(j).meeg);
 		D{j} = spm_eeg_load(fullfile(import_dir,S(j).meeg));
 		continue
@@ -139,7 +139,7 @@ use_existing = true;
 D = cell(length(S),1);
 parfor j = 1:length(S)
 
-	if use_existing && exist(fullfile(import_dir,S(j).meeg),'file')
+	if use_existing && isfile(fullfile(import_dir,S(j).meeg))
 		fprintf('Already imported %s\n',S(j).meeg);
 		D{j} = spm_eeg_load(fullfile(import_dir,S(j).meeg));
 		continue
@@ -179,7 +179,7 @@ wd = 'maxfilter';
 mkdir(wd);
 s = study('maxfilter_raw')
 parfor j = 1:s.n
-	if use_existing && exist(fullfile(wd,s.fnames{j}),'file')
+	if use_existing && isfile(fullfile(wd,s.fnames{j}))
 		fprintf('Already downsampled %s\n',s.fnames{j});
 		continue
 	end
