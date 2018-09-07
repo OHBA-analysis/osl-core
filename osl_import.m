@@ -1,5 +1,5 @@
 function D = osl_import(raw_data,varargin)
-    % [D fname] = osl_import(Sin)
+    % [D fname] = osl_import(raw_data,varargin)
     % 
     % Converts .fif file to continuous spm data file
     %
