@@ -569,7 +569,7 @@ for subi=1:length(opt.sessions_to_do),
 
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  MARK BAD SEGMENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  MARK  SEGMENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             D_continuous=spm_eeg_load(spm_file);
             S = struct();
             S.modalities=opt.modalities;
@@ -697,21 +697,23 @@ for subi=1:length(opt.sessions_to_do),
             opt_report=osl_report_set_figs(opt_report,'Coregistration_spm_view',coregfig1);
             opt_report=osl_report_print_figs(opt_report);
 
-            %% now do rhino displays
-            coregfig2 = sfigure;
-            rhino_display(Dcheck,coregfig2);
-            view(45,5)
-            title(['Session ' num2str(subnum)]);
-            opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view1',coregfig2);
-            opt_report=osl_report_print_figs(opt_report);
+            if opt.coreg.use_rhino
+                %% now do rhino displays
+                coregfig2 = sfigure;
+                rhino_display(Dcheck,coregfig2);
+                view(45,5)
+                title(['Session ' num2str(subnum)]);
+                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view1',coregfig2);
+                opt_report=osl_report_print_figs(opt_report);
 
-            coregfig3 = sfigure;
-            rhino_display(Dcheck,coregfig3);
-            view(90,-10)
-            title(['Session ' num2str(subnum)]);
-            opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view2',coregfig3);
-            opt_report=osl_report_print_figs(opt_report);
-
+                coregfig3 = sfigure;
+                rhino_display(Dcheck,coregfig3);
+                view(90,-10)
+                title(['Session ' num2str(subnum)]);
+                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view2',coregfig3);
+                opt_report=osl_report_print_figs(opt_report);
+            end
+                
             %%
 
         end
