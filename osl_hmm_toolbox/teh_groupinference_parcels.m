@@ -348,6 +348,9 @@ if todo.hmm
     if ~todo.prepare
         load(filenames.prepared_data,'X'); 
         load(filenames.prepare,'subj_inds');  
+        load(filenames.prepare,'hmmT'); 
+        load(filenames.prepare,'fsample'); 
+        load(filenames.prepare,'subj_inds'); 
     end
     
     % setup default options for hmm
@@ -358,7 +361,8 @@ if todo.hmm
     options.order = 0;
     options.zeromean = 1;
     options.K=8;
-
+    options.useMEX=1;
+    
     if hmmoptions.big
         % defaults for stochastic hmm
         options.BIGNbatch = 5;
@@ -400,18 +404,19 @@ if todo.hmm
     hmm.options = hmmoptions;
     hmm.data_files = data_files;
     hmm.fsample = fsample;
-    hmm.fehist = fehist;
+    %hmm.fehist = fehist;
     hmm.subj_inds=subj_inds;
+    hmm.K=options.K;
 
-    %hmm.gamma = gamma;
-    %hmm.statepath = vpath;
-    
     disp(['Saving inferred HMM to ' filenames.hmm])    
     save(filenames.hmm,'hmm');
 
     % compute state time courses    
-    hmm.gamma = hmmdecode(X,hmmT,hmm,0);  % last argument: 0, state time courses; 1, viterbi path
-    hmm.statepath = hmmdecode(X,hmmT,hmm,1);  % last argument: 0, state time courses; 1, viterbi path
+    switch hmmoptions.dynamic_model_type
+        case 'hmm'
+            hmm.gamma = hmmdecode(X,hmmT,hmm,0);  % last argument: 0, state time courses; 1, viterbi path
+            hmm.statepath = hmmdecode(X,hmmT,hmm,1);  % last argument: 0, state time courses; 1, viterbi path
+    end
     
     %hmm.statepath=zeros(size(hmm.statepath_hot,1),1);
     %for ii=1:size(hmm.statepath_hot,1)
