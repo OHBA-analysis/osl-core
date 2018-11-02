@@ -8,6 +8,13 @@ function [ mni_coords xform ] = osl_mniparcellation2mnicoords(mask_fname)
 
 mask=nii.load(mask_fname);
 
+if length(size(mask))==3
+    npar = max(mask(:));
+    tmp_mask = zeros([size(mask),npar]);
+    for pp = 1:npar, tmp_mask(:,:,:,pp) = mask==pp; end
+    mask = tmp_mask;
+end
+
 xstart=[90 -126 -72];
 xform=eye(4)*1;xform(1,1)=-mni_res(1);xform(2,2)=mni_res(2);xform(3,3)=mni_res(3);
 xform(1:3,4)=xstart;
