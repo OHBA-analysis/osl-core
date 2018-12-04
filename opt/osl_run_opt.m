@@ -512,6 +512,82 @@ for subi=1:length(opt.sessions_to_do),
             spm_files_basenames{subnum}=['f' spm_files_basenames{subnum}];
         end
 
+        %%%%%%%%%%%%%%%%%%%
+        %% DO REGISTRATION AND RUN FORWARD MODEL BASED ON STRUCTURAL SCANS
+        % needs to be done before any montaging (e.g.in AFRICA) to ensure that
+        % Neuromag gradiometer baseline correction is done correctly.
+        if(opt.coreg.do),
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  COREG, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            S=[];
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum} '.mat'];
+            S.D = [spm_file];
+            S.mri=opt.coreg.mri{subnum};
+            S.useheadshape=opt.coreg.useheadshape;
+            S.forward_meg=opt.coreg.forward_meg;
+            S.use_rhino=opt.coreg.use_rhino;
+
+            if(isfield(opt.coreg,'fid_mnicoords')),
+                S.fid.coords = opt.coreg.fid_mnicoords;
+                S.fid.coordsys = 'MNI';
+                % flirt -in /Users/woolrich/Desktop/GN170_anatomy_test.nii -ref /usr/local/fsl/data/standard/MNI152_T1_2mm -out /Users/woolrich/Desktop/anat_mne2;
+            end;
+            S.fid.label = opt.coreg.fid_label;
+
+            D=osl_headmodel(S);
+            clc
+            close all;
+
+            % CHECK REGISTRATION
+
+            % mnifid = ft_transform_headshape(D.inv{1}.datareg.toMNI,D.inv{1}.datareg.fid_mri );mnifid.fid.pnt
+            % opt.fid_mnicoords.nasion =[  1.3968   81.9389  -44.9899];opt.fid_mnicoords.lpa =[-83.3246  -20.2372  -68.1528];opt.fid_mnicoords.rpa = [83.9906  -19.5985  -65.6612];
+
+            %%
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum} '.mat'];
+            Dcheck=spm_eeg_load(spm_file);
+            %spm_eeg_inv_checkdatareg(D);
+
+            %% spm displays
+            coregfig1 = sfigure;
+            set(coregfig1,'Position',[300 300 1200 800]);
+            set(coregfig1,'Color', [1,1,1]);
+            subplot(1,3,1)
+            warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
+            view(-180,0)
+            %title(['concatMefsession' num2str(counter) '_spm_meeg'])
+            subplot(1,3,2)
+            warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
+            view(-270,0)
+            subplot(1,3,3)
+            warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
+            view(130,18)
+            title(['Session ' num2str(subnum)]);
+            %%
+            opt_report=osl_report_set_figs(opt_report,'Coregistration_spm_view',coregfig1);
+            opt_report=osl_report_print_figs(opt_report);
+
+            if opt.coreg.use_rhino
+                %% now do rhino displays
+                coregfig2 = sfigure;
+                rhino_display(Dcheck,coregfig2);
+                view(45,5)
+                title(['Session ' num2str(subnum)]);
+                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view1',coregfig2);
+                opt_report=osl_report_print_figs(opt_report);
+
+                coregfig3 = sfigure;
+                rhino_display(Dcheck,coregfig3);
+                view(90,-10)
+                title(['Session ' num2str(subnum)]);
+                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view2',coregfig3);
+                opt_report=osl_report_print_figs(opt_report);
+            end
+                
+            %%
+
+        end
+        
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Perform AfRICA - ICA denoising
 
@@ -643,80 +719,7 @@ for subi=1:length(opt.sessions_to_do),
             opt_report=osl_report_print_figs(opt_report);
         end
 
-        %%%%%%%%%%%%%%%%%%%
-        %% DO REGISTRATION AND RUN FORWARD MODEL BASED ON STRUCTURAL SCANS
-        % needs to be done before any montaging (e.g.in AFRICA) to ensure that
-        % Neuromag gradiometer baseline correction is done correctly.
-        if(opt.coreg.do),
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  COREG, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
-            S=[];
-            spm_file=[opt.dirname filesep spm_files_basenames{subnum} '.mat'];
-            S.D = [spm_file];
-            S.mri=opt.coreg.mri{subnum};
-            S.useheadshape=opt.coreg.useheadshape;
-            S.forward_meg=opt.coreg.forward_meg;
-            S.use_rhino=opt.coreg.use_rhino;
-
-            if(isfield(opt.coreg,'fid_mnicoords')),
-                S.fid.coords = opt.coreg.fid_mnicoords;
-                S.fid.coordsys = 'MNI';
-                % flirt -in /Users/woolrich/Desktop/GN170_anatomy_test.nii -ref /usr/local/fsl/data/standard/MNI152_T1_2mm -out /Users/woolrich/Desktop/anat_mne2;
-            end;
-            S.fid.label = opt.coreg.fid_label;
-
-            D=osl_headmodel(S);
-            clc
-            close all;
-
-            % CHECK REGISTRATION
-
-            % mnifid = ft_transform_headshape(D.inv{1}.datareg.toMNI,D.inv{1}.datareg.fid_mri );mnifid.fid.pnt
-            % opt.fid_mnicoords.nasion =[  1.3968   81.9389  -44.9899];opt.fid_mnicoords.lpa =[-83.3246  -20.2372  -68.1528];opt.fid_mnicoords.rpa = [83.9906  -19.5985  -65.6612];
-
-            %%
-            spm_file=[opt.dirname filesep spm_files_basenames{subnum} '.mat'];
-            Dcheck=spm_eeg_load(spm_file);
-            %spm_eeg_inv_checkdatareg(D);
-
-            %% spm displays
-            coregfig1 = sfigure;
-            set(coregfig1,'Position',[300 300 1200 800]);
-            set(coregfig1,'Color', [1,1,1]);
-            subplot(1,3,1)
-            warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
-            view(-180,0)
-            %title(['concatMefsession' num2str(counter) '_spm_meeg'])
-            subplot(1,3,2)
-            warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
-            view(-270,0)
-            subplot(1,3,3)
-            warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
-            view(130,18)
-            title(['Session ' num2str(subnum)]);
-            %%
-            opt_report=osl_report_set_figs(opt_report,'Coregistration_spm_view',coregfig1);
-            opt_report=osl_report_print_figs(opt_report);
-
-            if opt.coreg.use_rhino
-                %% now do rhino displays
-                coregfig2 = sfigure;
-                rhino_display(Dcheck,coregfig2);
-                view(45,5)
-                title(['Session ' num2str(subnum)]);
-                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view1',coregfig2);
-                opt_report=osl_report_print_figs(opt_report);
-
-                coregfig3 = sfigure;
-                rhino_display(Dcheck,coregfig3);
-                view(90,-10)
-                title(['Session ' num2str(subnum)]);
-                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view2',coregfig3);
-                opt_report=osl_report_print_figs(opt_report);
-            end
-                
-            %%
-
-        end
+        
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% DO EPOCHING (if epoch-based task data)
