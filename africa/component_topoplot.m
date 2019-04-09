@@ -8,7 +8,7 @@ function topos = component_topoplot(D,comp,modality,do_plot)
 
 cfg  = [];
 data = [];
- 
+
 if nargin<4
     do_plot=0;
 end
@@ -20,19 +20,23 @@ if (strcmp(modality,'MEGPLANAR')) % Average gradiometers
     comp2view = sqrt(comp2view(1:2:end,:).^2 + comp2view(2:2:end,:).^2);
 end
 
-if (strcmp(modality,'MEGMAG'))
+if strcmp(modality,'MEGMAG') && strcmp(D.sensors('MEG').type,'neuromag306')
     cfg.channel     = {'MEGMAG'};
     cfg.layout      = fullfile(osldir,'layouts','neuromag306mag.lay');
-elseif (strcmp(modality,'MEGPLANAR'))
+
+elseif strcmp(modality,'MEGPLANAR') && strcmp(D.sensors('MEG').type,'neuromag306')
     cfg.channel     = {'MEGMAG'};
     cfg.layout      = fullfile(osldir,'layouts','neuromag306mag.lay');
-elseif (strcmp(modality,'MEGGRAD'))
+
+elseif strcmp(modality,'MEGGRAD') && strcmp(D.sensors('MEG').type,'ctf275')
     cfg.channel     = {'MEG'};
     cfg.layout      = fullfile(osldir,'layouts','CTF275.lay');
-elseif strcmp(modality, 'MEG')
-    cfg.channel = {'MEG'};
+
+elseif strcmp(modality,'MEGMAG') && strcmp(D.sensors('MEG').type,'bti248')
+    cfg.channel = {'MEGMAG'};
     cfg.layout  = fullfile(osldir, 'layouts', '4D248.lay');
-elseif (strcmp(modality,'EEG')),
+
+elseif (strcmp(modality,'EEG'))
     warning('EEG not currently supported, using development EEG layout');
     cfg.channel = {'EEG'};
     cfg.layout  = fullfile(osldir, 'layouts', 'EEG60.lay');
@@ -55,7 +59,7 @@ cfg.title       = modality;
 
 if do_plot
     ft_topoplotIC(cfg,data);
-else    
+else
     tmp_fig = figure('visible','off');
     [~] = evalc('ft_topoplotIC(cfg,data);');
     topos = handle2struct(get(gcf,'children'));
