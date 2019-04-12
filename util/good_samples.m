@@ -1,4 +1,4 @@
-function res = good_samples(D,chanind, sampind, trialind)
+function res = good_samples(D,chanind, sampind, trialind, checkchantype)
 	% This is a convenience function equivalent to
 	%
 	% ~any(D.badsamples(chanind, sampind, trialind))
@@ -15,6 +15,10 @@ function res = good_samples(D,chanind, sampind, trialind)
 	%
 	% Romesh Abeysuriya 2017
 
+    if nargin < 5 
+        checkchantype = 1; 
+    end
+    
 	if nargin < 4 || isempty(trialind) 
 		trialind = ':';
 	end
@@ -70,9 +74,11 @@ function res = good_samples(D,chanind, sampind, trialind)
 
 	    if isempty(ev)
 	        continue
-	    end
+        end
 	    
-        ev = ev(ismember(upper({ev.value}),upper(chantypes))); % Then filter by chantype. This prevents bugs if the trial event value is not a chantype but a number
+        if checkchantype % Then filter by chantype. This prevents bugs if the trial event value is not a chantype but a number
+            ev = ev(ismember(upper({ev.value}),upper(chantypes))); 
+        end
     
 	    if ~isempty(ev)
 	        for k = 1:numel(ev)
