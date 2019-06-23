@@ -163,7 +163,7 @@ matlabbatch{2}.spm.tools.beamforming.sources.BF(1)                              
 matlabbatch{2}.spm.tools.beamforming.sources.reduce_rank                        = [2 3];
 matlabbatch{2}.spm.tools.beamforming.sources.keep3d                             = 1;
 matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 0;
-matlabbatch{2}.spm.tools.beamforming.sources.plugin.mni_coords.pos              = mni_coords;
+matlabbatch{2}.spm.tools.beamforming.sources.plugin.mni_coords.pos              = double(mni_coords);
 
 
 % MESH STUFF!
