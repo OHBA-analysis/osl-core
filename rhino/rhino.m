@@ -221,8 +221,10 @@ std_brain  = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz'];
 % Reorient the image to match standard MNI orientation
 % The orientation matches the standard brain, but we are still in the scanner coordinate system
 runcmd('fslreorient2std %s %s',sMRI,sMRI);
-gunzip([sMRI '.gz']);
-delete([sMRI '.gz'])
+if exist(([sMRI '.gz']))
+    gunzip([sMRI '.gz']);
+    delete([sMRI '.gz']);
+end
 std_orient  = runcmd('fslorient -getorient %s 2>/dev/null', std_brain);
 smri_orient = runcmd('fslorient -getorient %s 2>/dev/null', sMRI);
 assert(strcmp(deblank(smri_orient),deblank(std_orient)),'fslreorient2std seemed to fail - orientations do not match');

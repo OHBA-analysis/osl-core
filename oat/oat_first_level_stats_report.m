@@ -214,7 +214,7 @@ else
         fig_title{1}=[fig_title{1} ' (Max found using c' num2str(first_level_cons_to_do(1)) ')'];
         report=osl_report_set_figs(report,fig_name,fig_handle,fig_title);
         report=osl_report_print_figs(report);
-    end;
+    end
 
     if ~isfield(oat.first_level, 'mni_coords'),
 
@@ -259,12 +259,11 @@ else
             setpixelposition(fig_handle(coni),[1 1 1300 450]);
         end;
 
-    end;
+        report=osl_report_set_figs(report,fig_name,fig_handle,fig_title);
+        report=osl_report_print_figs(report);
 
-    report=osl_report_set_figs(report,fig_name,fig_handle,fig_title);
-    report=osl_report_print_figs(report);
-
-end;
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%
 %% generate source recon web report

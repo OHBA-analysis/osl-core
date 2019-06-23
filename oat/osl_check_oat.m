@@ -300,8 +300,6 @@ else
     end
 end
 
-try oat.first_level.oat.first_level.sessions_to_dotf_morlet_factor = oatin.first_level.morlet_factor; oatin.first_level = rmfield(oatin.first_level,'tf_morlet_factor'); catch, oat.first_level.tf_morlet_factor=6; end;
-
 % hilbert
 try oat.first_level.tf_hilbert_freq_res=oatin.first_level.tf_hilbert_freq_res;  oatin.first_level = rmfield(oatin.first_level,'tf_hilbert_freq_res'); catch, oat.first_level.tf_hilbert_freq_res=2; end;  % Freq res (width of freq bins) to use for Hilbert transform in Hz
 try oat.first_level.tf_hilbert_do_bandpass_for_single_freq=oatin.first_level.tf_hilbert_do_bandpass_for_single_freq;  oatin.first_level = rmfield(oatin.first_level,'tf_hilbert_do_bandpass_for_single_freq'); catch, oat.first_level.tf_hilbert_do_bandpass_for_single_freq=0; end;  % do not redo band pass filtering (under the assumption it has been done as part of, or before, the source recon. This helps to avoid edge effects with epoched data in particular)
