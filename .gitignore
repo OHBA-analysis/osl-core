@@ -10,6 +10,8 @@
 
 ## Temporary files 
 *.swp
+*.tmp
+*.log
 *~
 tmp*
 _tmp/
@@ -35,6 +37,7 @@ _tmp/
 *.tiff
 *.nii
 *.nii.gz
+*.gii
 
 *.avi
 *.mp4
@@ -54,3 +57,4 @@ _tmp/
 ## OSL files
 osl_debug_log.txt
 osl.conf
+
