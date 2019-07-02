@@ -218,17 +218,25 @@ bet_file   = fullfile(struct_path,[struct_name '_outskin_mesh.nii.gz']);
 scalp_file = fullfile(struct_path,[struct_name '_scalp.nii.gz']);
 std_brain  = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz'];
 
-% Reorient the image to match standard MNI orientation
-% The orientation matches the standard brain, but we are still in the scanner coordinate system
-runcmd('fslreorient2std %s %s',sMRI,sMRI);
-if exist(([sMRI '.gz']))
-    gunzip([sMRI '.gz']);
-    delete([sMRI '.gz']);
-end
-std_orient  = runcmd('fslorient -getorient %s 2>/dev/null', std_brain);
-smri_orient = runcmd('fslorient -getorient %s 2>/dev/null', sMRI);
-assert(strcmp(deblank(smri_orient),deblank(std_orient)),'fslreorient2std seemed to fail - orientations do not match');
+% determine orientation of standard brain
+std_orient = deblank(runcmd('fslorient -getorient %s 2>/dev/null', std_brain));
 
+% determine orientation of subject brain
+smri_orient = deblank(runcmd('fslorient -getorient %s 2>/dev/null', sMRI));
+
+% if orientations don't match, reorient the subject brain
+if ~strcmp(std_orient, smri_orient)
+    disp('reorienting subject brain to match standard brain');
+    switch std_orient
+        case 'RADIOLOGICAL'
+            orient_flag = '-forceradiological';
+        case 'NEUROLOGICAL'
+            orient_flag = '-forceneurological';
+        otherwise
+            error('cannot determine orientation of subject brain');
+    end
+    runcmd('fslorient %s %s', orient_flag, sMRI);
+end
 
 % CHECK IF SCALP EXTRACTION ALREADY DONE
 if exist(scalp_file,'file')~=2
@@ -515,7 +523,7 @@ end%if
 close_hf = onCleanup(@() close(hf));
 
 % ICP RIGID BODY TRANSFORMATION USING HEADSHAPE POINTS AND SCALP OUTLINE
-if S.useheadshape,
+if S.useheadshape
     % get headshape points
     headshape_polhemus = [D.fiducials.pnt; D.fiducials.fid.pnt];
     assert(~isempty(headshape_polhemus),      ...
