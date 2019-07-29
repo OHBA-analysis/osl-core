@@ -60,7 +60,7 @@ opt = opt_gather_results(opt);
 for subi=1:length(opt.sessions_to_do), subnum=opt.sessions_to_do(subi);
     opt_report.sub_reports{subi}.html_fname=[opt.dirname '/plots/session' num2str(subnum) '/report.html'];    
         
-    if ~exist(opt_report.sub_reports{subi}.html_fname,'file')
+    if ~isfile(opt_report.sub_reports{subi}.html_fname)
         opt_report.sub_reports{subi}.html_fname=[];
         opt_report.sub_reports{subi}.title=['Session ' num2str(subnum) ' (NOT FOUND)'];
     else,
