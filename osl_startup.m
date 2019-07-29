@@ -27,7 +27,7 @@ function osl_startup( osl_root )
 
         % If anything goes wrong, osl_startup.m should still be left on the path
         addpath(fullfile(osl_root,'osl-core'))
-        addpath(fullfile(osl_root,'osl-core','util'))
+        addpath(genpath(fullfile(osl_root,'osl-core','util')))
 
         for j = 1:length(oldpaths)
             if strfind(oldpaths{j},matlabroot)
