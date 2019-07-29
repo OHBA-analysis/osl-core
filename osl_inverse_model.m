@@ -219,14 +219,14 @@ switch S.inverse_method,
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 1;
     case 'mne_diag_datacov'
         mne_lambda=1;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.noise_cov_type = 'diag_datacov';
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.lambda         = mne_lambda;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.type           = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'diag_datacov';
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
     case 'mne_eye'
         mne_lambda=1;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.noise_cov_type = 'eye';    
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.lambda         = mne_lambda;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_multicov.type           = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'eye';    
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
     case 'mne_adaptive'
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise          = S.MNE.Noise;
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = S.MNE.Options;
