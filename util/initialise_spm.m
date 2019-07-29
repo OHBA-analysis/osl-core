@@ -15,7 +15,7 @@ function initialise_spm
         SPMDIR = s.SPMDIR;
 	end
 
-	if ~isdir(SPMDIR) || ~isfile(fullfile(SPMDIR,'spm.m'),'file')
+	if ~isdir(SPMDIR) || ~exist(fullfile(SPMDIR,'spm.m'),'file')
 	    error('SPM12 was not found at the required location: %s',fullfile(SPMDIR))
 	end
 
