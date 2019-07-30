@@ -30,7 +30,9 @@ end%if
 
 
 %% Construct inputs
-SensorData = struct('cov',      osl_cov(BF.data.D, 1), ...
+%
+% JH: error here, osl_cov should take into account badchan or chantype
+SensorData = struct('cov',      osl_cov(BF.data.D), ...
                     'nSamples', BF.data.D.nsamples * BF.data.D.ntrials);
 LeadFields = struct('nSources', length(S.L), ...
                     'nDims',    3,           ... % dimensions in space

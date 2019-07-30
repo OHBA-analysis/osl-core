@@ -56,7 +56,7 @@ arg.addParameter('type','Scalar',@(x) any(strcmp(x,{'Scalar','Vector'})));
 arg.addParameter('timespan',[0 Inf]); % Time range to use in seconds [start end]
 arg.addParameter('pca_order',[],@(x) isnumeric(x) && isscalar(x) && x>0 && ~mod(x,1)); % PCA dimensionality to use for covariance matrix inversion (defaults to full rank)
 arg.addParameter('use_class_channel',false); % flag indicating whether or not to use the class channel to determine the time samples to be used for
-arg.addParameter('inverse_method','beamform',@(x) any(strcmp(x,{'beamform','beamform_bilateral','mne_eye','mne_diag_datacov','mne_adaptive'}))); % inverse method to use
+arg.addParameter('inverse_method','beamform',@(x) any(strcmp(x,{'beamform','beamform_bilateral','mne','mne_eye','mne_diag_datacov','mne_adaptive'}))); % inverse method to use
 arg.addParameter('conditions','all',@(x) ischar(x) || iscell(x)); % Should be a cell array of conditions
 arg.addParameter('dirname','',@ischar); % dir to output results to - default/empty makes a temporary folder alongside the D object
 arg.addParameter('prefix',''); % write new SPM file by prepending this prefix
@@ -217,16 +217,15 @@ switch S.inverse_method,
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 1;
+    case 'mne'
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.snr             = 5;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.trunc           = 0;
     case 'mne_diag_datacov'
-        mne_lambda=1;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'diag_datacov';
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise.model    = 'diag_datacov';
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = struct();
     case 'mne_eye'
-        mne_lambda=1;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'eye';    
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise.model    = 'white';
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = struct();
     case 'mne_adaptive'
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise          = S.MNE.Noise;
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = S.MNE.Options;
