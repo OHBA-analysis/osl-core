@@ -1,4 +1,4 @@
-function [C,M] = osl_cov(D)
+function [C,M] = osl_cov( D, varargin )
 % Computes the covariance of a [channels x samples] matrix without
 % encountering memory issues. This allows the covariance matrix to be
 % computed for large data matrices without running out of memory.
@@ -12,8 +12,87 @@ function [C,M] = osl_cov(D)
 %
 % [C,M] = osl_cov(D) also returns the mean
 %
-% Adam Baker 2014
+% Adam Baker 2014, JH 2019
 
+    if isa(D,'meeg')
+        nfreqs = max([ 1, D.nfrequencies ]);
+        [smask,cid,~,tid] = good_samples(D,varargin{:});
+        
+        is_timefreq = strcmp(D.transformtype,'TF');
+        if nfreqs > 1 && ~is_timefreq
+            warning('There are several frequencies, but no time-frequency transform.');
+        end
+        
+        nchans  = numel(cid);
+        ntrials = numel(tid);
+    else
+        [nchans,nsamples] = size(D);
+        ntrials = 1;
+        nfreqs  = 1;
+        
+        is_timefreq = false;
+        if nchans > nsamples
+            warning(['Input has ' num2str(nsamples) ' rows and ' num2str(nchans) ' columns. Consider transposing']);
+        end
+        if nargin > 1
+            warning('Additional arguments are ignored for matrix inputs.');
+        end
+        
+        smask = true(1,nsamples,1);
+        cid = 1:nchans;
+        tid = 1:ntrials;
+    end
+    
+    M = zeros(nchans,ntrials,nfreqs);
+    C = zeros(nchans,nchans,ntrials,nfreqs);
+
+    for k = 1:ntrials
+        
+        t = tid(k);
+        samp2use = smask(1,:,k);
+        nsamples = sum(samp2use);
+        if nsamples == 0, continue; end
+        
+        sid = find(samp2use);
+        chan_blks = osl_memblocks([nchans,nsamples],1);
+        smpl_blks = osl_memblocks([nchans,nsamples],2);
+        
+        for f = 1:nfreqs
+            
+            % Compute means
+            for i = 1:size(chan_blks,1)
+                b = chan_blks(i,1) : chan_blks(i,2);
+                c = cid(b);
+                if is_timefreq
+                    Dblk = squeeze(D(c,f,:,t));
+                else
+                    Dblk = D(c,:,t);
+                end
+                Dblk = Dblk(:,samp2use);
+                M(b,k,f) = mean(Dblk,2);
+            end
+
+            % Compute covariance
+            if nsamples <= 1, continue; end
+            for i = 1:size(smpl_blks,1)
+                s = sid(smpl_blks(i,1) : smpl_blks(i,2));
+
+                if is_timefreq
+                    Dblk = squeeze(D(cid,f,:,t));
+                else
+                    Dblk = D(cid,:,t);
+                end
+
+                Dblk = bsxfun( @minus, Dblk(:,s), M(:,k,f) );
+                C(:,:,k,f) = C(:,:,k,f) + Dblk*Dblk';
+            end
+            C(:,:,k,f) = C(:,:,k,f)./(nsamples-1);
+            
+        end
+
+    end
+
+end
 
 %{
 % PROTOTYPE CODE
@@ -34,21 +113,18 @@ function [C,M] = osl_cov(D,chaninds)
    
    samples2use = good_samples(D,chaninds); % Check all good channels by default - this will be sensible in source space. In sensor space, probably better to just compute cov directly?
 
-
    if D.montage('getindex')
-        montaged=true
+       montaged=true
        mont = D.montage('getmontage');
        D = D.montage('switch',0); 
        M = mont.tra*q2;
-       else
-        montaged = false
+   else
+       montaged = false
    end
 
    dat = D(:,:,:); % Read in sensor data
    M = zeros(D.nchannels,D.ntrials,D.nfrequencies);
    C = zeros(D.nchannels,D.nchannels,D.ntrials,D.nfrequencies);
-
-
 
    for j = 1:nfreqs
        for k = 1:ntrials
@@ -71,80 +147,3 @@ function [C,M] = osl_cov(D,chaninds)
         C=mont.tra*C*mont.tra';
     end
 %}
-
-
-if isa(D,'meeg')
-    nfreqs   = max([1,D.nfrequencies]);
-    nchans   = D.nchannels;
-    ntrials  = D.ntrials;
-    samples2use = good_samples(D);
-else
-    [nchans,nsamples] = size(D);
-    ntrials = 1;
-    nfreqs  = 1;
-    if nchans > nsamples
-        warning(['Input has ' num2str(nsamples) ' rows and ' num2str(nchans) ' columns. Consider transposing']);
-    end
-    samples2use = true(1,nsamples,1);
-end
-
-M = zeros(nchans,ntrials,nfreqs);
-C = zeros(nchans,nchans,ntrials,nfreqs);
-   
-for f = 1:nfreqs
-             
-    for trl = 1:ntrials
-        nsamples = sum(samples2use(1,:,trl));
-        
-        if nsamples,            
-            % Compute means
-            chan_blks = osl_memblocks([nchans,sum(samples2use(1,:,trl))],1);
-            for i = 1:size(chan_blks,1)
-                if isa(D,'meeg') && isequal(D.transformtype,'TF')
-                    Dblk = D(chan_blks(i,1):chan_blks(i,2),f,:,trl);
-                    Dblk = Dblk(:,:,samples2use(1,:,trl));
-                else
-                    Dblk = D(chan_blks(i,1):chan_blks(i,2),:,trl);
-                    Dblk = Dblk(:,samples2use(1,:,trl));
-                end
-                Dblk = squeeze(Dblk);
-                M(chan_blks(i,1):chan_blks(i,2),trl,f) = mean(Dblk,2);
-            end
-
-            % Compute covariance
-            smpl_blks = osl_memblocks([nchans,nsamples],2);
-            for i = 1:size(smpl_blks,1)                
-                samples2use_blk = find(samples2use(1,:,trl));
-                samples2use_blk = samples2use_blk(1,smpl_blks(i,1):smpl_blks(i,2));
-
-                if isa(D,'meeg') && isequal(D.transformtype,'TF')
-                    Dblk = squeeze(D(:,f,:,trl));
-                    Dblk = Dblk(:,samples2use_blk);
-                else
-                    Dblk = D(:,:,trl);
-                    Dblk = Dblk(:,samples2use_blk);
-                end
-
-                Dblk = bsxfun(@minus,Dblk,M(:,trl,f));
-                C(:,:,trl,f) = C(:,:,trl,f) + Dblk*Dblk';
-            end
-
-            C(:,:,trl,f) = C(:,:,trl,f)./(nsamples-1);
-        else % trial is bad or empty
-            C(:,:,trl,f) = zeros(nchans);
-        end
-        
-    end
-end
-
-end
-
-
-
-
-
-
-
-
-
-
