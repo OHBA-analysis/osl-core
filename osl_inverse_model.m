@@ -47,7 +47,10 @@ function D = osl_inverse_model(D,mni_coords,varargin)
 % S.prefix         - write new SPM file by prepending this prefix
 %                     (default is '')
 %
-% AB 2014, MWW 2014
+% AB 2014, MWW 2014, JH 2019
+
+default_minimumnorm = struct( 'snr', 5 );
+default_mne_adaptive = struct( 'Noise', struct('model','white','lambda',1), 'Options', struct() ); % cv osl_inverse_mne_weights
 
 arg = inputParser;
 arg.addParameter('modalities',[],@(x) ischar(x) || iscell(x)); % Sensor modalities to use
@@ -56,10 +59,11 @@ arg.addParameter('type','Scalar',@(x) any(strcmp(x,{'Scalar','Vector'})));
 arg.addParameter('timespan',[0 Inf]); % Time range to use in seconds [start end]
 arg.addParameter('pca_order',[],@(x) isnumeric(x) && isscalar(x) && x>0 && ~mod(x,1)); % PCA dimensionality to use for covariance matrix inversion (defaults to full rank)
 arg.addParameter('use_class_channel',false); % flag indicating whether or not to use the class channel to determine the time samples to be used for
-arg.addParameter('inverse_method','beamform',@(x) any(strcmp(x,{'beamform','beamform_bilateral','mne','mne_eye','mne_diag_datacov','mne_adaptive'}))); % inverse method to use
+arg.addParameter('inverse_method','beamform',@(x) any(strcmp(x,{'beamform','beamform_bilateral','mne','mne_adaptive'}))); % inverse method to use
 arg.addParameter('conditions','all',@(x) ischar(x) || iscell(x)); % Should be a cell array of conditions
 arg.addParameter('dirname','',@ischar); % dir to output results to - default/empty makes a temporary folder alongside the D object
 arg.addParameter('prefix',''); % write new SPM file by prepending this prefix
+arg.addParameter('mne',[],@isstruct); % options for mne methods
 arg.parse(varargin{:});
 S = arg.Results;
 
@@ -125,6 +129,7 @@ if isempty(S.pca_order)
     S.pca_order = D.nchannels;
     fprintf('Setting PCA order to %d (full rank)\n',D.nchannels);
 end
+S.pca_trunc = D.nchannels - S.pca_order;
 
 % Check conditions Specification:
 if ischar(S.conditions)
@@ -205,10 +210,9 @@ matlabbatch{3}.spm.tools.beamforming.features.regularisation.manual.lambda      
 matlabbatch{3}.spm.tools.beamforming.features.bootstrap                         = false;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 matlabbatch{4}.spm.tools.beamforming.inverse.BF(1)                              = cfg_dep('Define sources: BF.mat file', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
 
-switch S.inverse_method,
+switch S.inverse_method
     case 'beamform'
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
@@ -218,19 +222,23 @@ switch S.inverse_method,
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
         matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 1;
     case 'mne'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.snr             = 5;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.trunc           = 0;
-    case 'mne_diag_datacov'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise.model    = 'diag_datacov';
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = struct();
-    case 'mne_eye'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise.model    = 'white';
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = struct();
+        if isempty(S.mne)
+            S.mne = default_minimumnorm;
+        else
+            assert( isfield(S.mne,'snr'), 'Missing MNE option "snr".' );
+        end
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.snr             = S.mne.snr;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.trunc           = S.pca_trunc;
     case 'mne_adaptive'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise          = S.MNE.Noise;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = S.MNE.Options;
+        if isempty(S.mne)
+            S.mne = default_mne_adaptive;
+        else
+            assert( all(isfield(S.mne,{'Noise','Options'})), 'Missing MNE options "Noise" and "Options".' );
+        end
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise          = S.mne.Noise;
+        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = S.mne.Options;
     otherwise 
-        disp('Inversion method unknown!');        
+        error('Inversion method unknown!');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -245,7 +253,7 @@ obj = onCleanup(@() cd(old_dir)); % Restore the working directory
 spm_jobman('run',matlabbatch)
 
 if ~isempty(S.prefix)
-    D = spm_eeg_load(fullfile(D.path,[S.prefix D.fname]))
+    D = spm_eeg_load(fullfile(D.path,[S.prefix D.fname]));
 else
     D = spm_eeg_load(D.fullfile); % Load the file back from disk with the new online montages
 end

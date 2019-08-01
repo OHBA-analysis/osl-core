@@ -51,7 +51,7 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %                           the regularised data covariance estimated using
 %                           the sparse Bayes model. 
 %
-%        .Normalise.weights - sLoreta, norm, noise-proj, none: normalises
+%        .Normalise.weights - sLoreta, [norm], noise-proj, none: normalises
 %                             reconstruction weights using a variety of
 %                             methods. sLoreta uses normalisation from the
 %                             Wens paper. 'norm' normalised the 2-norm of
@@ -63,7 +63,7 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %        .Normalise.leadFields - [true] or false normalises lead fields as
 %                                a compensation for depth bias. 
 %
-%        .gammaPrior - form of prior on source variance parameters. Can
+%        .Prior      - form of prior on source variance parameters. Can
 %                      be 'uniform-sd   - flat on sqrt(gamma) [Default].
 %                         'uniform-variance' - flat on gamma.
 %                         'log-uniform' - flat on log-gamma (this is the 
@@ -128,7 +128,7 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %	Originally written on: GLNXA64 by Giles Colclough, 19-Jan-2015 14:40:17
 
 global DEBUG
-DEBUG = true;
+DEBUG = false;
 
 %% Input Checking
 % Sensor data covariance 
@@ -300,7 +300,7 @@ if nargin < 4 || ~exist('rho', 'var') || isempty(rho),
 end%if
 
 W_3d = rho .* sourceCov * lf3d.' * ...      
-       osl_cholinv(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
+       ROInets.cholinv(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
    
 end%estimate_weights
 
@@ -327,7 +327,7 @@ if nargin < 4 || ~exist('rho', 'var') || isempty(rho),
     rho = 1;
 end%if
 
-invDataCov = osl_cholinv(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
+invDataCov = ROInets.cholinv(empirical_bayes_cov(noiseCov, sourceCov, lf3d));
 
 W_3d = rho .* lf3d.' * invDataCov ./ trace(lf3d.' * invDataCov * lf3d);   
 end%estimate_weights
@@ -769,7 +769,7 @@ while iIter <= nIterMax,
     
     % use Factorize object to hold inverse of regularized covariance
     % without computation
-    invSigmaB = osl_cholinv(empirical_bayes_cov(Noise.cov, sourceCovFn(oldGamma), LeadFields.lf));
+    invSigmaB = ROInets.cholinv(empirical_bayes_cov(Noise.cov, sourceCovFn(oldGamma), LeadFields.lf));
     
     % update rules
     % Wipf and Nagarajan 2009 Eq. 31
@@ -869,7 +869,7 @@ end%try
 
 % use property sum(eig(B, A)) = trace(inv(A) * B)
 % or trace(AB) = sum(sum(A .* B')) (and covariance matrices are symmetric)
-L = real((trace(Data.cov * osl_cholinv(Sigma_EB)) ...                  % faster than elementwise product or sum(eig()). 
+L = real((trace(Data.cov * ROInets.cholinv(Sigma_EB)) ...             % faster than elementwise product or sum(eig()). 
      + logDetSigma) * Data.nSamples - 2 * prior(logGamma, scale));       
 
 
@@ -927,7 +927,7 @@ end%try
 %
 % use property sum(eig(B, A)) = trace(inv(A) * B)
 % or trace(AB) = sum(sum(A .* B')) (and covariance matrices are symmetric)
-L = (exp(2*logRho) * trace(Data.cov * osl_cholinv(Sigma_EB)) ...  % faster than elementwise product or sum(eig()). 
+L = (exp(2*logRho) * trace(Data.cov * ROInets.cholinv(Sigma_EB)) ...  % faster than elementwise product or sum(eig()). 
      + logDetSigma - 2*logRho) .* Data.nSamples  ...
     - 2*pg(logGamma, priorScales(1)) - 2*pr(logRho, priorScales(2)); 
 
@@ -1104,7 +1104,7 @@ function ParsedOptions = parse_options(Options)
 %PARSE_OPTIONS sets default options
 %
 % OPTIONS = PARSE_OPTIONS(OPTIONS) manages settings for
-% Options.ReduceRank.weights    - Boolean [1] converts to scalar weights
+% Options.ReduceRank.weights    - Boolean [true] converts to scalar weights
 %                   .leadFields - Integer [3] dimensionality of lead fields
 %        .sourceModel     - Wens (based on paper referenced below), 
 %                           MNE (which uses gamma-MAP estimation), 
@@ -1135,17 +1135,21 @@ IP.StructExpand  = true;  % If true, can pass parameter-value pairs in a struct
 IP.KeepUnmatched = false; % If true, accept unexpected inputs
 
 % declare allowed options
+default = struct( 'weights', true, 'leadFields', 3 );
 test = @(x) isstruct(x)         &&                         ...
        isfield(x, 'weights')    && islogical(x.weights) && ...
        isfield(x, 'leadFields') && isscalar(x.leadFields);
-IP.addParamValue('ReduceRank', [], test);
+IP.addParameter('ReduceRank', default, test);
+
 test = @(x) ischar(validatestring(x,                                   ...
                                   {'Wens', 'MNE', 'MNE-INA',           ...
                                    'MNE-scaled-noise', 'sparse-Bayes', ...
                                    'rvm-beamformer'},                  ...
                                   mfilename, ...
                                   'Options.sourceModel'));
-IP.addParamValue('sourceModel', 'MNE', test);
+IP.addParameter('sourceModel', 'MNE', test);
+
+default = struct( 'weights', 'norm', 'leadFields', true );
 test = @(x) isstruct(x) &&                                                                     ...
             isfield(x, 'weights')    && ischar(validatestring(x.weights,                       ...
                                                               {'sLoreta', 'norm',              ...
@@ -1154,13 +1158,14 @@ test = @(x) isstruct(x) &&                                                      
                                                               'Options.Normalise.weights')) && ...
             isfield(x, 'leadFields') && islogical(x.leadFields);
         
-IP.addParamValue('Normalise', 'norm', test);
+IP.addParameter('Normalise', default, test);
+
 test = @(x) isa(x, 'function_handle') || ...
             ischar(validatestring(x, {'uniform-sd', 'uniform-variance', ...
                                       'uniform-log', 'cauchy',          ...
                                       'normal', 'log-normal'},          ...
                                   mfilename, 'Options.gammaPrior'));
-IP.addParamValue('gammaPrior', 'uniform-sd', test);
+IP.addParameter('Prior', 'uniform-sd', test);
 
 % parse inputs
 IP.parse(Options);
@@ -1168,8 +1173,9 @@ IP.parse(Options);
 ParsedOptions = IP.Results;
 
 % set prior functions
+ParsedOptions.gammaPrior = struct();
 [ParsedOptions.gammaPrior.fn, ...
- ParsedOptions.gammaPrior.diff_fn] = parse_priors(ParsedOptions.gammaPrior);
+ ParsedOptions.gammaPrior.diff_fn] = parse_priors(ParsedOptions.Prior);
 end%parse_options
 
 
