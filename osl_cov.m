@@ -16,15 +16,16 @@ function [C,M] = osl_cov( D, varargin )
 
     if isa(D,'meeg')
         nfreqs = max([ 1, D.nfrequencies ]);
-        [smask,cid,~,tid] = good_samples(D,varargin{:});
+        [smask,cid,sid,tid] = good_samples(D,varargin{:});
         
         is_timefreq = strcmp(D.transformtype,'TF');
         if nfreqs > 1 && ~is_timefreq
             warning('There are several frequencies, but no time-frequency transform.');
         end
         
-        nchans  = numel(cid);
-        ntrials = numel(tid);
+        nchans   = numel(cid);
+        nsamples = numel(sid);
+        ntrials  = numel(tid);
     else
         [nchans,nsamples] = size(D);
         ntrials = 1;
@@ -40,6 +41,7 @@ function [C,M] = osl_cov( D, varargin )
         
         smask = true(1,nsamples,1);
         cid = 1:nchans;
+        sid = 1:nsamples;
         tid = 1:ntrials;
     end
     
@@ -49,13 +51,13 @@ function [C,M] = osl_cov( D, varargin )
     for k = 1:ntrials
         
         t = tid(k);
-        samp2use = smask(1,:,k);
-        nsamples = sum(samp2use);
-        if nsamples == 0, continue; end
+        s = sid(smask(1,:,k));
         
-        sid = find(samp2use);
-        chan_blks = osl_memblocks([nchans,nsamples],1);
-        smpl_blks = osl_memblocks([nchans,nsamples],2);
+        nsmpl = numel(s);
+        if nsmpl == 0, continue; end
+        
+        chan_blks = osl_memblocks([nchans,nsmpl],1);
+        smpl_blks = osl_memblocks([nchans,nsmpl],2);
         
         for f = 1:nfreqs
             
@@ -64,29 +66,28 @@ function [C,M] = osl_cov( D, varargin )
                 b = chan_blks(i,1) : chan_blks(i,2);
                 c = cid(b);
                 if is_timefreq
-                    Dblk = squeeze(D(c,f,:,t));
+                    Dblk = squeeze(D(c,f,s,t));
                 else
-                    Dblk = D(c,:,t);
+                    Dblk = D(c,s,t);
                 end
-                Dblk = Dblk(:,samp2use);
                 M(b,k,f) = mean(Dblk,2);
             end
 
             % Compute covariance
-            if nsamples <= 1, continue; end
+            if nsmpl <= 1, continue; end
             for i = 1:size(smpl_blks,1)
-                s = sid(smpl_blks(i,1) : smpl_blks(i,2));
+                b = smpl_blks(i,1) : smpl_blks(i,2);
 
                 if is_timefreq
-                    Dblk = squeeze(D(cid,f,:,t));
+                    Dblk = squeeze(D(cid,f,s(b),t));
                 else
-                    Dblk = D(cid,:,t);
+                    Dblk = D(cid,s(b),t);
                 end
 
-                Dblk = bsxfun( @minus, Dblk(:,s), M(:,k,f) );
+                Dblk = bsxfun( @minus, Dblk, M(:,k,f) );
                 C(:,:,k,f) = C(:,:,k,f) + Dblk*Dblk';
             end
-            C(:,:,k,f) = C(:,:,k,f)./(nsamples-1);
+            C(:,:,k,f) = C(:,:,k,f)./(nsmpl-1);
             
         end
 
