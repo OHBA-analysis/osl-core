@@ -219,10 +219,18 @@ scalp_file = fullfile(struct_path,[struct_name '_scalp.nii.gz']);
 std_brain  = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz'];
 
 % determine orientation of standard brain
-std_orient = deblank(runcmd('fslorient -getorient %s 2>/dev/null', std_brain));
+cmd = sprintf('fslorient -getorient %s', std_brain);
+std_orient = deblank(runcmd(cmd));
+if ~ismember(std_orient,{'RADIOLOGICAL','NEUROLOGICAL'})
+    error('Cannot determine orientation of standard brain, please check output of:\n%s',cmd)
+end
 
 % determine orientation of subject brain
-smri_orient = deblank(runcmd('fslorient -getorient %s 2>/dev/null', sMRI));
+cmd = sprintf('fslorient -getorient %s', sMRI);
+smri_orient = deblank(runcmd(cmd));
+if ~ismember(smri_orient,{'RADIOLOGICAL','NEUROLOGICAL'})
+    error('Cannot determine orientation of subject brain, please check output of:\n%s',cmd);
+end
 
 % if orientations don't match, reorient the subject brain
 if ~strcmp(std_orient, smri_orient)
