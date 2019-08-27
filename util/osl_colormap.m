@@ -1243,7 +1243,7 @@ end
         if strcmpi(formula, 'CIE76')
           deltaE = cie76(L, a, b, W);
         elseif strcmpi(formula, 'CIEDE2000')
-          if ~isfile('deltaE2000')
+          if ~osl_util.isfile'deltaE2000')
             fprintf('You need Gaurav Sharma''s function deltaE2000.m\n');
             fprintf('available at:\n');
             fprintf('http://www.ece.rochester.edu/~gsharma/ciede2000/\n');

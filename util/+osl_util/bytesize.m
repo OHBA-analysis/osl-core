@@ -1,5 +1,5 @@
 function [bsize,scale] = bytesize( b, unit )
-% [bsize,scale] = byte_size( b, unit='B' )
+% [bsize,scale] = osl_util.byte_size( b, unit='B' )
 %
 % Format input bytesize as a struct with conversions to kB, MB, GB, TB and PB
 % If it is a BITsize (not BYTEsize), you can set the unit symbol to 'b' instead.
@@ -27,7 +27,7 @@ function [bsize,scale] = bytesize( b, unit )
     end
     assert( isnumeric(b) && isscalar(b), 'Bad input bytesize.' );
     
-    units = mapfun( @(x) [x unit], {'','k','M','G','T','P'}, false );
+    units = osl_util.mapfun( @(x) [x unit], {'','k','M','G','T','P'}, false );
     scale = units{min( numel(units), 1+floor( log(b)/log(1024) ) )};
     
     for i = 1:numel(units)

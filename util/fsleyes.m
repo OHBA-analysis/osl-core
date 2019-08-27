@@ -38,7 +38,7 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical)
 
     % Check all files exist
     for j = 1:length(fnames)
-        if ~isfile(fnames{j})
+        if ~osl_util.isfilefnames{j})
             error(sprintf('File not found: %s',fnames{j}));
         end
     end

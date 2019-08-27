@@ -1,6 +1,6 @@
 function count = filewrite( fpath, txt, fmode )
 %
-% count = filewrite( fpath, txt, mode='w+' )
+% count = osl_util.filewrite( fpath, txt, mode='w+' )
 %
 % Complement Matlab's function fileread.
 % This function writes or appends text `txt` to file `fpath`.

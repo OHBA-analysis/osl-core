@@ -12,7 +12,7 @@ function bf_save(BF, overwrite)
     if nargin < 2, overwrite=true; end
 
     fpath = fullfile(pwd,'BF.mat');
-    if isfile(fpath) && ~overwrite
+    if osl_util.isfilefpath) && ~overwrite
         try 
             save(fpath, '-struct', 'BF', '-append');
         catch
@@ -25,7 +25,7 @@ function bf_save(BF, overwrite)
         % todo: is that sufficient storage capacity for us?
 
         % JH: changed here to adapt to larger file-sizes
-        bs = bytesize(BF);
+        bs = osl_util.bytesize(BF);
         if bs.GB >= 2
             save(fpath, '-struct', 'BF', '-v7.3');
         else

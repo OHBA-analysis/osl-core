@@ -4,7 +4,7 @@ function v = osl_version
 	% If git is not functional, return 'unknown'
 	
 	version_file = fullfile(osldir,'version.txt');
-	if isfile(version_file)
+	if osl_util.isfileversion_file)
 		fid = fopen(version_file,'r');
 		l = fgetl(fid);
 		fclose(fid);

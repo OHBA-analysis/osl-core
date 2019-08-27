@@ -1,6 +1,6 @@
 function out = mapfun( fun, val, unif )
 %
-% out = mapfun( fun, val, unif=false )
+% out = osl_util.mapfun( fun, val, unif=false )
 %
 % Use cellfun, arrayfun or structfun depending on the type of input.
 % Returns a cell by default; set unif=true if you would like an array.

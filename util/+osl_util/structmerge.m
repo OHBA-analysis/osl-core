@@ -1,6 +1,6 @@
 function a = structmerge( varargin )
 %
-% a = structmerge( s1, s2, ..., sN, recursive=false )
+% a = osl_util.structmerge( s1, s2, ..., sN, recursive=false )
 %
 % The merge is in right-to-left direction (i.e. left structures are overwritten).
 % Merging more than 2 structures is supported (just set as many arguments as needed).
@@ -11,8 +11,8 @@ function a = structmerge( varargin )
 %
 % Example:
 %   a.foo = struct('a',42); b.bar = 'hello'; c.foo = struct('c',5);
-%   nonrecursive = structmerge( a, b, c ); nonrecursive.foo
-%   recursive = structmerge( a, b, c, true ); recursive.foo
+%   nonrecursive = osl_util.structmerge( a, b, c ); nonrecursive.foo
+%   recursive = osl_util.structmerge( a, b, c, true ); recursive.foo
 %
 % JH
 
@@ -33,7 +33,7 @@ function a = structmerge( varargin )
     if nmerge > 2
 
         for k = nmerge:-1:2
-            to_merge{k-1} = structmerge( to_merge{k-1}, to_merge{k}, recursive );
+            to_merge{k-1} = osl_util.structmerge( to_merge{k-1}, to_merge{k}, recursive );
         end
         a = to_merge{1};
 
@@ -51,7 +51,7 @@ function a = structmerge( varargin )
 
             f = F{i};
             if recursive && isfield(a,f) && isstruct(a(j).(f)) && isstruct(b(j).(f))
-                a(j).(f) = structmerge( a(j).(f), b(j).(f), true );
+                a(j).(f) = osl_util.structmerge( a(j).(f), b(j).(f), true );
             else
                 a(j).(f) = b(j).(f);
             end

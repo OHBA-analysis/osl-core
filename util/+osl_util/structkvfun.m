@@ -1,6 +1,6 @@
 function out = structkvfun( fun, s, unif )
 %
-% out = structkvfun( fun, s, unif=true )
+% out = osl_util.structkvfun( fun, s, unif=true )
 %
 % Variant of Matlab's structfun, which applies a function to each field of a struct-array.
 % fun should be a function handle with TWO arguments:

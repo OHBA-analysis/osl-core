@@ -1,14 +1,14 @@
 function s = repstruct( fields, varargin )
 %
-% s = repstruct( fields, varargin )
-% s = repstruct( fields, varargin )
+% s = osl_util.repstruct( fields, varargin )
+% s = osl_util.repstruct( fields, varargin )
 %
 % Create a struct-array with specified fields.
 % This is equivalent to repmat( struct('field1',[],'field2',[],...), varargin{:} ).
 % 
 % This function can also be called to create an "empty" struct, where fieldnames are specified, 
 % but values are not. For example:
-%   s = repstruct( {'a','b','c'} )
+%   s = osl_util.repstruct( {'a','b','c'} )
 % creates a scalar structure with fields {'a','b','c'}.
 %
 % See also: repmat

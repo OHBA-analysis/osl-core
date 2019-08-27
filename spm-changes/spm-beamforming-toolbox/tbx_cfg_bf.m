@@ -34,7 +34,7 @@ end
 % name (might fail if there is no write permission)
 [tbx_path, tbx_name] = fileparts(tbxdir);
 if ~isequal(tbx_name, 'beamforming')
-    if ~isfile(fullfile(tbxdir, ['spm_' tbx_name '.m']))
+    if ~osl_util.isfilefullfile(tbxdir, ['spm_' tbx_name '.m']))
         try
             fid = fopen(fullfile(tbxdir, ['spm_' tbx_name '.m']), 'w');
             fprintf(fid, 'function spm_%s\n\nspm_beamforming', tbx_name);
