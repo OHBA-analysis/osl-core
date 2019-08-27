@@ -30,7 +30,7 @@ function [] = check_filename_is_clear(filename)
 %	Contact: giles.colclough 'at' magd.ox.ac.uk
 %	Originally written on: GLNXA64 by Giles Colclough, 25-Oct-2013 12:43:45
 
-if osl_util.isfilefilename) || osl_util.isfile[filename '.mat']),
+if osl_util.isfile(filename) || osl_util.isfile([filename '.mat']),
     try
         % delete existing object, so we can replace cleanly later
         Dtest = spm_eeg_load(filename);

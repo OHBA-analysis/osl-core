@@ -120,7 +120,7 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 		add_to_call('-ds %d',arg.Results.downsample_factor);
     end
     
-	if osl_util.isfilefif_out)
+	if osl_util.isfile(fif_out)
 		fprintf('Deleting existing file: %s\n',fif_out);
 		delete(fif_out);
 	end
@@ -138,7 +138,7 @@ function [fif_out,bad_times,head_out,final_offset] = osl_maxfilter(fif_in,method
 	disp(maxfilter_call);
 	ret = system(maxfilter_call); % Capture log output
 
-	if ~osl_util.isfilefif_out)
+	if ~osl_util.isfile(fif_out)
 		fprintf(2,'Maxfilter did not generate the output file - something probably went wrong. Check %s\n',stderr_log);
 	end
 	
