@@ -231,7 +231,7 @@ end
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if todo.concat || (todo.infer && ~osl_util.isfilefilenames.concat))
+if todo.concat || (todo.infer && ~osl_util.isfile(filenames.concat))
     
     for f = 1:max(numel(multiband),1)
         

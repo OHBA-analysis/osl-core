@@ -12,7 +12,7 @@ function bf_save(BF, overwrite)
     if nargin < 2, overwrite=true; end
 
     fpath = fullfile(pwd,'BF.mat');
-    if osl_util.isfilefpath) && ~overwrite
+    if osl_util.isfile(fpath) && ~overwrite
         try 
             save(fpath, '-struct', 'BF', '-append');
         catch
