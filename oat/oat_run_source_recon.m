@@ -179,7 +179,7 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% generate source recon web report for this session
     
-    source_recon_results.report = osl_report_write(source_recon_results.report);         
+    source_recon_results.report = osl_report_write(source_recon_results.report, source_recon_report);         
     source_recon_report         = osl_report_add_sub_report(source_recon_report, source_recon_results.report);
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

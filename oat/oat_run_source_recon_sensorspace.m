@@ -70,7 +70,7 @@ for sessi_todo=1:length(oat.source_recon.sessions_to_do),
 
     %%%%%%%%%%%%%%%%%%%
     %% generate source recon web report for this session
-    report=osl_report_write(report);        
+    report=osl_report_write(report, source_recon_report);        
     source_recon_report=osl_report_add_sub_report(source_recon_report, report)    
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -128,7 +128,7 @@ end;
 
 %%%%%%%%%%%%%%%%%%%
 %% generate source recon web report
-source_recon_report=osl_report_write(source_recon_report);        
+source_recon_report=osl_report_write(source_recon_report, oat.results.report);        
 source_recon_results.report=source_recon_report;
 
 end

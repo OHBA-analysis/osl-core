@@ -9,13 +9,13 @@ function [report, source_recon_results]=oat_source_recon_report(oat,report,sourc
 %
 % MWW 2015
 
-if nargin<2,
+if nargin<2
     report=[];
-end;
+end
 
-if nargin<3,
+if nargin<3
     source_recon_results=[];
-end;
+end
 
 %%%%%%%%%%%%%%%%%%%
 %% if needed set diagnostic report up 
@@ -92,7 +92,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%
 %% generate source recon web report
-report=osl_report_write(report);        
+report=osl_report_write(report, oat.results.report);        
 disp('View source recon report at:');
 disp(['<a href="' report.html_fname '">' report.html_fname '</a>']);
 

@@ -25,7 +25,7 @@ delete(opt.results.logfile);
 opt.results.date=date;
 
 % set diagnostic report up
-opt_report=osl_report_setup(opt.results.plotsdir,['OPT report'],opt.results.logfile);
+opt_top_report=osl_report_setup(opt.results.plotsdir,['OPT report'],opt.results.logfile);
 
 spm_files_basenames={};
 spm_files_epoched_basenames={};
@@ -78,7 +78,7 @@ for subi=1:length(opt.sessions_to_do),
         % set session specific diagnostic report up
         report_dir=fullfile(opt.results.plotsdir,['session' num2str(subnum)]);
         opt_report=osl_report_setup(report_dir,['Session ' num2str(subnum) ' (Input file:' input_file  ')']);
-
+        
         if(opt.maxfilter.do)
 
             opt_results.maxfilter=[];
@@ -649,10 +649,10 @@ for subi=1:length(opt.sessions_to_do),
             D_continuous=spm_eeg_load(spm_file);
             S = struct();
             S.modalities=opt.modalities;
-            S.dummy_epoch_tsize    = opt.bad_segments.dummy_epoch_tsize   
-            S.measure_fns  = opt.bad_segments.outlier_measure_fns 
-            S.event_significance   = opt.bad_segments.event_significance  
-            S.channel_significance = opt.bad_segments.channel_significance
+            S.dummy_epoch_tsize    = opt.bad_segments.dummy_epoch_tsize;   
+            S.measure_fns  = opt.bad_segments.outlier_measure_fns; 
+            S.event_significance   = opt.bad_segments.event_significance;  
+            S.channel_significance = opt.bad_segments.channel_significance;
             D_continuous = osl_detect_artefacts(D_continuous,S);
             D_continuous.save();
 
@@ -770,7 +770,6 @@ for subi=1:length(opt.sessions_to_do),
 
             %%%%
             % do epoching
-            S3=[];
             S3 = epochinfo;
             S3.D = D_continuous;
             D = osl_epoch(S3);
@@ -807,9 +806,9 @@ for subi=1:length(opt.sessions_to_do),
 
             S = struct();
             S.modalities=opt.modalities;
-            S.measure_fns  = opt.outliers.outlier_measure_fns 
-            S.event_significance   = opt.outliers.event_significance  
-            S.channel_significance = opt.outliers.channel_significance
+            S.measure_fns  = opt.outliers.outlier_measure_fns;
+            S.event_significance   = opt.outliers.event_significance;  
+            S.channel_significance = opt.outliers.channel_significance;
             S.max_iter = 5;
 
             Dold=spm_eeg_load(spm_file);
@@ -853,9 +852,20 @@ for subi=1:length(opt.sessions_to_do),
         opt_results.spm_files_basename=spm_files_basenames{subnum};
 
         %%%%%%%%%%%%%%%%%%%
-        %% generate source recon web report for this session
-        opt_report=osl_report_write(opt_report);
-        opt_report=osl_report_add_sub_report(opt_report, opt_report);
+        %% write output filename
+             
+        if opt.epoch.do
+            spm_file_result=[opt.dirname opt_results.spm_files_epoched_basename '.mat'];   
+        else
+            spm_file_result=[opt.dirname opt_results.spm_files_basenames '.mat'];   
+        end
+        
+        opt_report=osl_report_add_text(opt_report,['(Output file:' spm_file_result  ')'],1);
+        
+        %%%%%%%%%%%%%%%%%%%
+        %% write sub report and add it to top level report    
+        opt_report=osl_report_write(opt_report, opt_top_report);
+        opt_top_report=osl_report_add_sub_report(opt_top_report, opt_report);
 
         %%%%%%%%%%%%%%%%%%%
         %% save opt results
@@ -894,11 +904,11 @@ opt=opt_gather_results(opt);
 
 %%%%%%%%%%%%%%%%%%%%
 %% diagnostic plots over all sessions
-[opt, opt_report]=opt_report_summary_plots(opt, opt_report);
+[opt, opt_top_report]=opt_report_summary_plots(opt, opt_top_report);
 
 %%%%%%%%%%%%%%%%%%%
 %% generate web report
-opt.results.report=osl_report_write(opt_report);
+opt.results.report=osl_report_write(opt_top_report);
 
 %%%%%%%%%%%%%%%%%%%
 %% output res

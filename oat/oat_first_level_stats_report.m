@@ -1,4 +1,4 @@
-function report=oat_first_level_stats_report(oat,first_level_results,report_dir_in)
+function report=oat_first_level_stats_report(oat,first_level_results,report_dir_in,parent_report)
 
 % report=oat_first_level_stats_report(oat,first_level_results)
 %
@@ -16,9 +16,12 @@ function report=oat_first_level_stats_report(oat,first_level_results,report_dir_
 
 OSLDIR = getenv('OSLDIR');
 
-if nargin<3,
+if nargin<3
     report_dir_in='';
-end;
+end
+if nargin<4
+    parent_report=[];
+end
 
 % contrasts
 contrast_list=oat.first_level.contrast;
@@ -267,7 +270,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%
 %% generate source recon web report
-report=osl_report_write(report);
+report=osl_report_write(report, parent_report);
 disp(['View first level report at:']);
 disp([report.html_fname]);
 

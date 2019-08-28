@@ -33,7 +33,7 @@ num_sessions=length(opt.convert.spm_files_basenames);
 %%%%%%%%%%%%%%%%%%%%
 %% find SPM MEEG file results
 
-for subi=1:length(opt.sessions_to_do), 
+for subi=1:length(opt.sessions_to_do)
     subnum=opt.sessions_to_do(subi);
          
     % try and load in results
@@ -58,15 +58,16 @@ opt = opt_gather_results(opt);
 
 % write links to sub reports written previously
 for subi=1:length(opt.sessions_to_do), subnum=opt.sessions_to_do(subi);
-    opt_report.sub_reports{subi}.html_fname=[opt.dirname '/plots/session' num2str(subnum) '/report.html'];    
+    opt_report.sub_reports{subi}.dir=[opt.dirname 'plots/session' num2str(subnum)];
+    opt_report.sub_reports{subi}.html_fname=[opt_report.sub_reports{subi}.dir '/report.html'];    
         
     if ~osl_util.isfile(opt_report.sub_reports{subi}.html_fname)
         opt_report.sub_reports{subi}.html_fname=[];
         opt_report.sub_reports{subi}.title=['Session ' num2str(subnum) ' (NOT FOUND)'];
-    else,
+    else
         opt_report.sub_reports{subi}.title=['Session ' num2str(subnum) ];
-    end;
-end;
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%%
 %% diagnostic plots over all sessions
@@ -74,7 +75,7 @@ end;
 
 %%%%%%%%%%%%%%%%%%%%
 %% generate web report
-opt.results.report=osl_report_write(opt_report);        
+opt.results.report=osl_report_write(opt_report,[]);        
 
 opt.fname=[opt.dirname '/opt'];
 

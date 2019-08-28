@@ -18,9 +18,9 @@ function group_level_report = oat_group_level_stats_report(oat,group_level_resul
 
 OSLDIR = getenv('OSLDIR');
 
-if nargin<3,
+if nargin<3
     report_dir_in='';
-end;
+end
 
 if isstr(group_level_results)
     group_level_results=oat_load_results(oat,group_level_results);
@@ -226,7 +226,7 @@ if is_sensor_space,
         
         %%%%%%%%%%%%%%%%%%%
         %% generate source recon web report
-        con_report=osl_report_write(con_report);
+        con_report=osl_report_write(con_report, group_level_report);
         group_level_report=osl_report_add_sub_report(group_level_report, con_report);
 
     end;
@@ -472,7 +472,7 @@ else
         
         %%%%%%%%%%%%%%%%%%%
         %% generate source recon web report
-        con_report=osl_report_write(con_report);
+        con_report=osl_report_write(con_report, group_level_report);
         group_level_report=osl_report_add_sub_report(group_level_report, con_report);
 
     end; % for cc=1:length(first_level_cons_to_do), 
@@ -481,6 +481,6 @@ end; % if is_sensor_space
 
 %%%%%%%%%%%%%%%%%%%
 %% generate source recon web report
-group_level_report=osl_report_write(group_level_report);        
+group_level_report=osl_report_write(group_level_report, oat.results.report);        
 disp(['To view group level report, point your browser to <a href="' group_level_report.html_fname '">' group_level_report.html_fname '</a>']);
 
