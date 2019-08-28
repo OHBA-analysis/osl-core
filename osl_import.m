@@ -79,7 +79,7 @@ function D = osl_import(raw_data,varargin)
     %% MWW added back in from osl1.2.beta.15 - Oct 2013
     ev = events(D,1);
     for j = 1:length(ev)
-        if ~(ev(j).value>0)
+        if isempty(ev(j).value) || ~(ev(j).value>0)
             ev(j).value=1;
         end
     end
