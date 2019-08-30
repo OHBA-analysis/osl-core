@@ -1,4 +1,4 @@
-function y = isfilefname, varargin)
+function y = isfile(fname, varargin)
 %
 %  res = osl_util.isfile( fileName )
 %
