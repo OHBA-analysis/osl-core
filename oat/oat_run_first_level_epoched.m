@@ -363,7 +363,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
         NKrecon=1;
         NKglm=NKrecon;
     else
-        NKrecon=numel(source_recon_results.BF.inverse.MEG.class);
+        NKrecon=1;%numel(source_recon_results.BF.inverse.MEG.class);
         NKglm=NKrecon;
 
         if NKrecon>1 && ~do_glm_statewise

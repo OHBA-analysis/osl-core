@@ -20,7 +20,7 @@ if(isfield(report,'logfile'))
     html=[html '</p><p><a href="' plotname '">Log file</a>'];
 end
 
-% write sub reports, and add links to sub reports:
+% add links to sub reports:
 if ~isempty(report.sub_reports)
     for rr=1:length(report.sub_reports)
         %plotname = report.sub_reports{rr}.html_fname(length(report.dir)+2:end);

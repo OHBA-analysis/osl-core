@@ -30,7 +30,9 @@ for ii=1:length(fighands),
     end
 
     report.plot_names{report.index}=[report.dir '/' fignames{ii}];
+    warning off;
     print(fighands(ii), ['-d' report.fig_format], sprintf('-r%d',r), report.plot_names{report.index});
+    warning on;
     %exportfig(fighands(ii),report.plots{report.index},'Color','rgb','Format',report.fig_format);
  
     report.plot_titles{report.index}=figtitles{ii};

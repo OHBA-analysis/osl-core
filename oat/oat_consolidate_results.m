@@ -60,8 +60,4 @@ end
 oat.group_level.results_fnames=[oat.first_level.name '_' oat.subject_level.name '_' oat.group_level.name];
 if ~osl_util.isfile([oat.source_recon.dirname '/' oat.group_level.results_fnames '.mat'])
     oat.group_level.results_fnames=[];
-<<<<<<< HEAD
-end   
-=======
-end;    
->>>>>>> origin/master
+end

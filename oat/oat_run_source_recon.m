@@ -1,4 +1,4 @@
-function [results_fnames, source_recon_results ]=oat_run_source_recon(oat)
+function [results_fnames, source_recon_results]=oat_run_source_recon(oat)
 
 % results_fnames=osl_run_source_recon_beamform(oat)
 %
@@ -12,7 +12,9 @@ function [results_fnames, source_recon_results ]=oat_run_source_recon(oat)
 OSLDIR = getenv('OSLDIR');
 
 source_recon=oat.source_recon;
-   
+
+source_recon_results=[];
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Setup mni coords using std space mask
 if(isfield(source_recon,'mask_fname'))
@@ -71,7 +73,7 @@ end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set diagnostic report up    
 report_dir=[oat.results.plotsdir '/' oat.results.date '_source_recon'];
-source_recon_report=osl_report_setup(report_dir,['Source recon (epoched)']);   
+source_recon_results.report=osl_report_setup(report_dir,['Source recon']);   
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -88,8 +90,8 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Set session specific diagnostic report up    
-    report_dir = [source_recon_report.dir '/sess' num2str(sessi)];
-    report     = osl_report_setup(report_dir,['Session ' num2str(sessi)]);       
+    report_dir = [source_recon_results.report.dir '/sess' num2str(sessi)];
+    report_sess     = osl_report_setup(report_dir,['Session ' num2str(sessi)]);       
 
     source_recon.session_name = oat.source_recon.session_names{sessi}; % set in osl_check_oat. Changed by GC to allow different naming conventions Jan 2014 
         
@@ -126,13 +128,10 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
         source_recon_sess.hmm_block = source_recon.hmm_block{sessi};
     end;
     
-    source_recon_sess.report = report;
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Prepare data (bandpass filter, epoch, normalise sensors, HMM)
-    source_recon_results=[];
-    [source_recon_sess source_recon_results report] = oat_prepare_source_recon(source_recon_sess, source_recon_results, report);
-    D=source_recon_results.BF.data.D;
+    [source_recon_sess source_recon_sess_results source_recon_sess_results.report] = oat_prepare_source_recon(source_recon_sess, report_sess);
+    D=source_recon_sess_results.BF.data.D;
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% DO CO-REGISTRATION AND HEAD MODEL
@@ -169,47 +168,45 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     S2.dirname = D.path;
     D = osl_inverse_model(D,mni_coords,S2);
     
-    source_recon_results.BF=load(fullfile(source_recon_sess.dirname,'BF.mat'));
+    source_recon_sess_results.BF=load(fullfile(source_recon_sess.dirname,'BF.mat'));
 
     delete(fullfile(source_recon_sess.dirname,'BF.mat'));
 
-    source_recon_results.type = source_recon_sess.type;
-    source_recon_results.report=report;
+    source_recon_sess_results.type = source_recon_sess.type;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% generate source recon web report for this session
     
-    source_recon_results.report = osl_report_write(source_recon_results.report, source_recon_report);         
-    source_recon_report         = osl_report_add_sub_report(source_recon_report, source_recon_results.report);
+    source_recon_sess_results.report = osl_report_write(source_recon_sess_results.report, source_recon_results.report);         
+    source_recon_results.report         = osl_report_add_sub_report(source_recon_results.report, source_recon_sess_results.report);
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% 
 
-    source_recon_results.source_recon=source_recon;
-    source_recon_results.mask_fname=mask_fname;
-    source_recon_results.mni_coords=mni_coords;        
-    source_recon_results.gridstep=source_recon.gridstep;        
-    source_recon_results.recon_method=source_recon.method;
+    source_recon_sess_results.source_recon=source_recon;
+    source_recon_sess_results.mask_fname=mask_fname;
+    source_recon_sess_results.mni_coords=mni_coords;        
+    source_recon_sess_results.gridstep=source_recon.gridstep;        
+    source_recon_sess_results.recon_method=source_recon.method;
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % save
 
-    source_recon_results.session_name=source_recon.session_name;    
-    source_recon_results.fname=[source_recon_results.session_name '_recon' ];
-    disp(['Saving source-space results: ' source_recon_results.fname]);  % changed by DM
+    source_recon_sess_results.session_name=source_recon.session_name;    
+    source_recon_sess_results.fname=[source_recon_sess_results.session_name '_recon' ];
+    disp(['Saving source-space results: ' source_recon_sess_results.fname]);  % changed by DM
     
-    oat_save_results(oat,source_recon_results);
+    oat_save_results(oat,source_recon_sess_results);
 
-    results_fnames{sessi}=source_recon_results.fname;
+    results_fnames{sessi}=source_recon_sess_results.fname;
     
     
-end;
+end
 
 oat.source_recon.results_fnames=results_fnames;
 
 %%%%%%%%%%%%%%%%%%%
 %% summary plots over sessions
-[source_recon_report source_recon_results] = oat_source_recon_report(oat, source_recon_report, source_recon_results);
-
+source_recon_results = oat_source_recon_report(oat, source_recon_results);
 
 end
