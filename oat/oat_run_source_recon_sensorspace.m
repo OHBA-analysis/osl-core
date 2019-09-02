@@ -9,8 +9,7 @@ function [results_fnames source_recon_results]=osl_run_source_recon_sensorspace(
 
 getenv('OSLDIR');
 
-dirname=oat.source_recon.dirname;
-modalities=oat.source_recon.modalities;  % added by DM
+source_recon=oat.source_recon;
 
 source_recon_results=[];
 
@@ -30,8 +29,6 @@ for sessi_todo=1:length(oat.source_recon.sessions_to_do),
     report_dir = [source_recon_results.report.dir '/sess' num2str(sessi)];
     report_sess     = osl_report_setup(report_dir,['Session ' num2str(sessi)]); 
     
-    source_recon=oat.source_recon;
-
     source_recon_sess=source_recon;
     
     source_recon_sess.do_plots=oat.do_plots;
@@ -61,11 +58,6 @@ for sessi_todo=1:length(oat.source_recon.sessions_to_do),
         source_recon_sess.pca_dim=source_recon.pca_dim;        
     end;
     
-    clear source_recon;
-            
-    source_recon_sess_results.source_recon=source_recon_sess;         
-    source_recon_sess_results.recon_method=source_recon_sess.method;
-
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%
     [source_recon_sess source_recon_sess_results source_recon_sess_results.report] = oat_prepare_source_recon(source_recon_sess, report_sess);
@@ -76,7 +68,13 @@ for sessi_todo=1:length(oat.source_recon.sessions_to_do),
     source_recon_results.report         = osl_report_add_sub_report(source_recon_results.report, source_recon_sess_results.report);
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% save    
+    %%     
+    
+    source_recon_sess_results.source_recon=source_recon;
+    source_recon_sess_results.recon_method=source_recon.method;
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% save
     
     source_recon_sess_results.session_name=source_recon_sess.session_name;    
     source_recon_sess_results.fname=[source_recon_sess_results.session_name '_recon' ];
