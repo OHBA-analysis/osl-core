@@ -140,7 +140,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
             first_level_results.chanlabels=D.chanlabels(chanindmeg);
             first_level_results.chantype=D.chantype(chanindmeg);
 
-            first_level_results.mask_indices_in_source_recon=1:length(chanindmeg);
+            first_level_results.mask_indices_in_source_recon=chanindmeg;
 
         else,
 
