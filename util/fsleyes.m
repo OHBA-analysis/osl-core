@@ -1,4 +1,4 @@
-function fsleyes(fnames,thresholds,colour_maps,anatomical)
+function fsleyes(fnames,thresholds,colour_maps,anatomical,filename_for_fsleyes)
     % Wrapper to call fsleyes
     %
     % INPUTS
@@ -12,6 +12,13 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical)
     %
     % Romesh Abeysuriya 2017
 
+    
+    if nargin < 5 || isempty(filename_for_fsleyes)
+        filename_for_fsleyes='fsleyes';
+    
+        %filename_for_fsleyes='/Applications/FSLeyes.app/Contents/MacOS/fsleyes';    
+    end
+    
     assert(nargin > 0,'You must specify at least one image file to display');
     assert(ischar(fnames) || iscell(fnames),'Input must be either a file name or a cell array of file names');
 
@@ -85,5 +92,5 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical)
 
     % Current version of fsleyes returns 0 even if an error occurred. So this command
     % below will fail silently. Hopefully this will be fixed upstream later on
-    runcmd('fsleyes %s %s &',anatomical,file_string);
+    runcmd('%s %s %s &',filename_for_fsleyes, anatomical,file_string);
      
