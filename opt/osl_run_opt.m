@@ -495,7 +495,7 @@ for subi=1:length(opt.sessions_to_do),
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% save opt results
-        opt_results.fname=['session' num2str(subnum)];
+        opt_results.fname=['opt_result_session' num2str(subnum)];
         disp(['Saving opt results for: ' opt_results.fname]);
         opt_save_results(opt, opt_results);
         opt.results.fnames{subnum}=opt_results.fname;
