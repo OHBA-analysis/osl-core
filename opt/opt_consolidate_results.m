@@ -28,7 +28,7 @@ opt.results.date=date;
 opt_report=osl_report_setup(opt.results.plotsdir,['OPT report'],opt.results.logfile);  
 diary(opt.results.logfile);
 
-num_sessions=length(opt.convert.spm_files_basenames);
+num_sessions=length(opt.spm_files);
 
 %%%%%%%%%%%%%%%%%%%%
 %% find SPM MEEG file results
