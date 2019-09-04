@@ -9,24 +9,6 @@ function opt = osl_check_opt(optin)
 %
 % Required inputs:
 %
-% opt.raw_fif_files: A list of the existing raw fif files for subjects (need these if
-% want to do SSS Maxfiltering)
-% e.g.:
-% raw_fif_files{1}=[testdir '/fifs/sub1_face'];
-% raw_fif_files{2}=[testdir '/fifs/sub2_face'];
-% etc...
-%
-% OR:
-%
-% opt.input_files: A list of the base input (e.g. fif) files for input into the SPM
-% convert call
-% e.g.:
-% input_files{1}=[testdir '/fifs/sub1_face_sss'];
-% input_files{2}=[testdir '/fifs/sub2_face_sss'];
-% etc...
-%
-% OR:
-%
 % opt.spm_files: A list of the spm meeg files for input into SPM (require
 % .mat extensions).
 % e.g.:
@@ -53,34 +35,13 @@ opt=[];
 
 try, opt.datatype=optin.datatype; optin = rmfield(optin,'datatype'); catch, error('Need to specify opt.datatype'); end; % datatype: 'neuromag', 'ctf', 'eeg'
 
-try, opt.raw_fif_files=optin.raw_fif_files; optin = rmfield(optin,'raw_fif_files'); catch, opt.raw_fif_files=[]; end; % Specify a list of the raw fif files for subjects
-% OR:
-try, opt.input_files=optin.input_files; optin = rmfield(optin,'input_files'); catch, opt.input_files=[]; end; % Specify a list of the base input (e.g. fif) files for input into the SPM
-% OR:
-try, opt.spm_files=optin.spm_files; optin = rmfield(optin,'spm_files'); catch, opt.spm_files=[]; end; % Specify a list of the SPM MEEG files (do this if jumping the maxfilter/convert stage
+try, opt.spm_files=optin.spm_files; optin = rmfield(optin,'spm_files'); catch, opt.spm_files=[]; end; % Specify a list of the SPM MEEG files 
 
-% check list of SPM MEEG filenames input
-if(~isempty(opt.raw_fif_files)),
-    sess=opt.raw_fif_files;
-    if ~strcmp(opt.datatype,'neuromag'), error('Should only specify raw fif files if using neuromag datatype'); end;
-    opt.input_file_type='raw_fif_files';
-elseif(~isempty(opt.input_files)),
-    sess=opt.input_files;
-    opt.input_file_type='input_files';
-elseif(~isempty(opt.spm_files)),
-    sess=opt.spm_files;
-    opt.input_file_type='spm_files';
-else
-    error('Either opt.raw_fif_files, or opt.input_files, or opt.spm_files need to be specified');
-end;
-disp(['Using opt.' opt.input_file_type ' as input']);
-try, optin = rmfield(optin,'input_file_type');catch, end;
-
-num_sessions=length(sess);
+num_sessions=length(opt.spm_files);
 
 % check that full directory names have been specified
 for iSess = 1:num_sessions,
-    sessPath = fileparts(sess{iSess});
+    sessPath = fileparts(opt.spm_files{iSess});
     if isempty(sessPath) || strcmpi(sessPath(1), '.'),
         error([mfilename ':FullPathNotSpecified'], ...
               'Please specify full paths for the fif, input or spm files. \n');
@@ -115,41 +76,6 @@ end;
 % post-sss fif and pre/post africa files) and 2 means that everything will be
 % cleaned up
 try, opt.cleanup_files=optin.cleanup_files; optin = rmfield(optin,'cleanup_files'); catch, opt.cleanup_files=1; end;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% convert settings
-
-try, opt.convert.trigger_channel_mask=optin.convert.trigger_channel_mask; optin.convert = rmfield(optin.convert,'trigger_channel_mask'); catch, opt.convert.trigger_channel_mask='0000000000111111'; end;  % binary mask to use on the trigger channel
-try, opt.convert.spm_files_basenames=optin.convert.spm_files_basenames; optin.convert = rmfield(optin.convert,'spm_files_basenames'); catch, for ii=1:num_sessions, opt.convert.spm_files_basenames{ii}=['spm_meg' num2str(ii)]; end; end; % basename used for SPM MEEG object files
-try, opt.convert.bad_epochs=optin.convert.bad_epochs; optin.convert = rmfield(optin.convert,'bad_epochs'); catch, opt.convert.bad_epochs=cell(num_sessions,1); end; % Bad epochs to ignore once the SPM object has been created, one cell for each session, where the cell contains a (N_epochs x 2) matrix of epochs indicating the start and end time (in secs) (use -1 to indicate the start or end of the data)
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% maxfilter settings
-try, opt.maxfilter.remote_port=optin.maxfilter.remote_port; optin.maxfilter = rmfield(optin.maxfilter,'remote_port');
-catch
-    opt.maxfilter.remote_port = 0;
-end
-
-try, opt.maxfilter.do=optin.maxfilter.do; optin.maxfilter = rmfield(optin.maxfilter,'do');
-catch,
-    switch opt.datatype
-        case 'neuromag'
-            opt.maxfilter.do=1;
-        otherwise
-            opt.maxfilter.do=0;
-    end;
-end; % flag to indicate whether to do maxfilter or not (e.g. would not do it because it has been pre-run or because we are not using neuromag data)
-
-try, opt.maxfilter.do_sss=optin.maxfilter.do_sss; optin.maxfilter = rmfield(optin.maxfilter,'do_sss'); catch, opt.maxfilter.do_sss=1; end; % flag to indicate whether actual SSS maxfiltering should be done or not
-try, opt.maxfilter.do_remove_badchans_pre_sss=optin.maxfilter.do_remove_badchans_pre_sss; optin.maxfilter = rmfield(optin.maxfilter,'do_remove_badchans_pre_sss'); catch, opt.maxfilter.do_remove_badchans_pre_sss=1; end; % flag to indicate whether bad chans should be removed before running SSS
-try, opt.maxfilter.max_badchans_pre_sss=optin.maxfilter.max_badchans_pre_sss; optin.maxfilter = rmfield(optin.maxfilter,'max_badchans_pre_sss'); catch, opt.maxfilter.max_badchans_pre_sss=10; end; % maximum number of bad chans to be removed before running SSS
-try, opt.maxfilter.movement_compensation=optin.maxfilter.movement_compensation; optin.maxfilter = rmfield(optin.maxfilter,'movement_compensation'); catch, opt.maxfilter.movement_compensation=1; end; % flag to indicate whether move comp should be done
-try, opt.maxfilter.trans_ref_file=optin.maxfilter.trans_ref_file; optin.maxfilter = rmfield(optin.maxfilter,'trans_ref_file'); catch, opt.maxfilter.trans_ref_file=[]; end; % trans reference file to pass to maxfilter call using the -trans flag
-try, opt.maxfilter.temporal_extension=optin.maxfilter.temporal_extension; optin.maxfilter = rmfield(optin.maxfilter,'temporal_extension'); catch, opt.maxfilter.temporal_extension=0; end; % flag to indicate whether Maxfilter temporal extension should be done
-try, opt.maxfilter.maxfilt_dir=optin.maxfilter.maxfilt_dir; optin.maxfilter = rmfield(optin.maxfilter,'maxfilt_dir'); catch, opt.maxfilter.maxfilt_dir='/neuro/bin/util'; end; % where to find MaxFilter exe. Defaults to S.maxfilt_dir = '/neuro/bin/util'.
-try, opt.maxfilter.bad_epochs=optin.maxfilter.bad_epochs; optin.maxfilter = rmfield(optin.maxfilter,'bad_epochs'); catch, opt.maxfilter.bad_epochs=cell(num_sessions,1); end; % Bad epochs to ignore (by maxfilter (passed using the -skip Maxfilter option), one cell for each session, where the cell contains a (N_epochs x 2) matrix of epochs, where each row indicates the start and end time of each bad epoch (in secs)
-try, opt.maxfilter.cal_file = optin.maxfilter.cal_file; optin.maxfilter = rmfield(optin.maxfilter,'cal_file'); catch, opt.maxfilter.cal_file = 0;end
-try, opt.maxfilter.ctc_file = optin.maxfilter.ctc_file; optin.maxfilter = rmfield(optin.maxfilter,'ctc_file'); catch, opt.maxfilter.ctc_file = 0;end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% downsample settings
@@ -190,16 +116,11 @@ try, opt.africa.used_maxfilter=optin.africa.used_maxfilter; optin.africa = rmfie
 catch,
     switch opt.datatype
         case 'neuromag'
-            if strcmp(opt.input_file_type,'raw_fif_files'),
-                opt.africa.used_maxfilter=opt.maxfilter.do_sss;
-            else
-                opt.africa.used_maxfilter=1;
-                warning('opt.datatype is neuromag, Will assume that data has been maxfiltered and will set opt.africa.used_maxfilter=1');
-            end;
+            opt.africa.used_maxfilter=1;
         otherwise
             opt.africa.used_maxfilter=0;
-    end;
-end; % flag to indicate if SSS Maxfilter has been done
+    end
+end % flag to indicate if SSS Maxfilter has been done
 
 % africa.ident settings (used in identifying which artefacts are bad):
 opt.africa.ident=[];
@@ -354,30 +275,6 @@ if ~isempty(wierdfields)
 end % if ~isempty(wierdfields)
 end;
 
-if isfield(optin,'maxfilter'),
-wierdfields = fieldnames(optin.maxfilter);
-if ~isempty(wierdfields)
-    disp('The following opt.maxfilter settings were not recognized by osl_check_opt');
-
-    for iprint = 1:numel(wierdfields)
-        disp([' ' wierdfields{iprint} ' '])
-    end
-    error('Invalid osl_check_opt settings');
-end % if ~isempty(wierdfields)
-end;
-
-if isfield(optin,'convert'),
-wierdfields = fieldnames(optin.convert);
-if ~isempty(wierdfields)
-    disp('The following opt.convert settings were not recognized by osl_check_opt');
-
-    for iprint = 1:numel(wierdfields)
-        disp([' ' wierdfields{iprint} ' '])
-    end
-    error('Invalid osl_check_opt settings');
-end % if ~isempty(wierdfields)
-end;
-
 try, optin.africa = rmfield(optin.africa,'ident');catch, end;
 try, optin.africa = rmfield(optin.africa,'todo');catch, end;
 if isfield(optin,'africa'),
@@ -402,8 +299,6 @@ try, optin = rmfield(optin,'highpass');catch, end;
 try, optin = rmfield(optin,'mains');catch, end;
 try, optin = rmfield(optin,'downsample');catch, end;
 try, optin = rmfield(optin,'coreg');catch, end;
-try, optin = rmfield(optin,'maxfilter');catch, end;
-try, optin = rmfield(optin,'convert');catch, end;
 try, optin = rmfield(optin,'africa');catch, end;
 try, optin = rmfield(optin,'fname'); catch, end;
 

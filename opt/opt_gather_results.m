@@ -6,7 +6,7 @@ function opt = opt_gather_results( opt )
 %
 % MWW 2016
 
-num_sessions=length(opt.convert.spm_files_basenames);
+num_sessions=length(opt.spm_files);
 
 opt.results.spm_files=cell(num_sessions,1);
 opt.results.spm_files_basenames=cell(num_sessions,1);
