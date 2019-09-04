@@ -478,7 +478,7 @@ if todo.output
                     ntpts=min(max_ntpts,size(datap,2));
                     datap = datap(:,1:ntpts);
                 else
-                    max_ntpts=size(datap,2);
+                    ntpts=size(datap,2);
                 end
 
                 tmp=osl_hmm_statemaps(hmm_sub,datap,true,output_method,state_assignment);            
@@ -489,7 +489,7 @@ if todo.output
                 goodsamples = good_samples(Dp);
 
                 sp_full = zeros(1,Dp.nsamples*Dp.ntrials);
-                sp_full(goodsamples(1:max_ntpts)) = hmm_sub.statepath;
+                sp_full(goodsamples(1:ntpts)) = hmm_sub.statepath';
                 epoched_statepath_sub{subnum} = reshape(sp_full,[1,Dp.nsamples,Dp.ntrials]);
                 
                 if Dp.ntrials>1
