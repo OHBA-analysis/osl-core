@@ -51,7 +51,7 @@ function h = bad_trials(D,measure_fn)
 		a1=axis;
 		xlabel(measure_fn)
 		ylabel('counts')
-
+        title(sprintf('TRIAL SUMMARY: %s (without bad channels)', modalities{j}));
 
 		subplot(4,1,4);
 		plot(dat(~badtrials),1:sum(~badtrials),'*g');
