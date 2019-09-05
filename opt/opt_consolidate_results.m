@@ -37,7 +37,7 @@ for subi=1:length(opt.sessions_to_do)
     subnum=opt.sessions_to_do(subi);
          
     % try and load in results
-    opt.results.fnames{subnum}=['session' num2str(subnum)];
+    opt.results.fnames{subnum}=['opt_result_session' num2str(subnum)];
     
     try
         opt_results=opt_load_results(opt, opt.results.fnames{subnum});
@@ -46,8 +46,8 @@ for subi=1:length(opt.sessions_to_do)
     end
     
     % build logfile
-    %runcmd(['cat ' opt_results.logfile '>' opt.results.logfile]);
-    opt_results.logfile % With diary on, this should dump the contents to the log file   
+    text = fileread(opt_results.logfile);
+    disp(text); 
 end
 
 % gather the results together
