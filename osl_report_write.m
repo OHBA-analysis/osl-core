@@ -1,18 +1,14 @@
 function report=osl_report_write(report, parent_report)
  
-if nargin>1 
-    report.parent_report=parent_report;
-else
-    report.parent_report=[];
-end
-    
 html=[];
 
-% add link to parent report (if there is one):
-if ~isempty(report.parent_report)
-    html=[html '</p><p><a href="' [report.parent_report.html_fname] '">Back</a>'];
+if nargin>1 
+    % add link to parent report (if there is one):
+    if ~isempty(parent_report)
+        html=[html '</p><p><a href="' [parent_report.html_fname] '">Back</a>'];
+    end
 end
-
+    
 html=[html '</p><p>' report.title];
 
 if(isfield(report,'logfile'))
