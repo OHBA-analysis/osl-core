@@ -498,6 +498,7 @@ for subi=1:length(opt.sessions_to_do),
         opt_results.fname=['opt_result_session' num2str(subnum)];
         disp(['Saving opt results for: ' opt_results.fname]);
         opt_save_results(opt, opt_results);
+        disp(['Save complete']);
         opt.results.fnames{subnum}=opt_results.fname;
 
     catch ME,
@@ -518,6 +519,7 @@ for subi=1:length(opt.sessions_to_do),
     % which implies that opt.results.logfile is overwritten because it uses > not >>
     % Thus replacing with a copyfile call here. Maybe a more sophisticated solution is
     % required if 
+    disp(['Building logfile']);
     copyfile(opt_results.logfile,opt.results.logfile);
 
 end
@@ -526,6 +528,7 @@ diary(opt.results.logfile);
 
 %%%%%%%%%%%%%%%%%%%%
 %% gather results over all sessions
+disp(['Gathering results']);
 opt=opt_gather_results(opt);
 
 %%%%%%%%%%%%%%%%%%%%
@@ -534,6 +537,7 @@ opt=opt_gather_results(opt);
 
 %%%%%%%%%%%%%%%%%%%
 %% generate web report
+disp(['Generating opt report']);
 opt.results.report=osl_report_write(opt_top_report);
 
 %%%%%%%%%%%%%%%%%%%
@@ -542,6 +546,7 @@ opt.osl2_version=osl_version;
 
 opt.fname=[opt.dirname filesep 'opt'];
 
+disp(['Saving opt']);
 save(opt.fname, 'opt');
 
 disp(['To view OPT report, point your browser to <a href="' opt.results.report.html_fname '">' opt.results.report.html_fname '</a>']);
