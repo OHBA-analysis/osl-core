@@ -483,7 +483,7 @@ for subi=1:length(opt.sessions_to_do),
         if opt.epoch.do
             spm_file_result=[opt.dirname opt_results.spm_files_epoched_basename '.mat'];   
         else
-            spm_file_result=[opt.dirname opt_results.spm_files_basenames '.mat'];   
+            spm_file_result=[opt.dirname opt_results.spm_files_basename '.mat'];   
         end
         
         opt_report=osl_report_add_text(opt_report,['(Output file:' spm_file_result  ')'],1);
