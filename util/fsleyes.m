@@ -16,7 +16,7 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical,filename_for_fsleyes)
     if nargin < 5 || isempty(filename_for_fsleyes)
         filename_for_fsleyes='fsleyes';
     
-        %filename_for_fsleyes='/Applications/FSLeyes.app/Contents/MacOS/fsleyes';    
+        filename_for_fsleyes='/Applications/FSLeyes.app/Contents/MacOS/fsleyes';    
     end
     
     assert(nargin > 0,'You must specify at least one image file to display');
@@ -71,7 +71,7 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical,filename_for_fsleyes)
 
     % Construct the command
     file_string = '';
-    res = nan(length(fnames));
+    res = nan(length(fnames),1);
     for j = 1:length(fnames)
         tmp = nii.get_spatial_res(fnames{j});
         res(j) = tmp(1);
