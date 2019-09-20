@@ -1,6 +1,6 @@
-function [ results ] = vbrt_infer_dynamic_model( X,options )
+function [ results ] = vbrt_infer_dynamic_model_gamma( X,options )
 
-% [ results ] = vbrt_infer_dynamic_model( X,T,options )
+% [ results ] = vbrt_infer_dynamic_model_gamma( X,T,options )
 
     results = [];
     
@@ -36,17 +36,16 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     %python_cmd=['setup_tools.setup_dictionary(\"' options.workingdir '\", Q=' num2str(size(data,2)) ', ndicts=' num2str(size(data,2)) ', use_off_diags=False, use_greens_fns=False)'];  
     
     options.vbrt=[];
-    options.vbrt.ntraining_init=100;
-    options.vbrt.ntraining=options.vbrt.ntraining_init+200;
+    options.vbrt.ntraining_init=50;
+    options.vbrt.ntraining=options.vbrt.ntraining_init+50;
     options.vbrt.nportions=20;
     options.vbrt.subportion_length=50;
     options.vbrt.nstates=options.K;
     options.vbrt.model_mode='\"lstm\"';
-    options.vbrt.alpha_softxform_model='\"softmax\"';
     options.vbrt.model_name='\"dtfm\"';
     
     options.vbrt.do_recon='False';
-    options.vbrt.do_fullprob_alpha='True';
+    options.vbrt.do_fullprob_inference_rnn='True';
     options.vbrt.do_fullprob_beta='False';
     options.vbrt.use_pca_cov_model='False';
     
@@ -54,7 +53,7 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     
     options.vbrt.state_model='\"categorical\"';
     
-    python_cmd=['infer_dynamic_model.reconstruct(\"' ...
+    python_cmd=['infer_dynamic_model_gamma.reconstruct(\"' ...
         options.workingdir '\", \"' options.workingdir '\"' ...
         ', nsessions= ' num2str(length(fnames)) ...
         ', ntraining= ' num2str(options.vbrt.ntraining) ...
@@ -64,39 +63,45 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
         ', npcs=' num2str(options.vbrt.npcs) ...
         ', nstates=' num2str(options.vbrt.nstates) ...
         ', model_mode=' options.vbrt.model_mode ...
-        ', alpha_softxform=' options.vbrt.alpha_softxform_model ...
         ', load_model_epoch=None, epochs_per_model_save=100' ...
         ', model_name=' options.vbrt.model_name ...
         ', use_pca_cov_model=' options.vbrt.use_pca_cov_model ...
-        ', do_fullprob_alpha=' options.vbrt.do_fullprob_alpha ...
+        ', do_fullprob_theta=' options.vbrt.do_fullprob_inference_rnn ...
         ', do_fullprob_beta=' options.vbrt.do_fullprob_beta ...
         ', do_recon=' options.vbrt.do_recon ...
         ', state_model=' options.vbrt.state_model ...
         ')'];
 
     disp('Calling cmd:');
-    disp(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"']);
+    disp(['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"']);
             
-    runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"'])   
+    %runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"'])   
     
     python_cmd=['plot_tools.plot_results(\"' ...
         options.workingdir '\", \"' options.workingdir '\"' ...
         ', time_range=[0,10000]' ...
         ')'];
        
-    disp('Calling cmd:');
-    disp(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"']);
+    disp('For python plots, call cmd:');
+    disp(['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"']);
     
-    %runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"'])   
+    %runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"'])   
     
     %%
-    
     results.gamma=[];
     
     for ii=1:length(fnames)
-        tmp=load([options.workingdir '/softxform_alpha_mean_store' num2str(ii-1) '.mat']);
         
-        results.gamma=[results.gamma; tmp.softxform_alpha_mean_store0]
+        if strcmp(options.vbrt.state_model,'\"categorical\"')
+            tmp=load([options.workingdir '/m_z_store' num2str(ii-1) '.mat']);
+            alphas=tmp.m_z_store0;
+        else
+            tmp=load([options.workingdir '/m_alpha_store' num2str(ii-1) '.mat']);
+            alphas=tmp.m_alpha_store0;
+        end
+        
+        
+        results.gamma=[results.gamma; alphas]
         
         %keyboard;
         
