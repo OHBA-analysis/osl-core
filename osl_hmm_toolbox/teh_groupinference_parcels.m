@@ -369,7 +369,7 @@ if todo.hmm
         options.BIGtol = 1e-7;
         options.BIGcyc = 500;
         options.BIGundertol_tostop = 5;
-        options.BIGdelay = 5; 
+        options.BIGdelay = 2; 
         options.BIGforgetrate = 0.7;
         options.BIGbase_weights = 0.9;
     end
@@ -394,7 +394,7 @@ if todo.hmm
             [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options);
         case 'vbrt'
             options.workingdir=hmmdir;
-            hmm = vbrt_infer_dynamic_model(X,options);
+            hmm = vbrt_infer_dynamic_model_gamma(X,options);
     end    
         
     

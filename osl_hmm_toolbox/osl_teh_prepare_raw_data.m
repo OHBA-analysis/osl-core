@@ -5,6 +5,8 @@ if logtrans
     data = log10(data);
 end
 
+lags=[];
+
 if exist('embed','var') && embed.do
     
     disp('Time embedding data');
