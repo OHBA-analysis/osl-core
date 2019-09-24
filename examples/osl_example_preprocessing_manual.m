@@ -606,7 +606,7 @@ for subnum = 1:length(spm_files), % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['ABdff' spm_files_basenames{subnum}]);
 end
 
-for i=1:length(spm_files), % Iterating over subjects
+for i=1:length(spm_files) % Iterating over subjects
 
     % define the trials we want from the event information
     S2 = [];
@@ -648,7 +648,10 @@ for i=1:length(spm_files), % Iterating over subjects
     D = osl_epoch(S3);
 end
 
-report.event_timings(D);
+%%
+% We can visualise the timings of the different trial types alongside the
+% samples that have been marked as bad, all in continuous (pre-epoched time) using the following:
+report.trial_timings(D);
 
 %%
 % After epoching, data will be stored in a file with the prefix 'e',
@@ -786,11 +789,18 @@ end
 % are instead marked as bad, so that they can be optionally excluded from
 % future parts of the analysis. 
 %
-% We can see the indices for any bad trials using:
+% We can now see the indices for any bad trials. This will be a combination
+% of those trials that overlapped with bad epochs on the continuous data, and 
+% trials that have just now been identified as bad using the automated bad
+% trial detection on the epoched data.
 D.badtrials
   
 %%
-% We can see the indices for any bad channels using:
+% We can also see the indices for any bad channels. This will be a combination
+% of those channels that were found to be bad on the continuous data, and 
+% channels that have just now been identified as bad using the automated bad
+% channel detection on the epoched data.
+
 D.badchannels
 
 %%
@@ -801,6 +811,7 @@ D.badchannels
 % (bottom half), the bad trials. Trials marked as bad are shown as red astrices, and trials marked as good
 % are green astrices. You may need to zoom in on the second (from the top) subplot
 % to see the green, good trials.
+
 report.bad_trials(D);
 
 %% MANUAL BAD TRIAL/CHANNEL DETECTION 
@@ -842,9 +853,8 @@ end
 % # Press "quit" and repeat the process for the gradiometers. 
 
 %%
-% Again, we can see the indices for any bad trials or channels:
-D.badtrials
-D.badchannels
+% Again, we can visualise the bad trials:
+report.bad_trials(D);
 
 %% EXAMINE AND VISUALISE CLEANED EPOCHED DATA
 % 

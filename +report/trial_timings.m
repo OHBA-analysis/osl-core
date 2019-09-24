@@ -51,7 +51,6 @@ for cc=1:length(D.condlist)
 
 end
 
-
 % plot
 hfig = figure('name','Event timings','tag','event_timings');
 hold on;
@@ -62,7 +61,7 @@ for cc=1:length(D.condlist)
     plot(D_continuous.time, tmp, get_cols(cc), 'LineWidth',8);
 end
 
-tmp=double(~good_samples(D_continuous))*df(length(D.condlist)+2);
+tmp=double(~good_samples(D_continuous,D_continuous.indchantype('MEEG','GOOD')))*df(length(D.condlist)+2);
 tmp(tmp==0)=nan;
 
 plot(D_continuous.time, tmp, 'k', 'LineWidth',8);
