@@ -1,5 +1,7 @@
 function [data, lags] = osl_teh_prepare_raw_data(data,normalisation,logtrans,embed)
 
+lags=[];
+
 % log transform
 if logtrans
     data = log10(data);

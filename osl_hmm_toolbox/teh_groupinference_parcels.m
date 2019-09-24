@@ -171,6 +171,8 @@ try output_method       = options.output.method;                catch, output_me
 try state_assignment    = options.output.assignment;            catch, state_assignment     = 'hard';  end  
 try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights   = 0;       end
 
+freq_ind=[];
+
 hmm=[];
 hmm.options=options;
 
@@ -224,7 +226,7 @@ if todo.prepare
 
         embed.tres=1/D.fsample;
 
-        data = osl_teh_prepare_data(D,normalisation,logtrans,f,embed);
+        data = osl_teh_prepare_data(D,normalisation,logtrans,freq_ind,embed);
         
         if max_ntpts>0
             ntpts=min(max_ntpts,size(data,2));
@@ -279,7 +281,7 @@ if todo.prepare
 
         embed.tres=1/D.fsample;
 
-        [data, lags] = osl_teh_prepare_data(D,normalisation,logtrans,f,embed);
+        [data, lags] = osl_teh_prepare_data(D,normalisation,logtrans,freq_ind,embed);
         
         if max_ntpts>0
             ntpts=min(max_ntpts,size(data,2));
@@ -472,7 +474,7 @@ if todo.output
                 hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
                                            
                 Dp = spm_eeg_load(data_files{subnum});
-                datap = osl_teh_prepare_data(Dp,normalisation,logtrans,f,embed);
+                datap = osl_teh_prepare_data(Dp,normalisation,logtrans,freq_ind,embed);
                 
                 if max_ntpts>0
                     ntpts=min(max_ntpts,size(datap,2));
