@@ -36,13 +36,13 @@ datadir = fullfile(osldir,'example_data','preproc_example','manual');
 
 %%
 % The working directory will be same as the data directory. This is where
-% the analysis files will be stored in.
+% the analysis files will be stored.
 workingdir=datadir; 
 
 %%
 % We now need to specify a list of the fif files that we want to work on. 
 % We also need to specify a list of SPM file names, 
-% which will be used to name data files once each fif file has been 
+% which will be used to name the resulting SPM data files after the fif files have been 
 % imported into SPM. It is important to make
 % sure that the order of these lists is consistent. Note
 % that here we only have 1 subject, but more generally there would be more
@@ -54,6 +54,7 @@ workingdir=datadir;
 % etc...
 
 %%
+
 clear fif_files spm_files_basenames;
 
 fif_files{1}=fullfile(datadir,'fifs','sub1_face_sss.fif'); 
@@ -171,8 +172,7 @@ methods('meeg')
 % OSLview.
 %
 % OSLview is a tool for viewing continuous MEG data. Additionally it allows
-% interactive flagging of bad channels and time periods in format that is
-% compatible with the OAT pipeline. We will use this feature later.
+% interactive flagging of bad channels and time periods. We will use this feature later.
 %
 % OSLview may be run in Matlab by calling
 % oslview(D) where D is any SPM MEEG object containing the continuous data.
@@ -205,16 +205,18 @@ D = oslview(D);
 % kurtosis). The Pan Window shows the variance over all channels at each time
 % point. 
 %
-% The unpreprocessed data is messy, with
-% low frequency and mains line noise (50Hz plus harmonics). 
-% We will now do some temporal filtering
-% to remove these. First, close oslview.
-%
 % Note that for more details on oslview, see:
 %
 % <html>
 % <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a>
 % </html>
+%
+% The unpreprocessed data is messy, with
+% low frequency and line noise (50Hz plus its harmonics). 
+% We will now do some temporal filtering
+% to remove these. First, close oslview.
+%
+
 
 %% FILTERING: BAND-PASS AND NOTCH FILTERING
 
@@ -235,11 +237,12 @@ end
 % We then pass these inputs to the SPM function osl_filter to band pass
 % filter between 0.1Hz and 120Hz. As well as removing noise outside this
 % frequency range, this reflects the fact that we have decided that we do
-% not need information
-% outside this frequency range in our planned analysis.
+% not need to keep any signal that may be
+% outside this frequency range in our planned event related field (ERF) analysis.
+%
 % The resulting filtered data set will get the prefix 'f' 
-% preceding the file name. Feel free to use oslview to look at how the data
-% is changed.
+% preceding the file name. 
+%
 
 for subnum = 1:length(spm_files) % iterates over subjects
     D=spm_eeg_load(spm_files{subnum});
@@ -318,18 +321,30 @@ D = spm_eeg_load(spm_files{subnum});
 % with 139200 time points at 150Hz. We will epoch the data later.
 D
 
-%% AUTOMATED BAD EPOCH/CHANNEL DETECTION 
-% Even with the temporal filtering there may be large artefacts in
-% the data. Hence, we next perform bad epoch/channel detection. This
-% can be done either manually or automated.
+%%
+% Let's have a look at the continuous data, now that it has been temporally
+% filtered and downsampled using oslview. You'll see that there are very bad artefacts in
+% this data, especially at the end of the scan. These severity
+% of artefact is not normal for good quality MEG and EEG data, but it serves well for
+% demonstrating the power of good preprocessing. 
 %
-% We will first do this manually using the function osl_detect_artefacts. 
+% Close oslview.
+
+oslview(D);
+
+%% AUTOMATED BAD EPOCH/CHANNEL DETECTION 
+% As we have seen, even after temporal filtering there can be large artefacts left in
+% the data. Hence, we next perform bad epoch/channel detection. This
+% can be done either manually or automatically.
+%
+% We will first do this automatically using the function osl_detect_artefacts. 
 %
 % Note that in the code below we first create a copy of the D objects using spm_eeg_copy. These will be 
 % the new SPM MEEG objects that will eventually have the bad epochs/channels indicated in them.
 % Here we represent bad epoch/channel detection in the filename using the prefix 'B'
 %
 % The MEEG object will be saved by the D.save (containing the marked bad epochs/channels). 
+
 for subnum = 1:length(spm_files) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 
@@ -350,25 +365,23 @@ end
 %
 % We can view the automatically marked epochs/channels using oslview. The start of
 % any bad epochs are indicated with a dashed green line, and the end with a
-% dashed red line. There are a lot of artefact epochs in this data! 
+% dashed red line. There are a lot of artefact epochs now maarked in this data! 
 %
 % See https://ohba-analysis.github.io/osl-docs/matlab/osl_example_preprocessing_detect_artefacts.html
 % for more info on this automated approach, including how to select data
-% that exludes bad channels/epochs
+% that exludes bad channels/epochs.
+
 D=oslview(D); 
 
 %% MANUAL BAD EPOCH/CHANNEL DETECTION USING OSLVIEW 
 % There is also the option to run manual bad epoch/channel detection using
-% oslview. We can do this as an alternative, or in addition, to the automated bad
-% epoch/channel detection done above. 
+% oslview itself. We can do this as an alternative, or in addition, to the automated bad
+% epoch/channel detection described above. 
 %
 % Here we will run the manual dection on the data that has NOT 
 % already had the automated bad
 % epoch/channel detection done (i.e. using the data with the 'dff' prefix as input).
-% 
-% Don't forget to manually remove the bad times
-% in both MEGPLANAR and MEGMAG modalities! 
-
+%
 % This data has some exceptionally bad artefacts in. Mark the epochs at
 % around 325s, 380s and 600s as bad, as well as everything from 650 seconds
 % to the end. Marking is done by right-clicking in the proximity of the
@@ -376,15 +389,19 @@ D=oslview(D);
 % the begin of a bad period, another second click indicates the end (in
 % red). This will mean that we are not using about half of the data. But
 % with such bad artefacts this is the best we can do. We can still obtain
-% good results with what remains. NB: 
+% good results with what remains. 
+%
+% Don't forget to manually remove the bad times
+% in both MEGPLANAR and MEGMAG modalities! 
 %
 % The MEEG object will be saved by the D.save (containing the marked bad epochs). 
-% Note that the bad epochs are not actually removed from the data, they
+%
+% As with the automated approach, the bad epochs are not actually removed from the data, they
 % are instead marked as bad, so that they can be optionally excluded from
 % future parts of the analysis.
 %
 % Note that if you had multiple
-% subjects/session, this process would need to be repeated for each one.
+% subjects/sessions, this process would need to be repeated for each one.
 
 for subnum = 1:length(spm_files) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
@@ -466,7 +483,10 @@ D.save(); % You need to save the MEEG object to commit marked bad components to 
 % 
 
 %%
-% NB: Just close the window when finished to save your results.
+% Just close the window when finished to save your results.
+%
+% Note that if you had multiple
+% subjects/sessions, this process would need to be repeated for each one.
 
 %%
 % *VISUALISING AFRICA DENOISED CONTINUOUS DATA*
@@ -551,7 +571,7 @@ legend({'pre AFRICA' 'post AFRICA'});
 % Now we will epoch the data into trials.
 % 
 % Note that if you are using the OSL tool OAT to do your subsequent statistical analysis,
-% both the epoched and continuous data will ideally be passed
+% both the epoched and continuous data can be passed
 % into OAT. This is so that OAT has the option to do things like temporal 
 % filtering on the continuous data, before the data is
 % epoched inside OAT. 
@@ -559,7 +579,7 @@ legend({'pre AFRICA' 'post AFRICA'});
 % Here the epochs are set to be from -1000ms to +2000ms relative to the
 % triggers in the MEG data. We also specify the trigger values for each of
 % the 4 epoch types of interest (motorcycle images, neutral faces, fearful
-% faces, happy faces). To repeat, the codes used on the trigger channel for this
+% faces, happy faces). The codes used on the trigger channel for this
 % experiment were:
 %
 %
@@ -579,7 +599,9 @@ legend({'pre AFRICA' 'post AFRICA'});
 
 %%
 % As before, here we set filenames used for the following step. Prefix is
-% now 'ABdff'. The next part does the actual epoching:
+% now 'ABdff'. The following for loop does the actual epoching using a call
+% to osl_epoch:
+
 for subnum = 1:length(spm_files), % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['ABdff' spm_files_basenames{subnum}]);
 end
@@ -618,20 +640,19 @@ for i=1:length(spm_files), % Iterating over subjects
     S2.fsample = D_continuous.fsample;
     S2.timeonset = D_continuous.timeonset;
     
-    [epochinfo.trl, epochinfo.conditionlabels, S3] = spm_eeg_definetrial(S2);        
+    [epochinfo.trl, epochinfo.conditionlabels] = spm_eeg_definetrial(S2);        
     
     % do epoching
-    S3=[];
     S3 = epochinfo;
     S3.D = D_continuous;     
     D = osl_epoch(S3);
 end
 
+report.event_timings(D);
 
 %%
 % After epoching, data will be stored in a file with the prefix 'e',
-% preceding all the other prefixes acquired during preprocessing (in our
-% case 'dff').
+% preceding all the other prefixes acquired during preprocessing.
 
 
 %% 
@@ -726,10 +747,12 @@ title('Raw event-related field, average','FontSize',15)
 %
 % As mentioned, any trials that overlap with the bad epochs that we marked as bad 
 % on the continuous data (using oslview), will already be marked as bad trials in
-% the epoched data. We can see the indices for any bad trials using:
+% the epoched data. We can see the indices for these bad trials using:
+
 subnum=1;
 D = spm_eeg_load(spm_files{subnum});
 D.badtrials
+report.bad_trials(D);
 
 % Before seeing the benefits
 % of excluding these already marked as bad trials, we will
