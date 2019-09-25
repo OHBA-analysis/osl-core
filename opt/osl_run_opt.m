@@ -225,7 +225,7 @@ for subi=1:length(opt.sessions_to_do),
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Perform AfRICA - ICA denoising
 
-        if(opt.africa.todo.ica) || (opt.africa.todo.ident) || (opt.africa.todo.remove)
+        if(opt.africa.todo.ica) || ~strcmp(opt.africa.todo.ident,'auto') || (opt.africa.todo.remove)
 
             disp(['%%%%%%%%%%%%%%%%%%%%%%%  AFRICA, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 

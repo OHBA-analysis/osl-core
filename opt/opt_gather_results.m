@@ -20,7 +20,7 @@ opt.results.icsremoved=nan(length(opt.sessions_to_do),1);
 opt.results.pre_sss_badchans=nan(length(opt.sessions_to_do),1);
 opt.results.pre_sss_badchans=nan(length(opt.sessions_to_do),1);
 
-for subi=1:length(opt.sessions_to_do), 
+for subi=1:length(opt.sessions_to_do)
     subnum=opt.sessions_to_do(subi);
 
     try
@@ -31,12 +31,12 @@ for subi=1:length(opt.sessions_to_do),
         opt.results.spm_files_basenames{subnum}=opt_results.spm_files_basename;
         opt.results.spm_files{subnum}=[opt.dirname '/'  opt.results.spm_files_basenames{subnum}];
 
-        if opt.epoch.do,
+        if opt.epoch.do
             opt.results.spm_files_epoched_basenames{subnum}=opt_results.spm_files_epoched_basename;
             opt.results.spm_files_epoched{subnum}=[opt.dirname '/'  opt.results.spm_files_epoched_basenames{subnum}];
         end
         
-        if opt.epoch.do, 
+        if opt.epoch.do 
             spm_file = fullfile(opt.dirname, opt_results.spm_files_epoched_basename);
         else
             spm_file = fullfile(opt.dirname, opt_results.spm_files_basename);
@@ -50,20 +50,12 @@ for subi=1:length(opt.sessions_to_do),
         if isfield(opt_results,'bad_segments') && isfield(opt_results.bad_segments, 'bad_segments')
             opt.results.bad_segments(subnum)=length(opt_results.bad_segments.bad_segments);
         end
-        
-        if isfield(opt_results,'maxfilter') && isfield(opt_results.maxfilter,'badchans_pre_sss')                    
-            opt.results.badchans_pre_sss(subnum)=length(opt_results.maxfilter.badchans_pre_sss);
-        end
-
-        if isfield(opt_results,'maxfilter') && isfield(opt_results.maxfilter,'sss_autobad_off')        
-            opt.results.autobadoff(subnum)=opt_results.maxfilter.sss_autobad_off(subnum);
-        end
 
         if opt.africa.todo.ica || opt.africa.todo.ident || opt.africa.todo.remove
             opt.results.icsremoved(subnum) = length(D.ica.bad_components);
         end
 
-    catch ME,
+    catch ME
         ME.getReport
         disp(['Could not get results for subject number ' num2str(subnum)]);
     end       
