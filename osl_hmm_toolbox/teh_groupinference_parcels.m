@@ -252,20 +252,52 @@ if todo.prepare
 
     clear data;
 
+%     % Apply PCA dimensionality reduction
+%     if pcadim > 0
+%         disp(['Keeping top ' num2str(pcadim) ' PCs']);
+%         pcadim = min(pcadim,size(dat_concat,1));
+%         [allsvd,M] = eigdec(C,pcadim);
+%     else
+%         M = eye(size(dat_concat,1));
+%         allsvd = diag(C);
+%     end
+% 
+%     if whiten
+%         M = diag(1./sqrt(allsvd)) * M';
+%     else
+%         M = M';
+%     end
+
     % Apply PCA dimensionality reduction
     if pcadim > 0
         disp(['Keeping top ' num2str(pcadim) ' PCs']);
         pcadim = min(pcadim,size(dat_concat,1));
-        [allsvd,M] = eigdec(C,pcadim);
+
+        if false
+            [allsvd,M] = eigdec(C,pcadim);    
+
+            if whiten
+                M = diag(1./sqrt(allsvd)) * M';
+            end
+        else
+
+            [V, D] = svd(C);
+
+            V=V(:,end-pcadim+1:end);
+            D=sqrt(inv(D(end-pcadim+1:end,end-pcadim+1:end)));
+
+            epsilon=0.0001;
+
+            if whiten
+                whMat = V*sqrtm(inv(D + eye(size(D))*epsilon))*V';
+                M = pinv(whMat);
+            else
+                M = eye(size(dat_concat,1));
+            end
+
+        end
     else
         M = eye(size(dat_concat,1));
-        allsvd = diag(C);
-    end
-
-    if whiten
-        M = diag(1./sqrt(allsvd)) * M';
-    else
-        M = M';
     end
 
     % Apply PC dim to concat data
