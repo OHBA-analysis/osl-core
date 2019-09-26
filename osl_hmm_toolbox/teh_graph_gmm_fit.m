@@ -27,12 +27,16 @@ end
 
 normalised_logistic_data=normalise(logistic_data);   
 
+addpath(genpath([osldir '/ohba-external/netlab3.3']));
+
 mix = gmm(1, 2, 'diag');
 mix = gmminit(mix, normalised_logistic_data, foptions);
 mix = gmmem(mix, normalised_logistic_data, foptions);
 
+
 %%%%%%%%%%%%%%%%%%%%%
 %% compute thresh
+
 xx=min(normalised_logistic_data):range(normalised_logistic_data)/50:max(normalised_logistic_data);
 xx2=linspace(0.003, 0.014, 50);
 
@@ -55,7 +59,8 @@ th=xx(indsearch(nearest(prob2(indsearch,ind_null),S.pvalue_th)));
 
 % check to see if 2nd dist is irrelevant if it is too similar to
 % 1st dist
-if abs(range(mix.centres))<1 || th<0
+if abs(range(mix.centres))<0.75 || th<0
+    warning('2nd dist is irrelevant as it is too similar to 1st dist');
     th=[];
 end
 
@@ -101,6 +106,8 @@ res.mix=mix;
 res.normalised_th=th;
 res.orig_th=orig_th;
 res.data=normalised_logistic_data;
+
+rmpath(genpath([osldir '/ohba-external/netlab3.3']));
 
 end
 

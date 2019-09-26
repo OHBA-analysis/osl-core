@@ -171,6 +171,8 @@ try output_method       = options.output.method;                catch, output_me
 try state_assignment    = options.output.assignment;            catch, state_assignment     = 'hard';  end  
 try use_parcel_weights  = options.output.use_parcel_weights;    catch, use_parcel_weights   = 0;       end
 
+freq_ind=[];
+
 hmm=[];
 hmm.options=options;
 
@@ -224,7 +226,7 @@ if todo.prepare
 
         embed.tres=1/D.fsample;
 
-        data = osl_teh_prepare_data(D,normalisation,logtrans,f,embed);
+        data = osl_teh_prepare_data(D,normalisation,logtrans,freq_ind,embed);
         
         if max_ntpts>0
             ntpts=min(max_ntpts,size(data,2));
@@ -250,20 +252,52 @@ if todo.prepare
 
     clear data;
 
+%     % Apply PCA dimensionality reduction
+%     if pcadim > 0
+%         disp(['Keeping top ' num2str(pcadim) ' PCs']);
+%         pcadim = min(pcadim,size(dat_concat,1));
+%         [allsvd,M] = eigdec(C,pcadim);
+%     else
+%         M = eye(size(dat_concat,1));
+%         allsvd = diag(C);
+%     end
+% 
+%     if whiten
+%         M = diag(1./sqrt(allsvd)) * M';
+%     else
+%         M = M';
+%     end
+
     % Apply PCA dimensionality reduction
     if pcadim > 0
         disp(['Keeping top ' num2str(pcadim) ' PCs']);
         pcadim = min(pcadim,size(dat_concat,1));
-        [allsvd,M] = eigdec(C,pcadim);
+
+        if false
+            [allsvd,M] = eigdec(C,pcadim);    
+
+            if whiten
+                M = diag(1./sqrt(allsvd)) * M';
+            end
+        else
+
+            [V, D] = svd(C);
+
+            V=V(:,end-pcadim+1:end);
+            D=sqrt(inv(D(end-pcadim+1:end,end-pcadim+1:end)));
+
+            epsilon=0.0001;
+
+            if whiten
+                whMat = V*sqrtm(inv(D + eye(size(D))*epsilon))*V';
+                M = pinv(whMat);
+            else
+                M = eye(size(dat_concat,1));
+            end
+
+        end
     else
         M = eye(size(dat_concat,1));
-        allsvd = diag(C);
-    end
-
-    if whiten
-        M = diag(1./sqrt(allsvd)) * M';
-    else
-        M = M';
     end
 
     % Apply PC dim to concat data
@@ -279,7 +313,7 @@ if todo.prepare
 
         embed.tres=1/D.fsample;
 
-        [data, lags] = osl_teh_prepare_data(D,normalisation,logtrans,f,embed);
+        [data, lags] = osl_teh_prepare_data(D,normalisation,logtrans,freq_ind,embed);
         
         if max_ntpts>0
             ntpts=min(max_ntpts,size(data,2));
@@ -369,7 +403,7 @@ if todo.hmm
         options.BIGtol = 1e-7;
         options.BIGcyc = 500;
         options.BIGundertol_tostop = 5;
-        options.BIGdelay = 5; 
+        options.BIGdelay = 2; 
         options.BIGforgetrate = 0.7;
         options.BIGbase_weights = 0.9;
     end
@@ -394,7 +428,7 @@ if todo.hmm
             [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options);
         case 'vbrt'
             options.workingdir=hmmdir;
-            hmm = vbrt_infer_dynamic_model(X,options);
+            hmm = vbrt_infer_dynamic_model_gamma(X,options);
     end    
         
     
@@ -472,13 +506,13 @@ if todo.output
                 hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
                                            
                 Dp = spm_eeg_load(data_files{subnum});
-                datap = osl_teh_prepare_data(Dp,normalisation,logtrans,f,embed);
+                datap = osl_teh_prepare_data(Dp,normalisation,logtrans,freq_ind,embed);
                 
                 if max_ntpts>0
                     ntpts=min(max_ntpts,size(datap,2));
                     datap = datap(:,1:ntpts);
                 else
-                    max_ntpts=size(datap,2);
+                    ntpts=size(datap,2);
                 end
 
                 tmp=osl_hmm_statemaps(hmm_sub,datap,true,output_method,state_assignment);            
@@ -489,7 +523,7 @@ if todo.output
                 goodsamples = good_samples(Dp);
 
                 sp_full = zeros(1,Dp.nsamples*Dp.ntrials);
-                sp_full(goodsamples(1:max_ntpts)) = hmm_sub.statepath;
+                sp_full(goodsamples(1:ntpts)) = hmm_sub.statepath';
                 epoched_statepath_sub{subnum} = reshape(sp_full,[1,Dp.nsamples,Dp.ntrials]);
                 
                 if Dp.ntrials>1

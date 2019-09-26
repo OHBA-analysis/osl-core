@@ -40,7 +40,7 @@ if ~isempty(G)
   else
       if exist('thresh','var') && ~isempty(thresh)
           Gt = G(~tril(ones(size(G))));
-          G(abs(G)<prctile(abs(Gt),thresh))=nan;
+          G(abs(G)<percentile(abs(Gt),thresh))=nan;
       end
   end
   

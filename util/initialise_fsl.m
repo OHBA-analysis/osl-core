@@ -1,4 +1,4 @@
-function fsl_initialise()
+function initialise_fsl()
 	% Adds FSL directories to system path, sets FSL environment variables
 	% and adds Matlab utilities to the path
 	%
@@ -41,7 +41,7 @@ function fsl_initialise()
 	end
 
 	% Add FSLDIR to path, if it exists - otherwise, print warning
-	if exist(getenv('FSLDIR'))
+	if isdir(getenv('FSLDIR'))
     	addpath(fullfile(s.FSLDIR,'etc','matlab'));
     else
         fprintf(2,'FSLDIR does not exist. Check that it is set correctly in osl.conf\n');
@@ -56,6 +56,7 @@ function fsl_initialise()
 	    fprintf(2,'FSL is not installed properly. Have you installed the correct version and set it in osl.conf?\n');
 	end
 
+end
 
 function [fsldir,bindir,libdir] = guess_fsldir()
 	% Guess where the FSL directories maybe
@@ -65,10 +66,10 @@ function [fsldir,bindir,libdir] = guess_fsldir()
 	libdir = '/usr/local/fsl/lib';
 
 	% Debian FSL package
-	if ~exist(fsldir) &&  exist('/usr/share/fsl/5.0')
+	if ~isdir(fsldir) && isdir('/usr/share/fsl/5.0')
 		fsldir = '/usr/share/fsl/5.0';
 		bindir = '/usr/share/fsl/5.0/bin';
 		libdir = '/usr/lib/fsl/5.0';
 	end
 
-
+end

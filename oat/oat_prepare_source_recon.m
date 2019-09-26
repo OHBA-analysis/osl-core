@@ -1,4 +1,4 @@
-function [source_recon_sess source_recon_results report] = osl_prepare_oat_source_recon(source_recon_sess, source_recon_results, report)
+function [source_recon_sess source_recon_sess_results sess_report] = osl_prepare_oat_source_recon(source_recon_sess, sess_report)
 
 % [source_recon_sess source_recon_results report] = osl_prepare_oat_source_recon(source_recon_sess, report)
 % [source_recon_sess source_recon_results] = osl_prepare_oat_source_recon(source_recon_sess )
@@ -16,11 +16,13 @@ function [source_recon_sess source_recon_results report] = osl_prepare_oat_sourc
 %
 % MWW 2014
 
-if nargin>1,
+if nargin>1
     do_report=1;
 else
-    report=[];
-end;
+    sess_report=[];
+end
+
+source_recon_sess_results=[];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% check epoching in the SPM MEEG objects passed in
@@ -32,15 +34,15 @@ elseif ~isempty(source_recon_sess.D_continuous),
     source_recon_sess.D=source_recon_sess.D_continuous;
 else
     error('Need to specify source_recon_sess.D_continuous or source_recon_sess.D_epoched.');
-end;
+end
 
 % do epoching if needed, but only if any epoch info is provided
 do_epoching=0;
 if ~only_epoched_data_provided
     if ~isempty(source_recon_sess.D_epoched) || ~isempty(source_recon_sess.epochinfo),
         do_epoching=1;
-    end;
-end;
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -271,8 +273,8 @@ elseif ~strcmp(source_recon_sess.normalise_method,'none'),
 
     if do_report
         % diagnostic plot of design matrix    
-        report=osl_report_set_figs(report,fig_names,fig_handles);
-        report=osl_report_print_figs(report);
+        sess_report=osl_report_set_figs(sess_report,fig_names,fig_handles);
+        sess_report=osl_report_print_figs(sess_report);
     end;
 
 %    D.delete;
@@ -351,13 +353,13 @@ if(isfield(source_recon_sess,'hmm_num_states') && source_recon_sess.hmm_num_stat
         
     end;
     
-    source_recon_results.block=block;
+    source_recon_sess_results.block=block;
     
     hmm_class=zeros(1,size(D,2),size(D,3));
-    hmm_class(1,find(samples2use),trials)=reshape(source_recon_results.block(1).q_star,[1,numel(find(samples2use)),length(trials)]);
+    hmm_class(1,find(samples2use),trials)=reshape(source_recon_sess_results.block(1).q_star,[1,numel(find(samples2use)),length(trials)]);
     
     hmm_class_probs=zeros(NK,size(D,2),size(D,3));
-    hmm_class_probs(:,find(samples2use),trials)=reshape(source_recon_results.block(1).gamma',[NK,numel(find(samples2use)),length(trials)]);
+    hmm_class_probs(:,find(samples2use),trials)=reshape(source_recon_sess_results.block(1).gamma',[NK,numel(find(samples2use)),length(trials)]);
     
     %% plot results
     if(1),
@@ -370,8 +372,8 @@ if(isfield(source_recon_sess,'hmm_num_states') && source_recon_sess.hmm_num_stat
         [fig_handles fig_names fig_titles]=plot_hmm(S2);
 
         if do_report
-            report=osl_report_set_figs(report,fig_names,fig_handles,fig_titles);        
-            report=osl_report_print_figs(report);
+            sess_report=osl_report_set_figs(sess_report,fig_names,fig_handles,fig_titles);        
+            sess_report=osl_report_print_figs(sess_report);
         end;
         
         % if epoched data, plot epoched state courses
@@ -390,8 +392,8 @@ if(isfield(source_recon_sess,'hmm_num_states') && source_recon_sess.hmm_num_stat
             legend(leg,'Location','NorthWest','FontSize',12); 
                
             if do_report
-                report=osl_report_set_figs(report,'hmm_epoched_state_occurences',fig_handle,'HMM Epoched State Occurrences');        
-                report=osl_report_print_figs(report);
+                sess_report=osl_report_set_figs(sess_report,'hmm_epoched_state_occurences',fig_handle,'HMM Epoched State Occurrences');        
+                sess_report=osl_report_print_figs(sess_report);
             end;
         end;
         
@@ -465,12 +467,12 @@ D=Dnew;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 
 
-source_recon_results.BF.data.D=spm_eeg_load(D);    
-source_recon_results.woi=woi;
-source_recon_results.samples2use=samples2use;
-source_recon_results.pca_order = pcadim;
-source_recon_results.normalisation = normalisation;
-source_recon_results.trials=trials;
+source_recon_sess_results.BF.data.D=spm_eeg_load(D);    
+source_recon_sess_results.woi=woi;
+source_recon_sess_results.samples2use=samples2use;
+source_recon_sess_results.pca_order = pcadim;
+source_recon_sess_results.normalisation = normalisation;
+source_recon_sess_results.trials=trials;
 %source_recon_results.chanind=chanind;
 
 end

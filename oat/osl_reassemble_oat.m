@@ -33,13 +33,13 @@ for iSess = 1:nSess
     subdir = fullfile(rootDir,nam);
     
     if iSess == 1
-        if (exist([subdir '/source_recon_mask.nii.gz'],'file')) == 2
+        if osl_util.isfile([subdir '/source_recon_mask.nii.gz'])
             % copy the source recon mask
             copyfile(fullfile(subdir,'source_recon_mask.nii.gz'),masterDir);
             
         end
         
-        if (exist([subdir '/first_level_mask.nii.gz'],'file')) == 2
+        if osl_util.isfile([subdir '/first_level_mask.nii.gz'])
             % copy the source recon mask
             copyfile(fullfile(subdir,'first_level_mask.nii.gz',masterDir));
             

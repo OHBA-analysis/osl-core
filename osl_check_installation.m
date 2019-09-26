@@ -19,7 +19,7 @@ function osl_check_installation(do_log,test_fslview)
 	section = @(x) log(sprintf('\n------------------ %s ------------------',upper(x)));
 
 	if do_log
-		logfile = fullfile(pwd,'osl_debug_log.txt');
+		logfile = fullfile(osldir,'osl_debug_log.txt');
 		if exist(logfile)
 			delete(logfile);
 		end
@@ -33,7 +33,7 @@ function osl_check_installation(do_log,test_fslview)
 	section('OSL version')
 	log(sprintf('osldir = %s',osldir))
 	version_file = fullfile(osldir,'version.txt');
-	if exist(version_file,'file')
+	if osl_util.isfile(version_file)
 		type(version_file)
 	else
 		log('Version file missing')

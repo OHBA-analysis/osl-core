@@ -19,14 +19,14 @@ function [cfg, dats, fig_handle]=oat_stats_multiplotER(S)
 
 OSLDIR = getenv('OSLDIR');
 
-try, oat=S.oat; catch, error('No S.oat supplied'); end;
-try, stats_fname=S.stats_fname; catch, error('No S.stats_fname supplied'); end;
-try, modality=S.modality; catch, modality='MEGPLANAR'; end;
-try, contrast=S.first_level_contrast; catch, error('No S.first_level_contrast supplied'); end;
-try, group_contrast=S.group_level_contrast; catch, group_contrast=1; end; % specify group contrast if group level stats
-try, view_cope=S.view_cope; catch, view_cope=0; end;
-try, cfg=S.cfg; catch, cfg=[]; end;
-try, do_plots=S.do_plots; catch, do_plots=1; end;
+try, oat=S.oat; catch, error('No S.oat supplied'); end
+try, stats_fname=S.stats_fname; catch, error('No S.stats_fname supplied'); end
+try, modality=S.modality; catch, modality='MEGPLANAR'; end
+try, contrast=S.first_level_contrast; catch, error('No S.first_level_contrast supplied'); end
+try, group_contrast=S.group_level_contrast; catch, group_contrast=1; end % specify group contrast if group level stats
+try, view_cope=S.view_cope; catch, view_cope=0; end
+try, cfg=S.cfg; catch, cfg=[]; end
+try, do_plots=S.do_plots; catch, do_plots=1; end
 try plot_avg=S.plot_avg; catch, plot_avg=0; end
 
 try, D_tstat=S.D; catch
@@ -35,7 +35,7 @@ try, D_tstat=S.D; catch
         stats=oat_load_results(oat,stats_fname);
     else
         stats=stats_fname;
-    end;
+    end
 
     S4=[];
     S4.oat=oat;
@@ -48,19 +48,19 @@ try, D_tstat=S.D; catch
     if(stats.level==2),
         D_tstat=D_tstat{group_contrast};
         D_cope=D_cope{group_contrast};
-    end;
-end;
+    end
+end
 
 cope=stats.cope;
 if(stats.level==2),
     cope = cope(:,:,:,:,group_contrast);
-end;
+end
 
 if(isfield(S,'data')),
     cope=S.data;
     view_cope=1;
     contrast=1;
-end;
+end
 
 if isfield(S,'time_range');
     time_inds = find(stats.times > S.time_range(1) & stats.times < S.time_range(2));
@@ -90,8 +90,8 @@ for cc=1:length(contrast),
                 ts(ind,:)=cope(chanind(ind),squeeze(time_inds),contrast(cc));
             else
                 ts(ind,:)=cope(chanind(ind),time_inds,contrast(cc))./stats.stdcope(chanind(ind),time_inds,contrast(cc));
-            end;
-        end;
+            end
+        end
 
     elseif (strcmp(modality,'MEGPLANAR')),
 
@@ -106,8 +106,8 @@ for cc=1:length(contrast),
                 ts(ind,:)=cope(chanind(ind),time_inds,contrast(cc));
             else
                 ts(ind,:)=cope(chanind(ind),time_inds,contrast(cc)) ./ (stats.stdcope(chanind(ind),time_inds,contrast(cc)));
-            end;
-        end;
+            end
+        end
 
     elseif (strcmp(modality,'MEG')) || (strcmp(modality,'MEGGRAD')),
 
@@ -123,8 +123,8 @@ for cc=1:length(contrast),
                 ts(ind,:)=cope(indp,time_inds,contrast(cc));
             else
                 ts(ind,:)=cope(indp,time_inds,contrast(cc))./stats.stdcope(indp,time_inds,contrast(cc));
-            end;
-        end;
+            end
+        end
 
     elseif(strcmp(modality,'EEG')),   % added by DM
 
@@ -146,28 +146,28 @@ for cc=1:length(contrast),
                 ts(ind,:)=cope(ind,time_inds,contrast(cc));
             else
                 ts(ind,:)=cope(ind,time_inds,contrast(cc))./stats.stdcope(ind,time_inds,contrast(cc));
-            end;
-        end;
+            end
+        end
 
     else
         error('Unsupported modality');
-    end;
+    end
 
     data.avg = ts;
-    data.datatype='timelock';
+    %data.datatype='timelock';
 
     dats{cc}=data;
-end;
+end
 
 if(~isfield(cfg,'interactive')),
     cfg.interactive = 'yes';
-end;
+end
 if(~isfield(cfg,'xlim')),
     cfg.xlim        = [stats.times(time_inds(1)) stats.times(time_inds(end))];
-end;
+end
 if(~isfield(cfg,'comment')),
     cfg.comment     = '';
-end;
+end
 cfg.parameter='avg';
 
 fig_handle=[];
@@ -177,5 +177,5 @@ if do_plots,
         fig_handle=sfigure; ft_topoplotER(cfg,dats{:});
     else
         fig_handle=sfigure; ft_multiplotER(cfg,dats{:});
-    end;
-end;
+    end
+end

@@ -1,12 +1,14 @@
 function ret = get_cols( ind )
 
-cols={'r','g','b','m','c','y','r--','g--','b--','m--','c--','y--'};
+    cols={'y--','r','g','b','m','c','y','r--','g--','b--','m--','c--'};
 
-if nargin>0
-    ret=cols{ind};
-else
-    ret=cols
-end
+    if nargin>0
+
+        ret=cols{rem(ind,length(cols))+1};
+
+    else
+        ret=cols;
+    end
 
 end
 

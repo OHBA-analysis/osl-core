@@ -87,7 +87,7 @@ cd(outdir);
 
 %-Ask about overwriting files from previous analyses
 %--------------------------------------------------------------------------
-if exist(fullfile(pwd,'BF.mat'),'file') && ~job.overwrite
+if osl_util.isfile(fullfile(pwd,'BF.mat')) && ~job.overwrite
     str = {'Current directory contains existing BF file:',...
         'Continuing will overwrite existing file!'};
     if spm_input(str,1,'bd','stop|continue',[1,0],1,mfilename);

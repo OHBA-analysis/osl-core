@@ -9,13 +9,28 @@ function bf_save(BF, overwrite)
 % System: MBP '15, Matlab R2016a, OSx 10.11.6 
 % RB 2017
 
-if nargin == 1 && exist(fullfile(pwd, 'BF.mat'), 'file')
-    save('BF.mat', '-struct', 'BF', '-append');
-else
-    %    save('BF.mat', '-struct', 'BF', '-v7.3');
-    
-    % appending to -v7.3 slows down performance incredibly, so modified here
-    % todo: is that sufficient storage capacity for us?
-    save('BF.mat', '-struct', 'BF', '-v7');
+    if nargin < 2, overwrite=true; end
+
+    fpath = fullfile(pwd,'BF.mat');
+    if osl_util.isfile(fpath) && ~overwrite
+        try 
+            save(fpath, '-struct', 'BF', '-append');
+        catch
+            fprintf(2,'Could not append to file: %s\n',fpath);
+            fprintf(2,'This could be because the storage format is v7, and appending would make the file larger than 2GB.\n');
+            fprintf(2,'In that case, either manually load and re-save with format v7.3, or set overwrite to true.\n');
+        end
+    else
+        % appending to -v7.3 slows down performance incredibly, so modified here
+        % todo: is that sufficient storage capacity for us?
+
+        % JH: changed here to adapt to larger file-sizes
+        bs = osl_util.bytesize(BF);
+        if bs.GB >= 2
+            save(fpath, '-struct', 'BF', '-v7.3');
+        else
+            save(fpath, '-struct', 'BF', '-v7');
+        end 
+    end
     
 end

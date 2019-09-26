@@ -6,12 +6,12 @@ function report=osl_report_set_figs(report, fig_names, fig_handles, fig_titles)
     else
         report.fig_handle=sfigure;
         report.fig_name=fig_names;    
-    end;
+    end
     
     if nargin>3
         report.fig_title=fig_titles;
     else
         report.fig_title=fig_names;
-    end;
+    end
 end
 

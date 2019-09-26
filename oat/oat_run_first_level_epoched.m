@@ -140,7 +140,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
             first_level_results.chanlabels=D.chanlabels(chanindmeg);
             first_level_results.chantype=D.chantype(chanindmeg);
 
-            first_level_results.mask_indices_in_source_recon=1:length(chanindmeg);
+            first_level_results.mask_indices_in_source_recon=chanindmeg;
 
         else,
 
@@ -363,7 +363,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
         NKrecon=1;
         NKglm=NKrecon;
     else
-        NKrecon=numel(source_recon_results.BF.inverse.MEG.class);
+        NKrecon=1;%numel(source_recon_results.BF.inverse.MEG.class);
         NKglm=NKrecon;
 
         if NKrecon>1 && ~do_glm_statewise
@@ -1207,13 +1207,14 @@ for subi_todo=1:length(first_level.sessions_to_do),
     %%%%%%%%%%%%%%%%%%%
     %% generate source recon web report for this session
     if first_level.doGLM
-        report = oat_first_level_stats_report(oat,first_level_results);
+        report = oat_first_level_stats_report(oat,first_level_results,'',first_level_results.report);
         first_level_results.report=osl_report_add_sub_report(first_level_results.report, report);
+
     end;
 end;
 
 %%%%%%%%%%%%%%%%%%%
 %% generate first level web report
-first_level_results.report=osl_report_write(first_level_results.report);
+first_level_results.report=osl_report_write(first_level_results.report, oat.results.report);
 
 end

@@ -83,7 +83,7 @@ end
 % Check Structural Specification:
 S.mri = char(S.mri);
 if ~isempty(S.mri)
-    assert(logical(exist(S.mri,'file')),'Structural MRI %s not found',S.mri);
+    assert(osl_util.isfile(S.mri),'Structural MRI %s not found',S.mri);
     [~,~,ext] = fileparts(S.mri);   
     if strcmp(ext,'.gz') && S.use_rhino == 0
         % Try unzipping

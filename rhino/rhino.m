@@ -104,7 +104,7 @@ else
 end
 [~,~,ext] = fileparts(sMRI);   
 assert(strcmp(ext,'.nii'),'Unexpected extension - perhaps the .gz file did not contain a .nii file?'); % We can assume after this point we are working with a .nii file
-assert(logical(exist(sMRI)),'MRI file %s not found',sMRI)
+assert(osl_util.isfile(sMRI),'MRI file %s not found',sMRI)
 
 % Check Headshape Specification:
 try
@@ -218,35 +218,51 @@ bet_file   = fullfile(struct_path,[struct_name '_outskin_mesh.nii.gz']);
 scalp_file = fullfile(struct_path,[struct_name '_scalp.nii.gz']);
 std_brain  = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz'];
 
-% Reorient the image to match standard MNI orientation
-% The orientation matches the standard brain, but we are still in the scanner coordinate system
-runcmd('fslreorient2std %s %s',sMRI,sMRI);
-if exist(([sMRI '.gz']))
-    gunzip([sMRI '.gz']);
-    delete([sMRI '.gz']);
+% determine orientation of standard brain
+cmd = sprintf('fslorient -getorient %s', std_brain);
+std_orient = deblank(runcmd(cmd));
+if ~ismember(std_orient,{'RADIOLOGICAL','NEUROLOGICAL'})
+    error('Cannot determine orientation of standard brain, please check output of:\n%s',cmd)
 end
-std_orient  = runcmd('fslorient -getorient %s 2>/dev/null', std_brain);
-smri_orient = runcmd('fslorient -getorient %s 2>/dev/null', sMRI);
-assert(strcmp(deblank(smri_orient),deblank(std_orient)),'fslreorient2std seemed to fail - orientations do not match');
 
+% determine orientation of subject brain
+cmd = sprintf('fslorient -getorient %s', sMRI);
+smri_orient = deblank(runcmd(cmd));
+if ~ismember(smri_orient,{'RADIOLOGICAL','NEUROLOGICAL'})
+    error('Cannot determine orientation of subject brain, please check output of:\n%s',cmd);
+end
+
+% if orientations don't match, reorient the subject brain
+if ~strcmp(std_orient, smri_orient)
+    disp('reorienting subject brain to match standard brain');
+    switch std_orient
+        case 'RADIOLOGICAL'
+            orient_flag = '-forceradiological';
+        case 'NEUROLOGICAL'
+            orient_flag = '-forceneurological';
+        otherwise
+            error('cannot determine orientation of subject brain');
+    end
+    runcmd('fslorient %s %s', orient_flag, sMRI);
+end
 
 % CHECK IF SCALP EXTRACTION ALREADY DONE
-if exist(scalp_file,'file')~=2
+if ~osl_util.isfile(scalp_file)
     
     % RUN FLIRT - get the transformation to take the input image into standard MNI space
-    if exist(trans_file,'file')~=2
+    if ~osl_util.isfile(trans_file)
         disp('Running FLIRT...')
         flirtCommand = runcmd('flirt -in %s -ref %s -omat %s -o %s',sMRI, std_brain, trans_file,fullfile(struct_path,[struct_name,'_MNI']));
     end
     
     % RUN BET - get the surface mesh in the scanner space
-    if exist(mesh_file,'file')~=2
+    if ~osl_util.isfile(mesh_file)
         disp('Running BET...')
         runcmd('bet2 %s %s -n --mesh ',sMRI,fullfile(struct_path,struct_name)); % This generates the mesh file
     end
     
     % RUN BETSURF - get the head surfaces in scanner space, using FLIRTs trans_file as part of the extraction (see betsurf documentation)
-    if exist(bet_file,'file')~=2
+    if ~osl_util.isfile(bet_file)
         disp('Running BETSURF...')
         runcmd('betsurf --t1only -o %s %s %s %s',sMRI,mesh_file,trans_file,fullfile(struct_path,struct_name))
     end
@@ -266,7 +282,7 @@ if exist(scalp_file,'file')~=2
     % READ IN VOLUME & OUTLINE
     
     % check it has been created properly
-    assert(logical(exist(bet_file, 'file')),    ...
+    assert( osl_util.isfile(bet_file),    ...
            [mfilename ':BET_FILEDoesNotExist'], ...
            ['bet_file does not exist. '         ...
             'Maybe it failed to create earlier in Rhino?\n']);
@@ -515,7 +531,7 @@ end%if
 close_hf = onCleanup(@() close(hf));
 
 % ICP RIGID BODY TRANSFORMATION USING HEADSHAPE POINTS AND SCALP OUTLINE
-if S.useheadshape,
+if S.useheadshape
     % get headshape points
     headshape_polhemus = [D.fiducials.pnt; D.fiducials.fid.pnt];
     assert(~isempty(headshape_polhemus),      ...

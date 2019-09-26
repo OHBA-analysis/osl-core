@@ -15,8 +15,8 @@ function initialise_spm
         SPMDIR = s.SPMDIR;
 	end
 
-	if ~exist(SPMDIR,'dir') || ~exist(fullfile(SPMDIR,'spm.m'),'file')
-	    error(sprintf('SPM12 was not found at the required location: %s',fullfile(SPMDIR)))
+	if ~isdir(SPMDIR) || ~exist(fullfile(SPMDIR,'spm.m'),'file')
+	    error('SPM12 was not found at the required location: %s',fullfile(SPMDIR))
 	end
 
 	if disable_undobalancing
@@ -35,7 +35,7 @@ function initialise_spm
 	% However, if the folder is deleted every time, this makes it very unreliable to use
 	% OSL on a cluster with a shared OSL folder
 	bf_path = fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox');
-	if exist(bf_path,'dir')
+	if isdir(bf_path)
 		rmdir(bf_path,'s');
 	end
 	copyfile(fullfile(osldir,'osl-core','spm-changes','spm-beamforming-toolbox'),bf_path);
