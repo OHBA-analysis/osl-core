@@ -118,7 +118,7 @@ end
 
 if D.ntrials == 1 % can just pass in the MEEG object
     voxeldata = D(:,:,:);
-    goodsamples = good_samples(D);; % all checks if any channels are bad then ignore those samples
+    goodsamples = good_samples(D); % all checks if any channels are bad then ignore those samples
     % Get time-coursess
     nodedata = ROInets.get_node_tcs(voxeldata(:,goodsamples), parcellation, S.method);
     if ~strcmp(S.orthogonalisation,'none')
