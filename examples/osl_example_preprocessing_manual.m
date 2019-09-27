@@ -86,11 +86,12 @@ spm_files_basenames{1}=['spm_meg1.mat'];
 % For example, there should be 120 motorbike trials, and 80 of each of the
 % face conditions. Check that the histogram plot corresponds to these
 % trials numbers.
+clear spm_files;
 for subnum = 1:length(fif_files) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,spm_files_basenames{subnum});
 end
 
-if(length(fif_files)>0)
+if(~isempty(fif_files))
     S2=[];
     for i=1:length(fif_files), % loops over subjects
         S2.outfile = spm_files{i};       
@@ -108,7 +109,8 @@ end
 % Here we will see how to display some summary information about the SPM M/EEG object.
 
 % Set filenames used in following steps.
-for subnum = 1:length(spm_files) % iterates over subjects
+spm_files=[];
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,spm_files_basenames{subnum});
 end
 
@@ -119,13 +121,13 @@ D = spm_eeg_load(spm_files{subnum});
 %%
 % Have a look at the SPM object by typing 'D'. Note that this is continuous
 % data, with 232000 time points at 250Hz. We will epoch the data later.
-D
 
+D
 
 %%
 % The above output gives you some basic information about the M/EEG object
 % that has been loaded into workspace. Note that the data values themselves
-% are memory-mapped from spm_meg1.dat and can be accessed by indexing the D
+% are memory-mapped from the file spm_meg1.dat and can be accessed by indexing the D
 % object. E.g, D(1,2,3) returns the field strength in the first sensor at
 % the second sample point during the third trial).
 
@@ -133,9 +135,9 @@ D
 % Here are some essential methods to be used with the D object, try them consecutively: 
 D.ntrials % gives you the number of trials
 %%
-D.conditions % shows a list of condition labels per trial, this should be 'undefined' in continuous data, but will tend to have meaningful names in epoched data (see later)
+D.conditions % shows a list of condition labels per trial, this should be 'undefined' in continuous data, but will have meaningful names in epoched data (see later)
 %%
-D.condlist % shows the list of unique conditions, again this should be 'undefined' in continuous data, but will tend to have meaningful names in epoched data (see later)
+D.condlist % shows the list of unique conditions, again this should be 'undefined' in continuous data, but will have meaningful names in epoched data (see later)
 %%
 D.chanlabels % order and names of channels, you should be able to see channel names corresponding to the MEG sensors ('MEG1234') alongsize EOG, ECG and trigger channels ('STI123')
 %%
@@ -211,10 +213,10 @@ D = oslview(D);
 % <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a>
 % </html>
 %
-% The unpreprocessed data is messy, with
-% low frequency and line noise (50Hz plus its harmonics). 
+% The unpreprocessed data here is very messy, with many artefacts,
+% low frequency noise and line noise (50Hz plus its harmonics). 
 % We will now do some temporal filtering
-% to remove these. First, close oslview.
+% to help start removing these. First, close oslview.
 %
 
 
@@ -228,8 +230,8 @@ D = oslview(D);
 %%
 % We have already set the SPM file names for the input into the filtering above, 
 % but if we needed to setup them up here, we would use something like:
-
-for subnum = 1:length(spm_files) % iterates over subjects
+spm_files=[];
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,spm_files_basenames{subnum});
 end
 
@@ -260,7 +262,7 @@ end
 % surprises later in the processing pipeline - e.g. you can do this using
 % oslview.
 
-for subnum = 1:length(spm_files) % iterates over subjects
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir, ['f' spm_files_basenames{subnum}]);
 end
 
@@ -286,7 +288,8 @@ end
 %%
 % Set filenames used in following steps. Since we did both a highpass and a
 % stopband (aka notch) filter, the prefix here needs to be 'ff'.
-for subnum = 1:length(spm_files) % iterates over subjects
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir, ['ff' spm_files_basenames{subnum}]);
 end
 
@@ -307,7 +310,8 @@ end
 % First, we need to set the filenames to correspond to the SPM MEEG object
 % at the current point in the analysis. Hence, we need to use the prefixes 'dff' (2x
 % filtered and then downsampled):
-for subnum = 1:length(spm_files) % iterates over subjects
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 end
 
@@ -323,8 +327,9 @@ D
 
 %%
 % Let's have a look at the continuous data, now that it has been temporally
-% filtered and downsampled using oslview. You'll see that there are very bad artefacts in
-% this data, especially at the end of the scan. These severity
+% filtered and downsampled using oslview. You'll see that while there is a
+% big improvement, there are still very big artefacts in
+% this data, especially at the end of the scan. This severity
 % of artefact is not normal for good quality MEG and EEG data, but it serves well for
 % demonstrating the power of good preprocessing. 
 %
@@ -332,20 +337,21 @@ D
 
 oslview(D);
 
-%% AUTOMATED BAD EPOCH/CHANNEL DETECTION 
+%% AUTOMATED BAD SEGMENT/CHANNEL DETECTION 
 % As we have seen, even after temporal filtering there can be large artefacts left in
-% the data. Hence, we next perform bad epoch/channel detection. This
+% the data. Hence, we next perform bad segment/channel detection. This
 % can be done either manually or automatically.
 %
 % We will first do this automatically using the function osl_detect_artefacts. 
 %
 % Note that in the code below we first create a copy of the D objects using spm_eeg_copy. These will be 
-% the new SPM MEEG objects that will eventually have the bad epochs/channels indicated in them.
-% Here we represent bad epoch/channel detection in the filename using the prefix 'B'
+% the new SPM MEEG objects that will eventually have the bad segments/channels indicated in them.
+% Here we represent bad segment/channel detection in the filename using the prefix 'B'
 %
-% The MEEG object will be saved by the D.save (containing the marked bad epochs/channels). 
+% The MEEG object will be saved by the D.save (containing the marked bad segments/channels). 
 
-for subnum = 1:length(spm_files) % iterates over subjects
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 
     S=[];
@@ -359,17 +365,22 @@ for subnum = 1:length(spm_files) % iterates over subjects
 end
 
 %%
-% Note that the bad epochs/channels are not actually removed from the data, they
+% Note that the bad segments/channels are not actually removed from the data, they
 % are instead marked as bad, so that they can be optionally excluded from
 % future parts of the analysis.
 %
-% We can view the automatically marked epochs/channels using oslview. The start of
-% any bad epochs are indicated with a dashed green line, and the end with a
-% dashed red line. There are a lot of artefact epochs now maarked in this data! 
+% We can view the automatically marked segments/channels using oslview. 
+% The start of
+% any bad segments are indicated with a dashed green line, and the end with a
+% dashed red line. 
+%
+% The data in bad channels are plotted as dashed lines.
+%
+% There are a lot of artefacts now marked in this data! 
 %
 % See https://ohba-analysis.github.io/osl-docs/matlab/osl_example_preprocessing_detect_artefacts.html
 % for more info on this automated approach, including how to select data
-% that exludes bad channels/epochs.
+% that exludes bad channels/segments. Close oslview.
 
 D=oslview(D); 
 
@@ -382,7 +393,7 @@ D=oslview(D);
 % already had the automated bad
 % epoch/channel detection done (i.e. using the data with the 'dff' prefix as input).
 %
-% This data has some exceptionally bad artefacts in. Mark the epochs at
+% This data has some exceptionally bad artefacts in. Mark the segments at
 % around 325s, 380s and 600s as bad, as well as everything from 650 seconds
 % to the end. Marking is done by right-clicking in the proximity of the
 % event and click on 'Mark Event'. A first click (green dashed label) marks
@@ -394,16 +405,17 @@ D=oslview(D);
 % Don't forget to manually remove the bad times
 % in both MEGPLANAR and MEGMAG modalities! 
 %
-% The MEEG object will be saved by the D.save (containing the marked bad epochs). 
+% The MEEG object will be saved by the D.save (containing the marked bad segments). 
 %
-% As with the automated approach, the bad epochs are not actually removed from the data, they
+% As with the automated approach, the bad segments are not actually removed from the data, they
 % are instead marked as bad, so that they can be optionally excluded from
 % future parts of the analysis.
 %
 % Note that if you had multiple
 % subjects/sessions, this process would need to be repeated for each one.
 
-for subnum = 1:length(spm_files) % iterates over subjects
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['dff' spm_files_basenames{subnum}]);
 
     S=[];
@@ -436,7 +448,8 @@ end
 
 %%
 % Set new SPM M/EEG object filenames to be used in following steps
-for subnum = 1:length(spm_files) % iterates over subjects
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['Bdff' spm_files_basenames{subnum}]);
 end
 
@@ -508,11 +521,14 @@ D
 has_montage(D)
 
 %%
-% Now we can switch to any montage we want. D_raw switches to the original,
+% Now we can switch to any montage we want. D_pre_africa switches to the original,
 % raw data while D_africe switches to the AFRICA denoised data. Have a look
 % at the output to see the difference.
-D_raw=D.montage('switch',0)
+
+D_pre_africa=D.montage('switch',0)
+
 %%
+
 D_africa=D.montage('switch',1)
 
 %%
@@ -520,20 +536,20 @@ D_africa=D.montage('switch',1)
 % is not enough, you need to assign the switched montage to a variable. It
 % will switch, but there will be no new object with the online montage
 % applied. So always use it in the way shown above. Examine the content of
-% each object by just typing _D_raw_ and _D_africa_ .
+% each object by just typing _D_pre_africa_ and _D_africa_ .
 
 %%
 % Now we plot some data to have a look at the differences between raw and
 % denoised data.
 figure;
 subplot(2,1,1);
-plot(D_raw.time(1:10000),D_raw(308,1:10000)); % takes first 10000 sample points
+plot(D_pre_africa.time(1:10000),D_pre_africa(308,1:10000)); % takes first 10000 sample points
 title('ECG channel')
 xlim([10 20]);
 xlabel('Time (s)');
 
 subplot(2,1,2);
-plot(D_raw.time(1:10000),D_raw(306,1:10000)); % takes first 10000 sample points
+plot(D_pre_africa.time(1:10000),D_pre_africa(306,1:10000)); % takes first 10000 sample points
 title('ECG contaminated channel')
 xlim([10 20]);
 hold on;
@@ -599,20 +615,22 @@ legend({'pre AFRICA' 'post AFRICA'});
 
 %%
 % As before, here we set filenames used for the following step. Prefix is
-% now 'ABdff'. The following for loop does the actual epoching using a call
-% to osl_epoch:
+% now 'ABdff'. The following code setups the trial definition and then
+% finds the relevant events in the continuous data, storing the resulting trial
+% structure in _epochinfo_
 
-for subnum = 1:length(spm_files), % iterates over subjects
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['ABdff' spm_files_basenames{subnum}]);
 end
 
+clear epochinfo;
 for i=1:length(spm_files) % Iterating over subjects
 
     % define the trials we want from the event information
     S2 = [];
     S2.D = spm_files{i};
-    D_continuous=spm_eeg_load(S2.D);
-    
+    D_continuous=spm_eeg_load(spm_files{i});
     D_continuous=D_continuous.montage('switch',0);
     
     pretrig = -1000; % epoch start in ms
@@ -640,18 +658,27 @@ for i=1:length(spm_files) % Iterating over subjects
     S2.fsample = D_continuous.fsample;
     S2.timeonset = D_continuous.timeonset;
     
-    [epochinfo.trl, epochinfo.conditionlabels] = spm_eeg_definetrial(S2);        
-    
-    % do epoching
-    S3 = epochinfo;
-    S3.D = D_continuous;     
-    D = osl_epoch(S3);
+    [epochinfo{i}.trl, epochinfo{i}.conditionlabels] = spm_eeg_definetrial(S2);        
 end
 
 %%
-% We can visualise the timings of the different trial types alongside the
-% samples that have been marked as bad, all in continuous (pre-epoched time) using the following:
-report.trial_timings(D);
+% We can visualise the timings of the information in _epochinfo_. This
+% shows the different trial types alongside the
+% samples that have been marked as bad, in continuous time.
+
+subnum=1;
+report.trial_timings(spm_files{subnum}, epochinfo{subnum});
+
+%%  
+% The following code now actually uses the 360 trials defined in _epochinfo_ to do the epoching using a call
+% to osl_epoch. Note that any trials that overlapped at all with any bad segments in
+% the continuous data, will be marked as bad in the epoched data.
+
+for i=1:length(spm_files) % Iterating over subjects
+    S3 = epochinfo{i};
+    S3.D = spm_files{i};
+    D = osl_epoch(S3); 
+end
 
 %%
 % After epoching, data will be stored in a file with the prefix 'e',
@@ -671,8 +698,9 @@ report.trial_timings(D);
 % * 360 trials
 
 %%
-% We need to load in the data with prefix 'eABdff'.
-for subnum = 1:length(spm_files) % iterates over subjects
+% To get the epoched data, we need to load in the file with prefix 'eABdff'.
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['eABdff' spm_files_basenames{subnum}]);
 end
 
@@ -687,33 +715,190 @@ D
 % Display a list of trial types:
 D.condlist
 
+%% 
+% Display a condition labels for each trial:
+D.conditions
+
 %%
 % Display time points (in seconds) per trial (i.e. the time within a trial):
+
 D.time
 
-%% 
-% The command below helps to identify trials of a certain type using the
-% indtrial function. E.g.:
-motorbike_trls = indtrial(D,'Motorbike')
+%%
+% As mentioned, any trials that overlap with the bad epochs that we marked as bad 
+% on the continuous data, will now be marked as bad trials in
+% the epoched data. We can see the indices for these bad trials using:
+
+disp('Bad trial indices:');
+disp(D.badtrials);
+ 
+%%
+% We can also see the indices for any bad channels. 
+
+disp('Bad channel indices:');
+disp(D.badchannels);
+ 
+%%
+% We can also view summary plots of the bad trials. This produces separate figures for MEGPLANARS and
+% MEGMAGS. These show the standard deviation of
+% the data in each trial/epoch, and a histogram of the standard deviation of
+% the data in each trial/epoch. These are shown with (top half), or without
+% (bottom half), the bad trials. Trials marked as bad are shown as red astrices, and trials marked as good
+% are green astrices. You may need to zoom in on the second (from the top) subplot
+% to see the green, good trials.
+
+report.bad_trials(D);
 
 %%
-% It displays all trials for the motorbike condition in the data
+% We can also view bad MEG channel information:
+
+modalities = {'MEGMAG','MEGPLANAR'};
+report.bad_channels(D, modalities);
+
+% We will now perform outlier/bad trial detection directly on the epoched
+% data to refine the marking of bad trials further.
+
+%% AUTOMATED BAD TRIAL/CHANNEL DETECTION 
+% We can either perform manual or automated bad trial detection.
+%
+% We will first do this manually using the function osl_detect_artefacts. This can
+% also find bad channels.
+%
+% Note that in the code below we first create a copy of the D objects using spm_eeg_copy. This will be 
+% the new SPM MEEG objects that will eventually have the bad trials indicated in them.
+% Here we represent bad epoch detection in the filename using the prefix 'R':
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
+    spm_files{subnum}=fullfile(workingdir,['eABdff' spm_files_basenames{subnum}]);
+
+    S=[];
+    S.D=spm_files{subnum};
+    S.outfile=prefix(spm_files{subnum},'R'); 
+    D=spm_eeg_copy(S); % copy D object and add R prefix
+
+    modalities = {'MEGMAG','MEGPLANAR'};
+    D = osl_detect_artefacts(D,'badchannels',true,'badtimes',true,'modalities',modalities);
+    D.save;
+end
+
+%%
+% Note that the bad trials/channels are not actually removed from the data, they
+% are instead marked as bad, so that they can be optionally excluded from
+% future parts of the analysis. 
+%
+% As before, we can now see the indices for any bad trials and channels. This will be a combination
+% of those trials that overlapped with bad epochs on the continuous data, and 
+% trials that have just now been identified as bad using the automated bad
+% trial detection on the epoched data.
+
+disp('Bad trial indices:');
+disp(D.badtrials);
+
+disp('Bad trial indices:');
+disp(D.badchannels);
+
+%%
+% Again, can also view summary plots of the bad trials
+
+report.bad_trials(D);
+
+%% MANUAL BAD TRIAL/CHANNEL DETECTION 
+% Generally, automated bad trial/channel detection is sufficient. 
+% However, there is also the option to run manual bad trial/channel detection using a Fieldtrip interactive tool.
+% We can do this as an alternative, or in addition, to the automated bad
+% trial/channel detection done above. 
+%
+% Here we will run the manual dection on the data that has already had the automated bad
+% trial/channel detection done (i.e. using the data with the 'ReABdff' prefix as input).
+clear spm_files;
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
+    spm_files{subnum}=fullfile(workingdir,['ReABdff' spm_files_basenames{subnum}]);
+
+    S=[];
+    S.D=spm_files{subnum};
+    S.outfile=prefix(spm_files{subnum},'R');
+    D=spm_eeg_copy(S); % copy D object and add R prefix
+    
+    D=osl_rejectvisual(D,[-0.2 0.4]);
+    D.save();
+end
+
+%%
+% Pass over the first interactive figure as it is the EOG channel - so just
+% press the "quit" button. This will bring up another interactive figure which will show the
+% magnetometers. You can choose the metric to display - it is best to stick
+% to the default, which is variance. This metric is then displayed for the
+% different trials (bottom left), the different channels (top right), and
+% for the combination of the two (top left). You need to use this
+% information to identify those trials and channels with high variance and
+% remove them.
+%
+% # Remove the worst channel (with highest variance) by drawing a box
+% around it in the top right plot with the mouse.
+% # Now remove the trials with high variance by drawing a box around them
+% in the bottom left plot.
+% # Repeat this until you are happy that there are no more outliers.
+% # Press "quit" and repeat the process for the gradiometers. 
+
+%%
+% Again, we can visualise the bad trial information:
+report.bad_trials(D);
+
+%% EXAMINE AND VISUALISE EPOCHED DATA
+% 
+% The pre-processing is now completed.
+%
+% We will finish by looking at the benefits of bad trial/segment/channel detection
+% and AFRICA
+% by computing a rudimentary event related field (ERF) for the motorbike trials
+%
+
+%%
+% Set new SPM M/EEG object filenames for epoched data to be used in visualisation of ERFs
+spm_files=[];
+for subnum = 1:length(spm_files_basenames) % iterates over subjects
+    spm_files{subnum}=fullfile(workingdir,['RReABdff' spm_files_basenames{subnum}]);
+end
+
+%%
+% Load in the data
+subnum = 1;
+D = spm_eeg_load(spm_files{subnum});
+
+%%
+% We want to look at data without any of the effects AFRICA of clean up.
+% to get this, we make sure the montage is set to 0 (i.e. no montage,
+% corresponding to the raw sensors):
+D=D.montage('switch',0)
+
+%% 
+% We first identify motorbike trials using the
+% indtrial function. E.g.:
+motorbike_trls = indtrial(D,'Motorbike');
+
+%%
+% This gives all trials for the motorbike condition in the data
 % (regardless of whether they contain good or bad data segments).
 
 
 %%
-% Identify channels of certain types using the indchantypes function. E.g.
+% We then identify channels of certain types using the indchantypes function. E.g.
 % identify the channel indices for the planar gradiometers and for the
 % magnetometers (what you have available may depend on the actual MEG
 % device). Note that you can use 'MEGMAG' to get the magnetometers, and
 % D.chantype gives you a list of all channel types by index.
 % 
-planars = D.indchantype('MEGPLANAR')
-%%
-magnetos = D.indchantype('MEGMAG')
+
+planars = D.indchantype('MEGPLANAR');
+magnetos = D.indchantype('MEGMAG');
 
 %%
-% We can access the actual MEG data using the syntax: D(channels, samples,
+% These correspond to all channels of those types in the data
+% (regardless of whether they are good or bad channels).
+
+
+%%
+% We can then  access the actual epoched MEG data using the syntax: D(channels, samples,
 % trials). E.g. plot a figure showing all the trials for the motorbike
 % condition in the 135th MEGPLANAR channel. Note that the squeeze function
 % is needed to remove single dimensions for passing to the plot function,
@@ -746,203 +931,66 @@ title('Raw event-related field, average','FontSize',15)
 %%
 % As you will notice, the ERF, both single trials and the average obtained are actually not usable at all.
 % However, we should bear in mind that this data is averaging over all data
-% including data already marked as bad (using oslview). 
+% including trials that we have marked as bad.
 %
-% As mentioned, any trials that overlap with the bad epochs that we marked as bad 
-% on the continuous data (using oslview), will already be marked as bad trials in
-% the epoched data. We can see the indices for these bad trials using:
-
-subnum=1;
-D = spm_eeg_load(spm_files{subnum});
-D.badtrials
-report.bad_trials(D);
-
-% Before seeing the benefits
-% of excluding these already marked as bad trials, we will
-% see how we can do even
-% better by performing outlier/bad trial detection directly on the epoched data.
-
-%% AUTOMATED BAD TRIAL/CHANNEL DETECTION 
-% We can either perform manual or automated bad trial detection.
-%
-% We will first do this manually using the function osl_detect_artefacts. This can
-% also find bad channels.
-%
-% Note that in the code below we first create a copy of the D objects using spm_eeg_copy. This will be 
-% the new SPM MEEG objects that will eventually have the bad trials indicated in them.
-% Here we represent bad epoch detection in the filename using the prefix 'R':
-for subnum = 1:length(spm_files) % iterates over subjects
-    spm_files{subnum}=fullfile(workingdir,['eABdff' spm_files_basenames{subnum}]);
-
-    S=[];
-    S.D=spm_files{subnum};
-    S.outfile=prefix(spm_files{subnum},'R'); 
-    D=spm_eeg_copy(S); % copy D object and add R prefix
-
-    modalities = {'MEGMAG','MEGPLANAR'};
-    D = osl_detect_artefacts(D,'badchannels',true,'badtimes',true,'modalities',modalities);
-    D.save;
-end
+% We will now look at the cleaned ERFs by only using good trials and
+% channels, and seeing the effects of using AFRICA
 
 %%
-% Note that the bad trials/channels are not actually removed from the data, they
-% are instead marked as bad, so that they can be optionally excluded from
-% future parts of the analysis. 
-%
-% We can now see the indices for any bad trials. This will be a combination
-% of those trials that overlapped with bad epochs on the continuous data, and 
-% trials that have just now been identified as bad using the automated bad
-% trial detection on the epoched data.
-D.badtrials
-  
-%%
-% We can also see the indices for any bad channels. This will be a combination
-% of those channels that were found to be bad on the continuous data, and 
-% channels that have just now been identified as bad using the automated bad
-% channel detection on the epoched data.
-
-D.badchannels
-
-%%
-% We can also view summary plots of the bad trials. This produces separate figures for MEGPLANARS and
-% MEGMAGS. These show the standard deviation of
-% the data in each trial/epoch, and a histogram of the standard deviation of
-% the data in each trial/epoch. These are shown with (top half), or without
-% (bottom half), the bad trials. Trials marked as bad are shown as red astrices, and trials marked as good
-% are green astrices. You may need to zoom in on the second (from the top) subplot
-% to see the green, good trials.
-
-report.bad_trials(D);
-
-%% MANUAL BAD TRIAL/CHANNEL DETECTION 
-% Generally, automated detection is sufficient. 
-% However, there is also the option to run manual bad trial/channel detection using a Fieldtrip interactive tool.
-% We can do this as an alternative, or in addition, to the automated bad
-% trial/channel detection done above. 
-%
-% Here we will run the manual dection on the data that has already had the automated bad
-% trial/channel detection done (i.e. using the data with the 'ReABdff' prefix as input).
-
-for subnum = 1:length(spm_files) % iterates over subjects
-    spm_files{subnum}=fullfile(workingdir,['ReABdff' spm_files_basenames{subnum}]);
-
-    S=[];
-    S.D=spm_files{subnum};
-    S.outfile=prefix(spm_files{subnum},'R');
-    D=spm_eeg_copy(S); % copy D object and add R prefix
-    
-    D=osl_rejectvisual(D,[-0.2 0.4]);
-    D.save();
-end
-
-%%
-% Pass over the first interactive figure as it is the EOG channel - so just
-% press the "quit" button. This will bring up another interactive figure which will show the
-% magnetometers. You can choose the metric to display - it is best to stick
-% to the default, which is variance. This metric is then displayed for the
-% different trials (bottom left), the different channels (top right), and
-% for the combination of the two (top left). You need to use this
-% information to identify those trials and channels with high variance and
-% remove them.
-%
-% # Remove the worst channel (with highest variance) by drawing a box
-% around it in the top right plot with the mouse.
-% # Now remove the trials with high variance by drawing a box around them
-% in the bottom left plot.
-% # Repeat this until you are happy that there are no more outliers.
-% # Press "quit" and repeat the process for the gradiometers. 
-
-%%
-% Again, we can visualise the bad trials:
-report.bad_trials(D);
-
-%% EXAMINE AND VISUALISE CLEANED EPOCHED DATA
-% 
-% We can now repeat the average over all the motorbike trials with the bad
-% trials removed to get a much cleaner ERF.
-
-%%
-% Set new SPM M/EEG object filenames to be used in following steps
-for subnum = 1:length(spm_files), % iterates over subjects
-    spm_files{subnum}=fullfile(workingdir,['RReABdff' spm_files_basenames{subnum}]);
-end
-
-%%
-% This loads in our data, the SPM M/EEG object
-subnum = 1;
-D = spm_eeg_load(spm_files{subnum});
-
-%%
-% Here we switch to montage 0 (raw data, rather than the post-AFRICA data). Sometimes switching back is necessary, when
-% the data sets has been modified, so it's always wise to check the applied
-% montage.
-D_raw=D.montage('switch',0)
-
-%%
-% Here we get the indices for both types of MEG sensors:
-planars = D_raw.indchantype('MEGPLANAR')
-%%
-magnetos = D_raw.indchantype('MEGMAG')
-
-%%
-% We list the marked bad channels and bad trials:
-D_raw.badchannels
-%%
-D_raw.badtrials
-
-%%
-% Depending on how strict you were with the visual artefact rejection, you
-% should have quite a lot of rejected trials and possibly some rejected channels.
-
-%%
-% Now we identify the motorbike image trials. Note that _indtrial_
+% First, we identify the good motorbike image trials. Note that _indtrial_
 % includes good AND bad trials, so bad trials need to be excluded.
 % _'good'_ finds the trials that are not bad.
-good_motorbike_trls = D_raw.indtrial('Motorbike','good');
+
+good_motorbike_trls = D.indtrial('Motorbike','good');
 
 %%
-% As before after AFRICA, we will make use of the online montages. Note that
+% To see the effects of AFRICA, we will make use of the online montages. Note that
 % the online montage got carried over when doing the epoching. So there is no need to do epoching on both the 'raw' and AFRICA
 % denoised data separately. Epoching on the raw data containing the AFRICA montage
 % allows you to switch between raw and AFRICA denoised data after epoching without
-% problems. So now we switch to online montage 1 ('AFRICA denoised data').
+% problems. So we can use online montage 1 ('AFRICA denoised data').
 % Again, keep in mind to assign it a new object (e.g. D_africa):
+
 D_africa=D.montage('switch',1)
 
+% Whereas our pre-AFRICA data corresponds to:
+
+D_pre_africa=D.montage('switch',0)
+
 %%
-% Now let us plot a cleaned rudimentary ERF for both the raw and post-AFRICA denoised data, but after having excluded the bad
-% samples from oslview and the rejected trials from the artifact rejection.
-% Now, data should look much better. Also, let us see
+% Now let us plot a cleaned rudimentary ERF for both the pre-AFRICA and post-AFRICA denoised data, but after having excluded the bad
+% segments/channels and the bad trials from the artifact rejection.
+% Now, the ERFs should look much better. Also, let us see
 % how much the task-related activity, i.e. the ERF differs between 'raw' and AFRICA
 % denoised data. 
 %%
 % This should give you some nice event-related fields.
 figure('units','normalized','outerposition',[0 0 0.4 0.3]); 
 subplot(1,2,1); % plots gradiometers, raw
-plot(D_raw.time,squeeze(mean(D_raw(planars(135),:,good_motorbike_trls),3)));
-xlabel('Time (seconds)','FontSize',20);ylim([-10 6])
-set(gca,'FontSize',20)
-ylabel(D.units(planars(1)),'FontSize',20);
+plot(D_pre_africa.time,squeeze(mean(D_pre_africa(planars(135),:,good_motorbike_trls),3)));
+xlabel('Time (seconds)','FontSize',15);ylim([-10 6])
+set(gca,'FontSize',15)
+ylabel(D_pre_africa.units(planars(1)),'FontSize',15);
 
 hold on;
 subplot(1,2,1); % plots gradiometers, AFRICA denoised
-plot(D_raw.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3))); 
-xlabel('Time (seconds)','FontSize',20);ylim([-10 6])
-legend({'Raw' 'AFRICA'},'FontSize',20);
-set(gca,'FontSize',20)
-title('Planar gradiometers','FontSize',20)
+plot(D_pre_africa.time,squeeze(mean(D_africa(planars(135),:,good_motorbike_trls),3))); 
+xlabel('Time (seconds)','FontSize',15);ylim([-10 6])
+legend({'Raw' 'AFRICA'},'FontSize',15);
+set(gca,'FontSize',15)
+title('Planar gradiometers','FontSize',15)
 
 subplot(1,2,2); % plots magnetometers, raw
-plot(D_raw.time,squeeze(mean(D_raw(magnetos(49),:,good_motorbike_trls),3)));
+plot(D_pre_africa.time,squeeze(mean(D_pre_africa(magnetos(49),:,good_motorbike_trls),3)));
 xlabel('time (seconds)','FontSize',15);ylim([-300 500])
-ylabel(D.units(magnetos(1)),'FontSize',15);
+ylabel(D_pre_africa.units(magnetos(1)),'FontSize',15);
 set(gca,'FontSize',15)
 
 hold on;
 subplot(1,2,2); % plots magnetometers, AFRICA denoised version
 plot(D_africa.time,squeeze(mean(D_africa(magnetos(49),:,good_motorbike_trls),3)));
 xlabel('time (seconds)');ylim([-300 500])
-ylabel(D.units(magnetos(1)),'FontSize',15);
+ylabel(D_africa.units(magnetos(1)),'FontSize',15);
 set(gca,'FontSize',15)
 legend({'Raw' 'AFRICA'})
 title('Magnetometers','FontSize',15)
@@ -957,17 +1005,17 @@ title('Magnetometers','FontSize',15)
 % 
 
 %%
-% Now we will plot a 2D image of all cleaned rudimentary ERFs across all
+% Now we will plot a 2D image of all cleaned ERFs across all
 % sensors (204 planar gradiometers and 102 magnetometers):
 figure('units','normalized','outerposition',[0 0 0.4 0.3]); % plots gradiometers
-subplot(1,2,1);imagesc(D.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3)));
+subplot(1,2,1);imagesc(D_africa.time,[],squeeze(mean(D_africa([planars(:)],:,good_motorbike_trls),3)));
 xlabel('Time (seconds)','FontSize',20);
 ylabel('Sensors','FontSize',15);colorbar
 title('Planar gradiometers, all sensors','FontSize',15)
 set(gca,'FontSize',15)
 
 subplot(1,2,2); % plots magnetometers
-imagesc(D.time,[],squeeze(mean(D_africa([magnetos(:)],:,good_motorbike_trls),3))); 
+imagesc(D_africa.time,[],squeeze(mean(D_africa([magnetos(:)],:,good_motorbike_trls),3))); 
 xlabel('Time (seconds)','FontSize',15);
 ylabel('Sensors','FontSize',15);colorbar
 title('Magnetometers, all sensors','FontSize',15)
@@ -987,17 +1035,17 @@ set(gca,'FontSize',15)
 % *PLOTTING EVENT-RELATED TOPOGRAPHIES AT DEFINED LATENCIES*
 %
 % To plot a cleaned rudimentary ERF topography (here at a relatively late latency)
-% over all good trials, do:
+% over all good trials for the pre-AFRICA data, do:
 
 
-figure('units','normalized','outerposition',[0 0 0.4 0.4]);
-topo=squeeze(mean(D(:,188,good_motorbike_trls),3));
-sensors_topoplot(D,topo,{'MEGPLANAR' 'MEGMAG'},1);
+figure('units','normalized','outerposition',[0 0 0.4 0.4],'name','Without AFRICA denoising');
+topo=squeeze(mean(D_pre_africa(:,188,good_motorbike_trls),3));
+sensors_topoplot(D_pre_africa,topo,{'MEGPLANAR' 'MEGMAG'},1);
 
 %%
 % The obtained topographies should correspond to the ERF time series at
 % this time:
-D.time(188)
+D_pre_africa.time(188)
 
 %%
 % They should look like this:
@@ -1009,14 +1057,14 @@ D.time(188)
 
 %%
 % Now we do the same procedures for the AFRICA denoised online montage:
-figure('units','normalized','outerposition',[0 0 0.4 0.4]);
+figure('units','normalized','outerposition',[0 0 0.4 0.4],'name','With AFRICA denoising');
 topo2=squeeze(mean(D_africa(:,188,good_motorbike_trls),3));
 sensors_topoplot(D_africa,topo2,{'MEGPLANAR' 'MEGMAG'},1);
 
 %%
 % They should look like this. Have a look at how different these
-% topographies look. Do you have an idea why now everything looks much more
-% similar than before?
+% topographies look. Here, AFRICA is not making a huge amount of difference
+% to the ERFs and topographies; however, that is not always the case
 
 %%
 % 

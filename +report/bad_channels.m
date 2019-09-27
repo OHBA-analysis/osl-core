@@ -1,11 +1,25 @@
-function h = bad_channels(D)
+function h = bad_channels(D, modalities, plot_bad_chans)
 
-	D = D.montage('switch',0);
+% h = bad_channels(D)
+% h = bad_channels(D, modalities)
+% h = bad_channels(D, modalities, plot_bad_chans)
+%
+% Display summary of SPM MEG object D for bad channels from each modality
+
+    if nargin<2
+        candidate_modalities = {'EEG','MEG','MEGANY'};
+        modalities = unique(D.chantype(D.indchantype(candidate_modalities)));
+    end
+    
+    if nargin<3
+        plot_bad_chans = false;
+    end
+    
+    D = D.montage('switch',0);
 
 	chaninds = D.badchannels;
 	metric = std(D(:,:),[],2);
-	modalities = unique(D.chantype);
-
+	
 	h = [];
 
 	% MODALITY REPORTS
@@ -22,9 +36,7 @@ function h = bad_channels(D)
 		bar(hsx,hs);
 		title(sprintf('CHANNEL SUMMARY: %s', modalities{j}));
 		a1=axis;
-		xlabel('std')
-		ylabel('counts')
-
+		
 		subplot(4,1,2);
 		plot(metric(this_modality_clean),this_modality_clean,'og');
 		if ~isempty(this_modality_bad)
@@ -33,7 +45,6 @@ function h = bad_channels(D)
 		end
 		a2=axis;
 		axis([a1(1) a1(2) a2(3) a2(4) ]);
-		xlabel('std')
 		ylabel('channel index')
 
 		subplot(4,1,3);
@@ -41,32 +52,33 @@ function h = bad_channels(D)
 		bar(hsx,hs);
 		a1=axis;
 		title(sprintf('CHANNEL SUMMARY: %s (without bad channels)', modalities{j}));
-		xlabel('std')
-		ylabel('counts')
-
+		
 		subplot(4,1,4);
 		plot(metric(this_modality_clean),this_modality_clean,'*g');
 		a2=axis;
 		axis([a1(1) a1(2) a2(3) a2(4) ]);
-		xlabel('std')
-		ylabel('channel index')
-	
-		badcolor = [204     0     0] / 255;
-		for j = 1:length(this_modality_bad)
-			cl = D.chanlabels(this_modality_bad(j));
-			cl = cl{1};
-			unit = D.units(this_modality_bad(j));
-			unit = unit{1};
+        xlabel('std')
+        ylabel('channel index')
 
-			h(end+1) = figure('name',sprintf('Bad Channel - %s',cl),'tag',sprintf('bad_channel_%s',cl));
-			pos = get(h(end),'Position');
-			set(h(end),'Position',pos.*[1 1 1 0.5])
-			plot(D.time,D(this_modality_bad(j),:),'Color',badcolor);
-			title(sprintf('Bad Channel - %s',cl));
-			xlabel('Time')
-			ylabel(sprintf('Signal (%s)',unit));
-		end
+        set(h(end),'Position',[1 1 500 700]);
 
+        if plot_bad_chans
+            badcolor = [204     0     0] / 255;
+            for j = 1:length(this_modality_bad)
+                cl = D.chanlabels(this_modality_bad(j));
+                cl = cl{1};
+                unit = D.units(this_modality_bad(j));
+                unit = unit{1};
+
+                h(end+1) = figure('name',sprintf('Bad Channel - %s',cl),'tag',sprintf('bad_channel_%s',cl));
+                pos = get(h(end),'Position');
+                set(h(end),'Position',pos.*[1 1 1 0.5])
+                plot(D.time,D(this_modality_bad(j),:),'Color',badcolor);
+                title(sprintf('Bad Channel - %s',cl));
+                xlabel('Time')
+                ylabel(sprintf('Signal (%s)',unit));
+            end
+        end
 	end
 
 

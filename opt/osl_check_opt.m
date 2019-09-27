@@ -95,6 +95,11 @@ try opt.highpass.cutoff=optin.highpass.cutoff; optin.highpass = rmfield(optin.hi
 try opt.mains.do=optin.mains.do; optin.mains = rmfield(optin.mains,'do'); catch, opt.mains.do=0; end % flag to indicate if mains filtering should be done 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% spectograms settings
+
+try opt.spectograms.do=optin.spectograms.do; optin.spectograms = rmfield(optin.spectograms,'do'); catch, opt.spectograms.do=0; end % flag to indicate if spectogram is plotted 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% trial and chan outlier detection settings
 
 try opt.bad_segments.do=optin.bad_segments.do; optin.bad_segments = rmfield(optin.bad_segments,'do'); catch, opt.bad_segments.do=1; end % flag to indicate if bad_segment marking should be done
@@ -251,6 +256,19 @@ if ~isempty(wierdfields)
 end % if ~isempty(wierdfields)
 end
 
+if isfield(optin,'spectograms')
+wierdfields = fieldnames(optin.spectograms);
+if ~isempty(wierdfields)
+    disp('The following opt.spectograms settings were not recognized by osl_check_opt');
+
+    for iprint = 1:numel(wierdfields)
+        disp([' ' wierdfields{iprint} ' '])
+    end
+    error('Invalid osl_check_opt settings');
+
+end % if ~isempty(wierdfields)
+end
+
 if isfield(optin,'downsample')
 wierdfields = fieldnames(optin.downsample);
 if ~isempty(wierdfields)
@@ -299,6 +317,7 @@ try optin = rmfield(optin,'outliers');catch, end
 try optin = rmfield(optin,'bad_segments');catch, end
 try optin = rmfield(optin,'highpass');catch, end
 try optin = rmfield(optin,'mains');catch, end
+try optin = rmfield(optin,'spectograms');catch, end
 try optin = rmfield(optin,'downsample');catch, end
 try optin = rmfield(optin,'coreg');catch, end
 try optin = rmfield(optin,'africa');catch, end
