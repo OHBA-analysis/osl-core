@@ -1,6 +1,6 @@
-function [ results ] = vbrt_infer_dynamic_model( X,options )
+function [ results ] = gumbel_infer_dynamic_model( X,options )
 
-% [ results ] = vbrt_infer_dynamic_model( X,T,options )
+% [ results ] = gumbel_infer_dynamic_model( X,T,options )
 
     results = [];
     
@@ -26,7 +26,7 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     %[~,pyversion_old]=pyversion();
     %pyversion('/Users/woolrich/anaconda/bin/python');
     
-    envset='tensorflow';
+    envset='tensorflow14';
     
     disp(['Setting conda env: ' envset]);
     conda.setenv(envset)
@@ -39,7 +39,7 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     options.vbrt.ntraining_init=100;
     options.vbrt.ntraining=options.vbrt.ntraining_init+200;
     options.vbrt.nportions=20;
-    options.vbrt.subportion_length=100;
+    options.vbrt.subportion_length=50;
     options.vbrt.nstates=options.K;
     options.vbrt.model_mode='\"lstm\"';
     options.vbrt.alpha_softxform_model='\"softmax\"';
@@ -47,7 +47,7 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     
     options.vbrt.do_recon='False';
     options.vbrt.do_fullprob_alpha='True';
-    options.vbrt.do_fullprob_beta='False';
+    options.vbrt.do_fullprob_beta='True';
     options.vbrt.use_pca_cov_model='False';
     
     options.vbrt.npcs=20;
@@ -87,51 +87,32 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     disp('Calling cmd:');
     disp(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"']);
     
-    %runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"'])   
+    runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon/call_python.py --cmd="' python_cmd '"'])   
     
     %%
-    
-    results.gamma=[];
+    hmm=[];
+    hmm.gamma=[];
     
     for ii=1:length(fnames)
         tmp=load([options.workingdir '/softxform_alpha_mean_store' num2str(ii-1) '.mat']);
         
-        results.gamma=[results.gamma; tmp.softxform_alpha_mean_store0]
+        hmm.gamma=[hmm.gamma; tmp.softxform_alpha_mean_store0]
         
-        %keyboard;
+        keyboard;
         
-        %results.statepath=[results.gamma; max(tmp.softxform_alpha_mean_store0)];
+        %hmm.statepath=[hmm.gamma; max(tmp.softxform_alpha_mean_store0)];
     end
         
     % options.K=8;workingdir  = [tilde '/homedir/vols_data/daisie/meg_data/'];i=1; 
     
-    %% plot state tcs
-    if false
-        figure; 
-        for kk=1:options.K
-            subplot(options.K,1,kk);plot(results.gamma(:,kk),'LineWidth',1.5);
-            a=axis;
-            a(4)=1.1;
-            axis(a);
-        end
-    end
-    
-    %% load in and store state covariances
-    tmp=load([options.workingdir  '/Djs_store.mat']);
-    Djs=tmp.Djs_store;
-    results.state=[];
-    for kk=1:options.K
-        results.state(kk).Omega.Gam_rate=squeeze(Djs(kk,:,:));
-        ndim = length(results.state(kk).Omega.Gam_rate);
-        results.state(kk).Omega.Gam_shape=ndim+2;
-    end
-    
-    results.train=[];
-    
+    figure; 
+    for kk=1:options.K, 
+        subplot(options.K,1,kk);plot(hmm.gamma(:,kk),'LineWidth',1.5);
+        a=axis;
+        a(4)=1.1;
+        axis(a);
+    end;
     %%
-    tmp=load([options.workingdir '/costs']);
-    results.costs=tmp.costs;
-
     %%%%%%%
     
     %pyversion(pyversion_old);

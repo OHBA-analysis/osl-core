@@ -36,26 +36,34 @@ function [ results ] = vbrt_infer_dynamic_model_gamma( X,options )
     %python_cmd=['setup_tools.setup_dictionary(\"' options.workingdir '\", Q=' num2str(size(data,2)) ', ndicts=' num2str(size(data,2)) ', use_off_diags=False, use_greens_fns=False)'];  
     
     options.vbrt=[];
-    options.vbrt.ntraining_init=50;
-    options.vbrt.ntraining=options.vbrt.ntraining_init+50;
+    options.nsessions=1;
+    options.vbrt.ntraining_init=100;
+    options.vbrt.ntraining=options.vbrt.ntraining_init+200;
     options.vbrt.nportions=20;
-    options.vbrt.subportion_length=50;
+    options.vbrt.subportion_length=140;
+    
     options.vbrt.nstates=options.K;
     options.vbrt.model_mode='\"lstm\"';
     options.vbrt.model_name='\"dtfm\"';
-    
+    options.vbrt.beta_type='\"full\"';
+
     options.vbrt.do_recon='False';
-    options.vbrt.do_fullprob_inference_rnn='True';
-    options.vbrt.do_fullprob_beta='False';
+    options.vbrt.do_fullprob_beta='True';
     options.vbrt.use_pca_cov_model='False';
     
-    options.vbrt.npcs=20;
+    options.vbrt.npcs=40;
     
-    options.vbrt.state_model='\"categorical\"';
+    if 1,
+        options.vbrt.state_model='\"categorical\"';
+        options.vbrt.do_fullprob_theta='False';
+    else
+        options.vbrt.state_model='\"partial_volume\"';
+        options.vbrt.do_fullprob_theta='False';
+    end
     
     python_cmd=['infer_dynamic_model_gamma.reconstruct(\"' ...
         options.workingdir '\", \"' options.workingdir '\"' ...
-        ', nsessions= ' num2str(length(fnames)) ...
+        ', nsessions= ' num2str(options.nsessions) ...
         ', ntraining= ' num2str(options.vbrt.ntraining) ...
         ', ntraining_init= ' num2str(options.vbrt.ntraining_init) ...
         ', nportions=' num2str(options.vbrt.nportions) ...
@@ -66,27 +74,31 @@ function [ results ] = vbrt_infer_dynamic_model_gamma( X,options )
         ', load_model_epoch=None, epochs_per_model_save=100' ...
         ', model_name=' options.vbrt.model_name ...
         ', use_pca_cov_model=' options.vbrt.use_pca_cov_model ...
-        ', do_fullprob_theta=' options.vbrt.do_fullprob_inference_rnn ...
+        ', beta_type=' options.vbrt.beta_type ...
+        ', do_fullprob_theta=' options.vbrt.do_fullprob_theta ...
         ', do_fullprob_beta=' options.vbrt.do_fullprob_beta ...
         ', do_recon=' options.vbrt.do_recon ...
         ', state_model=' options.vbrt.state_model ...
         ')'];
 
     disp('Calling cmd:');
-    disp(['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"']);
-            
-    %runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"'])   
+    cmd=['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"'];
+    disp(cmd); 
     
-    python_cmd=['plot_tools.plot_results(\"' ...
-        options.workingdir '\", \"' options.workingdir '\"' ...
-        ', time_range=[0,10000]' ...
-        ')'];
+    %runcmd(cmd);  
+   
+    %python_cmd=['plot_tools.plot_results(\"' ...
+    %    options.workingdir '\", \"' options.workingdir '\"' ...
+    %    ', time_range=[0,10000]' ...
+    %    ')'];
        
-    disp('For python plots, call cmd:');
-    disp(['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"']);
+    %disp('For python plots, call cmd:');
+    %cmd=['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"'];
+  
+    %disp(cmd); 
     
-    %runcmd(['python /Users/woolrich/homedir/scripts/dynamic_network_recon_gamma/call_python_gamma.py --cmd="' python_cmd '"'])   
-    
+    %runcmd(cmd);  
+   
     %%
     results.gamma=[];
     
@@ -134,6 +146,9 @@ function [ results ] = vbrt_infer_dynamic_model_gamma( X,options )
     results.train=[];
     
     %%
+    tmp=load([options.workingdir '/costs']);
+    results.costs=tmp.costs;
+
     %%%%%%%
     
     %pyversion(pyversion_old);

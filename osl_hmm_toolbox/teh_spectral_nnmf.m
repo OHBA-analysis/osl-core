@@ -87,6 +87,8 @@ else
     res.nnmf_psd_maps=maps(:,neworder_auto,:);
 end
 
+res.coh=abs(coh_comps);
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% Now do coh
 
