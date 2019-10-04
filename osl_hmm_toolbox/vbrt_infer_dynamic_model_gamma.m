@@ -53,7 +53,7 @@ function [ results ] = vbrt_infer_dynamic_model_gamma( X,options )
     
     options.vbrt.npcs=40;
     
-    if 1,
+    if 1
         options.vbrt.state_model='\"categorical\"';
         options.vbrt.do_fullprob_theta='False';
     else
