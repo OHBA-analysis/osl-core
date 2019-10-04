@@ -239,51 +239,17 @@ end
 %% Normalise modalities using, e.g., mean or smallest eigenvalues
 %% calculated using good channels and good trials, and over all woi
 
-if strcmp( source_recon_sess.normalise_method,'zscore')
-    % Z-score samples within channels and trials
-    [dirname, fname, ext] = fileparts(D.fullfile);
-    Dnew = D.clone( fullfile(dirname,['M' fname ext]) );
-
-    dat = D(:,:,:);
-    for jj = 1:size(dat,3)
-        dat(:,:,jj) = zscore(dat(:,:,jj),[],2);
-    end
-    Dnew(:,:,:) = dat;
-
-    D = Dnew;
-    chanind=indchantype(D,modality_meeg,'GOOD');
-    pcadim=length(chanind);
-    normalisation=1;
-
-elseif ~strcmp(source_recon_sess.normalise_method,'none')
-    
-    disp('Establish dimensionality and Normalising modalities...');
-    S2=source_recon_sess;
-    S2.D = D;
-    S2.samples2use=samples2use;
-    S2.trials=trials;
-    S2.do_plots=1;
-    S2.normalise_method=source_recon_sess.normalise_method;
-
-    %[ Dnew pcadims pcadim ] = normalise_sensor_data( S2 );
-
-    [ Dnew pcadims tmp norm_vec normalisation fig_handles fig_names] = normalise_sensor_data( S2 );
-
-    % set pcadim to min:
-    pcadim=min(pcadims);
-
-    if do_report
-        % diagnostic plot of design matrix    
-        sess_report=osl_report_set_figs(sess_report,fig_names,fig_handles);
-        sess_report=osl_report_print_figs(sess_report);
-    end
-
-    Dnew.save;
-    D=Dnew;
+if strcmp( source_recon_sess.normalise_method,'none')
+    S=[];
+    S.D=D_epoched;
+    S.normalise_method='mean_eig';
+    S.datatype='neuromag';
+    S.do_plots=true;
+    [D_epoched pcadim normalisation]= osl_normalise_sensor_data(S);
 else
-    chanind=indchantype(D,modality_meeg,'GOOD');
+    chanind=indchantype(D,modality_meeg,'good');
     pcadim=length(chanind);
-    normalisation=1;
+    normalisation=1;        
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -314,7 +280,7 @@ Dnew = osl_concat_spm_eeg_chans( Sc );
 
 D.delete;
 
-% restore old file name
+% restore file name
 Sc=[];
 Sc.D=Dnew;
 Sc.outfile=oldname;

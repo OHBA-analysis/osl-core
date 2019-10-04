@@ -1,4 +1,4 @@
-function [Dnew pcadim] = osl_normalise_sensor_data(S)
+function [Dnew pcadim normalisation] = osl_normalise_sensor_data(S)
 
 % [D pcadim] = osl_normalise_sensor_data(S)
 
