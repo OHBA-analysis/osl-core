@@ -4,7 +4,7 @@
 % common space to allow for analysis in sourcespace.
 %
 % This practical uses data from the face_singlesubject and coreg_example
-% subfolders in the osl2.1/example_data directory. Please make sure these
+% subfolders in the OSL example_data directory. Please make sure these
 % are both present before starting.
 %
 % There are several co-ordinate systems which must be aligned before we can
@@ -29,6 +29,14 @@
 % Once these transforms have been identified we can move between MEG
 % sensors and specific locations within the MRI scan.
 
+%% SET UP ANALYSIS
+% The only thing you need to do is to go into your OSL directory (i.e. type _cd /somedirectory/osl-core_ ) and then run the following.
+osl_startup;
+
+%%
+% This will not be necessary after you have done this once, i.e. no need to
+% repeat during one of the follow-up practicals.
+
 %% COREGISTRATION WITH SPM
 %
 % Coregistration is performed in OSL using osl_headmodel.
@@ -48,7 +56,7 @@
 % data
 %
 % The following example runs the coregistration on two datasets which are
-% required for the sourcespace OAT practical. While running, SPM will open
+% required for the sourcespace practicals. While running, SPM will open
 % a window showing the alignment of the headshape points to the scalp.
 
 % Set up data paths
@@ -80,7 +88,7 @@ D=osl_headmodel(S);
 
 %% VIEW SPM REGISTRATION
 %
-% This SPM tool allows us to view the results of the coregistration (click and drag to rotate the image)
+% This SPM tool allows us to view the results of the coregistration (click and drag to rotate the image - you may need to click on the "Rotate 3D" toolbar button)
 %
 % The coregistration shows several types of information:
 %
@@ -95,6 +103,7 @@ D=osl_headmodel(S);
 
 figure('Position',[100 100 1024 1024])
 spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
+axis(axis*1.7);
 
 %% ADVANCED COREGISTRATION WITH RHINO
 %
@@ -115,7 +124,7 @@ spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
 % face.
 
 datadir = fullfile(osldir,'example_data','coreg_example');
-spm_file=[datadir '/dsubject1_reduced'];
+spm_file=[datadir '/dsubject1'];
 
 S = [];
 S.D = spm_file;
@@ -153,11 +162,10 @@ D=osl_headmodel(S);
 % be misleading when we align to our headshape points. In this case, the
 % structrual preprcessing has worked well.
 
-mri = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon.nii');
-scalp = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon_scalp.nii.gz');
+mri = fullfile(osldir,'example_data','coreg_example','rhino_subject1_struct_canon.nii');
+scalp = fullfile(osldir,'example_data','coreg_example','rhino_subject1_struct_canon_scalp.nii.gz');
 
-system(['fslview ' mri ' ' scalp ])
-
+fsleyes({mri, scalp},[],'greyscale','none')
 
 %% VISUALISING THE RHINO COREGISTRATION
 %
