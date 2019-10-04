@@ -186,15 +186,13 @@ end
 if ~S.use_class_channel
     if D.ntrials == 1
         matlabbatch{3}.spm.tools.beamforming.features.plugin.contcov            = struct([]);
-        matlabbatch{3}.spm.tools.beamforming.features.woi                       = S.timespan;
     else
         matlabbatch{3}.spm.tools.beamforming.features.plugin.cov                = struct([]);
-        matlabbatch{3}.spm.tools.beamforming.features.woi                       = S.timespan;
     end
 else
     matlabbatch{3}.spm.tools.beamforming.features.plugin.cov_bysamples          = struct([]);
-    matlabbatch{3}.spm.tools.beamforming.features.woi                           = S.timespan;
 end
+matlabbatch{3}.spm.tools.beamforming.features.woi                               = S.timespan*1000; % needs to be in msecs for bf_features
 
 for jj=1:length(S.modalities),
     matlabbatch{3}.spm.tools.beamforming.features.modality{jj}                  = S.modalities{jj};
