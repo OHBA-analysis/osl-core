@@ -4,11 +4,14 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical,filename_for_fsleyes)
     % INPUTS
     % - fnames - A file name or cell array of file names (mandatory)
     % - thresholds - Array with two elements, or cell array of such elements
-    %   the same size as fnames with colour limits (optional)
+    %   the same size as fnames with colour limits (default: [] will do no thresholding)
     % - colour_maps - String, or cell array of strings, with name of valid
-    %   colour map (default: 'red-yellow')
-    % - anatomical - File name of base image to use (default: automatic std
-    %   brain image based on input resolution)
+    %   colour map (default: 'red-yellow', specify 'greyscale' for grey scale! )
+    % - anatomical - File name of base image to use (default: automatic
+    % std, specify 'none' if you want no anatomical file loaded), 
+    %
+    % e.g.: To show 2 images with no thresholding, with greyscale colormaps and no base anatomical image:
+    %       fsleyes({niftii1, niftii2},[],'greyscale','none')
     %
     % Romesh Abeysuriya 2017
 
@@ -86,8 +89,10 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical,filename_for_fsleyes)
 
     assert(numel(unique(res)) == 1,'Spatial maps must be of equal sizes')
     
-    if isempty(anatomical)
+    if isempty(anatomical) && ~strcmp(anatomical,'none')
         anatomical = fullfile(osldir,'std_masks',sprintf('MNI152_T1_%dmm_brain',res(1))); 
+    else
+        anatomical='';
     end
 
     % Current version of fsleyes returns 0 even if an error occurred. So this command
