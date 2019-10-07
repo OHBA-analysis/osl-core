@@ -80,7 +80,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Normalise
 
-if strcmp( S.normalise_method,'zscore')
+if strcmp(normalise_method,'zscore')
     % Z-score samples within channels and trials
     [dirname, fname, ext] = fileparts(D.fullfile);
     Dnew = D.clone( fullfile(dirname,['M' fname ext]) );
@@ -95,7 +95,7 @@ if strcmp( S.normalise_method,'zscore')
     pcadim=length(chanind);
     normalisation=1;
 
-elseif ~strcmp(S.normalise_method,'none')
+elseif ~strcmp(normalise_method,'none')
 
     S2.D = D;
     S2.samples2use=samples2use;
