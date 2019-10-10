@@ -293,6 +293,8 @@ for subi=1:length(opt.sessions_to_do)
             S.measure_fns  = opt.bad_segments.outlier_measure_fns; 
             S.event_significance   = opt.bad_segments.event_significance;  
             S.channel_significance = opt.bad_segments.channel_significance;
+            S.badchannels=true;
+            S.badtimes=true;
             D_continuous = osl_detect_artefacts(D_continuous,S);
             D_continuous.save();
 
@@ -451,6 +453,8 @@ for subi=1:length(opt.sessions_to_do)
             S.measure_fns  = opt.outliers.outlier_measure_fns;
             S.event_significance   = opt.outliers.event_significance;  
             S.channel_significance = opt.outliers.channel_significance;
+            S.badchannels=true;
+            S.badtimes=true;
             S.max_iter = 5;         
             
             D2 = osl_detect_artefacts(D2,S);

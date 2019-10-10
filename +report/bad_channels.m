@@ -18,13 +18,13 @@ function h = bad_channels(D, modalities, plot_bad_chans)
     D = D.montage('switch',0);
 
 	chaninds = D.badchannels;
-	metric = std(D(:,:),[],2);
 	
 	h = [];
 
 	% MODALITY REPORTS
 	for j = 1:length(modalities)
-
+        metric = std(D(:,find(good_samples(D,D.indchantype(modalities{j},'GOOD')))),[],2);
+	
 		h(end+1) = figure('name',sprintf('Bad Channels - modality ''%s'', %d',modalities{j}),'tag',sprintf('bad_channel_modality_%s',modalities{j}));
 		this_modality = D.indchantype(modalities{j}); % All channel indices for the current modality
 		this_modality_clean = setdiff(this_modality,chaninds);
