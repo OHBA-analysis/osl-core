@@ -273,7 +273,7 @@ if todo.prepare
         disp(['Keeping top ' num2str(pcadim) ' PCs']);
         pcadim = min(pcadim,size(dat_concat,1));
 
-        if false
+        if true
             [allsvd,M] = eigdec(C,pcadim);    
 
             if whiten
