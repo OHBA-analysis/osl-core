@@ -165,7 +165,7 @@ switch S.tf_method
         freq_ind=cell(length(out.tf_freqs),1);
         % Continue and do the transform if S.doTransform == 1
         if S.doTransform
-            ft_progress('init', 'textbar', 'Doing Hilbert transform...')      % ascii progress bar
+            ft_progress('init', 'text', 'Doing Hilbert transform...')      % ascii progress bar
             out.dattf = nan(size(dat,3),numel(out.tf_times),size(dat,1),numel(out.tf_freqs)); % [channel, time, trial, frequency]
             out.datbp = nan(size(dat,3),numel(out.tf_times),size(dat,1),numel(out.tf_freqs)); % [channel, time, trial, frequency]
             for iChan = 1:size(dat,3);
@@ -279,7 +279,7 @@ switch S.tf_method
 
             dat = permute(dat,[3,2,1]);
 
-            ft_progress('init', 'textbar', 'Doing Morlet transform...')      % ascii progress bar
+            ft_progress('init', 'text', 'Doing Morlet transform...')      % ascii progress bar
             out.dattf = nan(size(dat,3),numel(out.tf_times),size(dat,1),numel(out.tf_freqs)); % [channel, time, trial, frequency]
             out.datbp = nan(size(dat,3),numel(out.tf_times),size(dat,1),numel(out.tf_freqs)); % [channel, time, trial, frequency]
 
