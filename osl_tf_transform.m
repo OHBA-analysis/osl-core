@@ -16,7 +16,9 @@ function [ out ] = osl_tf_transform( S, dat )
 % - S.tf_num_freqs                 : how many frequency bands to compute?
 % - S.raw_times                  : the times in source_recon_results.times
 % - S.tf_logtransform           : log transform the tf, trial by trial?
-% - S.ds_factor                 : used for time domain, hilbert, morlet
+% - S.ds_factor                 : used for time domain, hilbert, morlet (a
+%                                 value < 1 indicates lower temporal
+%                                 resolution in TF output than was in the input)
 % - S.tf_morlet_factor             : only used for morlet
 % - S.tf_hanning_twin                   : used for hanning
 % - S.tf_calc_amplitude
