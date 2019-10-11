@@ -7,6 +7,7 @@
 
 %% SET UP ANALYSIS
 % The only thing you need to do is to go into your OSL directory (i.e. type _cd /somedirectory/osl-core_ ) and then run the following.
+
 osl_startup;
 
 %%
@@ -14,13 +15,22 @@ osl_startup;
 % repeat during one of the follow-up practicals.
 
 % First, we will load in an SPM MEEG object that has been preprocessed,
-% including epoching. This is from a subject doing a simple finger tapping
-% task.
-%%
-%
+% including epoching. This is from a subject doing two tasks interleaved together:
+% * a simple finger tapping
+% * viewing a simple visual stimulus
 
-%D_epoched = spm_eeg_load(fullfile(osldir,'example_data','beamforming_example','ReBffdloc_S01'))
-D_epoched = spm_eeg_load(fullfile(osldir,'example_data','beamforming_example','sept2019_vml_session1_epoched'))
+%%
+
+D_epoched = spm_eeg_load(fullfile(osldir,'example_data','beamforming_example','sept2019_vml_session2_epoched'));
+
+%%
+% We start by cropping the data in time to the time window we are
+% interested in (this will speed things up too). 
+
+S = struct;
+S.D = D_epoched;
+S.timewin = [-4 4]*1000; % in msecs
+D_epoched = spm_eeg_crop(S);
 
 %%
 % The MEEG object must be in a sensor-space montage - this could be the raw
@@ -62,15 +72,19 @@ D_epoched.fullfile
 
 %% Beamforming
 %
-% With MEGIN Neuromag data we have two sensor types, planar grads and magnetometers. 
-% Before beamforming, we need
+% If we were working with MEGIN Neuromag data then we would have two sensor types, planar gradiometers and magnetometers. 
+% Before beamforming, we would need
 % to normalise these two sensor types so that they can contribute equally to the
-% beamformer calculation. In brief, this is done by scaling the different sensor types 
-% to so that their variances over time are equal.
+% beamformer calculation. Briefly, this is done by scaling the different sensor types 
+% to so that their variances over time are equal. 
+%
+% Here, we are working with
+% CTF data, where there is one sensor type - so this step is not strictly
+% necessary:
 
 S=[];
 S.D=D_epoched;
-S.datatype='neuromag';
+%S.datatype='neuromag';
 S.datatype='ctf';
 S.do_plots=true; 
 [D_epoched pcadim] = osl_normalise_sensor_data(S);
@@ -80,6 +94,7 @@ S.do_plots=true;
 % perform beamforming, the MEEG object needs to have been coregistered and the
 % forward model needs to have been run. You can determine if this is the case
 % by examining the MEEG object's |inv| property
+
 D_epoched.inv{1}
 
 %%
@@ -128,14 +143,12 @@ size(mni_coords)
 % but you may of course wish to override the defaults
 
 S = struct;
-S.timespan          = [-2 4]; % in secs
-S.pca_order         = 55;
-S.type              = 'Scalar';
+S.timespan          = [-3 3]; % in secs
+S.pca_order         = 100;
 S.inverse_method    = 'beamform';
-S.prefix            = '';
-S.modalities        = {'MEGPLANAR' 'MEGMAG'}; 
-%S.fuse              = 'meg';
-S.modalities        = {'MEG'}; 
+S.type              = 'Scalar'; % beamformer output will be a scalar (rather than a 3D vector)
+S.prefix            = ''; % add no prefix to filename
+S.modalities        = {'MEG'};
 
 %%
 % The |S.timespan| option indicates the time window to be
@@ -143,13 +156,16 @@ S.modalities        = {'MEG'};
 % whole time range in D_epoched.time will still effectively be reconstructed.
 
 %%
-% The |S.fuse='meg'| option means that the source reconstruction will fuse
-% information from all MEG sensor types, in this case from both the MEG
+% Note that if you had MEGIN Neuromag data then you would want the following settings:
+% * S.modalities        = {'MEGPLANAR' 'MEGMAG'}; 
+% * S.fuse              = 'meg';
+% Where the |S.fuse='meg'| option means that the source reconstruction will fuse
+% information from all MEG sensor types listed in S.modalities, in this case from both the MEG
 % planar grads and the magnetometers.
 
 %%
 % The PCA order is a form of regularization and can help improve your results.
-% For CTF data, a value of 150 is
+% For CTF data, a value of 100 is
 % typical. For MEGIN data that has been maxfiltered, a value 
 %  less than ~60 will be appropriate (as this reflects the fact that after default
 % maxfiltering, the rank of the MEG data in sensor space is ~64).
@@ -171,7 +187,7 @@ D_epoched = osl_inverse_model(D_epoched,mni_coords,S);
 %
 
 %%
-% Note that the D_epoched (and correspondingly the D_continuous) has now
+% Note that the D_epoched object has now
 % got a number of channels equal to the number of MNI coordinates we
 % specified in mni_coords:
 
@@ -192,7 +208,9 @@ has_montage(D_epoched)
 
 %%
 % Switch to the montage that corresponds to the source recon
-% with weights normalisation
+% with weights normalisation, check that source_recon_montage is set accordingly before
+% running this next bit
+
 source_recon_montage=3;
 D_epoched=D_epoched.montage('switch',source_recon_montage)
 
@@ -203,17 +221,16 @@ D_epoched=D_epoched.montage('switch',source_recon_montage)
 D_epoched.condlist
 
 %%
-% Here we want to focus on 'RespRRespL' trials, which we can do using the
-% indtrial function:
+% Here we will first focus on 'Stim_Onset' trials, which corresponds to a simple
+% visual stimulus. We can do using the indtrial function:
 
-resp_trls = indtrial(D_epoched,'StimLRespL','good');
 resp_trls = indtrial(D_epoched,'Stim_Onset','good');
 
 %%
 % This gives all good trials for this condition in the data.
 
 %%
-% We then compute the erf by averaging over all these trials. Note that
+% We then compute the event-related field (ERF) by averaging over all these trials. Note that
 % because of the ambiguity of the sign of the activity following source
 % reconstruction (see
 % https://ohba-analysis.github.io/osl-docs/pages/docs/sign_ambiguity.html),
@@ -232,42 +249,29 @@ fsleyes(fname_out);
 %%
 % Once FSLeyes is open, make sure you:
 % * select the abs_erf image in the overlay list
-% * turn on the negative color map in fsleyes
-% * set the min to 5
+% * set the min to 0.3
 % * select "View->Time-series"
-% * find the evoked activity just after 0secs, NOTE: fsleyes currently
-% shows the time-axis (i.e. the x-axis) using the time index (i.e. the volume-index in the
-% 4D niftii file being shown). To know what
-% this is in seconds, you need to look at the values in |D_epoched.time|. To find the
-% index for 0 secs, you can use:
+%
+% We expect a good evoked response in the visual cortex at ~100ms.
+% NOTE: fsleyes shows the time-axis using the time index (i.e. the volume-index in the
+% 4D niftii file being shown). So to know what time
+% index 100ms corresponds to, you can use:
 
-disp(nearest(D_epoched.time,0))
+time_of_interest=0.1; % in secs
+time_index=nearest(D_epoched.time,time_of_interest)-1;
+disp(time_index);
 
 %% Time-Frequency event-related (de)synchronisations
 % As well as viewing the ERF, we can also look at oscillatory power using
-% the time-frequency TF transform (i.e. the induced response, which will
-% reveal event-related synchronisations and de-synchronisations)
+% the time-frequency TF transform (i.e. the induced response, which 
+% corresponds to event-related synchronisations and de-synchronisations)
 
 %%
-% We start by cropping the data in time to the window in time we are
-% interested in (this will speed things up too). 
-% Note that we need to temporarily switch to no montage being applied to
-% be able to use |spm_eeg_crop|
-
-D_epoched=D_epoched.montage('switch',0)
-
-S = struct;
-S.D = D_epoched;
-S.timewin = [-3 4]*1000; % in msecs
-D_epoched_timecropped = spm_eeg_crop(S);
-
-D_epoched_timecropped = D_epoched_timecropped.montage('switch',source_recon_montage);
-
-%%
-% Here we want to focus on 'Abduction' trials, which we can do using the
+% Here we want to focus on the 'Abduction' trials in the same data, which correspond to a simple 
+% hand movement. We can identify Abduction trials using the
 % indtrial function:
 
-resp_trls = indtrial(D_epoched_timecropped,'Abduction','good');
+resp_trls = indtrial(D_epoched,'Abduction','good');
 
 %%
 % We then use |osl_tf_transform| to do the time-frequency TF transform.
@@ -278,9 +282,9 @@ S = struct;
 S.tf_method = 'hilbert';
 S.tf_freq_range = [13,30];
 S.tf_num_freqs = 1;
-S.raw_times = D_epoched_timecropped.time;
+S.raw_times = D_epoched.time;
 S.ds_factor = 0.5; % smaller value means less time samples in result
-dat = osl_tf_transform( S , D_epoched_timecropped(:,:,resp_trls) );
+dat = osl_tf_transform( S , D_epoched(:,:,resp_trls) );
 
 %%
 % We can now compute the induced response in the beta band by averaging
@@ -294,7 +298,7 @@ induced_response_beta = mean(dat.dattf(:,:,:,:),3);
 S=struct;
 S.data = induced_response_beta; % pass in trial averaged beta power data [nchannels x ntpts]
 S.time = dat.tf_times; % vector or tpts for 2nd dimension of S.data
-S.time_window = [-Inf -1.5]; % [start end] in secs
+S.time_window = [-Inf -2]; % [start end] in secs
 induced_response_beta_bc = osl_baseline_correct(S);
 
 %%
@@ -304,11 +308,20 @@ fname_out=nii.quicksave(induced_response_beta_bc,'induced_response_beta_bc',spat
 fsleyes(fname_out);
 
 %%
-% Using fsleyes, find a voxel with high value in the post movement beta
-% rebound at about 1-2 sec post stimulus. To find the time index for 1.3 sec
-% post stimulus, we can use:
+% Once FSLeyes is open, make sure you:
+% * select the induced_response_beta_bc image in the overlay list
+% * turn on the negative color map and set it to use "blue-light blue"
+% * set the min to 0.15
+% * select "View->Time-series"
+%
+% We expect a post movement beta
+% rebound (beta synchronisation or power increase) at about 1-2 sec post stimulus
+% 
+% NOTE: fsleyes shows the time-axis using the time index (i.e. the volume-index in the
+% 4D niftii file being shown). 
 
-nearest(dat.tf_times,1.3)
+time_of_interest=1.3; % in secs
+disp(nearest(dat.tf_times,time_of_interest)-1)
 
 %%
 % Find a voxel with high beta rebound (a high positive value, indicating a
@@ -327,21 +340,22 @@ beta_ers_voxel_index=nearest_vec(mni_coords,beta_ers_mnicoord);
 %%
 % Plot time course of beta power at peak voxel:
 figure;
-plot(dat.tf_times,induced_response_beta(beta_ers_voxel_index,:));
-xlabel('time (s)');
-ylabel('beta power');
+plot(dat.tf_times,induced_response_beta_bc(beta_ers_voxel_index,:));
+xlabel('time (s)','FontSize',15);
+ylabel('beta power','FontSize',15);
+set(gca,'FontSize',15)
 
 %% 
-% We can also plot the TF transform across a range of freq bands at this peak ERS voxel
+% We can also plot the TF transform across a range of freq bands at this peak beta ERS voxel
 
 S = struct;
 S.tf_method = 'morlet';
 S.tf_freq_range = [1,40];
 S.tf_num_freqs = 30;
-S.raw_times = D_epoched_timecropped.time;
-S.tf_morlet_factor=5;
+S.raw_times = D_epoched.time;
+S.tf_morlet_factor=7;
 S.ds_factor = 0.5;
-dat = osl_tf_transform( S , D_epoched_timecropped(beta_ers_voxel_index,:,resp_trls) );
+dat = osl_tf_transform( S , D_epoched(beta_ers_voxel_index,:,resp_trls) );
 
 %%
 % Basline correction, carried out on trial averaged data, separately for
@@ -354,15 +368,19 @@ S.time_window = [-Inf -1.5]; % [start end] in secs
 dat_bc = osl_baseline_correct(S);
 
 %%
-% Plot TF at peak ERS voxel
+% Plot time-frequency response for peak beta ERS voxel.
 
 figure;
 tf = squeeze(dat_bc(:,:,:,:))';
 grid on;
-contourf(dattf.tf_times,dattf.tf_freqs,tf,32,'linestyle','none' )
+contourf(dat.tf_times,dat.tf_freqs,tf,32,'linestyle','none' )
 colorbar
 xlabel('Time (seconds)');
 ylabel('Power','FontSize',15);
 set(gca,'FontSize',15)
-title('Event-related field','FontSize',15)
+title('Induced Response','FontSize',15)
 
+%%
+% Note that in everything we have looked at so far, we have not done
+% any statistics. We have just been looking at the evoked responses 
+% averaged over trials in a single subject. 
