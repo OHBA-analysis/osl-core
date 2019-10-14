@@ -268,9 +268,9 @@ switch S.tf_method
         end % if ~isempty(S.ds_factor)
 
         if ~isfield(S,'tf_morlet_basis')
-            disp('Creating Morlet basis set.  If you are seeing message many times, you may wish to pass a morelt basis set to ''osl_tf_transform''');
+            disp('Creating Morlet basis set.  If you are seeing message many times, you may wish to pass a morlet basis set to ''osl_tf_transform''');
             fres=fsample;
-            out.tf_morlet_basis = spm_eeg_morlet(S.tf_morlet_factor, 1000/fres, out.tf_freqs); % ?? GW why is sample time coded this way?
+            out.tf_morlet_basis = spm_eeg_morlet(S.tf_morlet_factor, 1000/fres, out.tf_freqs); 
             S.tf_morlet_basis   = out.tf_morlet_basis;
         end % if ~isfield(S,'tf_morlet_basis')
 
