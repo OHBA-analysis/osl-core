@@ -51,9 +51,16 @@ if S.mark_bad_trials
         Badtrials=zeros(D_epoched.ntrials,1);
         bad_samps=~good_samples(S.D,S.D.indchantype('MEEG','GOOD'));
 
+        % note that the trials in epochinfo can be different to those in
+        % D_epoched, due to trials that run of the start or the end of the
+        % continuous data
+        trial_onsets_trl=D_epoched.epochinfo.trl(:, 1)./D_epoched.fsample; % in secs
+
         for ee=1:D_epoched.ntrials
-        
-            if any(bad_samps(D_epoched.epochinfo.trl(ee,1):D_epoched.epochinfo.trl(ee,2)))
+            % find trial index in epochinfo.trl by matching trial onsets
+            ind=find(trial_onsets_trl==D_epoched.trialonset(ee));
+            
+            if any(bad_samps(D_epoched.epochinfo.trl(ind,1):D_epoched.epochinfo.trl(ind,2)))
                 Badtrials(ee)=1;
             end
         end
