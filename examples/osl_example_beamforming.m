@@ -21,7 +21,7 @@ osl_startup;
 
 %%
 
-D_epoched = spm_eeg_load(fullfile(osldir,'example_data','beamforming_example','sept2019_vml_session2_epoched'));
+D_epoched = spm_eeg_load(fullfile(osldir,'example_data','beamforming_example','sept2019_vml_session1_epoched'));
 
 %%
 % We start by cropping the data in time to the time window we are
@@ -298,7 +298,7 @@ induced_response_beta = mean(dat.dattf(:,:,:,:),3);
 S=struct;
 S.data = induced_response_beta; % pass in trial averaged beta power data [nchannels x ntpts]
 S.time = dat.tf_times; % vector or tpts for 2nd dimension of S.data
-S.time_window = [-Inf -2]; % [start end] in secs
+S.time_window = [-3 -2]; % [start end] in secs
 induced_response_beta_bc = osl_baseline_correct(S);
 
 %%
