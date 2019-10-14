@@ -191,15 +191,18 @@ for subi=1:length(opt.sessions_to_do)
             subplot(1,3,1)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(-180,0)
+            axis(axis*1.7);
             %title(['concatMefsession' num2str(counter) '_spm_meeg'])
             subplot(1,3,2)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(-270,0)
+            axis(axis*1.7);
             subplot(1,3,3)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(130,18)
-            title(['Session ' num2str(subnum)]);
-            
+            axis(axis*1.7);
+            %title(['Session ' num2str(subnum)]);
+
             opt_report=osl_report_set_figs(opt_report,'Coregistration_spm_view',coregfig1);
             opt_report=osl_report_print_figs(opt_report);
 
@@ -215,7 +218,7 @@ for subi=1:length(opt.sessions_to_do)
                 coregfig3 = sfigure;
                 rhino_display(Dcheck,coregfig3);
                 view(90,-10)
-                title(['Session ' num2str(subnum)]);
+                %title(['Session ' num2str(subnum)]);
                 opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view2',coregfig3);
                 opt_report=osl_report_print_figs(opt_report);
             end
@@ -522,12 +525,10 @@ for subi=1:length(opt.sessions_to_do)
     end
     
     % build logfile
-    % the original command was 'cat opt_results.logfile '>' opt.results.logfile'
-    % which implies that opt.results.logfile is overwritten because it uses > not >>
-    % Thus replacing with a copyfile call here. Maybe a more sophisticated solution is
-    % required if 
     disp(['Building logfile']);
-    copyfile(opt_results.logfile,opt.results.logfile);
+    diary(opt.results.logfile);
+    text = fileread(opt_results.logfile);
+    disp(text);
 
 end
 
