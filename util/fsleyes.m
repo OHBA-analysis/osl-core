@@ -1,17 +1,27 @@
-function fsleyes(fnames,thresholds,colour_maps,anatomical)
+function fsleyes(fnames,thresholds,colour_maps,anatomical,filename_for_fsleyes)
     % Wrapper to call fsleyes
     %
     % INPUTS
     % - fnames - A file name or cell array of file names (mandatory)
     % - thresholds - Array with two elements, or cell array of such elements
-    %   the same size as fnames with colour limits (optional)
+    %   the same size as fnames with colour limits (default: [] will do no thresholding)
     % - colour_maps - String, or cell array of strings, with name of valid
-    %   colour map (default: 'red-yellow')
-    % - anatomical - File name of base image to use (default: automatic std
-    %   brain image based on input resolution)
+    %   colour map (default: 'red-yellow', specify 'greyscale' for grey scale! )
+    % - anatomical - File name of base image to use (default: automatic
+    % std, specify 'none' if you want no anatomical file loaded), 
+    %
+    % e.g.: To show 2 images with no thresholding, with greyscale colormaps and no base anatomical image:
+    %       fsleyes({niftii1, niftii2},[],'greyscale','none')
     %
     % Romesh Abeysuriya 2017
 
+    
+    if nargin < 5 || isempty(filename_for_fsleyes)
+        filename_for_fsleyes='fsleyes';
+    
+        filename_for_fsleyes='/Applications/FSLeyes.app/Contents/MacOS/fsleyes';    
+    end
+    
     assert(nargin > 0,'You must specify at least one image file to display');
     assert(ischar(fnames) || iscell(fnames),'Input must be either a file name or a cell array of file names');
 
@@ -64,7 +74,7 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical)
 
     % Construct the command
     file_string = '';
-    res = nan(length(fnames));
+    res = nan(length(fnames),1);
     for j = 1:length(fnames)
         tmp = nii.get_spatial_res(fnames{j});
         res(j) = tmp(1);
@@ -79,11 +89,13 @@ function fsleyes(fnames,thresholds,colour_maps,anatomical)
 
     assert(numel(unique(res)) == 1,'Spatial maps must be of equal sizes')
     
-    if isempty(anatomical)
+    if isempty(anatomical) && ~strcmp(anatomical,'none')
         anatomical = fullfile(osldir,'std_masks',sprintf('MNI152_T1_%dmm_brain',res(1))); 
+    else
+        anatomical='';
     end
 
     % Current version of fsleyes returns 0 even if an error occurred. So this command
     % below will fail silently. Hopefully this will be fixed upstream later on
-    runcmd('fsleyes %s %s &',anatomical,file_string);
+    runcmd('%s %s %s &',filename_for_fsleyes, anatomical,file_string);
      

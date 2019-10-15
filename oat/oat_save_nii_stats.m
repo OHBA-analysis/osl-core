@@ -217,7 +217,7 @@ save([Sin.stats_dir '/times'],'times','-ascii');
 statsdir=Sin.stats_dir;
 
 disp(['E.g. to view nii file: ']);
-disp(['fslview(''' fnamet ''')']);
+disp(['fsleyes(''' fnamet ''')']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

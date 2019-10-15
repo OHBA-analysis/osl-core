@@ -28,16 +28,16 @@ opt.results.date=date;
 opt_report=osl_report_setup(opt.results.plotsdir,['OPT report'],opt.results.logfile);  
 diary(opt.results.logfile);
 
-num_sessions=length(opt.convert.spm_files_basenames);
+num_sessions=length(opt.spm_files);
 
 %%%%%%%%%%%%%%%%%%%%
 %% find SPM MEEG file results
 
-for subi=1:length(opt.sessions_to_do), 
+for subi=1:length(opt.sessions_to_do)
     subnum=opt.sessions_to_do(subi);
          
     % try and load in results
-    opt.results.fnames{subnum}=['session' num2str(subnum)];
+    opt.results.fnames{subnum}=['opt_result_session' num2str(subnum)];
     
     try
         opt_results=opt_load_results(opt, opt.results.fnames{subnum});
@@ -46,8 +46,8 @@ for subi=1:length(opt.sessions_to_do),
     end
     
     % build logfile
-    %runcmd(['cat ' opt_results.logfile '>' opt.results.logfile]);
-    opt_results.logfile % With diary on, this should dump the contents to the log file   
+    text = fileread(opt_results.logfile);
+    disp(text); 
 end
 
 % gather the results together
@@ -58,15 +58,16 @@ opt = opt_gather_results(opt);
 
 % write links to sub reports written previously
 for subi=1:length(opt.sessions_to_do), subnum=opt.sessions_to_do(subi);
-    opt_report.sub_reports{subi}.html_fname=[opt.dirname '/plots/session' num2str(subnum) '/report.html'];    
+    opt_report.sub_reports{subi}.dir=[opt.dirname 'plots/session' num2str(subnum)];
+    opt_report.sub_reports{subi}.html_fname=[opt_report.sub_reports{subi}.dir '/report.html'];    
         
     if ~osl_util.isfile(opt_report.sub_reports{subi}.html_fname)
         opt_report.sub_reports{subi}.html_fname=[];
         opt_report.sub_reports{subi}.title=['Session ' num2str(subnum) ' (NOT FOUND)'];
-    else,
+    else
         opt_report.sub_reports{subi}.title=['Session ' num2str(subnum) ];
-    end;
-end;
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%%
 %% diagnostic plots over all sessions
@@ -74,7 +75,7 @@ end;
 
 %%%%%%%%%%%%%%%%%%%%
 %% generate web report
-opt.results.report=osl_report_write(opt_report);        
+opt.results.report=osl_report_write(opt_report,[]);        
 
 opt.fname=[opt.dirname '/opt'];
 

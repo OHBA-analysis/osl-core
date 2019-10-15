@@ -38,10 +38,37 @@ end
 
 D_epoched.epochinfo.time_continuous = S.D.time;
 
+good_meeg_chans=D_epoched.indchantype('MEEG','GOOD');
+tmp=good_samples(D_epoched,good_meeg_chans);
+
+
 if S.mark_bad_trials
-    Badtrials = squeeze(~all(good_samples(D_epoched,D_epoched.indchantype('MEEG','GOOD')),2)); % This is True if a trial contains a bad sample in any imaging modality
+    if false
+
+        Badtrials = squeeze(~all(good_samples(D_epoched,D_epoched.indchantype('MEEG','GOOD')),2)); % This is True if a trial contains any bad sample in any good meg/eeg sensor
+
+    else
+        Badtrials=zeros(D_epoched.ntrials,1);
+        bad_samps=~good_samples(S.D,S.D.indchantype('MEEG','GOOD'));
+
+        % note that the trials in epochinfo can be different to those in
+        % D_epoched, due to trials that run of the start or the end of the
+        % continuous data
+        trial_onsets_trl=D_epoched.epochinfo.trl(:, 1)./D_epoched.fsample; % in secs
+
+        for ee=1:D_epoched.ntrials
+            % find trial index in epochinfo.trl by matching trial onsets
+            ind=find(trial_onsets_trl==D_epoched.trialonset(ee));
+            
+            if any(bad_samps(D_epoched.epochinfo.trl(ind,1):D_epoched.epochinfo.trl(ind,2)))
+                Badtrials(ee)=1;
+            end
+        end
+
+    end
     fprintf('%d of %d trials contained bad samples and were marked bad\n',sum(Badtrials),length(Badtrials));
     D_epoched = D_epoched.badtrials(find(Badtrials),1);
+
 end
 
 fprintf(1,'** Saving epoched MEEG to disk **\n');

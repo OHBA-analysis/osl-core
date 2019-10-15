@@ -100,9 +100,9 @@ fig_name={};
 fig_title={};
 
 % use first contrast to choose the voxel and tpts of interest
-con=first_level_cons_to_do(1);
+%con=first_level_cons_to_do(1);
 % use first group contrast as one to choose coords
-gcon=group_level_cons_to_do(1);
+%gcon=group_level_cons_to_do(1);
 
 %%%%%%%
 %% do plots of first level cons shown together for each group contrast

@@ -31,7 +31,7 @@ for ss = 1:nsubjects
     end
 end
 
-if 0
+if 1
     % plot sanity check
     ii=37,jj=38;
     figure;
@@ -55,7 +55,7 @@ if isfield(S,'nnmf_psd_specs') && isfield(S,'nnmf_psd_maps')
 else    
     maxP=S.maxP;
     
-    % concat over states    
+    % concat over states after computing the mean over subjects
     psdtmp=[];
     for kk=1:NK
         psdtmp=cat(2,psdtmp, squeeze(mean(abs(auto_spectra_comps(:,kk,:,:)),1)));    
@@ -87,6 +87,8 @@ else
     res.nnmf_psd_maps=maps(:,neworder_auto,:);
 end
 
+res.coh=abs(coh_comps);
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% Now do coh
 
@@ -99,7 +101,7 @@ end
 psdtmp=[];
 for kk=1:NK
     
-    % extract lower diagonal only
+    % extract lower diagonal only and concat over states after computing the mean over subjects
     cohabs=squeeze(mean(abs(coh_comps(:,kk,:,:,:)),1));
     clear psd2;
     for pp=1:size(cohabs,1)
@@ -166,9 +168,11 @@ if S.do_plots
     figure;
     for pp=1:S.maxP   
         subplot(121);plot(res.nnmf_psd_specs(pp,:),get_cols(pp),'Linewidth',2);ho;
+        title('NNMF on PSDs');
     end
     for pp=1:S.maxPcoh   
         subplot(122);plot(res.nnmf_coh_specs(pp,:),get_cols(pp),'Linewidth',2);ho;
+        title('NNMF on Coherences');
     end
     legend(get_cols)
 end
