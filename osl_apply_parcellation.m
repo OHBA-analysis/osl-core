@@ -134,7 +134,7 @@ if D.ntrials == 1 % can just pass in the MEEG object
     data(:,goodsamples) = nodedata;
 
     data = reshape(data,[size(data,1),length(goodsamples),D.ntrials]);
-
+                
 elseif isa(D,'meeg') % work with D object in get_node_tcs
     %goodsamples = find(good_samples(D));
     nodedata = ROInets.get_node_tcs(D,parcellation,S.method);
@@ -194,6 +194,16 @@ outfile = prefix(fullfile(D.path,D.fname),S.prefix);
 Dnode = clone(montage(D,'switch',0),outfile,[size(data,1),D.nsamples,D.ntrials]);
 Dnode = chantype(Dnode,1:Dnode.nchannels,'VE');
 Dnode(:,:,:) = data;
+
+% copy badtrials
+badtrials=D.badtrials;
+if ~isempty(badtrials)
+    Dnode = Dnode.badtrials(1:length(badtrials),badtrials);
+end
+
+% copy events 
+Dnode = Dnode.events(1,D.events);
+
 Dnode.save;
 
 D = Dnode; % For output
