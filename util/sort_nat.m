@@ -31,15 +31,15 @@ function [cs,index] = sort_nat(c,mode)
 
 % Set default value for mode if necessary.
 if nargin < 2
-	mode = 'ascend';
+    mode = 'ascend';
 end
 
 % Make sure mode is either 'ascend' or 'descend'.
 modes = strcmpi(mode,{'ascend','descend'});
 is_descend = modes(2);
 if ~any(modes)
-	error('sort_nat:sortDirection',...
-		'sorting direction must be ''ascend'' or ''descend''.')
+    error('sort_nat:sortDirection',...
+        'sorting direction must be ''ascend'' or ''descend''.')
 end
 
 % Replace runs of digits with '0'.
@@ -59,8 +59,8 @@ max_len = size(s1,2);
 num_val = NaN(num_str,max_len);
 num_dig = NaN(num_str,max_len);
 for i = 1:num_str
-	num_val(i,z(i,:)) = sscanf(sprintf('%s ',digruns{i}{:}),'%f');
-	num_dig(i,z(i,:)) = last{i} - first{i} + 1;
+    num_val(i,z(i,:)) = sscanf(sprintf('%s ',digruns{i}{:}),'%f');
+    num_dig(i,z(i,:)) = last{i} - first{i} + 1;
 end
 
 % Find columns that have at least one non-NaN.  Make sure activecols is a
@@ -89,7 +89,7 @@ comp(:,ndigcols) = num_dig(:,activecols);
 % descending order, depending on mode.
 [unused,index] = sortrows(comp);
 if is_descend
-	index = index(end:-1:1);
+    index = index(end:-1:1);
 end
 index = reshape(index,size(c));
 cs = c(index);

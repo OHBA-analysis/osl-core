@@ -38,26 +38,26 @@ function D = osl_erase_trigger_artefact(D, triggerChan, triggerTime, deleteWindo
 
 
 
-%	Copyright 2015 OHBA
-%	This program is free software: you can redistribute it and/or modify
-%	it under the terms of the GNU General Public License as published by
-%	the Free Software Foundation, either version 3 of the License, or
-%	(at your option) any later version.
-%	
-%	This program is distributed in the hope that it will be useful,
-%	but WITHOUT ANY WARRANTY; without even the implied warranty of
-%	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%	GNU General Public License for more details.
-%	
-%	You should have received a copy of the GNU General Public License
-%	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%   Copyright 2015 OHBA
+%   This program is free software: you can redistribute it and/or modify
+%   it under the terms of the GNU General Public License as published by
+%   the Free Software Foundation, either version 3 of the License, or
+%   (at your option) any later version.
+%   
+%   This program is distributed in the hope that it will be useful,
+%   but WITHOUT ANY WARRANTY; without even the implied warranty of
+%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%   GNU General Public License for more details.
+%   
+%   You should have received a copy of the GNU General Public License
+%   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%	$LastChangedBy: GilesColclough $
-%	$Revision: 763 $
-%	$LastChangedDate: 2015-10-21 11:52:19 +0100 (Wed, 21 Oct 2015) $
-%	Contact: giles.colclough@magd.ox.ac.uk
-%	Originally written on: GLNXA64 by Giles Colclough, 01-Dec-2015 14:30:16
+%   $LastChangedBy: GilesColclough $
+%   $Revision: 763 $
+%   $LastChangedDate: 2015-10-21 11:52:19 +0100 (Wed, 21 Oct 2015) $
+%   Contact: giles.colclough@magd.ox.ac.uk
+%   Originally written on: GLNXA64 by Giles Colclough, 01-Dec-2015 14:30:16
 
 %% Input checking
 % D should be an epoched, sensor-space, Neuromag object

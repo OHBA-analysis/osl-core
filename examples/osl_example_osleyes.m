@@ -228,7 +228,7 @@ o.layer(3).visible = 0;
 % between 0 (fully transparent) and 1 (fully opaque). So to render the tstat
 % layer as semi-transparent, we can use
 o.layer(3).alpha = 0.5; % Set 50% opacity
-o.layer(3).visible = 1;	% Make the layer visible
+o.layer(3).visible = 1; % Make the layer visible
 
 %% Moving around the plot
 % Just like in |fslview| or |fsleyes|, you can change the slices that are
@@ -432,13 +432,13 @@ o = osleyes({[],nii_roi,nii_tstat},'colormap',{'jet','hsv',osl_colormap('green')
 %%
 % Finally, you could also provide these options as a struct. For example
 %
-%	s = struct;
-%	s.colormap = {'jet','hsv',osl_colormap('green')};
-%	s.clim = {[],[0 5],[1 5]};
-%	s.alpha = [NaN 0.5 0.25]
-%	s.show_crosshair = false;
-%	s.current_vols = [1 1 50]
-%	o = osleyes({[],nii_roi,nii_tstat},s);
+%   s = struct;
+%   s.colormap = {'jet','hsv',osl_colormap('green')};
+%   s.clim = {[],[0 5],[1 5]};
+%   s.alpha = [NaN 0.5 0.25]
+%   s.show_crosshair = false;
+%   s.current_vols = [1 1 50]
+%   o = osleyes({[],nii_roi,nii_tstat},s);
 %
 
 %% Putting it all together
@@ -459,9 +459,9 @@ o = osleyes({[],nii_roi,nii_tstat},'colormap',{'jet','hsv',osl_colormap('green')
 %   v = VideoWriter('test.mp4','MPEG-4');
 %   open(v)
 %   for j = 1:o.nvols % Iterate over volumes
-%   	o.title = sprintf('t=%d',j);
-%   	o.layer(2).volume = j;
-%   	writeVideo(v,frame2im(getframe(o.fig)))
+%       o.title = sprintf('t=%d',j);
+%       o.layer(2).volume = j;
+%       writeVideo(v,frame2im(getframe(o.fig)))
 %   end
 %   close(v)
 %

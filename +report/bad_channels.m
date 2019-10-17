@@ -17,46 +17,46 @@ function h = bad_channels(D, modalities, plot_bad_chans)
     
     D = D.montage('switch',0);
 
-	chaninds = D.badchannels;
-	
-	h = [];
+    chaninds = D.badchannels;
+    
+    h = [];
 
-	% MODALITY REPORTS
-	for j = 1:length(modalities)
+    % MODALITY REPORTS
+    for j = 1:length(modalities)
         metric = std(D(:,find(good_samples(D,D.indchantype(modalities{j},'GOOD')))),[],2);
-	
-		h(end+1) = figure('name',sprintf('Bad Channels - modality ''%s'', %d',modalities{j}),'tag',sprintf('bad_channel_modality_%s',modalities{j}));
-		this_modality = D.indchantype(modalities{j}); % All channel indices for the current modality
-		this_modality_clean = setdiff(this_modality,chaninds);
-		this_modality_bad = setdiff(this_modality,this_modality_clean);
+    
+        h(end+1) = figure('name',sprintf('Bad Channels - modality ''%s'', %d',modalities{j}),'tag',sprintf('bad_channel_modality_%s',modalities{j}));
+        this_modality = D.indchantype(modalities{j}); % All channel indices for the current modality
+        this_modality_clean = setdiff(this_modality,chaninds);
+        this_modality_bad = setdiff(this_modality,this_modality_clean);
 
-		% Histogram
-		subplot(4,1,1)
-		[hs hsx]=hist(metric(this_modality),ceil(length(metric(this_modality))/10));
-		bar(hsx,hs);
-		title(sprintf('CHANNEL SUMMARY: %s', modalities{j}));
-		a1=axis;
-		
-		subplot(4,1,2);
-		plot(metric(this_modality_clean),this_modality_clean,'og');
-		if ~isempty(this_modality_bad)
-			hold on
-			plot(metric(this_modality_bad),this_modality_bad,'*r');
-		end
-		a2=axis;
-		axis([a1(1) a1(2) a2(3) a2(4) ]);
-		ylabel('channel index')
+        % Histogram
+        subplot(4,1,1)
+        [hs hsx]=hist(metric(this_modality),ceil(length(metric(this_modality))/10));
+        bar(hsx,hs);
+        title(sprintf('CHANNEL SUMMARY: %s', modalities{j}));
+        a1=axis;
+        
+        subplot(4,1,2);
+        plot(metric(this_modality_clean),this_modality_clean,'og');
+        if ~isempty(this_modality_bad)
+            hold on
+            plot(metric(this_modality_bad),this_modality_bad,'*r');
+        end
+        a2=axis;
+        axis([a1(1) a1(2) a2(3) a2(4) ]);
+        ylabel('channel index')
 
-		subplot(4,1,3);
-		[hs hsx]=hist(metric(this_modality_clean),ceil(length(metric(this_modality_clean))/10));
-		bar(hsx,hs);
-		a1=axis;
-		title(sprintf('CHANNEL SUMMARY: %s (without bad channels)', modalities{j}));
-		
-		subplot(4,1,4);
-		plot(metric(this_modality_clean),this_modality_clean,'*g');
-		a2=axis;
-		axis([a1(1) a1(2) a2(3) a2(4) ]);
+        subplot(4,1,3);
+        [hs hsx]=hist(metric(this_modality_clean),ceil(length(metric(this_modality_clean))/10));
+        bar(hsx,hs);
+        a1=axis;
+        title(sprintf('CHANNEL SUMMARY: %s (without bad channels)', modalities{j}));
+        
+        subplot(4,1,4);
+        plot(metric(this_modality_clean),this_modality_clean,'*g');
+        a2=axis;
+        axis([a1(1) a1(2) a2(3) a2(4) ]);
         xlabel('std')
         ylabel('channel index')
 
@@ -79,7 +79,7 @@ function h = bad_channels(D, modalities, plot_bad_chans)
                 ylabel(sprintf('Signal (%s)',unit));
             end
         end
-	end
+    end
 
 
 

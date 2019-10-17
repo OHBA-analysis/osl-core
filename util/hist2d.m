@@ -40,13 +40,13 @@ if(length(x) == 1)
   maxx=max(mat(:,1));minx=min(mat(:,1));rx=maxx-minx;
   maxy=max(mat(:,2));miny=min(mat(:,2));ry=maxy-miny;
 else,
-  nx = length(x);	
+  nx = length(x);   
   maxx=max(x);minx=min(x);rx=maxx-minx;
   if(nargin == 2),
     ny=length(x);
     maxy=max(x);miny=min(x);ry=maxy-miny;
   else,
-    ny=length(y);	
+    ny=length(y);   
     maxy=max(y);miny=min(y);ry=maxy-miny;
   end;
 end;

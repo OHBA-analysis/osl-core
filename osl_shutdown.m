@@ -11,43 +11,43 @@ function osl_shutdown()
 % Romesh Abeysuriya 2017
 % JH 2018
 
-	% OSL is initialized if OSLDIR is set. If OSLDIR is not set, then do nothing
-	if isempty(getenv('OSLDIR'))
-		return
-	else
-		osl_root = getenv('OSLDIR');
-	end
+    % OSL is initialized if OSLDIR is set. If OSLDIR is not set, then do nothing
+    if isempty(getenv('OSLDIR'))
+        return
+    else
+        osl_root = getenv('OSLDIR');
+    end
 
-	% Restore path backup
-	% JH: use separate file for path backup
-	restore_path();
+    % Restore path backup
+    % JH: use separate file for path backup
+    restore_path();
 
-	% It's concievable that the backup path still contains OSL directories; for example
-	% it is common to add the osl-core folder manually in order to call osl_startup.
-	p = strsplit(path,pathsep);
-	p = p(cellfun( @(x) ~isempty(strfind(x,osl_root)), p ));
-	cellfun( @(x) rmpath(x), p );
+    % It's concievable that the backup path still contains OSL directories; for example
+    % it is common to add the osl-core folder manually in order to call osl_startup.
+    p = strsplit(path,pathsep);
+    p = p(cellfun( @(x) ~isempty(strfind(x,osl_root)), p ));
+    cellfun( @(x) rmpath(x), p );
 
-	% Done - clear OSLDIR
-	setenv('OSLDIR');
-	fprintf(1,'[OSL] Cleaned up the path. Bye now!\n');
+    % Done - clear OSLDIR
+    setenv('OSLDIR');
+    fprintf(1,'[OSL] Cleaned up the path. Bye now!\n');
 
 end
 
 function restore_path()
 
-	fname = getenv('OSL_PATH_BACKUP');
-	if ~isempty(fname)
-		if exist(fname,'file') ~= 2
-			fprintf(2,'Unable to restore path due to missing file: %s\n',fname);
-		else
-			p = fileread(fname);
-			if ~isempty(p)
-				path(p);
+    fname = getenv('OSL_PATH_BACKUP');
+    if ~isempty(fname)
+        if exist(fname,'file') ~= 2
+            fprintf(2,'Unable to restore path due to missing file: %s\n',fname);
+        else
+            p = fileread(fname);
+            if ~isempty(p)
+                path(p);
             end
             %delete(fname);
-		end
-	end
-	setenv('OSL_PATH_BACKUP');
+        end
+    end
+    setenv('OSL_PATH_BACKUP');
 
 end

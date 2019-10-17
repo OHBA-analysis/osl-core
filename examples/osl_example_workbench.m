@@ -19,7 +19,7 @@ D = ROInets.remove_source_leakage(D,'symmetric');
 % For each parcel, compute the power spectrum 
 V = D(:,:,:).';
 for j = 1:size(V,2)
-	[spec_power(:,j),f] = pwelch(detrend(V(:,j)),10*D.fsample,[],[],D.fsample);
+    [spec_power(:,j),f] = pwelch(detrend(V(:,j)),10*D.fsample,[],[],D.fsample);
 end
 
 %%

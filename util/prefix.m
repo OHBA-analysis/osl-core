@@ -4,28 +4,28 @@ function newNames = prefix(oldNames, prefix)
 %   NEW filename. OLD can be a single string, or a cell array of strings.
 %   PRE is a character string. OLD can contain directories, these are taken
 %   care of.
-%	
+%   
 
-%	Copyright 2014 OHBA
-%	This program is free software: you can redistribute it and/or modify
-%	it under the terms of the GNU General Public License as published by
-%	the Free Software Foundation, either version 3 of the License, or
-%	(at your option) any later version.
-%	
-%	This program is distributed in the hope that it will be useful,
-%	but WITHOUT ANY WARRANTY; without even the implied warranty of
-%	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%	GNU General Public License for more details.
-%	
-%	You should have received a copy of the GNU General Public License
-%	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%   Copyright 2014 OHBA
+%   This program is free software: you can redistribute it and/or modify
+%   it under the terms of the GNU General Public License as published by
+%   the Free Software Foundation, either version 3 of the License, or
+%   (at your option) any later version.
+%   
+%   This program is distributed in the hope that it will be useful,
+%   but WITHOUT ANY WARRANTY; without even the implied warranty of
+%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%   GNU General Public License for more details.
+%   
+%   You should have received a copy of the GNU General Public License
+%   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%	$LastChangedBy$
-%	$Revision$
-%	$LastChangedDate$
-%	Contact: giles.colclough@magd.ox.ac.uk
-%	Originally written on: GLNXA64 by Giles Colclough, 24-Oct-2014 10:44:58
+%   $LastChangedBy$
+%   $Revision$
+%   $LastChangedDate$
+%   Contact: giles.colclough@magd.ox.ac.uk
+%   Originally written on: GLNXA64 by Giles Colclough, 24-Oct-2014 10:44:58
 
 % input checking
 assert(ischar(prefix),                     ...
