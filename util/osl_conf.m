@@ -2,14 +2,13 @@ classdef (Abstract) osl_conf
 
 	methods(Static)
 
-		function s = read(fname)
+		function s = read()
 	
-			if nargin < 1 || isempty(fname) 
-				fname = fullfile(osldir,'osl.conf');
-			end
+			fname = getenv('OSLCONF');
+			assert( ~isempty(fname), 'Missing path to config file (env:OSLCONF).' );
 
-			if ~exist(fname,'file')
-				s = struct;
+			if ~osl_util.isfile(fname)
+				s = struct();
 				return
 			end
 			
@@ -19,46 +18,36 @@ classdef (Abstract) osl_conf
 			s = struct();
 			while l ~= -1
 		        if ~isempty(strtrim(l))
-		            lp = regexp(l,'=','split');
-		            if length(lp)>2
-		            	lp{2} = sprintf('%s=',lp{2:end});
-		            	lp{2} = lp{2}(1:end-1);
-		            end
-		            s.(strtrim(lp{1})) = strtrim(lp{2});
+					parts = strsplit(l,'=');
+					name  = strtrim(parts{1});
+					value = strjoin(parts(2:end),'=');
+		            s.(name) = strtrim(value);
 		        end
 		        l = fgetl(f);    
 			end
 			fclose(f);
+
 		end
 
-		function write(s,fname)
-		
-			if ~isempty(getCurrentTask)
-				fprintf('Running on parallel worker, not writing to osl.conf to avoid corrupting it\n');
+		function write(s)
+
+			fname = getenv('OSLCONF');
+			assert( ~isempty(fname), 'Missing path to config file (env:OSLCONF).' );
+            
+            if ~isempty(getCurrentTask)
+				fprintf(2,'Running on parallel worker, not writing to "%s" to avoid corruption.\n',fname);
 				return
 			end
 
-			if nargin < 2 || isempty(fname) 
-				fname = fullfile(osldir,'osl.conf');
-			end
-
-			if ~isstruct(s)
-				error('First input to osl_conf.write() must be a struct')
-			end
-
-			fn = fieldnames(s);
-			f = fopen(fname,'w');
-
-			for j = 1:length(fn)
-				fprintf(f,'%s=%s\n',fn{j},s.(fn{j}));
-			end
-
-			fclose(f);
+			assert( isstruct(s) && isscalar(s), 'First input to osl_conf.write() must be a struct.' );
+			assert( all(structfun( @ischar, s )), 'Config values must be strings.' );
+			
+			% overwrite config file
+			txt = osl_util.structkvfun( @(k,v) sprintf('%s = %s',k,v), s, false );
+			filewrite( fname, txt );
 
 		end
 
 	end
 
 end
-
-
