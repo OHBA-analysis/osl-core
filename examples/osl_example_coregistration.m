@@ -45,7 +45,7 @@ osl_startup;
 % about this can be found
 % here:
 %
-% <https://sites.google.com/site/ohbaosl/preprocessing/co-registration>
+% <https://ohba-analysis.github.io/osl-docs/pages/docs/preprocessing.html#coregistration-using-rhino>
 %
 % This takes an option structure defining several key parameters:
 %
