@@ -116,6 +116,7 @@ for voxel = 1:size(parcellation,1)
     end
 end
 
+
 if D.ntrials == 1 % can just pass in the MEEG object
     voxeldata = D(:,:,:);
     goodsamples = good_samples(D); % all checks if any channels are bad then ignore those samples
@@ -192,7 +193,8 @@ clear voxeldata_concat nodedata_concat;
 % Save data to new MEEG object
 outfile = prefix(fullfile(D.path,D.fname),S.prefix);
 Dnode = clone(montage(D,'switch',0),outfile,[size(data,1),D.nsamples,D.ntrials]);
-Dnode = chantype(Dnode,1:Dnode.nchannels,'VE');
+parcel_chantype='VE';
+Dnode = chantype(Dnode,1:Dnode.nchannels,parcel_chantype);
 Dnode(:,:,:) = data;
 
 % copy badtrials
@@ -201,8 +203,15 @@ if ~isempty(badtrials)
     Dnode = Dnode.badtrials(1:length(badtrials),badtrials);
 end
 
-% copy events 
-Dnode = Dnode.events(1,D.events);
+% copy events, but need to change ev.value to be 'VE' for all artefact
+% events, so that bad segments get passed through
+ev = D.events;
+for ee=1:length(ev)
+    if strncmp(ev(ee).type,'artefact',8)
+        ev(ee).value=parcel_chantype;
+    end
+end
+Dnode = Dnode.events(1,ev);
 
 Dnode.save;
 
