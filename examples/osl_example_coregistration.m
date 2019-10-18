@@ -1,11 +1,11 @@
 %% Coregistration with SPM and RHINO
 %
-% This tutorial covers the registration of mri and meg datasets into a
+% This tutorial covers the registration of MRI and M/EEG datasets into a
 % common space to allow for analysis in sourcespace.
 %
-% This practical uses data from the face_singlesubject and coreg_example
-% subfolders in the OSL example_data directory. Please make sure these
-% are both present before starting.
+% This practical uses data from the coreg_example
+% subfolders in the OSL example_data directory. Please make sure this
+% is present before starting.
 %
 % There are several co-ordinate systems which must be aligned before we can
 % project our sensor MEG data into source space. These are:
@@ -55,28 +55,16 @@ osl_startup;
 % headshape points to refine the alignment between the MRI and Polhemus
 % data
 %
-% The following example runs the coregistration on two datasets which are
-% required for the sourcespace practicals. While running, SPM will open
+% The following example runs standard SPM coregistration on an example dataset. 
+% While running, SPM will open
 % a window showing the alignment of the headshape points to the scalp.
 
 % Set up data paths
-datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
+datadir = fullfile(osldir,'example_data','coreg_example');
 spm_files_continuous=[datadir '/Aface_meg1.mat'];
-spm_files_epoched=[datadir '/eAface_meg1.mat'];
 
 S = [];
 S.D = spm_files_continuous;
-S.mri = fullfile(osldir,'example_data','faces_singlesubject','structurals','struct.nii');
-S.useheadshape = 1;
-S.use_rhino = 0;
-S.forward_meg = 'Single Shell';
-S.fid.label.nasion = 'Nasion';
-S.fid.label.lpa = 'LPA';
-S.fid.label.rpa = 'RPA';
-D=osl_headmodel(S);
-
-S = [];
-S.D = spm_files_epoched;
 S.mri = fullfile(osldir,'example_data','faces_singlesubject','structurals','struct.nii');
 S.useheadshape = 1;
 S.use_rhino = 0;
@@ -103,7 +91,7 @@ D=osl_headmodel(S);
 
 figure('Position',[100 100 1024 1024])
 spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
-axis(axis*1.7);
+zoom(0.5)
 
 %% ADVANCED COREGISTRATION WITH RHINO
 %
@@ -124,7 +112,7 @@ axis(axis*1.7);
 % face.
 
 datadir = fullfile(osldir,'example_data','coreg_example');
-spm_file=[datadir '/dsubject1'];
+spm_file=[datadir '/pdsubject1'];
 
 S = [];
 S.D = spm_file;

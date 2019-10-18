@@ -191,16 +191,16 @@ for subi=1:length(opt.sessions_to_do)
             subplot(1,3,1)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(-180,0)
-            axis(axis*1.7);
+            zoom(0.5);
             %title(['concatMefsession' num2str(counter) '_spm_meeg'])
             subplot(1,3,2)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(-270,0)
-            axis(axis*1.7);
+            zoom(0.5);
             subplot(1,3,3)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(130,18)
-            axis(axis*1.7);
+            zoom(0.5);
             %title(['Session ' num2str(subnum)]);
 
             opt_report=osl_report_set_figs(opt_report,'Coregistration_spm_view',coregfig1);
