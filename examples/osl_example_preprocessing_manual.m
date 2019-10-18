@@ -10,7 +10,7 @@
 % manual intervention. This will go through the following steps:
 
 
-%%
+
 % 
 % Note that this contains the fif file: fifs/sub1_face_sss.fif that has
 % already been SSS Maxfiltered and downsampled to 250 Hz.
@@ -30,13 +30,15 @@ osl_startup;
 %% 
 % *SPECIFY DIRECTORIES FOR THIS ANALYSIS*
 %
-% Next the data dir and working dir should now be be setup to point to the 
-% right folder, where our example data are stored.
+% Next, the |datadir| needs to be setup to point to the 
+% right folder, where the example data are stored.
+
 datadir = fullfile(osldir,'example_data','preproc_example','manual');
 
 %%
 % The working directory will be same as the data directory. This is where
-% the analysis files will be stored.
+% the files from the preprocessing we run will be stored.
+
 workingdir=datadir; 
 
 %%
@@ -45,15 +47,13 @@ workingdir=datadir;
 % which will be used to name the resulting SPM data files after the fif files have been 
 % imported into SPM. It is important to make
 % sure that the order of these lists is consistent. Note
-% that here we only have 1 subject, but more generally there would be more
+% that we only work with one subject here, but more generally there would be more
 % than one, e.g.:
-
 %
+
 % fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];
 % fif_files{2}=[testdir '/fifs/sub2_face_sss.fif']; 
 % etc...
-
-%%
 
 clear fif_files spm_files_basenames;
 
@@ -67,7 +67,8 @@ spm_files_basenames{1}=['spm_meg1.mat'];
 % The SPM M/EEG object is the data structure used to store and manipulate
 % MEG and EEG data in SPM.
 % 
-% This will produce a histogram plot showing the number of events detected
+% We will now import this file into SPM MEEG format using |osl_import|. 
+% In so doing, this will produce a histogram plot showing the number of events detected
 % for each code on the trigger channel. The codes used on the trigger
 % channel for this experiment were:
 %
@@ -86,6 +87,7 @@ spm_files_basenames{1}=['spm_meg1.mat'];
 % For example, there should be 120 motorbike trials, and 80 of each of the
 % face conditions. Check that the histogram plot corresponds to these
 % trials numbers.
+
 clear spm_files;
 for subnum = 1:length(fif_files) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,spm_files_basenames{subnum});
@@ -129,7 +131,7 @@ D
 % that has been loaded into workspace. Note that the data values themselves
 % are memory-mapped from the file spm_meg1.dat and can be accessed by indexing the D
 % object. E.g, D(1,2,3) returns the field strength in the first sensor at
-% the second sample point during the third trial).
+% the second sample point during the third trial.
 
 %%
 % Here are some essential methods to be used with the D object, try them consecutively: 
@@ -150,11 +152,12 @@ D.size
 % Size is given in number of channels, samples and trials (respectively).
 % Since this is continuous data that is yet to be epoched, there is only
 % one trial.
-% The size of each dimension separately can be accessed by _D.nchannels_,
-% _D.nsamples_ and _D.ntrials_. Note that although the syntax of these commands
+%
+% The size of each dimension separately can be accessed by |D.nchannels|,
+% |D.nsamples| and |D.ntrials|. Note that although the syntax of these commands
 % is similar to those used for accessing the fields of a struct data type
-% in Matlab, D is actually an "object" and therefore uses functions called 'methods' to return
-% the requested information from the internal data structure of the D. 
+% in Matlab, |D| is actually an "object" and therefore uses functions called 'methods' to return
+% the requested information from the internal data structure of the |D|. 
 % The internal structure is not accessible directly when working
 % with the object. 
 
@@ -163,13 +166,13 @@ D.size
 methods('meeg')
 
 %%
-% Note that to get help on any method, type help _meeg/method_name_of_choice_. 
+% Note that to get help on any method, type help |meeg/method_name_of_choice|. 
 % In terms of using above methods - you can use it in the way shown
-% (e.g. _D.ntrials_) or in the way you normally use functions, i.e.
-% _ntrials(D)_ where D is an argument (might need additional arguments as
+% (e.g. |D.ntrials|) or in the way you normally use functions, i.e.
+% |ntrials(D)| where |D| is an argument (might need additional arguments as
 % well).
 
-%% OSLview
+%% OSLVIEW
 % We will now take a look at the data. We can do this using the tool
 % OSLview.
 %
@@ -177,7 +180,7 @@ methods('meeg')
 % interactive flagging of bad channels and time periods. We will use this feature later.
 %
 % OSLview may be run in Matlab by calling
-% oslview(D) where D is any SPM MEEG object containing the continuous data.
+% |oslview(D)| where |D| is any SPM MEEG object containing the continuous data.
 % Here, we will view the SPM MEEG object we have just imported:
 
 D = oslview(D);
@@ -185,8 +188,8 @@ D = oslview(D);
 %%
 % <<oslview_main.png>>
 %
-%% Basic display
-%
+
+%%
 % OSLview displays a time window of data from all channels for a particular
 % sensor type. You can choose the sensor type from the 'Channels' menu. From
 % left to right, the buttons on the top of the window are
@@ -210,7 +213,7 @@ D = oslview(D);
 % Note that for more details on oslview, see:
 %
 % <html>
-% <a href="https://sites.google.com/site/ohbaosl/preprocessing/oslview" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/oslview</a>
+% <a href="https://ohba-analysis.github.io/osl-docs/matlab/osl_example_oslview.html" target="_blank">https://ohba-analysis.github.io/osl-docs/matlab/osl_example_oslview.html</a>
 % </html>
 %
 % The unpreprocessed data here is very messy, with many artefacts,
@@ -221,7 +224,6 @@ D = oslview(D);
 
 
 %% FILTERING: BAND-PASS AND NOTCH FILTERING
-
 % Some artefacts are relatively easy to remove by filtering. Line noise is
 % often filtered out by using an appropriate notch filter. Also, low
 % frequency drifts and high frequency noise can be removed by filtering. 
@@ -236,7 +238,7 @@ for subnum = 1:length(spm_files_basenames) % iterates over subjects
 end
 
 %%
-% We then pass these inputs to the SPM function osl_filter to band pass
+% We then pass these inputs to the SPM function |osl_filter| to band pass
 % filter between 0.1Hz and 120Hz. As well as removing noise outside this
 % frequency range, this reflects the fact that we have decided that we do
 % not need to keep any signal that may be
@@ -277,16 +279,20 @@ end
 % has already been downsampled to 250 Hz when the Maxfilter was
 % run on it. But we will now do further downsampling to 150Hz as this helps to speed
 % things up even more, and we do not need information at high frequency in
-% this particular analysis. [Note that doing downsampling here is
+% this particular analysis. 
+% 
+% [Note that doing downsampling here is
 % particularly necessary if movement compensation has been used when
 % running Maxfilter, as this stops you from doing downsampling as part of
-% the Maxfilter call.] Also, as a rule of thumb, always filter first
-% (especially low-pass, not done in this practical), before downsampling
+% the Maxfilter call.] 
+%
+% Also, as a rule of thumb, always filter first
+% (especially low-pass), before downsampling
 % to avoid any aliasing issues
 % (<https://en.wikipedia.org/wiki/Nyquist_frequency#Aliasing>).
 
 %%
-% Set filenames used in following steps. Since we did both a highpass and a
+% We first set the filenames used in following steps. Since we did both a highpass and a
 % stopband (aka notch) filter, the prefix here needs to be 'ff'.
 clear spm_files;
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
@@ -294,7 +300,7 @@ for subnum = 1:length(spm_files_basenames) % iterates over subjects
 end
 
 %%
-% Regarding the output, by default, the downsampled data set will get the
+% We now do the downsampling. Regarding the output, by default, the downsampled data set will get the
 % prefix 'd' (preceding any other prefixes acquired before). This does the
 % downsampling:
 S=[];
@@ -326,9 +332,9 @@ D = spm_eeg_load(spm_files{subnum});
 D
 
 %%
-% Let's have a look at the continuous data, now that it has been temporally
-% filtered and downsampled using oslview. You'll see that while there is a
-% big improvement, there are still very big artefacts in
+% Let's have a look at the continuous data using oslview, now that it has been temporally
+% filtered and downsampled. You'll see that while there is a
+% big improvement, there are still exceptionally big artefacts in
 % this data, especially at the end of the scan. This severity
 % of artefact is not normal for good quality MEG and EEG data, but it serves well for
 % demonstrating the power of good preprocessing. 
@@ -342,13 +348,13 @@ oslview(D);
 % the data. Hence, we next perform bad segment/channel detection. This
 % can be done either manually or automatically.
 %
-% We will first do this automatically using the function osl_detect_artefacts. 
+% We will first do this automatically using the function |osl_detect_artefacts|. 
 %
-% Note that in the code below we first create a copy of the D objects using spm_eeg_copy. These will be 
+% Note that in the code below we first create a copy of the |D| objects using |spm_eeg_copy|. These will be 
 % the new SPM MEEG objects that will eventually have the bad segments/channels indicated in them.
 % Here we represent bad segment/channel detection in the filename using the prefix 'B'
 %
-% The MEEG object will be saved by the D.save (containing the marked bad segments/channels). 
+% The MEEG object will be saved by the |D.save| (containing the marked bad segments/channels). 
 
 clear spm_files;
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
@@ -369,50 +375,33 @@ end
 % are instead marked as bad, so that they can be optionally excluded from
 % future parts of the analysis.
 %
-% We can view the automatically marked segments/channels using oslview. 
+% We now view the automatically marked segments/channels using oslview. 
+
+D=oslview(D); 
+
+%%
 % The start of
 % any bad segments are indicated with a dashed green line, and the end with a
 % dashed red line. 
 %
-% The data in bad channels are plotted as dashed lines.
+% Bad channels have their data plotted as dashed lines.
 %
 % There are a lot of artefacts now marked in this data! 
 %
-% See https://ohba-analysis.github.io/osl-docs/matlab/osl_example_preprocessing_detect_artefacts.html
+% See
+% <https://ohba-analysis.github.io/osl-docs/matlab/osl_example_preprocessing_detect_artefacts.html>
 % for more info on this automated approach, including how to select data
 % that exludes bad channels/segments. Close oslview.
 
-D=oslview(D); 
-
 %% MANUAL BAD EPOCH/CHANNEL DETECTION USING OSLVIEW 
 % There is also the option to run manual bad epoch/channel detection using
-% oslview itself. We can do this as an alternative, or in addition, to the automated bad
+% oslview itself. We can do this as an alternative, or in addition, to the 
+% automated bad
 % epoch/channel detection described above. 
 %
-% Here we will run the manual dection on the data that has NOT 
-% already had the automated bad
-% epoch/channel detection done (i.e. using the data with the 'dff' prefix as input).
-%
-% This data has some exceptionally bad artefacts in. Mark the segments at
-% around 325s, 380s and 600s as bad, as well as everything from 650 seconds
-% to the end. Marking is done by right-clicking in the proximity of the
-% event and click on 'Mark Event'. A first click (green dashed label) marks
-% the begin of a bad period, another second click indicates the end (in
-% red). This will mean that we are not using about half of the data. But
-% with such bad artefacts this is the best we can do. We can still obtain
-% good results with what remains. 
-%
-% Don't forget to manually remove the bad times
-% in both MEGPLANAR and MEGMAG modalities! 
-%
-% The MEEG object will be saved by the D.save (containing the marked bad segments). 
-%
-% As with the automated approach, the bad segments are not actually removed from the data, they
-% are instead marked as bad, so that they can be optionally excluded from
-% future parts of the analysis.
-%
-% Note that if you had multiple
-% subjects/sessions, this process would need to be repeated for each one.
+% Here we now run the manual dection on the data without 
+% the automated bad
+% epoch/channel detection having been done (i.e. using the data with the 'dff' prefix as input).
 
 clear spm_files;
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
@@ -426,6 +415,28 @@ for subnum = 1:length(spm_files_basenames) % iterates over subjects
     D=oslview(D);
     D.save();
 end
+
+%%
+% This data has some exceptionally bad artefacts in. Mark the segments at
+% around 325s, 380s and 600s as bad, as well as everything from 650 seconds
+% to the end. Marking is done by right-clicking in the proximity of the
+% event and click on 'Mark Event'. A first click (green dashed label) marks
+% the begin of a bad period, another second click indicates the end (in
+% red). This will mean that we are not using about half of the data. But
+% with such bad artefacts this is the best we can do. We can still obtain
+% good results with what remains. 
+%
+% Don't forget to repeat this in both MEGPLANAR and MEGMAG modalities!
+% You can switch between modalities using the |Channels| drop down menu at the top of the oslview window. 
+%
+% The MEEG object will be saved by the |D.save| call (containing the marked bad segments). 
+%
+% As with the automated approach, the bad segments are not actually removed from the data, they
+% are instead marked as bad, so that they can be optionally excluded from
+% future parts of the analysis.
+%
+% Note that if you had multiple
+% subjects/sessions, this process would need to be repeated for each one.
 
 %% MANUAL AFRICA DENOISING
 % In a next step we will run AFRICA denoising. AFRICA uses independent
@@ -442,19 +453,20 @@ end
 % it, please see the AFRICA wiki manual on
 %
 % <html>
-% <a href="https://sites.google.com/site/ohbaosl/preprocessing/africa" target="_blank">https://sites.google.com/site/ohbaosl/preprocessing/africa</a>
+% <a href="https://ohba-analysis.github.io/osl-docs/pages/docs/preprocessing.html#africa" target="_blank">https://ohba-analysis.github.io/osl-docs/pages/docs/preprocessing.html#africa</a>
 % </html>
 %
 
 %%
-% Set new SPM M/EEG object filenames to be used in following steps
+% We first set the SPM M/EEG object filenames for the data to be input into
+% AFRICA:
 clear spm_files;
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['Bdff' spm_files_basenames{subnum}]);
 end
 
 %%
-% We first create a copy of the D object using spm_eeg_copy. This will be 
+% We next create a copy of the |D| object using |spm_eeg_copy|. This will be 
 % the new SPM MEEG object that will eventually have AFRICA denoising in it.
 % Note that here we will represent AFRICA denoising in the filename using the prefix 'A':
 
@@ -464,6 +476,7 @@ S.D=D;
 S.outfile=prefix(spm_files{subnum},'A');
 D=spm_eeg_copy(S);
 
+%%
 % We will now run AFRICA. Once the ICA is computed, a window should be display.
 % You can scroll through components by clicking on the sub-plot on the right
 % (which shows the components ordered by the specified criteria), and then 
@@ -505,13 +518,13 @@ D.save(); % You need to save the MEEG object to commit marked bad components to 
 % *VISUALISING AFRICA DENOISED CONTINUOUS DATA*
 %
 % After having done AFRICA denoising, let's have a look at the effect this has on our data
-% quality. AFRICA has saved an 'online montage' attached to the current D
-% object, which you should see indicate when you look at the D object:
+% quality. AFRICA has saved an 'online montage' attached to the current |D|
+% object, which you should see indicate when you look at the |D| object:
 D
 
 %%
 % These online montages are linear combinations of the original sensor data
-% (= montage 0) that can be used to basically represent any linear
+% that can be used to basically represent any linear
 % operation. This can be very convenient since it avoids amassing data
 % without need. Here, for example, our first online montage has been
 % generated by AFRICA and represents the data after having removed both the
@@ -532,15 +545,16 @@ D_pre_africa=D.montage('switch',0)
 D_africa=D.montage('switch',1)
 
 %%
-% Keep in mind that just switching ( as in typing _D.montage('switch',0)_ )
+% Keep in mind that just switching ( as in typing |D.montage('switch',0)| )
 % is not enough, you need to assign the switched montage to a variable. It
 % will switch, but there will be no new object with the online montage
 % applied. So always use it in the way shown above. Examine the content of
-% each object by just typing _D_pre_africa_ and _D_africa_ .
+% each object by just typing |D_pre_africa| and |D_africa|.
 
 %%
 % Now we plot some data to have a look at the differences between raw and
 % denoised data.
+
 figure;
 subplot(2,1,1);
 plot(D_pre_africa.time(1:10000),D_pre_africa(308,1:10000)); % takes first 10000 sample points
@@ -585,12 +599,6 @@ legend({'pre AFRICA' 'post AFRICA'});
 
 %% EPOCHING OF DATA
 % Now we will epoch the data into trials.
-% 
-% Note that if you are using the OSL tool OAT to do your subsequent statistical analysis,
-% both the epoched and continuous data can be passed
-% into OAT. This is so that OAT has the option to do things like temporal 
-% filtering on the continuous data, before the data is
-% epoched inside OAT. 
 % 
 % Here the epochs are set to be from -1000ms to +2000ms relative to the
 % triggers in the MEG data. We also specify the trigger values for each of
@@ -662,16 +670,19 @@ for i=1:length(spm_files) % Iterating over subjects
 end
 
 %%
-% We can visualise the timings of the information in _epochinfo_. This
+% We can visualise the timings of the information in |epochinfo|. This
 % shows the different trial types alongside the
 % samples that have been marked as bad, in continuous time.
+% The start of a trial is marked with an 'o', and the end is marked with an
+% 'x'.
 
 subnum=1;
 report.trial_timings(spm_files{subnum}, epochinfo{subnum});
 
 %%  
-% The following code now actually uses the 360 trials defined in _epochinfo_ to do the epoching using a call
-% to osl_epoch. Note that any trials that overlapped at all with any bad segments in
+% The following code now actually uses the 360 trials defined in |epochinfo| 
+% to do the epoching using a call
+% to |osl_epoch|. Note that any trials that overlapped at all with any bad segments in
 % the continuous data, will be marked as bad in the epoched data.
 
 for i=1:length(spm_files) % Iterating over subjects
@@ -688,17 +699,10 @@ end
 %% 
 % *EXAMINING THE EPOCHED DATA*
 %%
-% Now we'll take a look at our preprocessed data so far. Note that this is
-% now EPOCHED data, with:
+% Now we'll take a look at our preprocessed data so far. 
 
 %%
-% * 4 conditions
-% * 323 channels
-% * 451 samples per trial
-% * 360 trials
-
-%%
-% To get the epoched data, we need to load in the file with prefix 'eABdff'.
+% To load in the epoched data, we need to load in the file with prefix 'eABdff'.
 clear spm_files;
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['eABdff' spm_files_basenames{subnum}]);
@@ -707,8 +711,15 @@ end
 D = spm_eeg_load(spm_files{subnum});
 
 %%
-% Have a look at the SPM object. Note that this is now EPOCHED data with
-% more than one trial.
+% Have a look at the SPM object. Note that this is
+% now epoched data, with:
+
+%%
+% * 4 conditions
+% * 323 channels
+% * 451 samples per trial
+% * 360 trials
+
 D
 
 %% 
@@ -761,10 +772,10 @@ report.bad_channels(D, modalities);
 %% AUTOMATED BAD TRIAL/CHANNEL DETECTION 
 % We can either perform manual or automated bad trial detection.
 %
-% We will first do this manually using the function osl_detect_artefacts. This can
-% also find bad channels.
+% We will first do this manually using the function |osl_detect_artefacts|. 
+% This can also find bad channels.
 %
-% Note that in the code below we first create a copy of the D objects using spm_eeg_copy. This will be 
+% Note that in the code below we first create a copy of the |D| objects using |spm_eeg_copy|. This will be 
 % the new SPM MEEG objects that will eventually have the bad trials indicated in them.
 % Here we represent bad epoch detection in the filename using the prefix 'R':
 clear spm_files;
@@ -824,8 +835,9 @@ for subnum = 1:length(spm_files_basenames) % iterates over subjects
 end
 
 %%
-% Pass over the first interactive figure as it is the EOG channel - so just
-% press the "quit" button. This will bring up another interactive figure which will show the
+% The first channel type that is loaded up is the 'EOG' channel, so you will 
+% need to pass over this - so just
+% press the "quit" button. This will bring up the next figure which will show the
 % magnetometers. You can choose the metric to display - it is best to stick
 % to the default, which is variance. This metric is then displayed for the
 % different trials (bottom left), the different channels (top right), and
@@ -854,14 +866,14 @@ report.bad_trials(D);
 %
 
 %%
-% Set new SPM M/EEG object filenames for epoched data to be used in visualisation of ERFs
+% First, we set the new SPM M/EEG object filenames for epoched data to be used in visualisation of ERFs
 spm_files=[];
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['RReABdff' spm_files_basenames{subnum}]);
 end
 
 %%
-% Load in the data
+% Next, we load in the data:
 subnum = 1;
 D = spm_eeg_load(spm_files{subnum});
 
@@ -872,8 +884,8 @@ D = spm_eeg_load(spm_files{subnum});
 D=D.montage('switch',0)
 
 %% 
-% We first identify motorbike trials using the
-% indtrial function. E.g.:
+% We can now identify motorbike trials using the
+% |indtrial| function. E.g.:
 motorbike_trls = indtrial(D,'Motorbike');
 
 %%
@@ -882,11 +894,11 @@ motorbike_trls = indtrial(D,'Motorbike');
 
 
 %%
-% We then identify channels of certain types using the indchantypes function. E.g.
+% We then identify channels of certain types using the |indchantypes| function. E.g.
 % identify the channel indices for the planar gradiometers and for the
 % magnetometers (what you have available may depend on the actual MEG
 % device). Note that you can use 'MEGMAG' to get the magnetometers, and
-% D.chantype gives you a list of all channel types by index.
+% |D.chantype| gives you a list of all channel types by index.
 % 
 
 planars = D.indchantype('MEGPLANAR');
@@ -898,11 +910,11 @@ magnetos = D.indchantype('MEGMAG');
 
 
 %%
-% We can then  access the actual epoched MEG data using the syntax: D(channels, samples,
-% trials). E.g. plot a figure showing all the trials for the motorbike
-% condition in the 135th MEGPLANAR channel. Note that the squeeze function
+% We can then  access the actual epoched MEG data using the syntax: |D(channels, samples,
+% trials)|. E.g. here we will plot a figure showing all the trials for the motorbike
+% condition in the 135th MEGPLANAR channel. Note that the |squeeze| function
 % is needed to remove single dimensions for passing to the plot function,
-% and D.time is used to return the time points relative to the trigger
+% and |D.time| is used to return the time points relative to the trigger
 % events (t=0 is time of stimulus onset) in seconds.
 
 figure('units','normalized','outerposition',[0 0 0.5 0.4]);
@@ -937,7 +949,7 @@ title('Raw event-related field, average','FontSize',15)
 % channels, and seeing the effects of using AFRICA
 
 %%
-% First, we identify the good motorbike image trials. Note that _indtrial_
+% First, we identify the good motorbike image trials. Note that |indtrial|
 % includes good AND bad trials, so bad trials need to be excluded.
 % _'good'_ finds the trials that are not bad.
 
