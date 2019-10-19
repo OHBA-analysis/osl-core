@@ -1,23 +1,21 @@
-%% Preproc - Manual 
+%% Preproc - Manual
 % This an example for running a manual preprocessing pipeline in OSL. 
 % For today's workshop we will copy and paste directly from this practical
 % on the website. You can also do the same with the Matlab script found
-% under /osl-core/examples/osl_example_preprocessing_manual.m .
+% under /osl-core/examples/osl_example_preprocessing_manual.m.
 %
+
+%%
 % We will work with a single subject's data from an emotional faces task. 
 % 
 % We will take an approach here which is run step-by-step and requires
 % manual intervention. This will go through the following steps:
-
-
-
-% 
+%
 % Note that this contains the fif file: fifs/sub1_face_sss.fif that has
 % already been SSS Maxfiltered and downsampled to 250 Hz.
 % 
 % We will now run it through a manual preprocessing
 % pipeline as outlined above.
-
 
 %% SET UP ANALYSIS
 % The only thing you need to do is to go into your OSL directory (i.e. type _cd /somedirectory/osl-core_ ) and then run the following.
