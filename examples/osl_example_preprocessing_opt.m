@@ -44,8 +44,9 @@ spm_files{2}=fullfile(datadir,'spm_files','loc_S02');
 % OPT takes in SPM MEEG objects, so we first need to convert the fif file
 % for each subject into this format using |osl_import|.
 %    
-% The fif file that we are working with is, e.g. loc_S02_sss1.fif. This has
-% already been max-filtered for you and downsampled to 250Hz.
+% The fif files that we are working with, e.g. loc_S02_sss1.fif, have
+% already been max-filtered and downsampled to 250Hz.
+%
 % The SPM M/EEG object is the data structure used to store and manipulate
 % MEG and EEG data in SPM.
 % 
