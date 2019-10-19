@@ -1,8 +1,9 @@
-function h = bad_trials(D,measure_fn,modalities)
+function h = bad_trials(D,measure_fn,modalities,plot_name_prefix)
 	
 % h = bad_trials(D)
 % h = bad_trials(D,measure_fn)
 % h = bad_trials(D,measure_fn,modalities)
+% h = bad_trials(D,measure_fn,modalities,plot_name_prefix)
 %
 % Display summary of epoched SPM MEG object D for bad trials for each modality
 
@@ -17,6 +18,10 @@ function h = bad_trials(D,measure_fn,modalities)
         modalities = unique(D.chantype(D.indchantype(candidate_modalities)));
     end
     
+    if nargin<4
+        plot_name_prefix='';
+    end
+    
 	D = D.montage('switch',0);
 	
 	h = [];
@@ -26,7 +31,7 @@ function h = bad_trials(D,measure_fn,modalities)
 		dat = feval(measure_fn,reshape(data,size(data,1)*size(data,2),size(data,3)),[],1); % Metric for each trial
 		badtrials = ismember(1:D.ntrials,D.badtrials);
 
-		h(end+1) = figure('name',sprintf('Bad trials - %s',modalities{j}),'tag',sprintf('bad_trials_modality_%s',modalities{j}));
+		h(end+1) = figure('name',sprintf([plot_name_prefix 'Bad trials - ' modalities{j}]),'tag',sprintf([plot_name_prefix 'bad_trials_modality_' modalities{j}]));
 
 		subplot(4,1,1)
 		[hs hsx]=hist(dat,ceil(length(dat)/10));

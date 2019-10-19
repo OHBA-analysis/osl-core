@@ -2,6 +2,9 @@ function opt = osl_check_opt(optin)
 
 % opt = osl_check_opt(opt)
 %
+% See https://ohba-analysis.github.io/osl-docs/pages/docs/opt.html for
+% documentation on OPT
+%
 % Checks an OPT (OSL's Preprocessing Tool) struct has all the appropriate
 % settings, which can then be passed to osl_run_opt to do an OPT
 % analysis. Throws an error if any required inputs are missing, fills other

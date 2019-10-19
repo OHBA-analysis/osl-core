@@ -366,7 +366,13 @@ for subnum = 1:length(spm_files_basenames) % iterates over subjects
     D=spm_eeg_copy(S); % copy D object and add B prefix
 
     modalities = {'MEGMAG','MEGPLANAR'};
-    D = osl_detect_artefacts(D,'badchannels',true,'badtimes',true,'modalities',modalities);
+    
+    % look for bad channels
+    D = osl_detect_artefacts(D,'badchannels',true,'badtimes',false,'modalities',modalities);
+    
+    % then look for bad segments
+    D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true,'modalities',modalities);
+    
     D.save;
 end
 
@@ -772,7 +778,7 @@ report.bad_channels(D, modalities);
 %% AUTOMATED BAD TRIAL/CHANNEL DETECTION 
 % We can either perform manual or automated bad trial detection.
 %
-% We will first do this manually using the function |osl_detect_artefacts|. 
+% We will first do this automatically using the function |osl_detect_artefacts|. 
 % This can also find bad channels.
 %
 % Note that in the code below we first create a copy of the |D| objects using |spm_eeg_copy|. This will be 
@@ -788,7 +794,11 @@ for subnum = 1:length(spm_files_basenames) % iterates over subjects
     D=spm_eeg_copy(S); % copy D object and add R prefix
 
     modalities = {'MEGMAG','MEGPLANAR'};
-    D = osl_detect_artefacts(D,'badchannels',true,'badtimes',true,'modalities',modalities);
+    % look for bad channels
+    D = osl_detect_artefacts(D,'badchannels',true,'badtimes',false,'modalities',modalities);
+    
+    % then look for bad segments
+    D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true,'modalities',modalities);
     D.save;
 end
 

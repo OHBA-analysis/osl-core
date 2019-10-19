@@ -1,8 +1,9 @@
-function h = bad_channels(D, modalities, plot_bad_chans)
+function h = bad_channels(D, modalities, plot_bad_chans, plot_name_prefix)
 
 % h = bad_channels(D)
 % h = bad_channels(D, modalities)
 % h = bad_channels(D, modalities, plot_bad_chans)
+% h = bad_channels(D, modalities, plot_bad_chans, plot_name_prefix)
 %
 % Display summary of SPM MEG object D for bad channels from each modality
 
@@ -15,6 +16,10 @@ function h = bad_channels(D, modalities, plot_bad_chans)
         plot_bad_chans = false;
     end
     
+    if nargin<4
+        plot_name_prefix='';
+    end
+    
     D = D.montage('switch',0);
 
 	chaninds = D.badchannels;
@@ -25,7 +30,7 @@ function h = bad_channels(D, modalities, plot_bad_chans)
 	for j = 1:length(modalities)
         metric = std(D(:,find(good_samples(D,D.indchantype(modalities{j},'GOOD')))),[],2);
 	
-		h(end+1) = figure('name',sprintf('Bad Channels - modality ''%s'', %d',modalities{j}),'tag',sprintf('bad_channel_modality_%s',modalities{j}));
+		h(end+1) = figure('name',sprintf([plot_name_prefix 'Bad Channels - modality ' modalities{j}]),'tag',sprintf([plot_name_prefix 'bad_channel_modality_' modalities{j}]));
 		this_modality = D.indchantype(modalities{j}); % All channel indices for the current modality
 		this_modality_clean = setdiff(this_modality,chaninds);
 		this_modality_bad = setdiff(this_modality,this_modality_clean);
@@ -70,7 +75,7 @@ function h = bad_channels(D, modalities, plot_bad_chans)
                 unit = D.units(this_modality_bad(j));
                 unit = unit{1};
 
-                h(end+1) = figure('name',sprintf('Bad Channel - %s',cl),'tag',sprintf('bad_channel_%s',cl));
+                h(end+1) = figure('name',sprintf([plot_name_prefix 'Bad Channel - ' cl]),'tag',sprintf([plot_name_prefix 'bad_channel_' cl]));
                 pos = get(h(end),'Position');
                 set(h(end),'Position',pos.*[1 1 1 0.5])
                 plot(D.time,D(this_modality_bad(j),:),'Color',badcolor);

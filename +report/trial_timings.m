@@ -1,4 +1,4 @@
-function hfig = trial_timings(D, epochinfo)
+function hfig = trial_timings(D, epochinfo, plot_name_prefix)
 
 % hfig = event_timings(D_epoched)
 % or
@@ -10,11 +10,15 @@ function hfig = trial_timings(D, epochinfo)
 %
 % MWW
 
+if nargin<3
+    plot_name_prefix='';
+end
+
 if ischar(D)
     D=spm_eeg_load(D);
 end
 
-if nargin==1
+if nargin==1 || isempty(epochinfo)
     
     if D.ntrials==1
         warning('Only works with single input, event_timings(D), if D is epoched data');
@@ -90,7 +94,7 @@ end
 clear D_epoched;
 
 % plot
-hfig = figure('name','Event timings','tag','event_timings');
+hfig = figure('name',[plot_name_prefix 'Event timings'],'tag',[plot_name_prefix 'event_timings']);
 hold on;
 pp=[];
 
