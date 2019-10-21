@@ -4,18 +4,13 @@ function initialise_spm
     
     s = osl_conf.read();
 
-    if ~isfield(s,'SPMDIR')
-        s.SPMDIR = '';
-        osl_conf.write(s);
-    end
-
     if isempty(s.SPMDIR)
-        SPMDIR = fullfile(osldir,'spm12');
+        SPMDIR = osldir('spm12');
     else
         SPMDIR = s.SPMDIR;
     end
 
-    if ~isdir(SPMDIR) || ~exist(fullfile(SPMDIR,'spm.m'),'file')
+    if ~osl_util.isfile(fullfile(SPMDIR,'spm.m'))
         error('SPM12 was not found at the required location: %s',fullfile(SPMDIR))
     end
 
@@ -26,7 +21,7 @@ function initialise_spm
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% Copy changes to SPM code from osl
+    % Copy changes to SPM code from osl
     filelist={};targetdir={};
 
     % Insert the beamforming toolbox - only do this once
@@ -91,7 +86,7 @@ function initialise_spm
     filelist{end+1} = fullfile('osl-core','spm-changes','functionSignatures.json');
     targetdir{end+1}= '';
 
-    for k=1:length(filelist),
+    for k=1:length(filelist)
         copyfile( fullfile(osldir,filelist{k}), fullfile(SPMDIR,targetdir{k}), 'f' );
     end
 
@@ -105,10 +100,12 @@ function initialise_spm
     addpath(fullfile(SPMDIR,'toolbox','spm-beamforming-toolbox'));
 
     % Remove fieldtrip substitutes for Matlab toolboxes if the toolbox is installed
-    if license('test', 'Statistics_Toolbox') && ~isempty(strfind(path,fullfile(SPMDIR,'external','fieldtrip','external','stats')))
+    if license('test', 'Statistics_Toolbox') && osl_util.contains(path,fullfile(SPMDIR,'external','fieldtrip','external','stats'))
         rmpath(fullfile(SPMDIR,'external','fieldtrip','external','stats'))
     end
 
-    if license('test','Signal_Toolbox') && ~isempty(strfind(path,fullfile(SPMDIR,'external','fieldtrip','external','signal')))
+    if license('test','Signal_Toolbox') && osl_util.contains(path,fullfile(SPMDIR,'external','fieldtrip','external','signal'))
         rmpath(fullfile(SPMDIR,'external','fieldtrip','external','signal'))
     end
+    
+end

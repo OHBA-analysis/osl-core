@@ -7,15 +7,13 @@ function osl_startup( osl_root )
     osl_core = fileparts(mfilename('fullpath')); % folder where this script is
     if nargin < 1 || isempty(osl_root) 
         osl_root = fileparts(osl_core);
-    else
-        osl_core = fullfile(osl_root,'osl-core');
     end
     
-    assert( isdir(osl_root), 'Specified OSL directory does not exist: %s', osl_root );
-    assert( isdir(osl_core), 'Could not find OSL core directory: %s', osl_core );
+    assert( osl_util.isdir(osl_root), 'Specified OSL directory does not exist: %s', osl_root );
+    assert( osl_util.isdir(osl_core), 'Could not find OSL core directory: %s', osl_core );
 
     % Check that OSL hasn't already started
-    if ~isempty(getenv('OSLDIR'))
+    if osl_isactive()
         warning('Found OSLDIR environment variable; shutting down before starting up again...');
         osl_shutdown();
     end
@@ -23,13 +21,13 @@ function osl_startup( osl_root )
     fprintf(1,'[OSL] Starting up from folder: %s\n',getenv('OSLDIR'));
 
     % Check for manually specified OSLCONF, otherwise set default
-    setenv('OSLCONF', find_oslconf() );
+    setenv('OSLCONF', osl_conf.find() );
     fprintf(1,'[OSL] Using configuration file: %s\n',getenv('OSLCONF'));
 
     % Save current path
     % JH: use separate file for path backup
     % JH: DO NOT move this above
-    oldpaths = backup_path();
+    oldpaths = osl_conf.path_backup();
 
     % does no path-changing if running in deployed mode (gw '13).
     if ~isdeployed 
@@ -47,11 +45,11 @@ function osl_startup( osl_root )
         mpath = matlabroot;
         for j = 1:length(oldpaths)
             % skip matlab paths
-            if ~isempty(strfind(oldpaths{j},mpath))
+            if osl_util.contains(oldpaths{j},mpath)
                 continue; 
             end
             % if none of the words in the checklist is found in the current token, add old path back
-            if all(cellfun( @(x) isempty(strfind(oldpaths{j},x)), checklist ))
+            if all(cellfun( @(x) ~osl_util.contains(oldpaths{j},x), checklist ))
                 addpath(oldpaths{j});
             else
                 if ~strfind(oldpaths{j},'osl') % Don't warn about OSL
@@ -72,70 +70,24 @@ function osl_startup( osl_root )
 
     % Add OHBA shared libraries
     extpath = fullfile(osl_root,'ohba-external');
-    if ~isdir(extpath)
-        fprintf(2,'Could not find "%s"\n',extpath);
-        error('ohba-external is missing. Clone https://github.com/OHBA-analysis/ohba-external into the same directory as osl-core.');
+    if ~osl_util.isdir(extpath)
+        error([ ...
+            'Folder ohba-external is missing (not found: %s).' newline ...
+            'Clone https://github.com/OHBA-analysis/ohba-external into %s.'], extpath, osl_root );
     end
 
     addpath(extpath);
     ohba_external_startup();
 
     addpath(fullfile(osl_root,'GLEAN'));
-    addpath(genpath_exclude(fullfile(osl_root,'HMM-MAR'),{'.git','.svn'}));
+    addpath(osl_util.genpath_exclude(fullfile(osl_root,'HMM-MAR'),{'.git','.svn'}));
     addpath(fullfile(osl_root,'MEG-ROI-nets'));
 
     % Ensure osl-core directories get priority in path by adding it last
-    addpath(genpath_exclude(osl_core,{'.git','.svn','spm-changes'}));
+    cellfun( ...
+        @(x) addpath(osl_core,x), ...
+        {'africa','examples','HCP','oat','oil','opt','osl_hmm_toolbox','oslview','rhino','util'} ...
+    );
     addpath(osl_root);
-
-end
-
-function pathstr = genpath_exclude(pathstr,excludes)
-    % Take in list of strings to exclude from path
-
-    if ischar(excludes)
-        excludes = {excludes};
-    end
-
-    paths = genpath(pathstr);
-    paths = strsplit(paths,pathsep);
-    retain = true(size(paths));
-
-    for j = 1:length(excludes)
-        retain = retain & cellfun( @(x) isempty(strfind(excludes{j},x)), paths );
-    end
-
-    paths = paths(retain);
-    pathstr = strjoin(paths,pathsep);
-
-end
-
-function p = backup_path()
-
-    p = path(); 
-
-    fname = fullfile( getenv('OSLDIR'), '.path-backup.tmp' );
-    setenv('OSL_PATH_BACKUP', fname);
-    fh = fopen(fname,'w+');
-    fwrite(fh,p);
-    fclose(fh);
-
-    p = strsplit(p,pathsep);
-
-end
-
-function f = find_oslconf()
-
-    p = fullfile( getenv('OSLDIR'), 'osl.conf' );
-    c = fullfile( getenv('OSLDIR'), 'osl-core', 'osl.conf' );
-    f = getenv('OSLCONF'); % manually set
-
-    if ~isempty(f), return; end
-    
-    if exist(c,'file') == 2
-        f = c; % in the osl-core directory
-    else
-        f = p; % otherwise, default to osl/osl.conf
-    end 
 
 end
