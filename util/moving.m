@@ -2,9 +2,9 @@ function [y]=moving(x,m,fun)
 %MOVING will compute moving averages of order n (best taken as odd)
 %
 %Usage: y=moving(x,n[,fun])
-%where x 	is the input vector (or matrix) to be smoothed. 
-%      m 	is number of points to average over (best odd, but even works)
-%      y 	is output vector of same length as x
+%where x    is the input vector (or matrix) to be smoothed. 
+%      m    is number of points to average over (best odd, but even works)
+%      y    is output vector of same length as x
 %      fun  (optional) is a custom function rather than moving averages
 %
 % Note:if x is a matrix then the smoothing will be done 'vertically'.

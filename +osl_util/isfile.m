@@ -1,14 +1,16 @@
-function y = isfile(fname, varargin)
+function y = isfile( fname, varargin )
 %
-%  res = osl_util.isfile( fileName )
+% ans = osl_util.isfile( fileName )
 %
 % Complement Matlab's function isdir().
 % Returns logical for exist(fname,'file') = [2,3,4,6]
 %
+% See also: osl_util.isdir
+%
 % JH
 
     % NOTE:
-    % Keep varargin to prevent silly error when converting from 
+    % Keep varargin for backwards compat when converting from 
     %   exist( filename, 'file' ) == 2    =>    osl_util.isfile(filename, 'file')
 
     y = [false, false, true, true, true, false, true, false, false];

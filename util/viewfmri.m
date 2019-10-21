@@ -158,7 +158,7 @@ while 1==1
   subplot(RightImg); 
   [X_c,Y_c,B_c]=ginput(1);
   
-  if gca==LeftImg	 
+  if gca==LeftImg    
     
     tmp=1+floor(X_c/res)+3*floor(Y_c/res);
     if tmp<=NumSlices-Index
@@ -196,10 +196,10 @@ while 1==1
   if gca==RightImg
     if (B_c==1)|(B_c==2)|(B_c==3) 
       if (round(X_c)>0)&(round(X_c)<=res)
-	Xind=round(X_c);
+    Xind=round(X_c);
       end;
       if (round(Y_c)>0)&(round(Y_c)<=res)      
-	Yind=round(Y_c);
+    Yind=round(Y_c);
       end;
     end;
     if B_c==2
@@ -240,7 +240,7 @@ while 1==1
   if (B_c==113)|(B_c==81)
     % close(HndlImg);
     break
-  end;	 
+  end;   
   if (B_c==68)|(B_c==100)
     figure
     feval(funcd, tseries, Xind,Yind,ImgNum+Index,varargin{:});     
@@ -261,16 +261,16 @@ while 1==1
       MeanImg(:,:,1:min([Index+21 NumSlices])-Index) = AllData(:,:,Index+1:min([Index+21 NumSlices])); 
       LeftPanel=zeros(7*res,3*res);
       for ct1=0:2
-	for ct2=0:6
-	  LeftPanel(1+ct2*res:res+ct2*res,1+ct1*res:res+ct1*res)=MeanImg(:,:,1+ct1+ct2*3)';
-	end;
+    for ct2=0:6
+      LeftPanel(1+ct2*res:res+ct2*res,1+ct1*res:res+ct1*res)=MeanImg(:,:,1+ct1+ct2*3)';
+    end;
       end;
       subplot(LeftImg);
       imagesc(LeftPanel);
       axis('equal')
       axis('off')
       if NumSlices > 21
-	title(sprintf('n for next 21 slices\np for previous 21 slices'));
+    title(sprintf('n for next 21 slices\np for previous 21 slices'));
       end;
     end;
   end;
@@ -282,16 +282,16 @@ while 1==1
       MeanImg(:,:,1:min([Index+21 NumSlices])-Index) = AllData(:,:,Index+1:min([Index+21 NumSlices])); 
       LeftPanel=zeros(7*res,3*res);
       for ct1=0:2
-	for ct2=0:6
-	  LeftPanel(1+ct2*res:res+ct2*res,1+ct1*res:res+ct1*res)=MeanImg(:,:,1+ct1+ct2*3)';
-	end;
+    for ct2=0:6
+      LeftPanel(1+ct2*res:res+ct2*res,1+ct1*res:res+ct1*res)=MeanImg(:,:,1+ct1+ct2*3)';
+    end;
       end;
       subplot(LeftImg);
       imagesc(LeftPanel);
       axis('equal')
       axis('off')
       if NumSlices > 21
-	title(sprintf('n for next 21 slices\np for previous 21 slices'));
+    title(sprintf('n for next 21 slices\np for previous 21 slices'));
       end;
     end;
   end;

@@ -46,7 +46,7 @@ figure('Color','k','InvertHardCopy','off')
 scatter3(pos(:,1),pos(:,2),pos(:,3),120,'b','filled')
 hold on
 for j = 1:3:size(pos,1)
-	text(pos(j,1),pos(j,2),pos(j,3),num2str(j),'HorizontalAlignment','center','VerticalAlignment','middle','FontSize',12,'Color','w','FontWeight','bold');
+    text(pos(j,1),pos(j,2),pos(j,3),num2str(j),'HorizontalAlignment','center','VerticalAlignment','middle','FontSize',12,'Color','w','FontWeight','bold');
 end
 axis equal
 axis vis3d

@@ -310,13 +310,13 @@ function [match mindist] = match_bruteForce(q, p)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [match mindist] = match_Delaunay(q, p, DT)
-	match = transpose(nearestNeighbor(DT, transpose(p)));
-	mindist = sqrt(sum((p-q(:,match)).^2,1));
+    match = transpose(nearestNeighbor(DT, transpose(p)));
+    mindist = sqrt(sum((p-q(:,match)).^2,1));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [match mindist] = match_kDtree(~, p, kdOBJ)
-	[match mindist] = knnsearch(kdOBJ,transpose(p));
+    [match mindist] = knnsearch(kdOBJ,transpose(p));
     match = transpose(match);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

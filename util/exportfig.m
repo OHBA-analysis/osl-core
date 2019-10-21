@@ -173,7 +173,7 @@ end
 % Do some validity checking on param-value pairs
 if (rem(length(paramPairs),2) ~= 0)
   error(['Invalid input syntax. Optional parameters and values' ...
-	 ' must be in pairs.']);
+     ' must be in pairs.']);
 end
 
 auto.format = 'eps';
@@ -217,7 +217,7 @@ for k = 1:2:length(paramPairs)
     opts.format = LocalCheckAuto(lower(value),auto.format);
     if strcmp(opts.format,'preview')
       error(['Format ''preview'' no longer supported. Use PREVIEWFIG' ...
-	     ' instead.']);
+         ' instead.']);
     end
    case 'preview'
     opts.preview = LocalCheckAuto(lower(value),auto.preview);
@@ -228,14 +228,14 @@ for k = 1:2:length(paramPairs)
     opts.width = LocalToNum(value, auto.width);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.width)
-	error('Width must be a numeric scalar > 0');
+    error('Width must be a numeric scalar > 0');
       end
     end
    case 'height'
     opts.height = LocalToNum(value, auto.height);
     if ~ischar(value) | ~strcmp(value,'auto')
       if(~LocalIsPositiveScalar(opts.height))
-	error('Height must be a numeric scalar > 0');
+    error('Height must be a numeric scalar > 0');
       end
     end
    case 'color'
@@ -252,28 +252,28 @@ for k = 1:2:length(paramPairs)
     opts.fontsize = LocalToNum(value,auto.fontsize);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.fontsize)
-	error('FontSize must be a numeric scalar > 0');
+    error('FontSize must be a numeric scalar > 0');
       end
     end
    case 'defaultfixedfontsize'
     opts.defaultfontsize = LocalToNum(value,auto.defaultfontsize);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.defaultfontsize)
-	error('DefaultFixedFontSize must be a numeric scalar > 0');
+    error('DefaultFixedFontSize must be a numeric scalar > 0');
       end
     end
    case 'fontsizemin'
     opts.fontmin = LocalToNum(value,auto.fontmin);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.fontmin)
-	error('FontSizeMin must be a numeric scalar > 0');
+    error('FontSizeMin must be a numeric scalar > 0');
       end
     end
    case 'fontsizemax'
     opts.fontmax = LocalToNum(value,auto.fontmax);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.fontmax)
-	error('FontSizeMax must be a numeric scalar > 0');
+    error('FontSizeMax must be a numeric scalar > 0');
       end
     end
    case 'fontencoding'
@@ -290,29 +290,29 @@ for k = 1:2:length(paramPairs)
     opts.linewidth = LocalToNum(value,auto.linewidth);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.linewidth)
-	error('LineWidth must be a numeric scalar > 0');
+    error('LineWidth must be a numeric scalar > 0');
       end
     end
    case 'defaultfixedlinewidth'
     opts.defaultlinewidth = LocalToNum(value,auto.defaultlinewidth);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.defaultlinewidth)
-	error(['DefaultFixedLineWidth must be a numeric scalar >' ...
-	       ' 0']);
+    error(['DefaultFixedLineWidth must be a numeric scalar >' ...
+           ' 0']);
       end
     end
    case 'linewidthmin'
     opts.linemin = LocalToNum(value,auto.linemin);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.linemin)
-	error('LineWidthMin must be a numeric scalar > 0');
+    error('LineWidthMin must be a numeric scalar > 0');
       end
     end
    case 'linewidthmax'
     opts.linemax = LocalToNum(value,auto.linemax);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~LocalIsPositiveScalar(opts.linemax)
-	error('LineWidthMax must be a numeric scalar > 0');
+    error('LineWidthMax must be a numeric scalar > 0');
       end
     end
    case 'linestylemap'
@@ -321,15 +321,15 @@ for k = 1:2:length(paramPairs)
     opts.renderer = LocalCheckAuto(lower(value),auto.renderer);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~strcmp(opts.renderer,{'painters','zbuffer','opengl'})
-	error(['Renderer must be ''painters'', ''zbuffer'' or' ...
-	       ' ''opengl''.']);
+    error(['Renderer must be ''painters'', ''zbuffer'' or' ...
+           ' ''opengl''.']);
       end
     end
    case 'resolution'
     opts.resolution = LocalToNum(value,auto.resolution);
     if ~ischar(value) | ~strcmp(value,'auto')
       if ~(isnumeric(value) & (prod(size(value)) == 1) & (value >= 0));
-	error('Resolution must be a numeric scalar >= 0');
+    error('Resolution must be a numeric scalar >= 0');
       end
     end
    case 'applystyle' % means to apply the options and not export
@@ -337,9 +337,9 @@ for k = 1:2:length(paramPairs)
    case 'reference'
     if ischar(value)
       if strcmp(value,'auto')
-	opts.refobj = auto.refobj;
+    opts.refobj = auto.refobj;
       else
-	opts.refobj = eval(value);
+    opts.refobj = eval(value);
       end
     else
       opts.refobj = value;
@@ -426,10 +426,10 @@ try
   hscale = opts.height/refsize(2);
   sizescale = min(wscale,hscale);
   old = LocalPushOldData(old,H,'PaperPositionMode', ...
-			 get(H,'PaperPositionMode'));
+             get(H,'PaperPositionMode'));
   set(H, 'PaperPositionMode', 'auto');
   newPos = [figPos(1) figPos(2)+figPos(4)*(1-hscale) ...
-	    wscale*figPos(3) hscale*figPos(4)];
+        wscale*figPos(3) hscale*figPos(4)];
   set(H, 'Position', newPos);
   set(H, 'Units', oldFigureUnits);
   
@@ -437,15 +437,15 @@ try
   if ~isempty(opts.stylemap) & ~isempty(allLines)
     oldlstyle = LocalGetAsCell(allLines,'LineStyle');
     old = LocalPushOldData(old, allLines, {'LineStyle'}, ...
-			   oldlstyle);
+               oldlstyle);
     newlstyle = oldlstyle;
     if ischar(opts.stylemap) & strcmpi(opts.stylemap,'bw')
       newlstyle = LocalMapColorToStyle(allLines);
     else
       try
-	newlstyle = feval(opts.stylemap,allLines);
+    newlstyle = feval(opts.stylemap,allLines);
       catch
-	warning(['Skipping stylemap. ' lasterr]);
+    warning(['Skipping stylemap. ' lasterr]);
       end
     end
     set(allLines,{'LineStyle'},newlstyle);
@@ -482,7 +482,7 @@ try
       opts.format = [opts.format 'c'];
       args = {args{:}, ['-d' opts.format]};
       if strcmp(opts.color,'cmyk')
-	args = {args{:}, '-cmyk'};
+    args = {args{:}, '-cmyk'};
       end
     else
       args = {args{:}, ['-d' opts.format]};
@@ -508,15 +508,15 @@ try
     switch (opts.fontmode)
      case 'fixed'
       if (opts.fontsize == -1)
-	set(allFont,'FontSize',opts.defaultfontsize);
+    set(allFont,'FontSize',opts.defaultfontsize);
       else
-	set(allFont,'FontSize',opts.fontsize);
+    set(allFont,'FontSize',opts.fontsize);
       end
      case 'scaled'
       if (opts.fontsize == -1)
-	scale = sizescale;
+    scale = sizescale;
       else
-	scale = opts.fontsize;
+    scale = opts.fontsize;
       end
       newfonts = LocalScale(oldfonts,scale,opts.fontmin,opts.fontmax);
       set(allFont,{'FontSize'},newfonts);
@@ -537,15 +537,15 @@ try
     switch (opts.linemode)
      case 'fixed'
       if (opts.linewidth == -1)
-	set(allMarker,'LineWidth',opts.defaultlinewidth);
+    set(allMarker,'LineWidth',opts.defaultlinewidth);
       else
-	set(allMarker,'LineWidth',opts.linewidth);
+    set(allMarker,'LineWidth',opts.linewidth);
       end
      case 'scaled'
       if (opts.linewidth == -1)
-	scale = sizescale;
+    scale = sizescale;
       else
-	scale = opts.linewidth;
+    scale = opts.linewidth;
       end
       newlines = LocalScale(oldlines, scale, opts.linemin, opts.linemax);
       set(allMarker,{'LineWidth'},newlines);
@@ -555,10 +555,10 @@ try
   % adjust figure bounds to surround axes
   if strcmp(opts.bounds,'tight')
     if (~strncmp(opts.format,'eps',3) & LocalHas3DPlot(allAxes)) | ...
-	  (strncmp(opts.format,'eps',3) & opts.separatetext)
+      (strncmp(opts.format,'eps',3) & opts.separatetext)
       if (explicitbounds == 1)
-	warning(['Cannot compute ''tight'' bounds. Using ''loose''' ...
-		 ' bounds.']);
+    warning(['Cannot compute ''tight'' bounds. Using ''loose''' ...
+         ' bounds.']);
       end
       opts.bounds = 'loose';
     end
@@ -567,7 +567,7 @@ try
   if ~isempty(allAxes)
     if strncmp(opts.format,'eps',3)
       if strcmp(opts.bounds,'loose')
-	args = {args{:}, '-loose'};
+    args = {args{:}, '-loose'};
       end
       old = LocalPushOldData(old,H,'Position', oldFigPos);
     elseif strcmp(opts.bounds,'tight')
@@ -582,23 +582,23 @@ try
       origfr = get(H,'position');
       fr = [];
       for k=1:length(allAxes)
-	if ~strcmpi(get(allAxes(k),'Tag'),'legend')
-	  axesR = apos{k};
-	  r = LocalAxesTightBoundingBox(axesR, allAxes(k));
+    if ~strcmpi(get(allAxes(k),'Tag'),'legend')
+      axesR = apos{k};
+      r = LocalAxesTightBoundingBox(axesR, allAxes(k));
       if ~isempty(r)
-	  r(1:2) = r(1:2) + axesR(1:2);
-	  fr = LocalUnionRect(fr,r);
+      r(1:2) = r(1:2) + axesR(1:2);
+      fr = LocalUnionRect(fr,r);
       end
-	end
+    end
       end
       if isempty(fr)
-	fr = [0 0 origfr(3:4)];
+    fr = [0 0 origfr(3:4)];
       end
       for k=1:length(allAxes)
-	ax = allAxes(k);
-	r = apos{k};
-	r(1:2) = r(1:2) - fr(1:2);
-	set(ax,'Position',r);
+    ax = allAxes(k);
+    r = apos{k};
+    r(1:2) = r(1:2) - fr(1:2);
+    set(ax,'Position',r);
       end
       old = LocalPushOldData(old, allAxes, {'Position'}, oldapos);
       old = LocalPushOldData(old, allText, {'Position'}, oldtpos);
@@ -639,18 +639,18 @@ try
     foundRenderer = 0;
     for k=1:length(args)
       if strncmp('-d',args{k},2)
-	args{k} = '-deps';
+    args{k} = '-deps';
       elseif strncmp('-zbuffer',args{k},8) | ...
-	    strncmp('-opengl', args{k},6)
-	args{k} = '-painters';
-	foundRenderer = 1;
+        strncmp('-opengl', args{k},6)
+    args{k} = '-painters';
+    foundRenderer = 1;
       end
     end
     if ~foundRenderer
       args = {args{:}, '-painters'};
     end
     allNonText = [allLines; allLights; allPatch; ...
-		  allImages; allSurf; allRect];
+          allImages; allSurf; allRect];
     oldvis = LocalGetAsCell(allNonText,'visible');
     oldc = LocalGetAsCell(allAxes,'color');
     oldaxg = LocalGetAsCell(allAxes,'XGrid');
@@ -674,12 +674,12 @@ try
     line = fgetl(fid2);
     while ischar(line)
       if strncmp(line,'%%Title',7)
-	fprintf(fid1,'%s\n',['%%Title: ', tfile]);
+    fprintf(fid1,'%s\n',['%%Title: ', tfile]);
       elseif (length(line) < 3) 
-	fprintf(fid1,'%s\n',line);
+    fprintf(fid1,'%s\n',line);
       elseif ~strcmp(line(end-2:end),' PR') & ...
-	    ~strcmp(line(end-1:end),' L')
-	fprintf(fid1,'%s\n',line);
+        ~strcmp(line(end-1:end),' L')
+    fprintf(fid1,'%s\n',line);
       end
       line = fgetl(fid2);
     end
@@ -910,12 +910,12 @@ if strcmp(get(a,'visible'),'on')
   oldunits = get(a,'fontunits');
   set(a,'fontunits','points');
   label = text(0,0,'','parent',a,...
-	       'units','points',...
-	       'fontsize',get(a,'fontsize'),...
-	       'fontname',get(a,'fontname'),...
-	       'fontweight',get(a,'fontweight'),...
-	       'fontangle',get(a,'fontangle'),...
-	       'visible','off');
+           'units','points',...
+           'fontsize',get(a,'fontsize'),...
+           'fontname',get(a,'fontname'),...
+           'fontweight',get(a,'fontweight'),...
+           'fontangle',get(a,'fontangle'),...
+           'visible','off');
   fs = get(a,'fontsize');
 
   % handle y axis tick labels
@@ -930,7 +930,7 @@ if strcmp(get(a,'visible'),'on')
       maxw = max(maxw,ext(3));
     end
     if ~LocalLabelsMatchTicks(ylabs,yticks) & ...
-	  strcmp(get(a,'xaxislocation'),'bottom')
+      strcmp(get(a,'xaxislocation'),'bottom')
       ry(4) = ry(4) + 1.5*ext(4);
     end
     if strcmp(get(a,'yaxislocation'),'left')
@@ -950,15 +950,15 @@ if strcmp(get(a,'visible'),'on')
     if strcmp(get(a,'xaxislocation'),'bottom')
       rx(2) = -(fs+5);
       if ~LocalLabelsMatchTicks(xlabs,xticks);
-	rx(4) = rx(4) + 2*fs;
-	rx(2) = rx(2) - 2*fs;
+    rx(4) = rx(4) + 2*fs;
+    rx(2) = rx(2) - 2*fs;
       end
     else
       rx(2) = axesR(4);
       % exponent is still below axes
       if ~LocalLabelsMatchTicks(xlabs,xticks);
-	rx(4) = rx(4) + axesR(4) + 2*fs;
-	rx(2) = -2*fs;
+    rx(4) = rx(4) + axesR(4) + 2*fs;
+    rx(2) = -2*fs;
       end
     end
     set(label,'string',xlabs(1,:));

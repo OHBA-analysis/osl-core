@@ -19,7 +19,7 @@ function [cleanD, jumpTimes] = osl_remove_jumps(D, varargin)
 %                    identification of bad epochs in the data [true]
 %   verbose        - boolean flag to report number of jumps found to
 %                    standard out [true] 
-%		
+%       
 % This function removes "jumps" (discontinuities) from the EEG/MEG raw
 % signal, based on a thresholding process, and filters the signal derivative
 % over 20 timepoints.
@@ -30,29 +30,29 @@ function [cleanD, jumpTimes] = osl_remove_jumps(D, varargin)
 % Timestamps for the jumps are returned and at the same time recorded as
 % event markers. Epochs containing such jumps should be rejected as they are
 % affected by ringing from analogue filters in the recording system.
-%	
-%	See also SPM_EEG_REMOVE_JUMPS
+%   
+%   See also SPM_EEG_REMOVE_JUMPS
 
-%	Copyright 2014 OHBA
-%	This program is free software: you can redistribute it and/or modify
-%	it under the terms of the GNU General Public License as published by
-%	the Free Software Foundation, either version 3 of the License, or
-%	(at your option) any later version.
-%	
-%	This program is distributed in the hope that it will be useful,
-%	but WITHOUT ANY WARRANTY; without even the implied warranty of
-%	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%	GNU General Public License for more details.
-%	
-%	You should have received a copy of the GNU General Public License
-%	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%   Copyright 2014 OHBA
+%   This program is free software: you can redistribute it and/or modify
+%   it under the terms of the GNU General Public License as published by
+%   the Free Software Foundation, either version 3 of the License, or
+%   (at your option) any later version.
+%   
+%   This program is distributed in the hope that it will be useful,
+%   but WITHOUT ANY WARRANTY; without even the implied warranty of
+%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%   GNU General Public License for more details.
+%   
+%   You should have received a copy of the GNU General Public License
+%   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%	$LastChangedBy$
-%	$Revision$
-%	$LastChangedDate$
-%	Contact: giles.colclough@magd.ox.ac.uk
-%	Originally written on: GLNXA64 by Giles Colclough, 27-Oct-2014 11:32:06
+%   $LastChangedBy$
+%   $Revision$
+%   $LastChangedDate$
+%   Contact: giles.colclough@magd.ox.ac.uk
+%   Originally written on: GLNXA64 by Giles Colclough, 27-Oct-2014 11:32:06
 
 %% Input processing
 % load in data, even if provided as a character string
