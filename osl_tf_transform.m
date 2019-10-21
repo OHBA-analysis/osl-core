@@ -16,7 +16,9 @@ function [ out ] = osl_tf_transform( S, dat )
 % - S.tf_num_freqs                 : how many frequency bands to compute?
 % - S.raw_times                  : the times in source_recon_results.times
 % - S.tf_logtransform           : log transform the tf, trial by trial?
-% - S.ds_factor                 : used for time domain, hilbert, morlet
+% - S.ds_factor                 : used for time domain, hilbert, morlet (a
+%                                 value < 1 indicates lower temporal
+%                                 resolution in TF output than was in the input)
 % - S.tf_morlet_factor             : only used for morlet
 % - S.tf_hanning_twin                   : used for hanning
 % - S.tf_calc_amplitude
@@ -163,7 +165,7 @@ switch S.tf_method
         freq_ind=cell(length(out.tf_freqs),1);
         % Continue and do the transform if S.doTransform == 1
         if S.doTransform
-            ft_progress('init', 'textbar', 'Doing Hilbert transform...')      % ascii progress bar
+            ft_progress('init', 'text', 'Doing Hilbert transform...')      % ascii progress bar
             out.dattf = nan(size(dat,3),numel(out.tf_times),size(dat,1),numel(out.tf_freqs)); % [channel, time, trial, frequency]
             out.datbp = nan(size(dat,3),numel(out.tf_times),size(dat,1),numel(out.tf_freqs)); % [channel, time, trial, frequency]
             for iChan = 1:size(dat,3);
@@ -266,9 +268,9 @@ switch S.tf_method
         end % if ~isempty(S.ds_factor)
 
         if ~isfield(S,'tf_morlet_basis')
-            disp('Creating Morlet basis set.  If you are seeing message many times, you may wish to pass a morelt basis set to ''osl_tf_transform''');
+            disp('Creating Morlet basis set.  If you are seeing message many times, you may wish to pass a morlet basis set to ''osl_tf_transform''');
             fres=fsample;
-            out.tf_morlet_basis = spm_eeg_morlet(S.tf_morlet_factor, 1000/fres, out.tf_freqs); % ?? GW why is sample time coded this way?
+            out.tf_morlet_basis = spm_eeg_morlet(S.tf_morlet_factor, 1000/fres, out.tf_freqs); 
             S.tf_morlet_basis   = out.tf_morlet_basis;
         end % if ~isfield(S,'tf_morlet_basis')
 
@@ -277,7 +279,7 @@ switch S.tf_method
 
             dat = permute(dat,[3,2,1]);
 
-            ft_progress('init', 'textbar', 'Doing Morlet transform...')      % ascii progress bar
+            ft_progress('init', 'text', 'Doing Morlet transform...')      % ascii progress bar
             out.dattf = nan(size(dat,3),numel(out.tf_times),size(dat,1),numel(out.tf_freqs)); % [channel, time, trial, frequency]
             out.datbp = nan(size(dat,3),numel(out.tf_times),size(dat,1),numel(out.tf_freqs)); % [channel, time, trial, frequency]
 

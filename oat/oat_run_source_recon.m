@@ -3,7 +3,7 @@ function [results_fnames, source_recon_results]=oat_run_source_recon(oat)
 % results_fnames=osl_run_source_recon_beamform(oat)
 %
 % takes in an OAT, which needs to be setup by calling oat=osl_setup_oat(S), struct 
-% and runs beamformer
+% and runs beamformer 
 % 
 % This function should normally be called using osl_run_oat(oat);
 %
@@ -124,12 +124,8 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     
     source_recon_sess.mni_coords = mni_coords;
     
-    if(isfield(source_recon,'hmm_block'))
-        source_recon_sess.hmm_block = source_recon.hmm_block{sessi};
-    end;
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% Prepare data (bandpass filter, epoch, normalise sensors, HMM)
+    %% Prepare data (bandpass filter, epoch, normalise sensors)
     [source_recon_sess source_recon_sess_results source_recon_sess_results.report] = oat_prepare_source_recon(source_recon_sess, report_sess);
     D=source_recon_sess_results.BF.data.D;
 
@@ -164,8 +160,8 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
     S2.conditions=source_recon_sess.conditions;
     S2.inverse_method=source_recon_sess.method;
     S2.dirname=source_recon_sess.dirname;
-    S2.use_class_channel=true;
     S2.dirname = D.path;
+    S2.use_class_channel=true;
     D = osl_inverse_model(D,mni_coords,S2);
     
     source_recon_sess_results.BF=load(fullfile(source_recon_sess.dirname,'BF.mat'));
@@ -194,12 +190,11 @@ for sessi_todo=1:length(source_recon.sessions_to_do),
 
     source_recon_sess_results.session_name=source_recon.session_name;    
     source_recon_sess_results.fname=[source_recon_sess_results.session_name '_recon' ];
-    disp(['Saving source-space results: ' source_recon_sess_results.fname]);  % changed by DM
+    disp(['Saving source-space results: ' source_recon_sess_results.fname]);  
     
     oat_save_results(oat,source_recon_sess_results);
 
     results_fnames{sessi}=source_recon_sess_results.fname;
-    
     
 end
 

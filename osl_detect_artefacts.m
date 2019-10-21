@@ -44,7 +44,7 @@ function D = osl_detect_artefacts(D,varargin)
     % Note - trial based detection merges across modalities i.e. an epoched MEEG marks bad trials instead of events
     arg = inputParser;
     arg.addParameter('modalities',{},@iscell); % By default, detect artefacts in all modalities except 'OTHER'
-    arg.addParameter('max_iter',10);
+    arg.addParameter('max_iter',1);
     arg.addParameter('max_bad_channels',10); % Maximum number of new bad channels in each modality to add
     arg.addParameter('badchannels',true); % Check for bad channels
     arg.addParameter('channel_significance',0.05); % Significance level for GESD bad channel detection
@@ -199,7 +199,5 @@ function D = osl_detect_artefacts(D,varargin)
         end
     else
         bt = D.badtrials;
-        for j = 1:length(bt)
-            fprintf('Trial %d is bad\n',bt(j));
-        end
+        fprintf('Bad times - rejected %d (%.0f%%) of trials in epoched data\n',length(bt),100*length(bt)/D.ntrials);        
     end

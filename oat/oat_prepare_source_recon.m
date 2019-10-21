@@ -12,7 +12,6 @@ function [source_recon_sess source_recon_sess_results sess_report] = osl_prepare
 % 3) Epoching (optional)
 % 4) Establishes valid time windows, trials and channels
 % 5) Normalises different modalities
-% 6) Performs HMM (optional)
 %
 % MWW 2014
 
@@ -27,7 +26,7 @@ source_recon_sess_results=[];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% check epoching in the SPM MEEG objects passed in
 only_epoched_data_provided=0;
-if ~isempty(source_recon_sess.D_epoched) && isempty(source_recon_sess.D_continuous),
+if ~isempty(source_recon_sess.D_epoched) && isempty(source_recon_sess.D_continuous)
     only_epoched_data_provided=1;
     source_recon_sess.D=source_recon_sess.D_epoched;
 elseif ~isempty(source_recon_sess.D_continuous),
@@ -67,6 +66,7 @@ S2.outfile=[spmname '.mat'];
 
 S2.updatehistory=0;
 D = spm_eeg_copy(S2);
+
 movefile(fullfile(D.path,D.fname),source_recon_sess.dirname);
 movefile(D.fnamedat,source_recon_sess.dirname);
 spm_filename=fullfile(source_recon_sess.dirname,D.fname);
@@ -92,7 +92,7 @@ spm_filename = fullfile(source_recon_sess.dirname,[source_recon_sess.session_nam
 %% do bandpass filtering
 isValidFreqRange = (length(source_recon_sess.freq_range) > 1) && ...
                    (source_recon_sess.freq_range(2) > source_recon_sess.freq_range(1));
-if isValidFreqRange,
+if isValidFreqRange
     disp('Temporal filtering...');
     S2=[];
     S2.D=spm_filename;
@@ -142,19 +142,19 @@ end %if source_recon_sess.bandpass_filter_mains
 %% do epoching
 
 % epochinfo will be in source_recon_sess.epochinfo, if its empty then look in D_epoched for D_epoched.epochinfo
-if(do_epoching),
+if(do_epoching)
     disp('Epoching...');
         
-    if(~isempty(source_recon_sess.epochinfo)),
+    if(~isempty(source_recon_sess.epochinfo))
         S2=source_recon_sess.epochinfo; 
     else
-        try,
+        try
             D_epoched=spm_eeg_load(source_recon_sess.D_epoched);
             S2=D_epoched.epochinfo;
         catch
             error('No epoch info available');
-        end;
-    end;
+        end
+    end
     S2.D = D;
     S2.epochinfo.padding = 0;
     S2.save=0;
@@ -164,11 +164,12 @@ if(do_epoching),
 
     Dnew = spm_eeg_epochs(S2);
 
+    Dnew.save;
     D.delete;
     D=Dnew;
     
     %% get bad channels and trials from passed in source_recon_sess.D_epoched    
-    if(~isempty(source_recon_sess.D_epoched)),
+    if(~isempty(source_recon_sess.D_epoched))
         D_epoched_passed_in=spm_eeg_load(source_recon_sess.D_epoched);
         rejtmp=badtrials(D_epoched_passed_in);
         rej=zeros(1,D_epoched_passed_in.ntrials);
@@ -176,11 +177,11 @@ if(do_epoching),
         rej(D_epoched_passed_in.badtrials)=1;
         D = badtrials(D, 1:length(rej), rej);  
 
-        if(length(D_epoched_passed_in.badchannels)>0),
+        if(length(D_epoched_passed_in.badchannels)>0)
             D = badchannels(D, D_epoched_passed_in.badchannels, ones(length(D_epoched_passed_in.badchannels),1));
-        end;
+        end
         D.save;
-    end;
+    end
 
 end%if do_epoching
 
@@ -202,12 +203,12 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Establish time windows of interest
 
-if isempty(source_recon_sess.time_range),
+if isempty(source_recon_sess.time_range)
     source_recon_sess.time_range = [D.time(1) D.time(end)];
 end
 time_range = source_recon_sess.time_range;
 
-if(D.ntrials==1),
+if(D.ntrials==1)
     goodsamples = good_samples(D,D.indchantype(modality_meeg));
 else
     goodsamples = true(1,D.nsamples); 
@@ -224,7 +225,7 @@ woi=[D.time(find(diff([0 samples2use])==1))' D.time(find(diff([samples2use 0])==
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Establish trials
 
-if strcmp(source_recon_sess.conditions{1},'all'),
+if strcmp(source_recon_sess.conditions{1},'all')
     trials = D.indtrial(D.condlist,'good');
 else
     
@@ -238,231 +239,52 @@ end
 %% Normalise modalities using, e.g., mean or smallest eigenvalues
 %% calculated using good channels and good trials, and over all woi
 
-if strcmp( source_recon_sess.normalise_method,'zscore');
-    % Z-score samples within channels and trials
-    [dirname, fname, ext] = fileparts(D.fullfile);
-    Dnew = D.clone( fullfile(dirname,['M' fname ext]) );
-
-    dat = D(:,:,:);
-    for jj = 1:size(dat,3)
-        dat(:,:,jj) = zscore(dat(:,:,jj),[],2);
-    end
-    Dnew(:,:,:) = dat;
-
-    D = Dnew;
-    chanind=indchantype(D,modality_meeg,'GOOD');
-    pcadim=length(chanind);
-    normalisation=1;
-
-elseif ~strcmp(source_recon_sess.normalise_method,'none'),
-    
-    disp('Establish dimensionality and Normalising modalities...');
-    S2=source_recon_sess;
-    S2.D = D;
-    S2.samples2use=samples2use;
-    S2.trials=trials;
-    S2.do_plots=1;
-    S2.normalise_method=source_recon_sess.normalise_method;
-
-    %[ Dnew pcadims pcadim ] = normalise_sensor_data( S2 );
-
-    [ Dnew pcadims tmp norm_vec normalisation fig_handles fig_names] = normalise_sensor_data( S2 );
-
-    % set pcadim to min:
-    pcadim=min(pcadims);
-
-    if do_report
-        % diagnostic plot of design matrix    
-        sess_report=osl_report_set_figs(sess_report,fig_names,fig_handles);
-        sess_report=osl_report_print_figs(sess_report);
-    end;
-
-%    D.delete;
-    D=Dnew;
+if strcmp( source_recon_sess.normalise_method,'none')
+    S=[];
+    S.D=D_epoched;
+    S.normalise_method='mean_eig';
+    S.datatype='neuromag';
+    S.do_plots=true;
+    [D_epoched pcadim normalisation]= osl_normalise_sensor_data(S);
 else
-    chanind=indchantype(D,modality_meeg,'GOOD');
+    chanind=indchantype(D,modality_meeg,'good');
     pcadim=length(chanind);
-    normalisation=1;
-end;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% DO HMM
-if(isfield(source_recon_sess,'hmm_num_states') && source_recon_sess.hmm_num_states~=0),
-    
-    %%
-    if(isfield(source_recon_sess,'hmm_block')),
-        block=source_recon_sess.hmm_block;
-        
-        if(source_recon_sess.hmm_num_states<0)
-            NK=size(block.delta,2);
-        else
-            NK=source_recon_sess.hmm_num_states;
-            if size(block.delta,2)~=NK,
-                error('Incompatible number of states');
-            end;
-        end;
-        tres=D.time(2)-D.time(1);
-        
-    else
-        
-        disp('Doing HMM...');
-        
-        tres=D.time(2)-D.time(1);
-        tt=tres*length(find(samples2use))*length(trials);
-        
-        recommend_NK=min(source_recon_sess.hmm_pca_dim-15,round(tt/source_recon_sess.hmm_av_class_occupancy));
-        disp(['There is ' num2str(tt) 'secs of data, recommend using no more than ' num2str(recommend_NK) ' HMM states.']);
-        
-        if(source_recon_sess.hmm_num_states<0)
-            NK=recommend_NK;
-        else
-            NK=source_recon_sess.hmm_num_states;
-        end;
-        
-        disp(['Inferring ' num2str(NK) ' HMM states']);
-        
-        Sh=[];
-        
-        chanind=indchantype(D,modality_meeg,'GOOD');
-    
-        Sh.data=reshape(D(chanind,find(samples2use),trials),length(chanind),(numel(find(samples2use))*length(trials)))';
-        
-        if(source_recon_sess.hmm_pca_dim>0)
-            [allsvd,Apca]=pca(Sh.data,source_recon_sess.hmm_pca_dim);
-            pinvApca=pinv(Apca);
-            Sh.data=(pinvApca*Sh.data')';
-        else
-            error('hmm_pca_dim unspecified');
-        end;
-        
-        Sh.data=normalise(Sh.data);
-        
-        if 1,
-            Sh.NK=NK;
-
-            Sh.num_starts=source_recon_sess.hmm_num_starts;
-
-            [ hmm, block ]=run_multistart_hmm(Sh);
-
-        else
-
-            hmm = osl_hmm_infer(Sh.data,struct('K',NK,'order',0,'Ninits',source_recon_sess.hmm_num_starts,'Hz',1/tres));
-
-        end;
-        NK=hmm.K;
-        
-    end;
-    
-    source_recon_sess_results.block=block;
-    
-    hmm_class=zeros(1,size(D,2),size(D,3));
-    hmm_class(1,find(samples2use),trials)=reshape(source_recon_sess_results.block(1).q_star,[1,numel(find(samples2use)),length(trials)]);
-    
-    hmm_class_probs=zeros(NK,size(D,2),size(D,3));
-    hmm_class_probs(:,find(samples2use),trials)=reshape(source_recon_sess_results.block(1).gamma',[NK,numel(find(samples2use)),length(trials)]);
-    
-    %% plot results
-    if(1),
-          
-        S2=[];
-        S2.block=block;
-        S2.tres=tres;
-        S2.NK=NK;
-        
-        [fig_handles fig_names fig_titles]=plot_hmm(S2);
-
-        if do_report
-            sess_report=osl_report_set_figs(sess_report,fig_names,fig_handles,fig_titles);        
-            sess_report=osl_report_print_figs(sess_report);
-        end;
-        
-        % if epoched data, plot epoched state courses
-        if D.ntrials>1                    
-        
-            tmp=zeros(NK,size(hmm_class,2));
-            leg={};
-            for ii=1:NK,
-                tmp(ii,:)=sum(hmm_class==ii,3);
-                leg{ii}=num2str(ii);
-            end;
-
-            fig_handle=sfigure;
-            plot(D.time(samples2use),tmp(:,samples2use)','LineWidth',2);
-            plot4paper('time (s)','# of trials');
-            legend(leg,'Location','NorthWest','FontSize',12); 
-               
-            if do_report
-                sess_report=osl_report_set_figs(sess_report,'hmm_epoched_state_occurences',fig_handle,'HMM Epoched State Occurrences');        
-                sess_report=osl_report_print_figs(sess_report);
-            end;
-        end;
-        
-        if(0)
-            data=normalise(Sh.data);
-            sqdata=mean(abs(data),2);
-            rng=max(sqdata)-min(sqdata);
-            hmm_class2=hmm_class(1,find(samples2use),trials);
-            hmm_class2=reshape(hmm_class2,size(hmm_class2,1),size(hmm_class2,2)*size(hmm_class2,3));
-
-            ii=0;
-            tmp=sqdata;
-            fig_handle=sfigure;
-            plot(tmp+rng*(ii) ,'b');
-            ho;
-            for ii=1:NK,
-
-                tmp=sqdata;
-                tmp(hmm_class2~=ii,:)=0;
-                plot(tmp+rng*(ii) ,'b');
-
-            end;
-        end;
-        
-    end;
-    
-    clear Sh;
-    
-else,
-    
-    NK=1;
-    
-    hmm_class=zeros(1,size(D,2),size(D,3));
-    hmm_class_probs=zeros(1,size(D,2),size(D,3));
-    
-    hmm_class(1,find(samples2use),trials)=1;
-    hmm_class_probs(1,find(samples2use),trials)=1;
-    
-end;
-
-
-% make a new state for eyeblinks/artefacts, and remove it from the other states
-if isfield(source_recon_sess, 'artefact_chanlabel') && ~isempty(source_recon_sess.artefact_chanlabel)
-    artefactchanind = find(strcmp(source_recon_sess.artefact_chanlabel,D.chanlabels));
-    if isempty(artefactchanind)
-        error('Can''t find the specified artefact channel in the D-object!');
-    end
-    maxclass = max(unique(hmm_class));
-    artfctclasssinds = logical(D(artefactchanind,:,:));
-    hmm_class(artfctclasssinds) = maxclass + 1;
-    % the highest indexed state is now the artefact state
+    normalisation=1;        
 end
 
-% add channel
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Legacy code for HMM
+
+NK=1;
+
+hmm_class=zeros(1,size(D,2),size(D,3));
+hmm_class_probs=zeros(1,size(D,2),size(D,3));
+
+hmm_class(1,find(samples2use),trials)=1;
+hmm_class_probs(1,find(samples2use),trials)=1;
+
+% add class channels (legacy code)
 Sc=[];
 Sc.D=D;
 Sc.newchandata=[hmm_class; hmm_class_probs];
 Sc.newchanlabels{1}='Class';
 Sc.newchantype{1}='CLASS';
-Sc.newname=D.fullfile;
-for kk=1:NK,
+oldname=D.fullfile;
+Sc.newname=prefix(oldname,'concat');
+for kk=1:NK
     Sc.newchanlabels{kk+1}=['ClassPr' num2str(kk)];
     Sc.newchantype{kk+1}='CLASSPR';
-end;
+end
 
-[ Dnew ] = osl_concat_spm_eeg_chans( Sc );
+Dnew = osl_concat_spm_eeg_chans( Sc );
 
-%D.delete;
-D=Dnew;
+D.delete;
+
+% restore file name
+Sc=[];
+Sc.D=Dnew;
+Sc.outfile=oldname;
+D=spm_eeg_copy(Sc);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 

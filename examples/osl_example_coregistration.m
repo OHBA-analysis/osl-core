@@ -1,11 +1,11 @@
 %% Coregistration with SPM and RHINO
 %
-% This tutorial covers the registration of mri and meg datasets into a
+% This tutorial covers the registration of MRI and M/EEG datasets into a
 % common space to allow for analysis in sourcespace.
 %
-% This practical uses data from the face_singlesubject and coreg_example
-% subfolders in the osl2.1/example_data directory. Please make sure these
-% are both present before starting.
+% This practical uses data from the coreg_example
+% subfolders in the OSL example_data directory. Please make sure this
+% is present before starting.
 %
 % There are several co-ordinate systems which must be aligned before we can
 % project our sensor MEG data into source space. These are:
@@ -29,6 +29,14 @@
 % Once these transforms have been identified we can move between MEG
 % sensors and specific locations within the MRI scan.
 
+%% SET UP ANALYSIS
+% The only thing you need to do is to go into your OSL directory (i.e. type _cd /somedirectory/osl-core_ ) and then run the following.
+osl_startup;
+
+%%
+% This will not be necessary after you have done this once, i.e. no need to
+% repeat during one of the follow-up practicals.
+
 %% COREGISTRATION WITH SPM
 %
 % Coregistration is performed in OSL using osl_headmodel.
@@ -37,7 +45,7 @@
 % about this can be found
 % here:
 %
-% <https://sites.google.com/site/ohbaosl/preprocessing/co-registration>
+% <https://ohba-analysis.github.io/osl-docs/pages/docs/preprocessing.html#coregistration-using-rhino>
 %
 % This takes an option structure defining several key parameters:
 %
@@ -47,14 +55,13 @@
 % headshape points to refine the alignment between the MRI and Polhemus
 % data
 %
-% The following example runs the coregistration on two datasets which are
-% required for the sourcespace OAT practical. While running, SPM will open
+% The following example runs standard SPM coregistration on an example dataset. 
+% While running, SPM will open
 % a window showing the alignment of the headshape points to the scalp.
 
 % Set up data paths
-datadir = fullfile(osldir,'example_data','faces_singlesubject','spm_files');
+datadir = fullfile(osldir,'example_data','coreg_example');
 spm_files_continuous=[datadir '/Aface_meg1.mat'];
-spm_files_epoched=[datadir '/eAface_meg1.mat'];
 
 S = [];
 S.D = spm_files_continuous;
@@ -67,20 +74,9 @@ S.fid.label.lpa = 'LPA';
 S.fid.label.rpa = 'RPA';
 D=osl_headmodel(S);
 
-S = [];
-S.D = spm_files_epoched;
-S.mri = fullfile(osldir,'example_data','faces_singlesubject','structurals','struct.nii');
-S.useheadshape = 1;
-S.use_rhino = 0;
-S.forward_meg = 'Single Shell';
-S.fid.label.nasion = 'Nasion';
-S.fid.label.lpa = 'LPA';
-S.fid.label.rpa = 'RPA';
-D=osl_headmodel(S);
-
 %% VIEW SPM REGISTRATION
 %
-% This SPM tool allows us to view the results of the coregistration (click and drag to rotate the image)
+% This SPM tool allows us to view the results of the coregistration (click and drag to rotate the image - you may need to click on the "Rotate 3D" toolbar button)
 %
 % The coregistration shows several types of information:
 %
@@ -95,6 +91,7 @@ D=osl_headmodel(S);
 
 figure('Position',[100 100 1024 1024])
 spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
+zoom(0.5)
 
 %% ADVANCED COREGISTRATION WITH RHINO
 %
@@ -115,7 +112,7 @@ spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
 % face.
 
 datadir = fullfile(osldir,'example_data','coreg_example');
-spm_file=[datadir '/dsubject1_reduced'];
+spm_file=[datadir '/pdsubject1'];
 
 S = [];
 S.D = spm_file;
@@ -153,11 +150,10 @@ D=osl_headmodel(S);
 % be misleading when we align to our headshape points. In this case, the
 % structrual preprcessing has worked well.
 
-mri = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon.nii');
-scalp = fullfile(osldir,'example_data','coreg_example','subject1_struct_canon_scalp.nii.gz');
+mri = fullfile(osldir,'example_data','coreg_example','rhino_subject1_struct_canon.nii');
+scalp = fullfile(osldir,'example_data','coreg_example','rhino_subject1_struct_canon_scalp.nii.gz');
 
-system(['fslview ' mri ' ' scalp ])
-
+fsleyes({mri, scalp},[],'greyscale','none')
 
 %% VISUALISING THE RHINO COREGISTRATION
 %

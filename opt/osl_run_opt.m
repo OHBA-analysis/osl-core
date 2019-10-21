@@ -2,6 +2,11 @@ function opt=osl_run_opt(opt)
 
 % opt=osl_run_opt(opt)
 %
+% See osl_check_opt for settings
+%
+% See https://ohba-analysis.github.io/osl-docs/pages/docs/opt.html for
+% documentation on OPT
+%
 % MWW 2013
 
 opt = osl_check_opt(opt);
@@ -37,7 +42,7 @@ end
 disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
 disp(['%%%%%%%%%%%%%%%%%%%%%%%  STARTING LOOP OVER SESSIONS  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'])
 
-for subi=1:length(opt.sessions_to_do),
+for subi=1:length(opt.sessions_to_do)
     subnum=opt.sessions_to_do(subi);
 
     % single session results container:
@@ -81,9 +86,9 @@ for subi=1:length(opt.sessions_to_do),
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Downsample with SPM (particularly important if movement compensation used - but worth doing anyway)
 
-        if(opt.downsample.do),
+        if(opt.downsample.do)
             S=[];
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  DOWNSAMP, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.downsample, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             S.D=spm_file;
             S.fsample_new = opt.downsample.freq;
@@ -106,7 +111,7 @@ for subi=1:length(opt.sessions_to_do),
         % To get rid of low frequency fluctuations in the data
 
         if(opt.highpass.do)
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  HP FILT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.highpass, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             S=[];
             S.D = spm_file;
@@ -128,7 +133,7 @@ for subi=1:length(opt.sessions_to_do),
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Mains Filter
         if(opt.mains.do)
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  MAINS FILT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.mains, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
                        
@@ -158,8 +163,8 @@ for subi=1:length(opt.sessions_to_do),
 
         %%%%%%%%%%%%%%%%%%%
         %% DO REGISTRATION AND RUN FORWARD MODEL BASED ON STRUCTURAL SCANS
-        if(opt.coreg.do),
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  COREG, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+        if(opt.coreg.do)
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.coreg, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             S=[];
             spm_file=[opt.dirname filesep spm_files_basenames{subnum} '.mat'];
             S.D = [spm_file];
@@ -191,16 +196,19 @@ for subi=1:length(opt.sessions_to_do),
             subplot(1,3,1)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(-180,0)
+            zoom(0.5);
             %title(['concatMefsession' num2str(counter) '_spm_meeg'])
             subplot(1,3,2)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(-270,0)
+            zoom(0.5);
             subplot(1,3,3)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(130,18)
-            title(['Session ' num2str(subnum)]);
-            
-            opt_report=osl_report_set_figs(opt_report,'Coregistration_spm_view',coregfig1);
+            zoom(0.5);
+            %title(['Session ' num2str(subnum)]);
+
+            opt_report=osl_report_set_figs(opt_report,'opt-coreg_spm_view',coregfig1);
             opt_report=osl_report_print_figs(opt_report);
 
             if opt.coreg.use_rhino
@@ -209,14 +217,14 @@ for subi=1:length(opt.sessions_to_do),
                 rhino_display(Dcheck,coregfig2);
                 view(45,5)
                 title(['Session ' num2str(subnum)]);
-                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view1',coregfig2);
+                opt_report=osl_report_set_figs(opt_report,'opt-coreg_rhino_view1',coregfig2);
                 opt_report=osl_report_print_figs(opt_report);
 
                 coregfig3 = sfigure;
                 rhino_display(Dcheck,coregfig3);
                 view(90,-10)
-                title(['Session ' num2str(subnum)]);
-                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view2',coregfig3);
+                %title(['Session ' num2str(subnum)]);
+                opt_report=osl_report_set_figs(opt_report,'opt-coreg_rhino_view2',coregfig3);
                 opt_report=osl_report_print_figs(opt_report);
             end
 
@@ -225,9 +233,9 @@ for subi=1:length(opt.sessions_to_do),
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Perform AfRICA - ICA denoising
 
-        if(opt.africa.todo.ica) || ~strcmp(opt.africa.todo.ident,'auto') || (opt.africa.todo.remove)
+        if(opt.africa.todo.ica) || (opt.africa.todo.ident) || (opt.africa.todo.remove)
 
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  AFRICA, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.africa, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             %% ADAPTER CODE FOR NEW CHANGES TO AFRICA
             S = struct;
@@ -279,18 +287,41 @@ for subi=1:length(opt.sessions_to_do),
 
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  MARK  SEGMENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
-            D_continuous=spm_eeg_load(spm_file);
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.bad_segments, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])            
+                            
+            % copy file and add R prefix
+            S=[];
+            S.D=spm_file;
+            S.outfile=prefix(spm_file,'B'); 
+            D_continuous=spm_eeg_copy(S); 
+            
             S = struct();
             S.modalities=opt.modalities;
             S.dummy_epoch_tsize    = opt.bad_segments.dummy_epoch_tsize;   
             S.measure_fns  = opt.bad_segments.outlier_measure_fns; 
             S.event_significance   = opt.bad_segments.event_significance;  
             S.channel_significance = opt.bad_segments.channel_significance;
+
+            % first look for bad channels
+            S.badchannels=true;
+            S.badtimes=false;
             D_continuous = osl_detect_artefacts(D_continuous,S);
             D_continuous.save();
 
-            figs = [report.bad_channels(D_continuous) report.bad_segments(D_continuous)];
+            S2=S;
+            S2.plot_name_prefix='opt-bad_segments: ';
+            figs = [report.bad_channels(D_continuous,opt.modalities, false, S2.plot_name_prefix)];
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) get(x,'tag'),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            opt_report=osl_report_print_figs(opt_report);
+            
+            % then look for bad segments
+            S.badchannels=false;
+            S.badtimes=true;
+            D_continuous = osl_detect_artefacts(D_continuous,S);            
+            D_continuous.save();
+
+            S.plot_name_prefix='opt-bad_segments: ';
+            figs = [report.bad_segments(D_continuous, S2)];
             opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) get(x,'tag'),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
             opt_report=osl_report_print_figs(opt_report);
 
@@ -301,58 +332,47 @@ for subi=1:length(opt.sessions_to_do),
                 BadEpochs = ev(cellfun(@(x) ~isempty(strmatch('artefact',x)),{ev.type})); % Find only artefact events
             end
             opt_results.bad_segments.bad_segments=BadEpochs;
-
-        else
-            % plot data
-            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
-            D_continuous=spm_eeg_load(spm_file);
-            S.outlier_measure_fns={'std', 'min'};
-            S.modalities=opt.modalities;
-            for ss=1:length(S.outlier_measure_fns),
-                fig_handles=sfigure;
-                set(fig_handles,'Position',[1 1 1300 450]);
-                for mm=1:length(S.modalities),
-                    chan_inds = find(strcmp(D_continuous.chantype, S.modalities{mm}));
-                    subplot(2,1,mm);
-                    tmpdat=squeeze(D_continuous(chan_inds,:,1));
-                    plot(D_continuous.time, feval(S.outlier_measure_fns{ss}, tmpdat));
-                    a=axis;
-                    ylims=a(3:4);
-
-                    plot4paper('time(s)',[S.outlier_measure_fns{ss} '(' S.modalities{mm} ')']);
-                end
-                opt_report=osl_report_set_figs(opt_report,[S.outlier_measure_fns{ss} '_chans_with_bad_epochs_tc'],fig_handles,['DATA: ' S.outlier_measure_fns{ss} ' over chans']);
-                opt_report=osl_report_print_figs(opt_report);
+            
+            % delete obsolete spm file
+            spm_file_old=[opt.dirname filesep spm_files_basenames{subnum}];
+            Dold=spm_eeg_load(spm_file_old);
+            if(opt.cleanup_files == 1) || (opt.cleanup_files == 2)
+                Dold.delete;
             end
+
+            spm_files_basenames{subnum}=['B' spm_files_basenames{subnum}];
         end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
         %% Plot spectograms
-        disp(['%%%%%%%%%%%%%%%%%%%%%%%  PLOT SPECTOGRAMS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+        if(opt.spectograms.do)
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.spectograms, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
-        D_continuous=spm_eeg_load(spm_file);
-        S.modalities=opt.modalities;
+            spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
+            D_continuous=spm_eeg_load(spm_file);
+            S.modalities=opt.modalities;
 
-        for mm=1:length(S.modalities),
-            fig_handles=sfigure;
-            set(fig_handles,'Position',[1 1 1300 450]);
+            for mm=1:length(S.modalities)
+                fig_handles=sfigure;
+                set(fig_handles,'Position',[1 1 1500 450]);
 
-            S=[]; 
-            S.D=D_continuous; 
-            S.chantype=opt.modalities{mm};
-            S.do_plot=false;
-            S.cut_badsegments=true;
-            [spect,F,T]=osl_plotspectrogram(S);
+                S=[]; 
+                S.D=D_continuous; 
+                S.chantype=opt.modalities{mm};
+                S.do_plot=false;
+                S.cut_badsegments=true;
+                [spect,F,T]=osl_plotspectrogram(S);
 
-            %do plot
-            imagesc(T,F,spect); colorbar
-            set(gca,'ydir','normal');
-            plot4paper('time (s)','freq (hz)');
+                %do plot
+                imagesc(T,F,spect); 
+                set(gca,'ydir','normal');
+                plot4paper('time (s)','freq (hz)');
 
-            opt_report=osl_report_set_figs(opt_report,['spectogram_' opt.modalities{mm}],fig_handles,['DATA: spectogram for ' opt.modalities{mm}]);
-            opt_report=osl_report_print_figs(opt_report);
+                opt_report=osl_report_set_figs(opt_report,['opt-spectogram_' opt.modalities{mm}],fig_handles,['opt-spectogram for ' opt.modalities{mm}]);
+                opt_report=osl_report_print_figs(opt_report);
+            end
         end
-
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% DO EPOCHING (if epoch-based task data)
 
@@ -371,7 +391,7 @@ for subi=1:length(opt.sessions_to_do),
             % Note that this will also remove those trials that overlap with the bad
             % epochs identified using oslview.
 
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  EPOCH, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.epoch, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             %%%%
             % define the trials we want from the event information
@@ -389,7 +409,7 @@ for subi=1:length(opt.sessions_to_do),
             S2.reviewtrials = 0;
             S2.save = 0;
 
-            [epochinfo.trl, epochinfo.conditionlabels, S3] = spm_eeg_definetrial(S2);
+            [epochinfo.trl, epochinfo.conditionlabels] = spm_eeg_definetrial(S2);
 
             %%%%
             % adjust timings to account for delay between trigger and visual display
@@ -410,6 +430,13 @@ for subi=1:length(opt.sessions_to_do),
 
             opt_results.spm_files_epoched_basename=spm_files_epoched_basenames{subnum};
             epoched=true;
+            
+            % do plot of trial timings
+            plot_name_prefix='opt-epoch: ';
+            figs = report.trial_timings(D, [], plot_name_prefix);
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) sprintf('opt-epoch_%s',get(x,'tag')),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            opt_report=osl_report_print_figs(opt_report);            
+
         else
             % check if epoching already been done on spm_file
 
@@ -417,7 +444,7 @@ for subi=1:length(opt.sessions_to_do),
 
             D2=spm_eeg_load(spm_file);
 
-            epoched= (D2.ntrials>1) ;
+            epoched= (D2.ntrials>1);
 
             if epoched
                 spm_files_epoched_basenames{subnum}=spm_files_basenames{subnum};
@@ -426,34 +453,51 @@ for subi=1:length(opt.sessions_to_do),
         end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %% Detect bad events and chans in epoched data        
+        %% Detect bad trials and chans in epoched data        
         if(opt.outliers.do && epoched)
 
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  BAD CHAN/EVENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.outliers, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             if ~opt.epoch.do           
                 spm_files_epoched_basenames{subnum}=spm_files_basenames{subnum};
             end
             spm_file=[opt.dirname filesep spm_files_epoched_basenames{subnum}];
 
+            % copy file for result of bad trial detection
+            S2=[];
+            S2.D=spm_file;
+            %fname=fnamedat(spm_eeg_load(spm_file));
+            [pth nm]=fileparts(spm_file);
+            S2.outfile=[pth filesep 'R' nm '.mat'];
+            D2=spm_eeg_copy(S2);
+            
+            % do bad trial/chan detection
             S = struct();
             S.modalities=opt.modalities;
             S.measure_fns  = opt.outliers.outlier_measure_fns;
             S.event_significance   = opt.outliers.event_significance;  
             S.channel_significance = opt.outliers.channel_significance;
-            S.max_iter = 5;
-
-            Dold=spm_eeg_load(spm_file);
-            S2=[];
-            S2.D=Dold;
-            fname=fnamedat(Dold);
-            [pth nm]=fileparts(fname);
-            S2.outfile=[pth filesep 'S' nm '.mat'];
-            D2=spm_eeg_copy(S2);
+            S.max_iter = 1;
+            
+            % first look for bad channels
+            S.badchannels=true;
+            S.badtimes=false;
             D2 = osl_detect_artefacts(D2,S);
             D2.save();
+            
+            plot_name_prefix='opt-outliers: ';            
+            figs = [report.bad_channels(D2,opt.modalities, false, plot_name_prefix)];
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) sprintf('epoched_%s',get(x,'tag')),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            opt_report=osl_report_print_figs(opt_report);
 
-            figs = [report.bad_channels(D2) report.bad_trials(D2)];
+            % then look for bad segments
+            S.badchannels=false;
+            S.badtimes=true;
+            D2 = osl_detect_artefacts(D2,S);            
+            D2.save();
+
+            plot_name_prefix='opt-outliers: ';            
+            figs = [report.bad_trials(D2, 'std', opt.modalities, plot_name_prefix)];
             opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) sprintf('epoched_%s',get(x,'tag')),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
             opt_report=osl_report_print_figs(opt_report);
 
@@ -469,7 +513,7 @@ for subi=1:length(opt.sessions_to_do),
                 Dold.delete;
             end
 
-            spm_files_epoched_basenames{subnum}=['S' spm_files_epoched_basenames{subnum}];
+            spm_files_epoched_basenames{subnum}=['R' spm_files_epoched_basenames{subnum}];
 
             opt_results.spm_files_epoched_basename=spm_files_epoched_basenames{subnum};
 
@@ -481,9 +525,9 @@ for subi=1:length(opt.sessions_to_do),
         %% write output filename
              
         if opt.epoch.do
-            spm_file_result=[opt.dirname opt_results.spm_files_epoched_basename '.mat'];   
+            spm_file_result=[opt.dirname '/' opt_results.spm_files_epoched_basename '.mat'];   
         else
-            spm_file_result=[opt.dirname opt_results.spm_files_basename '.mat'];   
+            spm_file_result=[opt.dirname '/' opt_results.spm_files_basename '.mat'];   
         end
         
         opt_report=osl_report_add_text(opt_report,['(Output file:' spm_file_result  ')'],1);
@@ -501,11 +545,11 @@ for subi=1:length(opt.sessions_to_do),
         disp(['Save complete']);
         opt.results.fnames{subnum}=opt_results.fname;
 
-    catch ME,
+    catch ME
 
          % set output SPM file as empty for this subject:
         spm_files_basenames{subnum}=[];
-        if(opt.epoch.do),
+        if(opt.epoch.do)
             spm_files_epoched_basenames{subnum}=[];
         end
 
@@ -515,12 +559,10 @@ for subi=1:length(opt.sessions_to_do),
     end
     
     % build logfile
-    % the original command was 'cat opt_results.logfile '>' opt.results.logfile'
-    % which implies that opt.results.logfile is overwritten because it uses > not >>
-    % Thus replacing with a copyfile call here. Maybe a more sophisticated solution is
-    % required if 
     disp(['Building logfile']);
-    copyfile(opt_results.logfile,opt.results.logfile);
+    diary(opt.results.logfile);
+    text = fileread(opt_results.logfile);
+    disp(text);
 
 end
 
@@ -552,106 +594,3 @@ save(opt.fname, 'opt');
 disp(['To view OPT report, point your browser to <a href="' opt.results.report.html_fname '">' opt.results.report.html_fname '</a>']);
 
 diary off;
-
-
-
-
-
-
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% OPTIONAL EXTRAS BELOW:
-
-%%%%%%%%%%%%%%%%%%%
-%% Run this bit of code if you want to unreject all trials and channels
-if(0)
-    for subi= 1:length(spm_files), subnum=opt.sessions_to_do(subi);
-        S2=[];
-        spmfilename=spm_files{subnum};
-        S2.D = spmfilename;
-        D=spm_eeg_load(S2.D);
-
-        rejected=sum(D.badtrials)
-        tmp=1:length(D.conditions);
-        trlsel = zeros(1, length(tmp));
-        D = badtrials(D, tmp, trlsel);
-        rejected=sum(D.badtrials)
-
-        chans=D.indchantype('MEEG');
-        D = D.badchannels(1:size(chans),0);
-        D.save;
-    end
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function D=set_bad(D,BadEpochs)
-
-% Save bad epochs using method meeg/events
-BadEvents = struct([]);
-for ev = 1:numel(BadEpochs)
-  if numel(BadEpochs{ev} == 2)
-    BadEvents(ev).type     = 'artefact_OSL';
-    BadEvents(ev).value    = 'all';
-    BadEvents(ev).time     =  BadEpochs{ev}(1);
-    BadEvents(ev).duration = diff(BadEpochs{ev});
-    BadEvents(ev).offset = 0;
-  end
-end
-
-% Load events
-Events = D.events;
-
-% Remove previous bad epoch events
-if isfield(Events,'type')
-  Events(strcmp({Events.type},'artefact_OSL')) = [];
-end
-
-% Concatenate new and old events
-if size(Events,1) < size(Events,2)
-  BadEvents = BadEvents(:);
-end
-if ~isempty(BadEvents)
-  Events = [Events(:); BadEvents(:)];
-end
-
-% Save new events with previous
-D = events(D,1,Events);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [fig_handles fig_names fig_titles] = plot_bad(D, S)
-
-BadEpochs=S.BadEpochs;
-fig_handles=[];
-fig_names ={};
-fig_titles={};
-
-for ss=1:length(S.outlier_measure_fns),
-    fig_handles(ss)=sfigure;
-    set(fig_handles(ss),'Position',[1 1 1300 450]);
-    for mm=1:length(S.modalities),
-        chan_inds = find(strcmp(D.chantype, S.modalities{mm}));
-        subplot(2,1,mm);
-        tmpdat=squeeze(D(chan_inds,:,1));
-        plot(D.time, feval(S.outlier_measure_fns{ss}, tmpdat));
-        a=axis;
-        ylims=a(3:4);
-
-        for b = 1:numel(BadEpochs)
-            line([BadEpochs{b}(1) BadEpochs{b}(1)],ylims,'linewidth',1.5,'linestyle','-','color',[0.1 0.8 0.1])
-            if numel(BadEpochs{b}) == 2
-              line([BadEpochs{b}(2) BadEpochs{b}(2)],ylims,'linewidth',1.5,'linestyle','-','color','r')
-            end
-        end
-
-        plot4paper('time(s)',[S.outlier_measure_fns{ss} '(' S.modalities{mm} ')']);
-    end
-
-    fig_names{ss}=['bad_segments_' S.outlier_measure_fns{ss} '_chans_with_bad_epochs_tc'];
-    fig_titles{ss}=['BAD SEGMENTS: ' S.outlier_measure_fns{ss} ' over chans'];
-
-end
-

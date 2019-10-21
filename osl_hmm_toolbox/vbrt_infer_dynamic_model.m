@@ -39,7 +39,7 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     options.vbrt.ntraining_init=100;
     options.vbrt.ntraining=options.vbrt.ntraining_init+200;
     options.vbrt.nportions=20;
-    options.vbrt.subportion_length=50;
+    options.vbrt.subportion_length=100;
     options.vbrt.nstates=options.K;
     options.vbrt.model_mode='\"lstm\"';
     options.vbrt.alpha_softxform_model='\"softmax\"';
@@ -129,6 +129,9 @@ function [ results ] = vbrt_infer_dynamic_model( X,options )
     results.train=[];
     
     %%
+    tmp=load([options.workingdir '/costs']);
+    results.costs=tmp.costs;
+
     %%%%%%%
     
     %pyversion(pyversion_old);

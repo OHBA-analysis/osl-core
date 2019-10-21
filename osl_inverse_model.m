@@ -56,7 +56,7 @@ arg.addParameter('type','Scalar',@(x) any(strcmp(x,{'Scalar','Vector'})));
 arg.addParameter('timespan',[0 Inf]); % Time range to use in seconds [start end]
 arg.addParameter('pca_order',[],@(x) isnumeric(x) && isscalar(x) && x>0 && ~mod(x,1)); % PCA dimensionality to use for covariance matrix inversion (defaults to full rank)
 arg.addParameter('use_class_channel',false); % flag indicating whether or not to use the class channel to determine the time samples to be used for
-arg.addParameter('inverse_method','beamform',@(x) any(strcmp(x,{'beamform','beamform_bilateral','mne_eye','mne_diag_datacov','mne_adaptive'}))); % inverse method to use
+arg.addParameter('inverse_method','beamform',@(x) any(strcmp(x,{'beamform','beamform_bilateral'}))); %any(strcmp(x,{'beamform','beamform_bilateral','mne_eye','mne_diag_datacov','mne_adaptive'}))); % inverse method to use
 arg.addParameter('conditions','all',@(x) ischar(x) || iscell(x)); % Should be a cell array of conditions
 arg.addParameter('dirname','',@ischar); % dir to output results to - default/empty makes a temporary folder alongside the D object
 arg.addParameter('prefix',''); % write new SPM file by prepending this prefix
@@ -186,15 +186,13 @@ end
 if ~S.use_class_channel
     if D.ntrials == 1
         matlabbatch{3}.spm.tools.beamforming.features.plugin.contcov            = struct([]);
-        matlabbatch{3}.spm.tools.beamforming.features.woi                       = S.timespan;
     else
         matlabbatch{3}.spm.tools.beamforming.features.plugin.cov                = struct([]);
-        matlabbatch{3}.spm.tools.beamforming.features.woi                       = S.timespan;
     end
 else
     matlabbatch{3}.spm.tools.beamforming.features.plugin.cov_bysamples          = struct([]);
-    matlabbatch{3}.spm.tools.beamforming.features.woi                           = S.timespan;
 end
+matlabbatch{3}.spm.tools.beamforming.features.woi                               = S.timespan*1000; % needs to be in msecs for bf_features
 
 for jj=1:length(S.modalities),
     matlabbatch{3}.spm.tools.beamforming.features.modality{jj}                  = S.modalities{jj};

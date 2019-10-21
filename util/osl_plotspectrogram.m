@@ -2,6 +2,8 @@ function [S,F,T] = osl_plotspectrogram(Sin)
 
 % [spectrogram,freq,time] = osl_plotspectrogram(S)
 %
+% Average spectrogram over all channels
+%
 % Inputs:
 % S.D
 % S.chantype (e.g. 'MEGGRAD','MEGPLANAR')
@@ -32,13 +34,7 @@ if D.ntrials>1
     error('Only works on continuous data')
 end
 
-goodsamples = find(good_samples(D));
-
-if cut_badsegments
-    [S,F,T] = plotspectrogram(D(1,goodsamples,1),512,512*0.75,1024,D.fsample);
-else
-    [S,F,T] = plotspectrogram(D(1,:,:),512,512*0.75,1024,D.fsample);
-end
+[S,F,T] = plotspectrogram(D(1,:,:),512,512*0.75,1024,D.fsample);
 
 chindex = 1:D.nchannels;
 ch = chindex(find(strcmp(D.chantype,chantype)));
@@ -47,16 +43,29 @@ ch = chindex(find(strcmp(D.chantype,chantype)));
 
 S(:)=0;
 for i = 1:length(ch)
-  if cut_badsegments
-    S=S+plotspectrogram(D(ch(i),goodsamples,1),512,512*0.75,1024,D.fsample);
-  else
+
     S=S+plotspectrogram(D(ch(i),:,:),512,512*0.75,1024,D.fsample);
-  end
   
   %P{i} = mean(S{i},2);
   %disp([num2str(i) '/' num2str(length(ch))])
 end
 S=S/length(ch);
+
+if cut_badsegments
+
+    badsamples = ~good_samples(D);
+    
+    badsamples_d=downsample(double(badsamples),round(length(D.time)/length(T)));
+    
+    if length(badsamples_d)>=length(T)
+        badsamples=badsamples_d(1:length(T));
+    else
+        badsamples=zeros(length(T),1);
+        badsamples(1:length(badsamples_d))=badsamples_d;
+    end
+    
+    S(:,find(badsamples))=nan;
+end
 
 %% Plot mean spectrogram
 if Sin.do_plot    
@@ -95,6 +104,6 @@ if 0
     imagesc(T,F,S{ind});
     title(D.chanlabels(ind))
     set(gca,'ydir','normal');
-    xlabel('time (s)');
-    ylabel('frequency (Hz)');
+    plot4paper('time (s)', 'frequency (Hz)');
+    
 end

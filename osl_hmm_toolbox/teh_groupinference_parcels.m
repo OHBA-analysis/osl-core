@@ -209,7 +209,9 @@ filenames.prepared_data=[pathstr '/prepared_data.mat'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if todo.prepare
-            
+           
+    disp('P R E P A R E   H M M   D A T A');
+    
     %MixingMatrix = [];
     hmmdata      = [];
 
@@ -273,7 +275,7 @@ if todo.prepare
         disp(['Keeping top ' num2str(pcadim) ' PCs']);
         pcadim = min(pcadim,size(dat_concat,1));
 
-        if false
+        if true
             [allsvd,M] = eigdec(C,pcadim);    
 
             if whiten
@@ -377,7 +379,8 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if todo.hmm
-           
+          
+    disp('I N F E R   H M M');
     % load in what's needed
     if ~todo.prepare
         load(filenames.prepared_data,'X'); 
@@ -430,8 +433,7 @@ if todo.hmm
             options.workingdir=hmmdir;
             hmm = vbrt_infer_dynamic_model_gamma(X,options);
     end    
-        
-    
+            
     % save('/Users/woolrich/for_diego','X','hmmT','options'); !scp /Users/woolrich/for_diego.mat $WS12HD
     % Error running [hmm, ~, ~, ~, ~, ~, fehist] = hmmmar(X,hmmT,options); You can get the data from: hbaws12.ohba.ox.ac.uk:/home/mwoolrich/homedir/for_diego.mat
     
@@ -450,7 +452,39 @@ if todo.hmm
         case 'hmm'
             hmm.gamma = hmmdecode(X,hmmT,hmm,0);  % last argument: 0, state time courses; 1, viterbi path
             hmm.statepath = hmmdecode(X,hmmT,hmm,1);  % last argument: 0, state time courses; 1, viterbi path
+            
     end
+    
+    %%%%%%%%
+    % Need to add back in bad data segments into gamma and statepath
+    subj_inds_new=[];
+    hmm_statepath_new=[];
+    hmm_gamma_new=[];
+    
+    for subnum = 1:length(data_files)
+        
+        hmm_sub_gamma = hmm.gamma(hmm.subj_inds==subnum,:);
+        hmm_sub_statepath = hmm.statepath(hmm.subj_inds==subnum);
+
+        Dp = spm_eeg_load(data_files{subnum});
+        
+        hmm_sub_statepath_new=zeros(size(Dp,2),1);
+        hmm_sub_statepath_new(good_samples(Dp))=hmm_sub_statepath;
+        hmm_statepath_new = [hmm_statepath_new; hmm_sub_statepath_new];
+        
+        hmm_sub_gamma_new=zeros(size(Dp,2),hmm.K);
+        hmm_sub_gamma_new(good_samples(Dp),:)=hmm_sub_gamma;
+        hmm_gamma_new = [hmm_gamma_new; hmm_sub_gamma_new];
+        
+        subj_inds_new  = [subj_inds_new, subnum*ones(1,size(Dp,2))];       
+        
+    end
+    
+    hmm.subj_inds=subj_inds_new;
+    hmm.statepath=hmm_statepath_new;
+    hmm.gamma=hmm_gamma_new;
+ 
+    %%%%%%%%
     
     %hmm.statepath=zeros(size(hmm.statepath_hot,1),1);
     %for ii=1:size(hmm.statepath_hot,1)
@@ -471,6 +505,8 @@ end
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if todo.output
+    
+    disp('O U T P U T   R E S U L T S');
     
     % load in what's needed
     if ~todo.prepare
@@ -523,8 +559,12 @@ if todo.output
                 goodsamples = good_samples(Dp);
 
                 sp_full = zeros(1,Dp.nsamples*Dp.ntrials);
-                sp_full(goodsamples(1:ntpts)) = hmm_sub.statepath';
-                epoched_statepath_sub{subnum} = reshape(sp_full,[1,Dp.nsamples,Dp.ntrials]);
+                sp_full(goodsamples(1:ntpts)) = hmm_sub.statepath(goodsamples(1:ntpts))';
+                
+                if Dp.ntrials>1
+                    warning('Trials in hmm.epoched_statepath_sub that contain bad segments are not excluded!');
+                    epoched_statepath_sub{subnum} = reshape(sp_full,[1,Dp.nsamples,Dp.ntrials]);
+                end
                 
                 if Dp.ntrials>1
                     hmm.is_epoched=1;

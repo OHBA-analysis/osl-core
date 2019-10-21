@@ -59,7 +59,7 @@ th=xx(indsearch(nearest(prob2(indsearch,ind_null),S.pvalue_th)));
 
 % check to see if 2nd dist is irrelevant if it is too similar to
 % 1st dist
-if abs(range(mix.centres))<0.75 || th<0
+if abs(range(mix.centres))<0.5 || th<0
     warning('2nd dist is irrelevant as it is too similar to 1st dist');
     th=[];
 end

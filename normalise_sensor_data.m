@@ -32,17 +32,17 @@ norm_vec=ones(length(D.chanlabels),1);
 
 clear chanind;
 
-for ff=1:length(S.modalities),
+for ff=1:length(S.modalities)
     
     % get good channels
-    chanind{ff} = strmatch(S.modalities{ff}, D.chantype);
-    chanind{ff} = setdiff(chanind{ff}, D.badchannels);
+    chanind{ff}= D.indchantype(S.modalities{ff},'good');
+    
     if isempty(chanind{ff})
         error(['No good ' S.modalities{ff} ' channels were found.']);
     end    
-end;
+end
 
-for ff=1:length(S.modalities),
+for ff=1:length(S.modalities)
     
     % calc normalisation
     tmpdat=D(chanind{ff},find(samples2use),trials);
@@ -316,11 +316,12 @@ subplot(2,2,2);legend(S.modalities);title('normalised log eigenspectrum');
 subplot(2,2,3);plot(spm_vec(vs));xlabel('Chan');title('normalised variances');
 subplot(2,2,4);xlabel('PC');title('normalised std ratios');legend(S.modalities);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [pcadim, allsvd]=establish_dim(dat,S)
 
 % check for empty input
-if isempty(dat),
+if isempty(dat)
     pcadim = 0;
     allsvd = [];
     return;
@@ -335,21 +336,21 @@ else
     pcadim_adapt = spm_pca_order(dat)-1;
     if((pcadim==-1 || pcadim>pcadim_adapt) && pcadim_adapt>1)
         pcadim = pcadim_adapt;
-    end;
+    end
     
-end;
+end
 
 [Apca,~,allsvd] = pca(dat,'numcomponents',pcadim);
 allsvd = allsvd(1:pcadim);
 min_eig2use = osl_check_eigenspectrum(allsvd, pcadim, 0);
 
-if S.force_pca_dim,
+if S.force_pca_dim
     if(min_eig2use<S.pca_dim)
         disp(['min_eig2use=' num2str(min_eig2use)]);
         disp(['S.pca_dim=' num2str(S.pca_dim)]);
         
         error('Dimensionality of data is less than the pca_dim being forced');
-    end;
+    end
 else
     pcadim=min_eig2use;
-end;
+end
