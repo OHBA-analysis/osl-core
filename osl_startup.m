@@ -84,10 +84,8 @@ function osl_startup( osl_root )
     addpath(fullfile(osl_root,'MEG-ROI-nets'));
 
     % Ensure osl-core directories get priority in path by adding it last
-    cellfun( ...
-        @(x) addpath(osl_core,x), ...
-        {'africa','examples','HCP','oat','oil','opt','osl_hmm_toolbox','oslview','rhino','util'} ...
-    );
-    addpath(osl_root);
+    local = {'','africa','examples','HCP','oat','oil','opt','osl_hmm_toolbox','oslview','rhino','util'};
+    local = cellfun( @(x) fullfile(osl_core,x), local, 'UniformOutput', false );
+    addpath(local{:});
 
 end
