@@ -20,15 +20,15 @@ xform=eye(4)*1;xform(1,1)=-mni_res(1);xform(2,2)=mni_res(2);xform(3,3)=mni_res(3
 xform(1:3,4)=xstart;
 mni_coord_vol=zeros([size(mask),3]);
 
-for x=1:size(mask,1),
-for y=1:size(mask,2),
-for z=1:size(mask,3),
-for pp=1:size(mask,4),
+for x=1:size(mask,1)
+for y=1:size(mask,2)
+for z=1:size(mask,3)
+for pp=1:size(mask,4)
 
     if(mask(x,y,z,pp)>0)
         tmp=round(xform*[([x-1 y-1 z-1]) 1]');
         mni_coord_vol(x,y,z,pp,:)=[tmp(1:3)];
-    end;
+    end
 
 end
 end
@@ -36,6 +36,6 @@ end
 end
 
 mni_coords=zeros(size(mask,4),3);
-for pp=1:size(mask,4),
+for pp=1:size(mask,4)
     mni_coords(pp,:)=squeeze(mean(vols2matrix(squeeze(mni_coord_vol(:,:,:,pp,:)),mask(:,:,:,pp)),1));
 end

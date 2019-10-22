@@ -9,8 +9,8 @@
 %
 % First, we will load an SPM object containing our data, and select a parcellation 
 % for the analysis 
-D = spm_eeg_load(fullfile(osldir,'example_data','roinets_example','subject_1'));
-spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
+D = spm_eeg_load(osldir('example_data','roinets_example','subject_1'));
+spatial_basis_file = osldir('parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
 
 %%
 % In general, an SPM MEEG object may have multiple online montages corresponding to 
