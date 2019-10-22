@@ -4,7 +4,7 @@ function hfig = trial_timings(D, epochinfo, plot_name_prefix)
 % or
 % hfig = event_timings(D_continuous, epochinfo)
 %
-% Plots occurence of trials and bad samples in unepoched, continuous
+% Plots occurence of trials (whether they are marked as good or bad) and bad samples in unepoched, continuous
 % time.
 % Input D_epoched needs to be epoched data that contains an epochinfo field (normally this is set by osl_epoch)
 %
