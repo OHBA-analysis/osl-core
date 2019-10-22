@@ -28,7 +28,7 @@ function osl_shutdown( clean_backup_path )
     % it is common to add the osl-core folder manually in order to call osl_startup.
     if clean_backup_path
         p = strsplit(path,pathsep);
-        p = p(cellfun( @(x) osl_util.contains(x,osl_root), p ));
+        p = p(cellfun( @(x) ~isempty(strfind(x,osl_root)), p )); %#ok
         cellfun( @(x) rmpath(x), p );
     end
 
