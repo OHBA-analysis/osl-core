@@ -13,11 +13,13 @@
 osl_startup;
 
 %%
-%This only needs to be run once, each time you re-start MATLAB
+% This only needs to be run once, each time you re-start MATLAB
 
+%%
 % First, we will load in an SPM MEEG object that has been preprocessed,
 % including epoching. This is from a subject doing two tasks interleaved
 % together:
+%
 % * a simple finger tapping
 % * viewing a simple visual stimulus
 

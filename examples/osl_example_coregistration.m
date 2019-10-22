@@ -3,10 +3,12 @@
 % This tutorial covers the registration of MRI and M/EEG datasets into a
 % common space to allow for analysis in sourcespace.
 %
-% This practical uses data from the coreg_example
-% subfolders in the OSL example_data directory. Please make sure this
-% is present before starting.
+% This practical uses data from the |coreg_example|
+% subfolders in the OSL |example_data| directory. Please make sure this
+% is present before starting. 
 %
+
+%% Coordinate Systems
 % There are several co-ordinate systems which must be aligned before we can
 % project our sensor MEG data into source space. These are:
 %
@@ -17,7 +19,8 @@
 % headshape points. These are acquired prior to the MEG scan.
 % * MRI Coordinates - This is the information from the individuals
 % structural T1 MRI scan.
-%
+
+%% Coregistration summary
 % The coregistration follows these steps
 %
 % # Extraction of the scalp shape and fiducial points from the MRI scan.
@@ -28,40 +31,37 @@
 %
 % Once these transforms have been identified we can move between MEG
 % sensors and specific locations within the MRI scan.
+%
 
-%% SET UP ANALYSIS
-% The only thing you need to do is to go into your OSL directory (i.e. type _cd /somedirectory/osl-core_ ) and then run the following.
+%% Setup the analysis
+% To start OSL only thing you need to do is to go into your OSL directory 
+% (i.e. type _cd /somedirectory/osl-core_ ) and then run the following.
 osl_startup;
 
 %%
-% This will not be necessary after you have done this once, i.e. no need to
-% repeat during one of the follow-up practicals.
+% This only needs to be run once, each time you re-start MATLAB
 
-%% COREGISTRATION WITH SPM
+%%
+% We now setup the location of the data to be coregistered
+datadir = fullfile(osldir,'example_data','coreg_example');
+spm_files_continuous=[datadir '/Aface_meg1.mat'];
+
+%% Coregistration using SPM
 %
-% Coregistration is performed in OSL using osl_headmodel.
+% Coregistration is performed in OSL using |osl_headmodel|.
 %
-% We will first run a standard coregistration using SPM. More information
-% about this can be found
-% here:
-%
-% <https://ohba-analysis.github.io/osl-docs/pages/docs/preprocessing.html#coregistration-using-rhino>
-%
+% We will first run a standard coregistration using SPM. 
 % This takes an option structure defining several key parameters:
 %
-% * S.D - spm object filename
-% * S.mri - structural mri scan filename
-% * S.useheadshape - set to 0 or 1 to indicate whether to use the Polhemus
+% * |S.D| - spm object filename
+% * |S.mri| - structural mri scan filename
+% * |S.useheadshape| - set to 0 or 1 to indicate whether to use the Polhemus
 % headshape points to refine the alignment between the MRI and Polhemus
 % data
 %
 % The following example runs standard SPM coregistration on an example dataset. 
 % While running, SPM will open
 % a window showing the alignment of the headshape points to the scalp.
-
-% Set up data paths
-datadir = fullfile(osldir,'example_data','coreg_example');
-spm_files_continuous=[datadir '/Aface_meg1.mat'];
 
 S = [];
 S.D = spm_files_continuous;
@@ -74,9 +74,11 @@ S.fid.label.lpa = 'LPA';
 S.fid.label.rpa = 'RPA';
 D=osl_headmodel(S);
 
-%% VIEW SPM REGISTRATION
+%% View SPM registration
 %
-% This SPM tool allows us to view the results of the coregistration (click and drag to rotate the image - you may need to click on the "Rotate 3D" toolbar button)
+% This SPM tool allows us to view the results of the coregistration 
+% (click and drag to rotate the image - you may need to click on the 
+% "Rotate 3D" toolbar button)
 %
 % The coregistration shows several types of information:
 %
@@ -93,7 +95,7 @@ figure('Position',[100 100 1024 1024])
 spm_eeg_inv_checkdatareg_3Donly(spm_files_continuous);
 zoom(0.5)
 
-%% ADVANCED COREGISTRATION WITH RHINO
+%% Coregistration with RHINO
 %
 % To ensure a good coregistration we must make sure that the alignment
 % between the MRI and Polhemus coordinates is as accurate as possible.
@@ -125,7 +127,7 @@ S.fid.label.lpa = 'LPA';
 S.fid.label.rpa = 'RPA';
 D=osl_headmodel(S);
 
-%% VISUALISING STRUCTURAL PREPROCESSING
+%% Visualising structural preprocessing
 %
 % The first time RHINO coregistration is run the structural data will be
 % preprocessed using FSL tools. These perform a linear registration, brain
@@ -133,16 +135,16 @@ D=osl_headmodel(S);
 %
 % More information about RHINO can be found here:
 %
-% <https://sites.google.com/site/ohbaosl/preprocessing/rhino>
+% <https://ohba-analysis.github.io/osl-docs/pages/docs/preprocessing.html#coregistration-using-rhino>
 %
-% We can visualise the extracted scalp surface and original MRI scan in fslview with the
-% following call.
+% We can visualise the extracted scalp surface and original MRI scan in 
+% |fsleyes| with the following call.
 %
 % This will load the structural scan overlayed on the scalp extraction.
 % You can turn-off the strutural scan by double clicking on the picture of
 % the eye to the left of the label 'subject1_struct_canon.nii' in the
-% middle-bottom of the screen. Underneath, the scalp is the boundary between the white
-% (outside) and black (inside) regions.
+% middle-bottom of the screen. Underneath, the scalp is the boundary 
+% between the white (outside) and black (inside) regions.
 %
 % Try turning the structural scan on and off whilst exploring the
 % image. There is a good correspondance between the scalp on the MRI and
@@ -155,9 +157,9 @@ scalp = fullfile(osldir,'example_data','coreg_example','rhino_subject1_struct_ca
 
 fsleyes({mri, scalp},[],'greyscale','none')
 
-%% VISUALISING THE RHINO COREGISTRATION
+%% Visualising the RHINO coregistration
 %
-% We can visualise the full coregistration by calling rhino_display(D).
+% We can visualise the full coregistration by calling |rhino_display(D)|.
 %
 % This contains similar information to the SPM coreg.
 %
