@@ -35,6 +35,10 @@ if nargin==1 || isempty(epochinfo)
     condlist=D.condlist;
     
     D_epoched=D;
+    
+    if D_epoched.fsample ~= D_continuous.fsample
+        error('fsample must be same for D and D_continuous=D.epochinfo.D to plot trial_timings');
+    end
 else
     
     % 2 inputs
@@ -51,7 +55,8 @@ else
 end
 clear D;
 
-% epochinfo is the begin_sample, end_sample and offset (in ms) of each trial (e.g. computed by spm_eeg_definetrial)
+% epochinfo.trl is [ begin_sample, end_sample, offset ] (in ms) of each 
+% trial (e.g. computed by spm_eeg_definetrial)
 
 % calculate vector of when each condition has a trial happening
 condition_on=zeros(length(condlist),length(D_continuous.time));
@@ -65,27 +70,29 @@ for cc=1:length(condlist)
             
     if isempty(D_epoched)
         for ee=1:size(epochinfo.trl,1)
-            if strcmp(epochinfo.conditionlabels{ee},condlist{cc})
-                condition_on(cc,epochinfo.trl(ee,1):epochinfo.trl(ee,2))=df(cc+1);
-                condition_start(cc,epochinfo.trl(ee,1))=df(cc+1);
-                condition_end(cc,epochinfo.trl(ee,2))=df(cc+1);
+            if epochinfo.trl(ee,1)>=1 && epochinfo.trl(ee,2)<=length(D_continuous.time)
+                if strcmp(epochinfo.conditionlabels{ee},condlist{cc})
+                    condition_on(cc,epochinfo.trl(ee,1):epochinfo.trl(ee,2))=df(cc+1);
+                    condition_start(cc,epochinfo.trl(ee,1))=df(cc+1);
+                    condition_end(cc,epochinfo.trl(ee,2))=df(cc+1);
+                end
             end
         end
     else
         % note that the trials in epochinfo can be different to those in
-        % D_epoched, due to trials that run of the start or the end of the
+        % D_epoched, due to trials that run off the start or the end of the
         % continuous data
-        trial_onsets_trl=epochinfo.trl(:, 1)./D_continuous.fsample; % in secs
-
+        
         for ee=1:D_epoched.ntrials
-            % Find trial index in epochinfo by matching trial onsets
-            ind=find(trial_onsets_trl==D_epoched.trialonset(ee));
+            
+            if strcmp(D_epoched.conditions{ee},condlist{cc})
+                start=round(D_epoched.trialonset(ee)*D_epoched.fsample);
 
-            if strcmp(epochinfo.conditionlabels{ind},condlist{cc})
-                condition_on(cc,epochinfo.trl(ind,1):epochinfo.trl(ind,2))=df(cc+1);
-                condition_start(cc,epochinfo.trl(ind,1))=df(cc+1);
-                condition_end(cc,epochinfo.trl(ind,2))=df(cc+1);
+                condition_on(cc,start : start + length(D_epoched.time) - 1)=df(cc+1);
+                condition_start(cc,start)=df(cc+1);
+                condition_end(cc,start + length(D_epoched.time) - 1)=df(cc+1);
             end
+            
         end
     end
 end
@@ -105,11 +112,11 @@ for cc=1:length(condlist)
     
     tmp=double(condition_start(cc,:));
     tmp(tmp==0)=nan;
-    plot(D_continuous.time, tmp, [get_cols(cc) 'o'], 'MarkerSize',8, 'LineWidth',2);
+    plot(D_continuous.time, tmp, [get_cols(cc) 'o'], 'MarkerSize',12, 'LineWidth',2);
     
     tmp=double(condition_end(cc,:));
     tmp(tmp==0)=nan;
-    plot(D_continuous.time, tmp, [get_cols(cc) 'x'], 'MarkerSize',8, 'LineWidth',2);
+    plot(D_continuous.time, tmp, [get_cols(cc) 'x'], 'MarkerSize',12, 'LineWidth',2);
 end
 
 tmp=double(~good_samples(D_continuous,D_continuous.indchantype('MEEG','GOOD')))*df(length(condlist)+2);
