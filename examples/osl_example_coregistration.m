@@ -18,6 +18,10 @@
 % headshape points. These are acquired prior to the MEG scan.
 % * MRI Coordinates - This is the information from the individuals
 % structural T1 MRI scan.
+%
+% See
+% <https://ohba-analysis.github.io/osl-docs/pages/docs/preprocessing.html#coregistration-using-rhino>
+% for more information.
 
 %% Coregistration summary
 % The coregistration follows these steps
