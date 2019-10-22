@@ -1,5 +1,6 @@
 %% Beamforming in OSL
 % This example shows how to perform beamforming
+%
 
 %%
 % This practical will work with a single subject's data from an emotional
@@ -12,11 +13,13 @@
 osl_startup;
 
 %%
-%This only needs to be run once, each time you re-start MATLAB
+% This only needs to be run once, each time you re-start MATLAB
 
+%%
 % First, we will load in an SPM MEEG object that has been preprocessed,
 % including epoching. This is from a subject doing two tasks interleaved
 % together:
+%
 % * a simple finger tapping
 % * viewing a simple visual stimulus
 
@@ -34,7 +37,7 @@ S.timewin = [-4 4]*1000; % in msecs
 D_epoched = spm_eeg_crop(S);
 
 %%
-% Note that we can visualise the timings of the trials, in continuous time, before the epoching was done. This
+% Note that we can visualise the timing of different trials, in continuous time, before the epoching was done. This
 % shows the different trial types (alongside the
 % samples that have been marked as bad - if there are any)
 % The start of a trial is marked with an 'o', and the end is marked with an
@@ -42,7 +45,7 @@ D_epoched = spm_eeg_crop(S);
 % 
 % You can see that this choice of window width (i.e. -4 to 4secs) avoids overlapping
 % between trials of the same type. Note that there were no bad samples marked in
-% continuous space in this data.
+% continuous space in this data. 
 
 report.trial_timings(D_epoched);
 

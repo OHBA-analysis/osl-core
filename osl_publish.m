@@ -1,4 +1,5 @@
 function output_html = osl_publish( filename, evalCode, matlabStyle, docsFolder )
+%
 % Make an HTML page on the OSL website
 %
 % INPUTS
@@ -11,12 +12,18 @@ function output_html = osl_publish( filename, evalCode, matlabStyle, docsFolder 
 %
 % To complete publishing, add files via Git and push to GitHub
 %
+%
 % PUBLISHING WORKFLOW
-% 1. After writing your script, use osl_publish('myscript',false,'') to do an initial test of the formatting
-% 2. Then, use osl_publish('myscript',true,'') to check the figures are correct
-% 3. Finally, use osl_publish('myscript') to generate the github-pages ready files
+%
+% 1. After writing your script, use osl_publish('myscript',false) to do an initial test of the formatting
+% 2. Then, use osl_publish('myscript',true) to check the figures are correct
+% 3. Finally, use osl_publish('myscript',true) to generate the github-pages ready files
 % 4. Add the new files in the docs folder, commit, and push, to publish them online
 %
+% NOTE: if the script to be published is inside a folder added to the path (e.g. example/osl_example_blah),
+%       you do NOT need to specify that folder when calling osl_publish. That is, calling
+%           osl_publish( 'osl_example_blah', true )
+%       will work just fine.
 %
 % RA 2017, JH 2019
 

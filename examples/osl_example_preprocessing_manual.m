@@ -678,7 +678,7 @@ end
 % shows the different trial types alongside the
 % samples that have been marked as bad, in continuous time.
 % The start of a trial is marked with an 'o', and the end is marked with an
-% 'x'.
+% 'x'. Bad trials are shown in black.
 
 subnum=1;
 report.trial_timings(spm_files{subnum}, epochinfo{subnum});
@@ -821,6 +821,14 @@ disp(D.badchannels);
 
 report.bad_trials(D);
 
+%%
+% And we can view the different trial types alongside the
+% samples that have been marked as bad, in continuous time.
+% The start of a trial is marked with an 'o', and the end is marked with an
+% 'x'. Bad trials are shown in black.
+
+report.trial_timings(D);
+
 %% MANUAL BAD TRIAL/CHANNEL DETECTION 
 % Generally, automated bad trial/channel detection is sufficient. 
 % However, there is also the option to run manual bad trial/channel detection using a Fieldtrip interactive tool.
@@ -829,7 +837,7 @@ report.bad_trials(D);
 %
 % Here we will run the manual dection on the data that has already had the automated bad
 % trial/channel detection done (i.e. using the data with the 'ReABdff' prefix as input).
-clear spm_files;
+clear spm_files
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
     spm_files{subnum}=fullfile(workingdir,['ReABdff' spm_files_basenames{subnum}]);
 

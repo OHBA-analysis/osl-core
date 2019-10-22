@@ -1,5 +1,5 @@
 function h = bad_trials(D,measure_fn,modalities,plot_name_prefix)
-	
+    
 % h = bad_trials(D)
 % h = bad_trials(D,measure_fn)
 % h = bad_trials(D,measure_fn,modalities)
@@ -22,16 +22,16 @@ function h = bad_trials(D,measure_fn,modalities,plot_name_prefix)
         plot_name_prefix='';
     end
     
-	D = D.montage('switch',0);
-	
-	h = [];
-	for j = 1:length(modalities)
-		chaninds = D.indchantype(modalities{j},'GOOD');
-		data = D(chaninds,:,:);
-		dat = feval(measure_fn,reshape(data,size(data,1)*size(data,2),size(data,3)),[],1); % Metric for each trial
-		badtrials = ismember(1:D.ntrials,D.badtrials);
+    D = D.montage('switch',0);
+    
+    h = [];
+    for j = 1:length(modalities)
+        chaninds = D.indchantype(modalities{j},'GOOD');
+        data = D(chaninds,:,:);
+        dat = feval(measure_fn,reshape(data,size(data,1)*size(data,2),size(data,3)),[],1); % Metric for each trial
+        badtrials = ismember(1:D.ntrials,D.badtrials);
 
-		h(end+1) = figure('name',sprintf([plot_name_prefix 'Bad trials - ' modalities{j}]),'tag',sprintf([plot_name_prefix 'bad_trials_modality_' modalities{j}]));
+        h(end+1) = figure('name',sprintf([plot_name_prefix 'Bad trials - ' modalities{j}]),'tag',sprintf([plot_name_prefix 'bad_trials_modality_' modalities{j}]));
 
         subplot(4,1,1)
         [hs hsx]=hist(dat,ceil(length(dat)/10));
