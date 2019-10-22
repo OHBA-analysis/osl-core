@@ -18,7 +18,7 @@ function samples = event_to_sample(D,event_type,modality)
     samples = false(1,D.nsamples);
 
     if ischar(event_type) || isstr(event_type)
-    	event_type = {event_type};
+        event_type = {event_type};
     end
 
     if ischar(modality) || isstr(modality)
@@ -41,7 +41,7 @@ function samples = event_to_sample(D,event_type,modality)
     end
 
     for j = 1:length(ev)
-    	samples(ev(j).sample+(0:(ev(j).duration-1))) = true;
+        samples(ev(j).sample+(0:(ev(j).duration-1))) = true;
     end
 
     samples = samples(1:D.nsamples);

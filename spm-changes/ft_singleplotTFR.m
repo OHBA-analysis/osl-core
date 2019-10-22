@@ -108,7 +108,7 @@ cfg = ft_checkconfig(cfg, 'renamedval',  {'directionality', 'feedback',    'infl
 cfg = ft_checkconfig(cfg, 'renamed',     {'channelindex',   'channel'});
 cfg = ft_checkconfig(cfg, 'renamed',     {'channelname',    'channel'});
 cfg = ft_checkconfig(cfg, 'renamed',     {'cohrefchannel',  'refchannel'});
-cfg = ft_checkconfig(cfg, 'renamed',	   {'zparam',         'parameter'});
+cfg = ft_checkconfig(cfg, 'renamed',       {'zparam',         'parameter'});
 cfg = ft_checkconfig(cfg, 'deprecated',  {'xparam',         'yparam'});
 
 % Set the defaults:

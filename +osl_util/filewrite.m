@@ -26,7 +26,7 @@ function count = filewrite( fpath, txt, fmode )
 
     % process text
     if iscellstr(txt)
-        txt = strjoin(txt,char(10));
+        txt = strjoin(txt,newline);
     end
     assert( ischar(txt), 'Input text should be a string or a cell of strings.' );
 

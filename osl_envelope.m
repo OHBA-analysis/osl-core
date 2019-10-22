@@ -1,5 +1,5 @@
 function [env,phase] = osl_envelope(D,varargin)
-	% Return Hilbert envelope and corresponding phases
+    % Return Hilbert envelope and corresponding phases
     %
     % INPUTS
     % - D : MEEG object OR n_signals x n_samples matrix
@@ -29,11 +29,11 @@ function [env,phase] = osl_envelope(D,varargin)
     arg.parse(varargin{:});
 
     if isa(D,'meeg')
-    	fs = D.fsample;
+        fs = D.fsample;
         clean = good_samples(D);
-    	D = D(:,:);
+        D = D(:,:);
     else
-    	fs = arg.Results.fs;
+        fs = arg.Results.fs;
         if isempty(fs)
             error('If D is a matrix, the sampling rate must be specified to ensure filtering and downsample work properly');
         end
@@ -46,8 +46,8 @@ function [env,phase] = osl_envelope(D,varargin)
 
     % If doing PM orthogonalization, do it before filtering
     if arg.Results.orthogonalise && isnumeric(arg.Results.orthog_method)
-    	D = leakcorr(D.',size(D,2),arg.Results.orthog_method).';
-	end
+        D = leakcorr(D.',size(D,2),arg.Results.orthog_method).';
+    end
 
     if ~isempty(arg.Results.filter)
         D = osl_filter(D,arg.Results.filter,'fs',fs);
@@ -55,7 +55,7 @@ function [env,phase] = osl_envelope(D,varargin)
 
     % If doing Giles orthogonalization, do it after
     if arg.Results.orthogonalise && ~isnumeric(arg.Results.orthog_method)
-    	D = ROInets.remove_source_leakage(D,arg.Results.orthog_method);
+        D = ROInets.remove_source_leakage(D,arg.Results.orthog_method);
     end
 
     % Compute the envelope and phase timecourses
