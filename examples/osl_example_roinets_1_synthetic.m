@@ -2,7 +2,7 @@
 %
 % This example uses synthetic signals to illustrate the effect of orthogonalization.
 %
-%%
+%% TUTORIAL
 % Spatial leakage in the beamformer results in correlations between adjacent/nearby voxels being
 % introduced, that are not the result of correlations in neural activity. As an approximation, this
 % can be corrected for by removing all zero-lag correlations. Note that this does not eliminate correlations
