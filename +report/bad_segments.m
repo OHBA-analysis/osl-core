@@ -17,6 +17,7 @@ if nargin < 2
     S=[];
 end
 
+try plot_name_prefix=S.plot_name_prefix; catch, plot_name_prefix = ''; end
 try dummy_epoch_tsize=S.dummy_epoch_tsize; catch, dummy_epoch_tsize = 1; end
 try modalities=S.modalities; 
 catch    
@@ -41,7 +42,7 @@ for j = 1:length(modalities)
         dat = feval(measure_fn,reshape(data,size(data,1)*size(data,2),size(data,3)),[],1); % Metric for each virtual trial
 
     
-        h(end+1) = figure('name',sprintf('Bad Segments - %s',modalities{j}),'tag',sprintf('bad_segments_modality_%s',modalities{j}));
+        h(end+1) = figure('name',sprintf([plot_name_prefix 'Bad Segments - ' modalities{j}]),'tag',sprintf([plot_name_prefix 'bad_segments_modality_' modalities{j}]));
 
         subplot(4,1,1)
         [hs hsx]=hist(dat,ceil(length(dat)/10));
@@ -78,7 +79,7 @@ for j = 1:length(modalities)
 
     end
     
-    h(end+1) = figure('name',sprintf('Bad segment timings - %s',modalities{j}),'tag',sprintf('bad_segments_timings_modality_%s',modalities{j}));
+    h(end+1) = figure('name',sprintf([plot_name_prefix 'Bad segment timings - ' modalities{j}]),'tag',sprintf([plot_name_prefix 'bad_segments_timings_modality_' modalities{j}]));
 
     tmp=double(~good_samples(D,D.indchantype(modalities{j},'GOOD'))*0.05);
     tmp(tmp==0)=nan;

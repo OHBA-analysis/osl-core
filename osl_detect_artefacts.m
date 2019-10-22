@@ -199,7 +199,5 @@ function D = osl_detect_artefacts(D,varargin)
         end
     else
         bt = D.badtrials;
-        for j = 1:length(bt)
-            fprintf('Trial %d is bad\n',bt(j));
-        end
+        fprintf('Bad times - rejected %d (%.0f%%) of trials in epoched data\n',length(bt),100*length(bt)/D.ntrials);        
     end

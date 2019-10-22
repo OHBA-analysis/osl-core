@@ -83,7 +83,7 @@ function [out,cid,sid,tid] = good_samples(D, cid, sid, tid, check_ctype)
     
 	for i = 1:length(tid)
 
-		% Retrieve all events associated with D trial
+        % Retrieve all events associated with D trial
                 
 	    ev = events(D, tid(i), 'samples');	            
         if iscell(ev), ev = ev{1}; end
@@ -104,7 +104,7 @@ function [out,cid,sid,tid] = good_samples(D, cid, sid, tid, check_ctype)
 	        end
 	    end
 
-	end
+    end
 
 	out = out(:, sid, :);
 	out(:, :, badtrials(D, tid)) = false;

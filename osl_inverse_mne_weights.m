@@ -84,13 +84,13 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 % References:
 %  Wipf and Nagarajan. A unified Bayesian framework for MEG/EEG source imaging. Neuroimage (2009) vol. 44 (3) pp. 947-66
 %
-%	Dale, A.M. & Sereno, M.I.(1993) "Improved localization of cortical
-%	activity by combining EEG and MEG with MRI cortical surface
-%	reconstruction: a linear approach," J. Cogn. Neurosci 5, pp. 162--176.
+%   Dale, A.M. & Sereno, M.I.(1993) "Improved localization of cortical
+%   activity by combining EEG and MEG with MRI cortical surface
+%   reconstruction: a linear approach," J. Cogn. Neurosci 5, pp. 162--176.
 %
-%	Pascual-Marqui, R.D. (2002) "Standardized low-resolution brain
-%	electromagnetic tomography (sLORETA): technical details," Methods Find.
-%	Exp. Clin. Pharmacol. 24 (Suppl D) pp. 5--12.
+%   Pascual-Marqui, R.D. (2002) "Standardized low-resolution brain
+%   electromagnetic tomography (sLORETA): technical details," Methods Find.
+%   Exp. Clin. Pharmacol. 24 (Suppl D) pp. 5--12.
 %
 %   Hamalainen, M.S., Lin, F. & Mosher, J.C. (2010) "Anatomically and
 %   functionally constrained minimum-norm estimates." In Hansen, P.C.,
@@ -106,26 +106,26 @@ function [W, W_nonorm,lf] = osl_inverse_mne_weights(SensorData, LeadFields, Nois
 %   Wens, V. et al. (2015) "A geometric correction scheme for spatial leakage effects in MEG/EEG seed-based functional connectivity mapping," Hum. Brain. Mapp. (In review)
 
 
-%	Copyright 2015 OHBA
-%	This program is free software: you can redistribute it and/or modify
-%	it under the terms of the GNU General Public License as published by
-%	the Free Software Foundation, either version 3 of the License, or
-%	(at your option) any later version.
-%	
-%	This program is distributed in the hope that it will be useful,
-%	but WITHOUT ANY WARRANTY; without even the implied warranty of
-%	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%	GNU General Public License for more details.
-%	
-%	You should have received a copy of the GNU General Public License
-%	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%   Copyright 2015 OHBA
+%   This program is free software: you can redistribute it and/or modify
+%   it under the terms of the GNU General Public License as published by
+%   the Free Software Foundation, either version 3 of the License, or
+%   (at your option) any later version.
+%   
+%   This program is distributed in the hope that it will be useful,
+%   but WITHOUT ANY WARRANTY; without even the implied warranty of
+%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%   GNU General Public License for more details.
+%   
+%   You should have received a copy of the GNU General Public License
+%   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-%	$LastChangedBy$
-%	$Revision$
-%	$LastChangedDate$
-%	Contact: giles.colclough@magd.ox.ac.uk
-%	Originally written on: GLNXA64 by Giles Colclough, 19-Jan-2015 14:40:17
+%   $LastChangedBy$
+%   $Revision$
+%   $LastChangedDate$
+%   Contact: giles.colclough@magd.ox.ac.uk
+%   Originally written on: GLNXA64 by Giles Colclough, 19-Jan-2015 14:40:17
 
 global DEBUG
 DEBUG = false;

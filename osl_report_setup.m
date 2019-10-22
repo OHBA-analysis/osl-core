@@ -16,7 +16,7 @@ report.plot_names={};
 report.sub_reports={};
 
 if ~exist(report_dir,'dir')
-	mkdir(report_dir);
+    mkdir(report_dir);
 end
 
 report.html_fname=[report.dir '/report.html'];

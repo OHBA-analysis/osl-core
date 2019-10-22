@@ -2,6 +2,11 @@ function opt=osl_run_opt(opt)
 
 % opt=osl_run_opt(opt)
 %
+% See osl_check_opt for settings
+%
+% See https://ohba-analysis.github.io/osl-docs/pages/docs/opt.html for
+% documentation on OPT
+%
 % MWW 2013
 
 opt = osl_check_opt(opt);
@@ -83,7 +88,7 @@ for subi=1:length(opt.sessions_to_do)
 
         if(opt.downsample.do)
             S=[];
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  DOWNSAMP, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.downsample, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             S.D=spm_file;
             S.fsample_new = opt.downsample.freq;
@@ -106,7 +111,7 @@ for subi=1:length(opt.sessions_to_do)
         % To get rid of low frequency fluctuations in the data
 
         if(opt.highpass.do)
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  HP FILT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.highpass, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             S=[];
             S.D = spm_file;
@@ -128,7 +133,7 @@ for subi=1:length(opt.sessions_to_do)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Mains Filter
         if(opt.mains.do)
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  MAINS FILT, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.mains, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
                        
@@ -159,7 +164,7 @@ for subi=1:length(opt.sessions_to_do)
         %%%%%%%%%%%%%%%%%%%
         %% DO REGISTRATION AND RUN FORWARD MODEL BASED ON STRUCTURAL SCANS
         if(opt.coreg.do)
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  COREG, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.coreg, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
             S=[];
             spm_file=[opt.dirname filesep spm_files_basenames{subnum} '.mat'];
             S.D = [spm_file];
@@ -191,19 +196,19 @@ for subi=1:length(opt.sessions_to_do)
             subplot(1,3,1)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(-180,0)
-            axis(axis*1.7);
+            zoom(0.5);
             %title(['concatMefsession' num2str(counter) '_spm_meeg'])
             subplot(1,3,2)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(-270,0)
-            axis(axis*1.7);
+            zoom(0.5);
             subplot(1,3,3)
             warning off;spm_eeg_inv_checkdatareg_3Donly(Dcheck);warning on;
             view(130,18)
-            axis(axis*1.7);
+            zoom(0.5);
             %title(['Session ' num2str(subnum)]);
 
-            opt_report=osl_report_set_figs(opt_report,'Coregistration_spm_view',coregfig1);
+            opt_report=osl_report_set_figs(opt_report,'opt-coreg_spm_view',coregfig1);
             opt_report=osl_report_print_figs(opt_report);
 
             if opt.coreg.use_rhino
@@ -212,14 +217,14 @@ for subi=1:length(opt.sessions_to_do)
                 rhino_display(Dcheck,coregfig2);
                 view(45,5)
                 title(['Session ' num2str(subnum)]);
-                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view1',coregfig2);
+                opt_report=osl_report_set_figs(opt_report,'opt-coreg_rhino_view1',coregfig2);
                 opt_report=osl_report_print_figs(opt_report);
 
                 coregfig3 = sfigure;
                 rhino_display(Dcheck,coregfig3);
                 view(90,-10)
                 %title(['Session ' num2str(subnum)]);
-                opt_report=osl_report_set_figs(opt_report,'Coregistration_rhino_view2',coregfig3);
+                opt_report=osl_report_set_figs(opt_report,'opt-coreg_rhino_view2',coregfig3);
                 opt_report=osl_report_print_figs(opt_report);
             end
 
@@ -230,7 +235,7 @@ for subi=1:length(opt.sessions_to_do)
 
         if(opt.africa.todo.ica) || (opt.africa.todo.ident) || (opt.africa.todo.remove)
 
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  AFRICA, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.africa, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             %% ADAPTER CODE FOR NEW CHANGES TO AFRICA
             S = struct;
@@ -282,7 +287,7 @@ for subi=1:length(opt.sessions_to_do)
 
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  DETECT BAD SEGMENTS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])            
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.bad_segments, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])            
                             
             % copy file and add R prefix
             S=[];
@@ -296,12 +301,27 @@ for subi=1:length(opt.sessions_to_do)
             S.measure_fns  = opt.bad_segments.outlier_measure_fns; 
             S.event_significance   = opt.bad_segments.event_significance;  
             S.channel_significance = opt.bad_segments.channel_significance;
+
+            % first look for bad channels
             S.badchannels=true;
-            S.badtimes=true;
+            S.badtimes=false;
             D_continuous = osl_detect_artefacts(D_continuous,S);
             D_continuous.save();
 
-            figs = [report.bad_channels(D_continuous,opt.modalities) report.bad_segments(D_continuous, S)];
+            S2=S;
+            S2.plot_name_prefix='opt-bad_segments: ';
+            figs = [report.bad_channels(D_continuous,opt.modalities, false, S2.plot_name_prefix)];
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) get(x,'tag'),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            opt_report=osl_report_print_figs(opt_report);
+            
+            % then look for bad segments
+            S.badchannels=false;
+            S.badtimes=true;
+            D_continuous = osl_detect_artefacts(D_continuous,S);            
+            D_continuous.save();
+
+            S.plot_name_prefix='opt-bad_segments: ';
+            figs = [report.bad_segments(D_continuous, S2)];
             opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) get(x,'tag'),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
             opt_report=osl_report_print_figs(opt_report);
 
@@ -326,7 +346,7 @@ for subi=1:length(opt.sessions_to_do)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
         %% Plot spectograms
         if(opt.spectograms.do)
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  PLOT SPECTOGRAMS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.spectograms, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             spm_file=[opt.dirname filesep spm_files_basenames{subnum}];
             D_continuous=spm_eeg_load(spm_file);
@@ -348,7 +368,7 @@ for subi=1:length(opt.sessions_to_do)
                 set(gca,'ydir','normal');
                 plot4paper('time (s)','freq (hz)');
 
-                opt_report=osl_report_set_figs(opt_report,['spectogram_' opt.modalities{mm}],fig_handles,['DATA: spectogram for ' opt.modalities{mm}]);
+                opt_report=osl_report_set_figs(opt_report,['opt-spectogram_' opt.modalities{mm}],fig_handles,['opt-spectogram for ' opt.modalities{mm}]);
                 opt_report=osl_report_print_figs(opt_report);
             end
         end
@@ -371,7 +391,7 @@ for subi=1:length(opt.sessions_to_do)
             % Note that this will also remove those trials that overlap with the bad
             % epochs identified using oslview.
 
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  EPOCH, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.epoch, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             %%%%
             % define the trials we want from the event information
@@ -412,8 +432,9 @@ for subi=1:length(opt.sessions_to_do)
             epoched=true;
             
             % do plot of trial timings
-            figs = report.trial_timings(D);
-            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) sprintf('epoched_%s',get(x,'tag')),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            plot_name_prefix='opt-epoch: ';
+            figs = report.trial_timings(D, [], plot_name_prefix);
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) sprintf('opt-epoch_%s',get(x,'tag')),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
             opt_report=osl_report_print_figs(opt_report);            
 
         else
@@ -435,7 +456,7 @@ for subi=1:length(opt.sessions_to_do)
         %% Detect bad trials and chans in epoched data        
         if(opt.outliers.do && epoched)
 
-            disp(['%%%%%%%%%%%%%%%%%%%%%%%  BAD CHAN/TRIALS, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
+            disp(['%%%%%%%%%%%%%%%%%%%%%%%  opt.outliers, SESS = ' num2str(subnum) '  %%%%%%%%%%%%%%%%%%%%%%%'])
 
             if ~opt.epoch.do           
                 spm_files_epoched_basenames{subnum}=spm_files_basenames{subnum};
@@ -456,14 +477,27 @@ for subi=1:length(opt.sessions_to_do)
             S.measure_fns  = opt.outliers.outlier_measure_fns;
             S.event_significance   = opt.outliers.event_significance;  
             S.channel_significance = opt.outliers.channel_significance;
-            S.badchannels=true;
-            S.badtimes=true;
-            S.max_iter = 5;         
+            S.max_iter = 1;
             
+            % first look for bad channels
+            S.badchannels=true;
+            S.badtimes=false;
             D2 = osl_detect_artefacts(D2,S);
             D2.save();
+            
+            plot_name_prefix='opt-outliers: ';            
+            figs = [report.bad_channels(D2,opt.modalities, false, plot_name_prefix)];
+            opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) sprintf('epoched_%s',get(x,'tag')),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
+            opt_report=osl_report_print_figs(opt_report);
 
-            figs = [report.bad_channels(D2,opt.modalities) report.bad_trials(D2)];
+            % then look for bad segments
+            S.badchannels=false;
+            S.badtimes=true;
+            D2 = osl_detect_artefacts(D2,S);            
+            D2.save();
+
+            plot_name_prefix='opt-outliers: ';            
+            figs = [report.bad_trials(D2, 'std', opt.modalities, plot_name_prefix)];
             opt_report=osl_report_set_figs(opt_report,arrayfun(@(x) sprintf('epoched_%s',get(x,'tag')),figs,'UniformOutput',false),figs,arrayfun(@(x) get(x,'name'),figs,'UniformOutput',false));
             opt_report=osl_report_print_figs(opt_report);
 
@@ -515,7 +549,7 @@ for subi=1:length(opt.sessions_to_do)
 
          % set output SPM file as empty for this subject:
         spm_files_basenames{subnum}=[];
-        if(opt.epoch.do),
+        if(opt.epoch.do)
             spm_files_epoched_basenames{subnum}=[];
         end
 

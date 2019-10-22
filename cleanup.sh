@@ -27,6 +27,7 @@ find . -type f \
 
 find . -type f \
     -name '*.mat' \
+    -o -name '*.dat' \
     -o -name '*.nii*' \
     -exec chmod 644 {} +
 

@@ -18,15 +18,15 @@ run_analysis = false;
 %%
 % Either way, we will now walk through how to set up the analysis and then visualize the results. 
 % First, we select the spatial basis we want to use
-spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
+spatial_basis_file = osldir('parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
 
 %%
 % To run the analysis, we need a list of MEEG objects. Below, we identify
 % where the data are, and where the output should be saved to.
-data_dir = fullfile(osldir,'example_data','roinets_example');
-output_directory = fullfile(osldir,'practical','roinets_demo');
+data_dir = osldir('example_data','roinets_example');
+output_directory = osldir('practical','roinets_demo');
 if run_analysis
-	mkdir(output_directory)
+    mkdir(output_directory)
 end
 
 %%
@@ -34,15 +34,15 @@ end
 % online montage. _It is essential that this montage is the selected montage_. Therefore, 
 % we need to make sure at this point that the montage is switched to the correct one. 
 if run_analysis
-	subjects = 1:10;
-	D_files = {};
-	session_name = {};
-	for j = 1:length(subjects)
-	    session_name{j} = sprintf('subject_%d',j);
-	    D = spm_eeg_load(fullfile(data_dir,session_name{j}));
-	    D_files{j} = D.copy(fullfile(output_directory,session_name{j}));
-	    D_files{j} = D_files{j}.montage('switch',2);
-	end
+    subjects = 1:10;
+    D_files = {};
+    session_name = {};
+    for j = 1:length(subjects)
+        session_name{j} = sprintf('subject_%d',j);
+        D = spm_eeg_load(fullfile(data_dir,session_name{j}));
+        D_files{j} = D.copy(fullfile(output_directory,session_name{j}));
+        D_files{j} = D_files{j}.montage('switch',2);
+    end
 end
 
 %% 
@@ -50,7 +50,7 @@ end
 % See |run_network_analysis.m| for a full listing of available options
 if run_analysis
 Settings = struct();
-Settings.spatialBasisSet          = spatial_basis_file 	   % a binary file which holds the voxel allocation for each ROI - voxels x ROIs
+Settings.spatialBasisSet          = spatial_basis_file     % a binary file which holds the voxel allocation for each ROI - voxels x ROIs
 Settings.gridStep                 = 8; % mm                % resolution of source recon and nifti parcellation file
 Settings.Regularize.do            = true;                  % use regularization on partial correlation matrices using the graphical lasso. 
 Settings.Regularize.path          = logspace(-9,2,80);     % This specifies a single, or vector, of possible rho-parameters controlling the strength of regularization. 
@@ -76,10 +76,10 @@ end
 %%
 % Run the network analysis, or otherwise load the precomputed results
 if run_analysis
-	correlationMats = ROInets.run_network_analysis(D_files,Settings);
-	d = load(fullfile(output_directory, 'corrected-ROI-timecourses','subject_1_13-30Hz_ROI_envelope_timecourses.mat'));
+    correlationMats = ROInets.run_network_analysis(D_files,Settings);
+    d = load(fullfile(output_directory,'ROInetworks_correlation_mats.mat'));
 else
-	d = load(fullfile(data_dir,'ROInetworks_correlation_mats.mat'))
+    d = load(fullfile(data_dir,'ROInetworks_correlation_mats.mat'))
 end
 
 %%

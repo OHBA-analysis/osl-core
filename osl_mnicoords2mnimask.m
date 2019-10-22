@@ -13,11 +13,11 @@ OSLDIR = getenv('OSLDIR');
 
 if(nargin<4)
     resamp_gridstep=2;
-end;
+end
 
 if(nargin<5)
     roi_radius=-1;
-end;
+end
 
 mask_fname=[OSLDIR '/std_masks/MNI152_T1_' num2str(gridstep) 'mm_brain.nii.gz'];
 [mask,~,xformmni] = nii.load(mask_fname);
@@ -62,4 +62,4 @@ if(resamp_gridstep~=gridstep)
     fname_out = nii.resample([fname '_' num2str(gridstep) 'mm'],[fname '_' num2str(resamp_gridstep) 'mm'],resamp_gridstep,'interptype','cubic','enforce_mask',true);
 else
     fname_out=[fname '_' num2str(gridstep) 'mm'];
-end;
+end
