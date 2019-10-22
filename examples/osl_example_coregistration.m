@@ -1,5 +1,4 @@
 %% Coregistration with SPM and RHINO
-%
 % This tutorial covers the registration of MRI and M/EEG datasets into a
 % common space to allow for analysis in sourcespace.
 %
