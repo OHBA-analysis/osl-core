@@ -1,12 +1,9 @@
 %% ROInets 2 - Amplitude envelope connectivity analysis
 %
 % This example shows how to examine functional connectivity using amplitude 
-% envelope correlations for a signal subject.
+% envelope correlations for a single subject.
 %
-% This example shows how to use low-level ROInets functionality to 
-% compute parcel timecourses and perform orthogonalization using
-% SPM objects
-%
+%%
 % First, we will load an SPM object containing our data, and select a parcellation 
 % for the analysis 
 D = spm_eeg_load(osldir('example_data','roinets_example','subject_1'));
