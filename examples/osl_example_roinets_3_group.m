@@ -18,13 +18,13 @@ run_analysis = false;
 %%
 % Either way, we will now walk through how to set up the analysis and then visualize the results. 
 % First, we select the spatial basis we want to use
-spatial_basis_file = fullfile(osldir,'parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
+spatial_basis_file = osldir('parcellations','fmri_d100_parcellation_with_PCC_reduced_2mm_ss5mm_ds8mm.nii.gz');
 
 %%
 % To run the analysis, we need a list of MEEG objects. Below, we identify
 % where the data are, and where the output should be saved to.
-data_dir = fullfile(osldir,'example_data','roinets_example');
-output_directory = fullfile(osldir,'practical','roinets_demo');
+data_dir = osldir('example_data','roinets_example');
+output_directory = osldir('practical','roinets_demo');
 if run_analysis
     mkdir(output_directory)
 end
@@ -77,7 +77,7 @@ end
 % Run the network analysis, or otherwise load the precomputed results
 if run_analysis
     correlationMats = ROInets.run_network_analysis(D_files,Settings);
-    d = load(fullfile(output_directory, 'corrected-ROI-timecourses','subject_1_13-30Hz_ROI_envelope_timecourses.mat'));
+    d = load(fullfile(output_directory,'ROInetworks_correlation_mats.mat'));
 else
     d = load(fullfile(data_dir,'ROInetworks_correlation_mats.mat'))
 end
