@@ -455,37 +455,6 @@ if todo.hmm
             
     end
     
-    %%%%%%%%
-    % Need to add back in bad data segments into gamma and statepath
-    subj_inds_new=[];
-    hmm_statepath_new=[];
-    hmm_gamma_new=[];
-    
-    for subnum = 1:length(data_files)
-        
-        hmm_sub_gamma = hmm.gamma(hmm.subj_inds==subnum,:);
-        hmm_sub_statepath = hmm.statepath(hmm.subj_inds==subnum);
-
-        Dp = spm_eeg_load(data_files{subnum});
-        
-        hmm_sub_statepath_new=zeros(size(Dp,2),1);
-        hmm_sub_statepath_new(good_samples(Dp))=hmm_sub_statepath;
-        hmm_statepath_new = [hmm_statepath_new; hmm_sub_statepath_new];
-        
-        hmm_sub_gamma_new=zeros(size(Dp,2),hmm.K);
-        hmm_sub_gamma_new(good_samples(Dp),:)=hmm_sub_gamma;
-        hmm_gamma_new = [hmm_gamma_new; hmm_sub_gamma_new];
-        
-        subj_inds_new  = [subj_inds_new, subnum*ones(1,size(Dp,2))];       
-        
-    end
-    
-    hmm.subj_inds=subj_inds_new;
-    hmm.statepath=hmm_statepath_new;
-    hmm.gamma=hmm_gamma_new;
- 
-    %%%%%%%%
-    
     %hmm.statepath=zeros(size(hmm.statepath_hot,1),1);
     %for ii=1:size(hmm.statepath_hot,1)
     %    ind = find(hmm.statepath_hot(ii,:));
@@ -513,7 +482,7 @@ if todo.output
         load(filenames.prepare); 
     end
     if ~todo.hmm
-        load(filenames.hmm);
+        load(filenames.hmm);        
     end
    
     switch output_method
@@ -538,8 +507,8 @@ if todo.output
 
                 % compute subject's state maps
                 hmm_sub = hmm;
-                %hmm_sub.gamma = hmm.gamma(subj_inds==subnum,:);
-                hmm_sub.statepath = hmm.statepath(subj_inds==subnum);
+                %hmm_sub.gamma = hmm.gamma(hmm.subj_inds==subnum,:);
+                hmm_sub.statepath = hmm.statepath(hmm.subj_inds==subnum);
                                            
                 Dp = spm_eeg_load(data_files{subnum});
                 datap = osl_teh_prepare_data(Dp,normalisation,logtrans,freq_ind,embed);
