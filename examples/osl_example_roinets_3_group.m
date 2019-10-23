@@ -2,7 +2,7 @@
 %
 % This example uses shows how to analyze static connectivity at the group level.
 %
-%%
+%% TUTORIAL
 % Here we will perform a standard connectivity analysis using ROInets.
 % Core functionality is provided by |ROInets.run_network_analysis()|. The key inputs
 % are

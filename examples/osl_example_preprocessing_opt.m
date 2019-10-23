@@ -378,8 +378,7 @@ opt.results.report.html_fname
 % Shows the different trial types alongside the
 % samples that have been marked as bad.
 % The start of a trial is marked with an 'o', and the end is marked with an
-% 'x'.
-% Bad segments are shown in black.
+% 'x'. Bad trials are shown in black.
 %
 % *opt-outliers: Bad Channels*
 %

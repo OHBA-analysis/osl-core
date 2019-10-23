@@ -1,12 +1,9 @@
 %% ROInets 2 - Amplitude envelope connectivity analysis
 %
 % This example shows how to examine functional connectivity using amplitude 
-% envelope correlations for a signal subject.
+% envelope correlations for a single subject.
 %
-% This example shows how to use low-level ROInets functionality to 
-% compute parcel timecourses and perform orthogonalization using
-% SPM objects
-%
+%% TUTORIAL
 % First, we will load an SPM object containing our data, and select a parcellation 
 % for the analysis 
 D = spm_eeg_load(osldir('example_data','roinets_example','subject_1'));
@@ -232,8 +229,8 @@ title('Envelope correlation after leakage correction and downsampling to 1Hz')
 % see how the choice of frequency bands affects the resulting connectivity.
 %
 % With regard to the dowsampling step before correlation, try even lower
-% sampling rates (e.g. replace  'resample(Hen_lc',1,D.fsample)' by
-% 'resample(Hen_lc',1,D.fsample*10)' to set the sample rate to 0.1 Hz).
+% sampling rates (e.g. replace  |resample(Hen_lc',1,D.fsample)| by
+% |resample(Hen_lc',1,D.fsample*10)| to set the sample rate to 0.1 Hz).
 % What do you see? What would this mean for this dataset in terms of used
 % samples that go into the correlation? Does it makes sense?
 
