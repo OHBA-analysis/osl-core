@@ -112,7 +112,7 @@ else
 end
 
 if size(D2,3)==1
-    D2=type(D2,'continuous')
+    D2=type(D2,'continuous');
 end
 
 D2.save;
