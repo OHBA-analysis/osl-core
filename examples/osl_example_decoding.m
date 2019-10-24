@@ -182,10 +182,11 @@ chancelevel=0.125;
 plot([trial_timepoints(1),trial_timepoints(end)],[chancelevel,chancelevel],'k--')
 legend('Images','Words','Chance Level');
 %%
-% It is apparent that decoding of image data is significantly abiove
+% It is apparent that decoding of image data is significantly above
 % chance, however decoding of word data is close to chance levels
 % throughout. Is it statistically significantly above chance though? We can
-% check this with a simple binomial test:
+% check this with a simple binomial test, selecting the time point of
+% maximum accuracy
 
 NCorrect = round(max(acc_words)*Ntr);
 p_value = 1-binocdf(NCorrect,Ntr,chancelevel)
@@ -291,13 +292,16 @@ title('Decoding Images')
 % points:
 %
 % 1. The accuracy improvements shown here are conservative, as they
-%       are based on a mean state timecourse model 
+%       are based on a mean state timecourse model. So the real HMM accuracy is
+%       probably much better. 
 %
 % 2. When these are plotted at the group level, they more reliably
 %       outperform standard approaches, even with this conservative estimate
 %
 % 3. They additionally provide us with a key metric of when activity
-%       patterns are activated on different trials
+%       patterns are activated on different trials. So, they provide
+%       valuable information in between-trial temporal variability in
+%       stimulus processing
 
 
 
@@ -389,7 +393,7 @@ title('Correlation with reaction times')
 %       Y = logistic sigmoid transfer function (X * beta)
 % where beta are our regression coefficients.
 %
-% On the other hand, LDA models fit a Guassian distribution to the data of
+% On the other hand, LDA models fit a Gaussian distribution to the data of
 % each class, and then determine the optimal classification boundary (the
 % 'linear discriminant') between classes. This is done automatically below
 % by the function "LDApredict".
@@ -399,7 +403,7 @@ if strcmp(options.classifier,'logistic')
     Y_prediction=zeros(length(X_images),8);
     for t=1:T
         t_selected=[t:T:length(X_words)];
-        Y_prediction(t_selected,:) = logsig(X_words(t_selected,:)*Beta_coefficients(:,:,t));
+        Y_prediction(t_selected,:) = log_sigmoid(X_words(t_selected,:)*Beta_coefficients(:,:,t));
     end    
     [~,hard_assignment_pred] = max(Y_prediction,[],2);
 else %LDA
