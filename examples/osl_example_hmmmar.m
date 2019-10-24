@@ -173,7 +173,6 @@ else
 end
 
 %%
-
 % We now show the states in osleyes. By flicking through the different
 % "Volumes", one can see the power distribution of the different states.
 % Warmer colours mean more power, and colder colours mean less power. 
@@ -193,7 +192,6 @@ if show_maps_osleyes
 end
 
 %% 
-%
 % Now that we have the HMM model, we shall compute the spectral information of the states (power, coherence, etc).
 % In the case of the HMM-MAR, as we will see below, the MAR parameters themselves contain this spectral information.
 % Here, because we are using a Gaussian distribution on wideband power, 
@@ -230,7 +228,6 @@ else % load a precomputed results
 end
 
 %% 
-
 % We now show the spectra of the states; each colour represents one
 % state, the diagonal panels represent power, and the off-diagonal
 % panels represent coherence (phase coupling). For simplicity, while we have this
@@ -245,7 +242,6 @@ plot_hmmspectra (spectra_env,[],[],[],[],channels_prim_visual_cortex);
 
 
 %%
-%
 % For the actual HMM-MAR approach, these states are based on autoregressive models, 
 % i.e. linear functions that predict each time point as a function
 % of its previous data points. Remember that, as opposed to that, the HMM-Gaussian 
@@ -304,7 +300,6 @@ end
 
 
 %% 
-%
 % As opposed to the HMM-Gaussian run on power, the state MAR parameters 
 % contain the spectral information of the states. 
 % To access those, we need to Fourier-transform these MAR parameters, 
@@ -332,7 +327,6 @@ else % load a precomputed results
 end
 
 %% 
-
 % We now show the spectra of the states, where each colour represents one
 % state. The diagonal panels represent power, whereas the off-diagonal
 % panels represent coherence (phase coupling)
@@ -343,7 +337,6 @@ end
 plot_hmmspectra (spectra_mar);
 
 %%
-%
 % The HMM with a MAR observation model works well to model spectral changes
 % in just a few regions with a rich spectral profile. 
 % If we wish to model the entire brain, this model does not work that well
@@ -395,7 +388,6 @@ else
 end
 
 %%
-%
 % As we did before with the HMM-Gaussian on power, we are going to use the
 % multitaper to estimate the frequency content of the states.
 % This one might take a bit longer to run. 
@@ -422,7 +414,6 @@ else % load a precomputed results
 end
 
 %% 
-
 % We now show the spectra of the states; again each colour represents one
 % state, the diagonal panels represent power, and the off-diagonal
 % panels represent coherence (phase coupling). For simplicity, while we have this
@@ -435,7 +426,6 @@ end
 plot_hmmspectra (spectra_tde,[],[],[],[],channels_prim_visual_cortex);
 
 %%
-%
 % With this method, we have a spectrally-defined description of each state;
 % for example, we have an estimation of power for each frequency bin, 
 % region and state. Therefore, we can construct brain maps for each frequency. 
@@ -468,7 +458,6 @@ else
 end
 
 %%
-%
 % We then show state maps in osleyes, for the slow-to-middle frequency mode
 % We see different states for visual, temporal, frontal and parietal regions
 
@@ -488,7 +477,6 @@ if show_maps_osleyes
 end
 
 %% 
-%
 % We now look at the temporal information of the states. Given that this is
 % task data, we will later look at how the states get modulated by the task.
 % But first we will have a look at an arbitrary segment of the states time
@@ -517,7 +505,6 @@ xlabel('Time'); ylabel('State probability')
 title('TDE-HMM' )
 
 %% 
-%
 % The HMM is based on the Markovian assumption. That means that, as far as
 % the model is concerned, what state is active at each time point depends
 % on what state was active in the previous time point. 
@@ -551,7 +538,6 @@ xlabel('From state'); ylabel('To state')
 title('TDE-HMM' )
 
 %% 
-%
 % Other informative statistics about the states is for how long the states
 % remain active before switching to a different state (state life times),
 % which we refer to as the state life times. 
@@ -569,7 +555,6 @@ lifetimes_mar = lifetimes_mar(:)'; lifetimes_mar = cell2mat(lifetimes_mar);
 lifetimes_tde = lifetimes_tde(:)'; lifetimes_tde = cell2mat(lifetimes_tde);
 
 %%
-%
 % We see that the HMM-Gauss is the one showing the quickest state
 % switching. The TDE-HMM, which has a tendency to
 % focus on slower frequencies, has the longest life times. 
@@ -594,7 +579,6 @@ title('TDE-HMM')
 
 
 %%
-%
 % In resting-state data, one can validate the states against, for example,
 % separate behavioural information (phenotypes, clinical variability, etc).
 % Here, given that this is task data we are going to look at how the state 
@@ -655,7 +639,6 @@ end
 
 
 %% 
-%
 % We saw that the stimulus modulates the state probabilities for all
 % conditions and all models. Now we will test how the activation of the
 % states differ between conditions
@@ -712,7 +695,6 @@ design_mat = design_mat(good_trials,:);
 design_mat = [ones(size(design_mat,1),1) design_mat];
 
 %%
-%
 % We then run the testing for each time point, for faces vs. scrambled
 % faces. We use the function hmmtest_epoched, which implements permutation
 % testing for this purpose. 
@@ -736,7 +718,6 @@ end
 
 
 %%
-%
 % We plot the p-values for each HMM modality as a function of time.
 % As observed, the HM
 
@@ -753,7 +734,6 @@ legend('Power envelope','MAR','Time-delay embedded','significance','location','S
 ylabel('pvalue');xlabel('time')
 
 %% 
-
 % As we have seen throughout the tutorial, the HMM provides a decomposition
 % of the data into states. What properties of the data are these states
 % picking up on depends on the type of HMM we are using. In this tutorial,
