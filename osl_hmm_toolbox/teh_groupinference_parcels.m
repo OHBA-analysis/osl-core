@@ -500,17 +500,42 @@ if todo.output
             % maps:
             embed.do=0;
 
+            mkdir(hmm.filenames.output);
+            
             hmm.statemap_parcel_vectors_persubj=zeros(length(data_files),Dp.nchannels,hmm.K);
             for subnum = 1:length(data_files)
 
                 disp(['Computing ' output_method ' maps for ' data_files{subnum}]);
 
-                % compute subject's state maps
                 hmm_sub = hmm;
-                %hmm_sub.gamma = hmm.gamma(hmm.subj_inds==subnum,:);
+                hmm_sub.gamma = hmm.gamma(hmm.subj_inds==subnum,:);
                 hmm_sub.statepath = hmm.statepath(hmm.subj_inds==subnum);
-                                           
+                                          
                 Dp = spm_eeg_load(data_files{subnum});
+                
+                %%%%%%%%%%%%%%
+                % Create spm_eeg objects with state time courses with bad segments in
+
+                hmm_sub_statepath_new=zeros(size(Dp,2),1);
+                hmm_sub_statepath_new(good_samples(Dp))=hmm_sub.statepath;
+                chan_types=[];
+                chan_types{1}='statepath';
+                
+                hmm_sub_gamma_new=zeros(size(Dp,2),hmm.K);
+                hmm_sub_gamma_new(good_samples(Dp),:)=hmm_sub.gamma;
+                for kk=1:hmm.K
+                    chan_types{1+kk}='gamma';
+                end
+                
+                Sc=struct;
+                Sc.D=Dp;
+                Sc.newdata=cat(2,hmm_sub_gamma_new,hmm_sub_statepath_new)';                
+                Sc.newname=[hmm.filenames.output '/' prefix(Dp.fname, 'state_tcs_')];
+                Sc.chantype=chan_types;
+                D2 = osl_change_spm_eeg_data( Sc );                
+
+                %%%%%%%%%%%%%%               
+                % compute subject's state maps                
                 datap = osl_teh_prepare_data(Dp,normalisation,logtrans,freq_ind,embed);
                 
                 if max_ntpts>0
