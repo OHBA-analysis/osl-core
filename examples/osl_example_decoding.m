@@ -35,6 +35,7 @@ dir = '/Users/chiggins/Documents/MATLAB/osl/osl-core/examples/';
 load([dir,'OSLDecodingPracticalData.mat']); 
 cd(dir)
 
+
 % Let's now identify some basic features:
 ttrial = length(trial_timepoints) 
 %%
@@ -76,7 +77,7 @@ unique(num_active_stimuli)
 % suitable for classification tasks - wherever the stimulus is continuous
 % you can use a Gaussian model.
 %
-% In OSL, classification is handled by the following methods:
+% In the HMM-MAR toolbox, classification is handled by the following methods:
 %
 % *      standard_classification()
 % *      tucatrain()
@@ -87,6 +88,9 @@ unique(num_active_stimuli)
 % *      standard_decoding()
 % *      tudatrain()
 % *      tudacv()
+%
+% Where our acronyms TUDA and TUCA stand for Temporally Unconstrained
+% DECODING / CLASSIFICATION Analysis, respectively.
 %
 % One remaining point is that our data should ideally be balanced over 
 % trials, to avoid introduction of biases into our classifiers. We can
@@ -109,19 +113,21 @@ nTrPerStim = sum(Y_images)./ttrial
 % 4. Iterate through the above steps repeatedly until every trial has been
 %       in the test set once.
 % 
-% By default, the OSL functions standard_classification(), standard_decoding(),
+% By default, the functions standard_classification(), standard_decoding(),
 % tucacv() and tudacv() will automatically separate your data into training 
 % and test folds - here however, we will work through this
 % manually to identify certain issues.
 %
-% First, let us determine how many folds to use. The most rigorous approach
-% is to use as many training folds as we have trials of a stimulus:
+% First, let us determine how many folds to use. If we wanted to maximise 
+% the amount of data each classifier is trained on, we would use as many 
+% training folds as we have trials of each stimulus:
 NCV_optimal = min(nTrPerStim)
 %%
 % This is 'hold one out' cross validation. It uses the most data possible 
 % when training each classifier. It does, however, require quite long 
 % processing times - just to speed things up, let's work with 4 fold
-% cross validation:
+% cross validation, where each test set contains a quarter of the total
+% number of trials:
 NCV = 4;
 
 Y_per_trial = Y_images(1:ttrial:end,:);
@@ -142,7 +148,7 @@ crossvalpartitions = cvpartition(grouplabels,'KFold',NCV);
 % different classifiers that can be used, but for M/EEG data there is 
 % something of a consensus that linear classifiers perform sufficiently 
 % well in most scenarios. We will only work with linear classifiers here -
-% the OSL code below supports three different classifier types as follows:
+% this toolbox supports three different classifier types as follows:
 %
 % *  options.classifier='logistic':  trains a logistic regression classifier
 % *  options.classifier='LDA': trains a linear discriminant analysis classifier
@@ -159,6 +165,7 @@ crossvalpartitions = cvpartition(grouplabels,'KFold',NCV);
 % giving us accuracy defined as a function of time.
 options=[];
 options.classifier='logistic';
+
 %%
 % We also want to specify the cross validation folds learned above:
 options.c=crossvalpartitions;
@@ -220,7 +227,9 @@ options.classifier='logistic';
 % between the data and the labels, states that can vary over trials to
 % identify patterns that are poorly aligned. Unfortunately when conducting
 % cross validation tests, this leaves no obvious way to infer each test
-% trial's state timecourse. We instead adopt a very conservative approach
+% trial's state timecourse (as these are normally determined by looking at 
+% the mapping between data and the labels, and for the testing we hold out 
+% the labels). We instead adopt a very conservative approach
 % for each test trial, just using the average state timecourse fit over all
 % trials in the training data, denoted here as CVmethod=1:
 options.CVmethod=1;
@@ -350,9 +359,6 @@ for k=1:options.K
     end
 end
 %%
-% At the single subject level these results are noisy, so let's threshold
-% our maps by significance:
-%C(rho_pval>0.05 | isnan(rho_pval))=0;
 figure('Position',[680 602 931 496]);
 subplot(2,1,1);
 plot(trial_timepoints,Gamma_images_mean,'LineWidth',2);
@@ -377,6 +383,12 @@ title('Correlation with reaction times')
 % ahead of the mean peak time correlate with lower (ie faster) reaction
 % times; trials where states are active later than their mean peak
 % correlate with longer (ie slower) reaction times.
+%
+% This confirms that the inferred stages of processing are behaviourally
+% relevant, and introduces another key variable into our analysis that
+% allows us to quantify when things happen on individual trials. These
+% correlate here with reaction times, but in other experiments with more
+% cognitive components may 
 
 %% Section 6: Classifier Generalisation tests
 %
@@ -477,8 +489,13 @@ legend({'Trained on images, tested on words','Trained on words, tested on images
 
 load('OSLDecodingPracticalGroupLevelData.mat');
 %%
-% As decoding analyses plot everything in the same space (ie predictions of
-% the stimulus), group level analyses are relatively straightforward.
+% As decoding analyses are focussed on predictions of stimuli Y, for 
+% statistical analysis at the group level we can treat our results as just 
+% a series of concatenated predictions. Importantly, we are not concerned 
+% with comparing each individual's activity patterns for a stimulus (which 
+% can display little or no correlation over subjects) - all that matters is 
+% how well we could consistently predict stimuli as a function of time
+% and the type of training data:
 words = [];images = [];wordsOnImages = [];imagesOnWords = [];
 for iSj=1:21
     words = cat(2,words,acc_hmm_words_sj{iSj});
