@@ -51,8 +51,7 @@ spm_files{2}=fullfile(datadir,'spm_files','loc_S02');
 % MEG and EEG data in SPM.
 % 
 % Calling |osl_import| will also produce a histogram plot showing the number of events detected
-% for each code on the trigger channel. The codes used on the trigger
-% channel for this experiment were:
+% for each code on the trigger channel. 
 
 if(~isempty(fif_files))
     S2=[];
@@ -72,10 +71,11 @@ end
 %%
 % *SET UP STRUCTURALS*
 % 
-% OPT can also perform coregistration (estimating the spatial position of a subject's head and brain
-% relative to the MEG sensors). Since coregistration requires a structural MRI for 
-% each subject, we need to supply these to OPT. Coregistration and its role in source reconstruction 
-% will be explained in a different practical. 
+% OPT can also perform coregistration (estimating the spatial position of a 
+% subject's head and brain relative to the MEG sensors). 
+% Since coregistration requires a structural MRI for 
+% each subject, we need to supply these to OPT. Coregistration and its role 
+% in source reconstruction will be explained in a different practical. 
 %
 % Here, we setup a list of existing structural files, in the same
 % order as in spm_files and fif_files.
@@ -98,7 +98,7 @@ structural_files{2}=fullfile(datadir,'structs','anat2.nii'); % leave empty if no
 % fields are. 
 % Note that you MUST specify:
 %
-% |opt.spm_files|: A list of the spm meeg files for input into SPM (require
+% |opt.spm_files|: A list of the spm meeg files for input into SPM
 %
 % AND:
 %
