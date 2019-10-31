@@ -17,9 +17,9 @@
 % We generate a synthetic signal with 3 channels, and a manually specified
 % covariance matrix C, using an auto-regressive model. This is done in two steps:
 %
-%   - first, we generate multi-variate normally distributed noise, using the Cholesky
+% * first, we generate multi-variate normally distributed noise, using the Cholesky
 %   decomposition of the covariance matrix C;
-%   - second, we give some temporal structure to that noise by smoothing it in time
+% * second, we give some temporal structure to that noise by smoothing it in time
 %   using an auto-regressive model (see
 %   <https://uk.mathworks.com/help/signal/examples/linear-prediction-and-autoregressive-modeling.html
 %   this tutorial> for details).  
