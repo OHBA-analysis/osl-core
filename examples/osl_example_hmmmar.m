@@ -38,6 +38,7 @@
 %% 
 
 % We will first set up the necessary directories
+clc; clear all; close all; %clean up workspace
 
 % Software directories: **you need to update OSLCOURSE_dir** to your local directory
 OSLCOURSE_dir = '/Users/dvidaurre/Work/Matlab/ohba_analysis/';
@@ -48,7 +49,10 @@ data_dir = [OSLCOURSE_dir 'OSL_course/data_HMM/'];
 
 % Name for this HMM-MAR analysis:
 results_file = [data_dir '/results.mat'];
-% Precomputed results 
+% Precomputed results - we will set this up to load the precomputed results instead of 
+% running everything from scratch. Most things are however quick to run and
+% can be done within the time of the practical. Below, it is given a rough
+% measure of how long it takes to run each block.
 precomputed_results_file = [data_dir '/precomp_results.mat'];
 
 % Atlas file, necessary to show the maps
@@ -163,6 +167,11 @@ options.cyc = 30; % to make it quicker - leave by default otherwise
 
 %%
 
+% Note that the HMM will try to use MATLAB's "parallel pool". This can take
+% a minute to start-up on the first call to it. However, this call to
+% parallel pool only needs to take place once, i.e. it will be faster if
+% you re-run the HMM again and if you don't re-start MATLAB.
+
 if precomputed_results
     load(precomputed_results_file,'hmm_env','Gamma_env')
 else
@@ -237,8 +246,9 @@ end
 
 %% 
 
+% select the channels that correspond to primary visual cortex
+channels_prim_visual_cortex = [26 27];
 plot_hmmspectra (spectra_env,[],[],[],[],channels_prim_visual_cortex);
-
 
 
 %%
@@ -378,7 +388,7 @@ options.cyc = 30; % to make it quicker - leave by default otherwise
 
 % We run the TDE-HMM, again on one subject only to save time
 
-if precomputed_results
+if precomputed_results 
     load(precomputed_results_file,'hmm_tde','Gamma_tde')
 else
     tic
@@ -423,6 +433,8 @@ end
 
 %% 
 
+% select the channels that correspond to primary visual cortex
+channels_prim_visual_cortex = [26 27];
 plot_hmmspectra (spectra_tde,[],[],[],[],channels_prim_visual_cortex);
 
 %%
@@ -524,17 +536,17 @@ figure
 
 subplot(1,3,1)
 imagesc(getTransProbs(hmm_env)); colorbar
-xlabel('From state'); ylabel('To state')
-title('HMM-Gaussian')
+xlabel('From state'); ylabel('To state'); axis image
+title('HMM-Gaussian') 
 
 subplot(1,3,2)
 imagesc(getTransProbs(hmm_mar)); colorbar
-xlabel('From state'); ylabel('To state')
+xlabel('From state'); ylabel('To state'); axis image
 title('HMM-MAR' )
 
 subplot(1,3,3)
 imagesc(getTransProbs(hmm_tde)); colorbar
-xlabel('From state'); ylabel('To state')
+xlabel('From state'); ylabel('To state'); axis image
 title('TDE-HMM' )
 
 %% 
