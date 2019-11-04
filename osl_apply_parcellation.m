@@ -200,18 +200,29 @@ Dnode(:,:,:) = data;
 % copy badtrials
 badtrials=D.badtrials;
 if ~isempty(badtrials)
-    Dnode = Dnode.badtrials(1:length(badtrials),badtrials);
+    tmp_bad = zeros(D.ntrials,1);
+    tmp_bad(badtrials) = 1;
+    Dnode = Dnode.badtrials(1:length(tmp_bad),tmp_bad);
 end
 
 % copy events, but need to change ev.value to be 'VE' for all artefact
 % events, so that bad segments get passed through
 ev = D.events;
 for ee=1:length(ev)
-    if strncmp(ev(ee).type,'artefact',8)
-        ev(ee).value=parcel_chantype;
+    if iscell(ev)
+        % ev might be a cell array for trial-wise data
+        for jj = 1:length(ev{ee})
+            if strncmp(ev{ee}(jj).type,'artefact',8)
+                ev{ee}(jj).value=parcel_chantype;
+            end
+        end
+    else
+         if strncmp(ev(ee).type,'artefact',8)
+            ev(ee).value=parcel_chantype;
+         end
     end
 end
-Dnode = Dnode.events(1,ev);
+Dnode = Dnode.events(1:Dnode.ntrials,ev);
 
 Dnode.save;
 
