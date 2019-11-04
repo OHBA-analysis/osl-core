@@ -9,7 +9,15 @@
 % We will work with a single subject's data from an emotional faces task. 
 % 
 % We will take an approach here which is run step-by-step and requires
-% manual intervention. This will go through the following steps:
+% manual intervention. This will go through the following preprocessing steps:
+%
+% * Import data into SPM MEEG format
+% * Band-pass temporal filtering
+% * Downsampling
+% * Bad segment/channel detection
+% * ICA denoising using AFRICA
+% * Epoching
+% * Outlier trial detection
 %
 % Note that this contains the fif file: fifs/sub1_face_sss.fif that has
 % already been SSS Maxfiltered and downsampled to 250 Hz.
@@ -397,15 +405,14 @@ D=oslview(D);
 % for more info on this automated approach, including how to select data
 % that exludes bad channels/segments. Close oslview.
 
-%% MANUAL BAD EPOCH/CHANNEL DETECTION USING OSLVIEW 
-% There is also the option to run manual bad epoch/channel detection using
+%% MANUAL BAD SEGMENT/CHANNEL DETECTION USING OSLVIEW 
+% There is also the option to run manual bad segment/channel detection using
 % oslview itself. We can do this as an alternative, or in addition, to the 
-% automated bad
-% epoch/channel detection described above. 
+% automated bad segment/channel detection described above. 
 %
 % Here we now run the manual dection on the data without 
 % the automated bad
-% epoch/channel detection having been done (i.e. using the data with the 'dff' prefix as input).
+% segment/channel detection having been done (i.e. using the data with the 'dff' prefix as input).
 
 clear spm_files;
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
