@@ -11,14 +11,16 @@
 % We will proceed through the following steps:
 %
 % * Load a single subject's data
-% * Setup a cross validation procedure to separate subsets or 'folds' of data for training and testing
-% * Train independent classifiers per timepoint on each training fold and test them on the appropriate test fold; plot the overall accuracy these achieve.
-% * Next, we will train some HMM classifiers and compare theirperformance to the above approach.
-% * See whether the timing information from the HMM models is
-%           relevant to behaviour
-% * Investigate whether neural representations of words and images
-%           have shared information by seeing how classifiers generalise
-%           over data types
+% * Setup a cross validation procedure to separate subsets or 'folds' of 
+% data for training and testing
+% * Train independent classifiers per timepoint on each training fold and 
+% test them on the appropriate test fold; plot the overall accuracy these achieve.
+% * Next, we will train some HMM classifiers and compare their performance 
+% to the above approach.
+% * See whether the timing information from the HMM models is relevant to 
+% behaviour
+% * Investigate whether neural representations of words and images have 
+% shared information by seeing how classifiers generaliseover data types
 % * Load the group level results to conduct group inference
 
 %% Section 1: Load single subject data
@@ -30,8 +32,11 @@
 % subject's data. Nonetheless, group level data will be loaded at the last
 % step to see how this result generalises to the group.
 %
+% Let's clear up the workspace before beginning:
+clc;clear all;close all;
+%
 % Amend the following to your working directory:
-dir = '/Users/chiggins/Documents/MATLAB/osl/osl-core/examples/';
+dir = '/Users/chiggins/Documents/MATLAB/osl/osl-core/examples/OSL_decoding_data/';
 load([dir,'OSLDecodingPracticalData.mat']); 
 cd(dir)
 
@@ -46,6 +51,17 @@ Ntr = length(T_words)
 %%
 % This is the number of independent trials (same number for words and
 % images).
+Ntr*ttrial
+sum(T_images)
+size(Y_images,1)
+size(X_images,1)
+%% 
+% As with yesterday, the rows of our matrices represent timepoints, stacked
+% over subsequent trials. T_images and T_words demarcate the number of
+% timepoints in each trial, demarcating where each trial begins and ends.
+% As a sanity check, the total number of trials times timpoints should 
+% equal the sum of this T vector; which should also be the dimension of
+% rows in our data X and design matrix Y.
 p = size(X_words,2) 
 %%
 % This is the data dimensionality - note this data has already been
@@ -135,6 +151,9 @@ Y_per_trial = Y_images(1:ttrial:end,:);
 rng(1);
 crossvalpartitions = cvpartition(grouplabels,'KFold',NCV);
 %%
+% The above code has called MATLAB's standard cvpartition function to break 
+% the available trials into multiple training and test partitions. 
+%
 % Note that using such a low number of cross validation folds speeds things
 % up for the purposes of this practical, however has some unwanted side 
 % effects that make it undesirable in practice - namely it becomes much
@@ -170,7 +189,8 @@ options.classifier='logistic';
 % We also want to specify the cross validation folds learned above:
 options.c=crossvalpartitions;
 %%
-% So - let's train a classifier over the presentation of words:
+% So - let's train a classifier over the presentation of words. Note this
+% will take a minute or two to run.
 acc_words = standard_classification(X_words,Y_words,T_words,options);
 %%
 % and separately, let's train a classifier over the presentation of images:
@@ -211,7 +231,7 @@ p_value = 1-binocdf(NCorrect,Ntr,chancelevel)
 %
 % In the previous section, we trained classifiers independently on each
 % timepoint. An alternative fully outlined in Vidaurre et al 2019 is to
-% using an HMM model to infer a dynamic state sequence on each trial that
+% use a HMM model to infer a dynamic state sequence on each trial that
 % best decodes the data. This has the advantage of grouping together points
 % that may be similarly distributed but poorly aligned over trials, and 
 % also accessing information content at a broader range of frequencies to
@@ -388,7 +408,8 @@ title('Correlation with reaction times')
 % relevant, and introduces another key variable into our analysis that
 % allows us to quantify when things happen on individual trials. These
 % correlate here with reaction times, but in other experiments with more
-% cognitive components may 
+% cognitive components may be able to capture other meaningful differences
+% in timing over trials that relate to higher order aspects of cognition.
 
 %% Section 6: Classifier Generalisation tests
 %

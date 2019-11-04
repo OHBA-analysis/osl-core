@@ -443,7 +443,9 @@ if todo.hmm
     %hmm.fehist = fehist;
     hmm.subj_inds=subj_inds;
     hmm.K=options.K;
-
+    
+    hmm.filenames=filenames;
+    
     disp(['Saving inferred HMM to ' filenames.hmm])    
     save(filenames.hmm,'hmm');
 
@@ -465,7 +467,7 @@ if todo.hmm
     
     disp(['Saving inferred HMM to ' filenames.hmm])    
     save(filenames.hmm,'hmm');
-   
+    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
