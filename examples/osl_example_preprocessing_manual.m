@@ -405,15 +405,14 @@ D=oslview(D);
 % for more info on this automated approach, including how to select data
 % that exludes bad channels/segments. Close oslview.
 
-%% MANUAL BAD EPOCH/CHANNEL DETECTION USING OSLVIEW 
-% There is also the option to run manual bad epoch/channel detection using
+%% MANUAL BAD SEGMENT/CHANNEL DETECTION USING OSLVIEW 
+% There is also the option to run manual bad segment/channel detection using
 % oslview itself. We can do this as an alternative, or in addition, to the 
-% automated bad
-% epoch/channel detection described above. 
+% automated bad segment/channel detection described above. 
 %
 % Here we now run the manual dection on the data without 
 % the automated bad
-% epoch/channel detection having been done (i.e. using the data with the 'dff' prefix as input).
+% segment/channel detection having been done (i.e. using the data with the 'dff' prefix as input).
 
 clear spm_files;
 for subnum = 1:length(spm_files_basenames) % iterates over subjects
