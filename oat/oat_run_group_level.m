@@ -537,6 +537,7 @@ end;
 try
     current_level_results.report = oat_group_level_stats_report(oat,current_level_results);
 catch   
+    disp('Report failed');
 end
 
 %%%%%%%%%%%%%%%%%%%

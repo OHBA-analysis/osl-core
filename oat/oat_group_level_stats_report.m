@@ -86,7 +86,7 @@ S2.modality=oat.group_level.report.modality_to_do; % in case we are in sensor sp
 %%%%%%%%%%%%%%%%%%%
 %% lower level cope plots
 if(oat.group_level.report.show_lower_level_copes)
-     if 0,
+     if 1,
         fig_handle=[];
         fig_name={};
         fig_title={};
@@ -129,8 +129,11 @@ for cc=1:length(first_level_cons_to_do),
         % find max voxel, time, freq
         S2=oat.group_level.report;
         S2.stats=group_level_results;
-        first_level_cons_to_do_reordered_for_con=[con4report, setdiff(first_level_cons_to_do,first_level_cons_to_do(con4report))];
-        S2.first_level_cons_to_do=first_level_cons_to_do_reordered_for_con;
+        if length(first_level_cons_to_do) == 1
+            first_level_cons_to_do_reordered_for_con = first_level_cons_to_do;
+        else
+            first_level_cons_to_do_reordered_for_con=[con4report, setdiff(first_level_cons_to_do,first_level_cons_to_do(con4report))];
+        end
         S2.modality=oat.group_level.report.modality_to_do; % in case we are in sensor space
 
         [vox_ind_max time_ind_max freq_ind_max stats max_stat] = oat_find_max_stats( S2 );

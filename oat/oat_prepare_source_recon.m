@@ -239,14 +239,21 @@ end
 %% Normalise modalities using, e.g., mean or smallest eigenvalues
 %% calculated using good channels and good trials, and over all woi
 
-if strcmp( source_recon_sess.normalise_method,'none')
+if strcmp( source_recon_sess.normalise_method,'mean_eig')
     S=[];
     S.D=D_epoched;
     S.normalise_method='mean_eig';
     S.datatype='neuromag';
     S.do_plots=true;
     [D_epoched pcadim normalisation]= osl_normalise_sensor_data(S);
-else
+elseif strcmp( source_recon_sess.normalise_method,'min_eig')
+    S=[];
+    S.D=D_epoched;
+    S.normalise_method='min_eig';
+    S.datatype='neuromag';
+    S.do_plots=true;
+    [D_epoched pcadim normalisation]= osl_normalise_sensor_data(S);
+elseif strcmp( source_recon_sess.normalise_method,'none')
     chanind=indchantype(D,modality_meeg,'good');
     pcadim=length(chanind);
     normalisation=1;        

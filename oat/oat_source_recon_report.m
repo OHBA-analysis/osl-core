@@ -31,8 +31,10 @@ for sessi=1:length(oat.source_recon.sessions_to_do), sessnum=oat.source_recon.se
         if sessi==1
             source_recon_results.normalisation=nan(length(res.normalisation),length(oat.source_recon.sessions_to_do),1);    
         end
-        
-        source_recon_results.pca_order(sessi)=res.pca_order;
+ 
+        for ff=1:length(res.normalisation)
+            source_recon_results.pca_order(ff,sessi)=res.pca_order(ff);
+        end
         
         for ff=1:length(res.normalisation)
             source_recon_results.normalisation(ff,sessi)=res.normalisation(ff);
@@ -66,9 +68,11 @@ for sessi=1:length(oat.source_recon.sessions_to_do), sessnum=oat.source_recon.se
 end
 
 try
-    source_recon_results.report=osl_report_set_figs(source_recon_results.report,'pca_order');
-    plot(oat.source_recon.sessions_to_do,source_recon_results.pca_order,'*');xlabel('sess no.');ylabel('PCA dim used'); 
-    source_recon_results.report=osl_report_print_figs(source_recon_results.report);
+    for ff=1:length(res.pca_order)
+        source_recon_results.report=osl_report_set_figs(source_recon_results.report,'pca_order');
+        plot(oat.source_recon.sessions_to_do,source_recon_results.pca_order(ff,:),'*');xlabel('sess no.');ylabel([oat.source_recon.modalities{ff} 'PCA dim used']); 
+        source_recon_results.report=osl_report_print_figs(source_recon_results.report);
+    end
 catch
 end
 
