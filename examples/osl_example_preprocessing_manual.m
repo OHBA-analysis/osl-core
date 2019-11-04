@@ -9,7 +9,15 @@
 % We will work with a single subject's data from an emotional faces task. 
 % 
 % We will take an approach here which is run step-by-step and requires
-% manual intervention. This will go through the following steps:
+% manual intervention. This will go through the following preprocessing steps:
+%
+% * Import data into SPM MEEG format
+% * Band-pass temporal filtering
+% * Downsampling
+% * Bad segment/channel detection
+% * ICA denoising using AFRICA
+% * Epoching
+% * Outlier trial detection
 %
 % Note that this contains the fif file: fifs/sub1_face_sss.fif that has
 % already been SSS Maxfiltered and downsampled to 250 Hz.
