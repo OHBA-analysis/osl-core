@@ -245,18 +245,25 @@ if strcmp( source_recon_sess.normalise_method,'mean_eig')
     S.normalise_method='mean_eig';
     S.datatype='neuromag';
     S.do_plots=true;
-    [D_epoched pcadim normalisation]= osl_normalise_sensor_data(S);
+    [D_epoched, pcadim, normalisation, fig_handles, fig_names] = osl_normalise_sensor_data(S);
 elseif strcmp( source_recon_sess.normalise_method,'min_eig')
     S=[];
     S.D=D_epoched;
     S.normalise_method='min_eig';
     S.datatype='neuromag';
     S.do_plots=true;
-    [D_epoched pcadim normalisation]= osl_normalise_sensor_data(S);
-elseif strcmp( source_recon_sess.normalise_method,'none')
+    [D_epoched, pcadim, normalisation, fig_handles, fig_names] = osl_normalise_sensor_data(S);
+end
+
+if strcmp( source_recon_sess.normalise_method,'none')
     chanind=indchantype(D,modality_meeg,'good');
     pcadim=length(chanind);
     normalisation=1;        
+else
+    if do_report    
+         sess_report=osl_report_set_figs(sess_report,fig_names,fig_handles);
+         sess_report=osl_report_print_figs(sess_report);
+    end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

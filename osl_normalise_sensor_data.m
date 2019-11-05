@@ -1,6 +1,10 @@
-function [Dnew pcadim normalisation] = osl_normalise_sensor_data(S)
+function [Dnew, pcadim, normalisation, fig_handles, fig_names] = osl_normalise_sensor_data(S)
 
-% [D pcadim] = osl_normalise_sensor_data(S)
+% [D, pcadim, normalisation, fig_handles, fig_names] = osl_normalise_sensor_data(S)
+% 
+% This is a wrapper fn for normalise_sensor_data(S).
+% It setups the good trial and sample indices.
+
 
 try D=S.D; catch, error('S.D must be specified'); end
 try datatype=S.datatype; catch, error('S.datatype must be specified'); end % 'ctf' or 'neuromag' or 'eeg'
@@ -36,6 +40,9 @@ switch datatype
     case 'eeg' 
         try pca_dim=S.pca_dim; catch, pca_dim=-1; end
 end
+
+fig_handles=[];
+fig_names=[];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Establish time windows of interest
