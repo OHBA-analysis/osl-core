@@ -1,5 +1,4 @@
 %% OAT 1 - Sensorspace ERF Analysis
-%
 % In this practical we will work with a single subject's data from an
 % emotional faces task (data courtesy of Susie Murphy) and perform an ERF
 % analysis in sensor space.
@@ -22,6 +21,7 @@
 %
 % * Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.
 % * eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.
+%
 
 %% A QUICK SUMMARY OF OAT
 %
@@ -87,15 +87,16 @@ oat.source_recon.dirname = fullfile(workingdir,'sensorspace_erf');
 
 %% SETUP THE FIRST LEVEL GLM
 % This cell defines the GLM parameters for the first level analysis.
-% Critically this includes the design matrix (in Xsummary) and contrast matrix.
-% Xsummary is a parsimonious description of the design matrix. It contains
-% values |Xsummary{reg,cond}|, where reg is a regressor index number and cond is a condition index number. This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix.
+% Critically this includes the design matrix (in |Xsummary|) and the contrast matrix.
+% |Xsummary| is a parsimonious description of the design matrix. It contains
+% values |Xsummary{reg,cond}|, where |reg| is a regressor index number and |cond| indexes different experimental conditions (e.g. pictures of faces, pictures of motorbikes). 
+% This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix.
 % 
 % Each contrast is a vector containing a weight per condition defining how the condition 
 % parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. 
-% Contrasts 1 and 2 describe positive correlations between each sensors activity and the 
+% Contrasts 1 and 2 describe positive correlations between each sensor's activity and the 
 % presence of a motorbike or face stimulus respectively. Contrast 3 tests whether each 
-% sensors activity is larger for faces than motorbikes.
+% sensor's activity is larger for faces than motorbikes.
 
 Xsummary={};
 Xsummary{1}=[1 0 0 0];Xsummary{2}=[0 1 0 0];Xsummary{3}=[0 0 1 0];Xsummary{4}=[0 0 0 1];
@@ -117,7 +118,7 @@ oat.first_level.bc=[0 0 0];
 oat = osl_check_oat(oat);
 
 %% VIEW OAT SETTINGS
-% As well as using the settings we specified in the previous cell, calling osl_check_oat has filled in a bunch of other settings as well.
+% As well as using the settings we specified in the previous cell, calling |osl_check_oat| has filled in a bunch of other settings as well.
 
 oat
 oat.source_recon
@@ -147,7 +148,7 @@ oat.first_level
 
 %% RUN OAT
 %
-% The OAT structure you have created, oat, should be passed to the function osl_run_oat.m, to run the pipeline.
+% The OAT structure you have created, |oat|, should be passed to the function |osl_run_oat|, to run the pipeline.
 % However, the OAT structure should contain a structure (|oat.to_do|), which is a list of binary values indicating which part of the pipeline is to be run.
 % E.g. |oat.to_do=[1 1 0 0];| will run just the source recon and first level stages, whereas |oat.to_do=[1 1 1 1];| will run all four (source-recon, first level, subject-level and group level).
 % Here we are not doing any group analysis, so we need:
@@ -160,21 +161,22 @@ oat = osl_run_oat(oat);
 %% VIEW RESULTS
 %
 % The OAT runs the GLM for every time point and frequency band across all
-% sensors and creates a useful summary of the results as well as range of diagnostic figures 
-% from the source recon and results from the first level.
+% sensors. 
 %
-% The report generates a summary of results based on the
-% information in oat.first_level.report. 
+% OAT will create a report containing a summary of the first level analysis 
+% results (as well as some diagnostic figures 
+% from the source reconstruction). The specific content of this report depends 
+% upon settings in |oat.first_level.report|:
 %
 % * |oat.first_level.report.modality_to_do| - e.g. MEGPLANAR, MEGMAG (only in sensor space)
 % * |oat.first_level.report.first_level_cons_to_do;| - plots only these contrasts and uses first one in list to determine max vox, time, freq
 % * |oat.first_level.report.time_range;| - to determine max vox, time, freq
 % * |oat.first_level.report.freq_range;| - to determine max vox, time, freq
 %
-% Open the report indicated in oat.results.report in a web browser 
+% Open the report indicated in |oat.results.report| in a web browser 
 % (there will also be a link to this available in the Matlab output). This displays the diagnostic plots. 
 %
-% * At the top of the file is a link to oat.results.logfile (a file containing the matlab output) - you should check this for any errors or unusual warnings.
+% * At the top of the file is a link to |oat.results.logfile| (a file containing the matlab output) - you should check this for any errors or unusual warnings.
 % * Then there will be a list of reports for each OAT stage. 
 % * Click on the "First level (epoched)" link to bring up the first level reports.
 %
@@ -183,29 +185,16 @@ oat = osl_run_oat(oat);
 %
 % The settings in the current OAT will generate several images
 %
-% *Design Matrix* - the design matrix used in the GLM analysis
-% *COPE and T-stat plots* - All three contrasts are shown with COPE  on the left and the t-stat on the
+% * *Design Matrix* - the design matrix used in the GLM analysis
+% * *COPE and T-stat plots* - All three contrasts are shown with COPE  on the left and the t-stat on the
 % right. These are from the peak sensor for the faces contrast.
-% *Topo and ERF plots* - These are shown for each of the  contrasts. The topoplot
+% * *Topo and ERF plots* - These are shown for each of the  contrasts. The topoplot
 % shows the response at the peak time point for the faces contrast and the
 % ERF plot shows the response across the whole epoch.
 %
 % <<osl_example_sensorspace_oat_stats_tc.png>>
 
 disp(oat.results.report.html_fname); % show path to web page report
-
-
-%% GENERATE REPORT
-%
-% The report creates a useful summary of the OAT results. You can click
-% through a log files from the analysis as well as range of diagnostic figures 
-% from the source recon and results from the first level.
-
-oat.first_level.report.modality_to_do='MEGPLANAR';
-report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});
-
-% open the report in matlabs html browser
-open(oat.results.report.html_fname);
 
 %% OAT RESULTS STRUCTURE
 %
@@ -216,16 +205,16 @@ open(oat.results.report.html_fname);
 %
 % It is highly recommended that you always inspect the |oat.results.report|, to ensure that OAT has run successfully. 
 %
-% Open the report indicated in oat.results.report in a web browser (there will also be a link to this available in the Matlab output). This displays the diagnostic plots. 
+% Open the report indicated in |oat.results.report| in a web browser (there will also be a link to this available in the Matlab output). This displays the diagnostic plots. 
 % 
-% * At the top of the file is a link to oat.results.logfile (a file containing the matlab output) - you should check this for any errors or unusual warnings.
+% * At the top of the file is a link to |oat.results.logfile| (a file containing the matlab output) - you should check this for any errors or unusual warnings.
 % * Then there will be a list of reports for each OAT stage. 
 %
 % Click on the "First level (epoched)" link to bring up the first level reports.
 %
 % This brings up a list of sessions. Here we have only preprocessed one session. Click on the "Session 1 report" link to bring up the diagnostic plots for session 1 and take a look.
 % 
-% The results can be loaded back into matlab using oat_load_results. 
+% The results can be loaded back into matlab using |oat_load_results|. 
 % This is useful for checking over results of the GLM or as the basis for further analyses.
 
 % Show OAT results
@@ -248,16 +237,16 @@ disp(oat.results);
 % * |oat.subject_level.results_fnames|
 % * |oat.group_level.results_fnames|
 %
-% These can loaded into Matlab, e.g. to load session 1?s source reconstruction results use the call:
+% These can loaded into Matlab, e.g. to load session 1's source reconstruction results use the call:
 %
-% |recon_results= oat_load_results(oat,oat.source_recon.results_fnames{1})|
+% |recon_results = oat_load_results(oat,oat.source_recon.results_fnames{1})|
 %
-% E.g. to load session 2?s first level stats results, you can use the call:
+% E.g. to load session 2's first level stats results, you can use the call:
 % 
-% |stats= oat_load_results(oat,oat.first_level.results_fnames{2})|
+% |stats = oat_load_results(oat,oat.first_level.results_fnames{2})|
 % 
 % Run the following code to load in the stats results from the GLM you just ran and plot the design matrix.
-% This is the nconditions by ntrials design matrix which is used to fit the GLM
+% This is the |nconditions x ntrials| design matrix which is used to fit the GLM
 % (NOTE that column 1 is motorbikes, columns 2-4 are faces)
 
 % load first-level GLM result
@@ -269,7 +258,7 @@ figure;imagesc(stats1.x);title('GLM design matrix');xlabel('regressor no.');ylab
 %% VISUALISE USING FIELDTRIP
 %
 % A lot of the visualisations work using functions from fieldtrip. These
-% offer a wide range of visualisation options and are high customisable.
+% offer a wide range of visualisation options and are highly customisable.
 % Here we will use an OSL function which plots an OAT result in a fieldtrip
 % multiplot.
 %
@@ -278,11 +267,13 @@ figure;imagesc(stats1.x);title('GLM design matrix');xlabel('regressor no.');ylab
 % calling |oat_stats_multiplotER|.
 %
 % Note that this produces an interactive figure, with which you can:
+%
 % * draw around a set of sensors
 % * click in the drawn box to produce a plot of the time series
 % * on the time series plot you can draw a time window
 % * and click in the window to create a topoplot averaged over that time
 % window (which is itself interactive....!)
+%
 
 S2=[];
 S2.oat=oat;
