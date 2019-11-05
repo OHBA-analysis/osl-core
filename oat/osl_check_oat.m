@@ -376,8 +376,6 @@ try oat.first_level.report.time_range=oatin.first_level.report.time_range; oatin
 try oat.first_level.report.freq_range=oatin.first_level.report.freq_range; oatin.first_level.report = rmfield(oatin.first_level.report,'freq_range'); catch, oat.first_level.report.freq_range=oat.first_level.tf_freq_range; end; % Indicates which modality to do diagnostic report - only relevant for a sensor space analysis
 try oat.first_level.report.max_method=oatin.first_level.report.max_method; oatin.first_level.report = rmfield(oatin.first_level.report,'max_method'); catch, oat.first_level.report.max_method='max_abs_tstat'; end; % method to use to find location, time and freq of interest for report: can be 'max_abs_tstat' or 'max_tstat'
 
-try oat.first_level.warp_fields=oatin.first_level.warp_fields; oatin.first_level = rmfield(oatin.first_level,'warp_fields'); catch, oat.first_level.warp_fields=[]; end; % warp fields
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% subjects stats setting
 
