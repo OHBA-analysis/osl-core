@@ -5,14 +5,13 @@
 %
 % We will go through the following steps:
 %
-% # Prepare data for OAT analysis
-% # Bandpass filter data and split into epochs
+% # Set-up an OAT Analysis: |source_recon| and |first_level|
 % # Compute a first level GLM analysis with OAT
 % # Visualise results with FieldTrip
 %
-% Please read each cell in turn before copying it's contents either directly  
+% Please read each cell in turn before copying its contents either directly  
 % into the MatLab console or your own blank script. By the end of this session 
-% you should have created your own template analysis script which can be %
+% you should have created your own template analysis script which can be 
 % applied to further analysis.
 %
 % We will work with a single subject's data from an emotional faces task and perform an ERF analysis in sensor space. 
@@ -34,7 +33,11 @@
 %
 % <<oat_stage_summary.png>>
 %
-% Since we are only analyzing a single session for a single subject here, we will only use the first two stages.
+% Since we are only analyzing a single session for a single subject here, 
+% we will only use the first two stages.
+%
+% For more information about OAT see:
+% <https://ohba-analysis.github.io/osl-docs/pages/docs/oat.html>
 
 %% INITIALISE GLOBAL SETTINGS FOR THIS ANALYSIS
 % This cell sets the directory that OAT will work in. Change the workingdir variable to correspond to the correct directory on your computer before running the cell.
@@ -47,16 +50,11 @@ workingdir = fullfile(osldir,'example_data','faces_singlesubject');
 
 %% SET UP THE SUBJECTS FOR THE ANALYSIS
 %
-% Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:
-%
-% |fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];|
-%
-% |fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];|
-%
-% etc...
+% Specify a list of the SPM input files. 
+% Note that here we only have 1 subject, but more generally there would be 
+% more than one. For example:
 %
 % |spm_files{1} = [workingdir '/sub1_face_sss.mat'];|
-%
 % |spm_files{2} = [workingdir '/sub2_face_sss.mat'];|
 %
 % etc...
@@ -68,10 +66,15 @@ spm_files_continuous{1} = fullfile(datadir,'Aface_meg1.mat');
 spm_files_epoched{1}    = fullfile(datadir,'eAface_meg1.mat');
 
 %% SETUP SENSOR SPACE SOURCE RECON
-% This stage sets up the source reconstruction stage of an OAT analysis. The source_recon stage is always run even for a sensorspace analysis, though in these cases it simply prepares the data for subsequent analysis.
+% This stage sets up the source reconstruction stage of an OAT analysis. 
+% The source_recon stage is always run even for a sensorspace analysis, 
+% though in these cases it simply prepares the data for subsequent analysis.
 % In this example we define our input files (|D_continuous| and
-% |D_epoched|) and conditions before setting a time frequency window from -200ms before stimulus onset to 400ms after and from 4Hz to 100Hz. The source recon method is set to 'none' as we are performing a sensorspace analysis.
-% The |oat.source_recon.dirname| is where all the analysis will be stored. This includes all the intermediate steps, diagnostic plots and final results.
+% |D_epoched|) and conditions before setting a time frequency window from 
+% -200ms before stimulus onset to 400ms after and from 4Hz to 100Hz. 
+% The source recon method is set to 'none' as we are performing a sensorspace analysis.
+% The |oat.source_recon.dirname| is where all the analysis will be stored. 
+% This includes all the intermediate steps, diagnostic plots and final results.
 
 oat=[];
 oat.source_recon.D_epoched=spm_files_epoched; % this is passed in so that the bad trials and bad channels can be read out
@@ -89,8 +92,11 @@ oat.source_recon.dirname = fullfile(workingdir,'sensorspace_erf');
 % This cell defines the GLM parameters for the first level analysis.
 % Critically this includes the design matrix (in |Xsummary|) and the contrast matrix.
 % |Xsummary| is a parsimonious description of the design matrix. It contains
-% values |Xsummary{reg,cond}|, where |reg| is a regressor index number and |cond| indexes different experimental conditions (e.g. pictures of faces, pictures of motorbikes). 
-% This will be used (by expanding the conditions over trials) to create the (num_regressors x num_trials) design matrix.
+% values |Xsummary{reg,cond}|, where |reg| is a regressor index number and 
+% |cond| indexes different experimental conditions (e.g. pictures of faces, 
+% pictures of motorbikes). 
+% This will be used (by expanding the conditions over trials) to create the 
+% (num_regressors x num_trials) design matrix.
 % 
 % Each contrast is a vector containing a weight per condition defining how the condition 
 % parameter estimates are to be compared. Each vector will produce a different t-map across the sensors. 
@@ -154,18 +160,23 @@ oat.first_level
 % Here we are not doing any group analysis, so we need:
 %
 % |oat.to_do=[1 1 0 0];|
+%
+% OAT will produce and close a number of figures as it processes, we
+% will discuss what they mean once it has finished (this takes a couple of
+% minutes)
 
 oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
 
 %% VIEW RESULTS
 %
-% The OAT runs the GLM for every time point and frequency band across all
+% OAT runs the GLM for every time point and frequency band across all
 % sensors. 
 %
 % OAT will create a report containing a summary of the first level analysis 
 % results (as well as some diagnostic figures 
-% from the source reconstruction). The specific content of this report depends 
+% from the source reconstruction). 
+% The specific content of this report depends 
 % upon settings in |oat.first_level.report|:
 %
 % * |oat.first_level.report.modality_to_do| - e.g. MEGPLANAR, MEGMAG (only in sensor space)

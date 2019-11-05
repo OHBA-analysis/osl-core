@@ -10,7 +10,7 @@
 % task dependant differences in this source activity is then quantified using a GLM.
 % This will go through the following steps:
 %
-% # Set-up an OAT Analysis: source_recon and first_level
+% # Set-up an OAT Analysis: |source_recon| and |first_level|
 % # Run source space GLM fitting and contrasts
 % # Check coregistration
 % # Save and view t-stat volumes
@@ -32,20 +32,13 @@ structdir =  fullfile(osldir,'example_data','faces_singlesubject','structurals')
 % directory to put the analysis in
 workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 
-
-
 %% SET UP THE SUBJECTS FOR THE ANALYSIS
 %
-% Specify a list of the fif files, structural files (not applicable for this practical) and SPM files (which will be created). It is important to make sure that the order of these lists is consistent across sessions. Note that here we only have 1 subject, but more generally there would be more than one. For example:
-%
-% |fif_files{1}=[testdir '/fifs/sub1_face_sss.fif'];|
-%
-% |fif_files{2}=[testdir '/fifs/sub2_face_sss.fif'];|
-%
-% etc...
+% Specify a list of the SPM input files. 
+% Note that here we only have 1 subject, but more generally there would be 
+% more than one. For example:
 %
 % |spm_files{1} = [workingdir '/sub1_face_sss.mat'];|
-%
 % |spm_files{2} = [workingdir '/sub2_face_sss.mat'];|
 %
 % etc...
@@ -67,9 +60,10 @@ D.save()
 
 %% SETUP THE OAT:
 %
-% The oat.source_recon options define the parameters for the data
-% filtering, windowing and beamforming. We define the D files, conditions
-% and time-frequency options in the same way as the sensorspace OAT. THe
+% The |oat.source_recon| options define the parameters for the data
+% filtering, windowing and beamforming. We define the continuous and epoched
+% SPM MEEG object files, conditions
+% and time-frequency options in the same way as the sensorspace OAT. The
 % In this section we will do a wholebrain beamformer, followed by a trial-wise
 % GLM that will correspond to a comparison of the ERFs for the different
 % conditions. The source-space projection is defined by a new set of
@@ -77,7 +71,7 @@ D.save()
 %
 % The critical options are:
 %
-% * |method| -   This defines the source reconstruction method to be used. other options include 'beamform_bilateral' and 'mne_datacov'
+% * |method| -   This defines the source reconstruction method to be used. other options include 'beamform_bilateral'
 % * |normalise_method| - How to normalise the magnetometers and gradiometers
 % * |gridstep| - This is the distance (in mm) between points to be reconstructed, the spatial resolution of the analysis. We
 % are using 8mm which is lower than usual but faster to compute.
@@ -87,6 +81,7 @@ D.save()
 %
 % These options are the same as the sensorspace OAT and define input-data,
 % conditions, filtering and windowing.
+
 oat=[];
 oat.source_recon.D_continuous=spm_files_continuous;
 oat.source_recon.D_epoched=spm_files_epoched;
@@ -106,15 +101,17 @@ oat.source_recon.report.do_source_variance_maps=1;
 
 oat.source_recon.dirname=fullfile(workingdir,'beamformer_erf'); % directory the oat and results will be stored in
 
-
 %% SPECIFIY FIRST LEVEL OPTIONS
 %
 % These options are the same as the sensorspace ERF tutorial.
 %
-% design_matrix_summary is a parsimonious description of the design matrix.
-% It contains values |design_matrix_summary{reg,cond}|, where reg is a regressor no. and cond
-% is a condition no. This will be used (by expanding the conditions over
-% trials) to create the (num_regressors x num_trials) design matrix:
+% |design_matrix_summary| is a parsimonious description of the design matrix.
+% It contains values |design_matrix_summary{reg,cond}|, where |reg| is a 
+% regressor index number and |cond| indexes different experimental 
+% conditions (e.g. pictures of faces, pictures of motorbikes). 
+% This will be used (by expanding the conditions over trials) to create the 
+% (num_regressors x num_trials) design matrix.
+
 design_matrix_summary={};
 design_matrix_summary{1}=[1 0 0 0];design_matrix_summary{2}=[0 1 0 0];design_matrix_summary{3}=[0 0 1 0];design_matrix_summary{4}=[0 0 0 1];
 oat.first_level.design_matrix_summary=design_matrix_summary;
@@ -138,8 +135,9 @@ oat = osl_check_oat(oat);
 
 %% RUN THE OAT:
 %
-% We only need to run the source_recon and first_level stages in this
-% tutorial, the subject_level and group_level options can be set to 0.
+% We only need to run the |source_recon| and |first_level| stages in this
+% tutorial, so the |oat.to_do| flags for the |subject_level| and |group_level| 
+% OAT stages are set to 0.
 %
 % The OAT will produce and close a number of figures as it processes, we
 % will discuss what they mean once it has finished (this takes a couple of
@@ -147,21 +145,27 @@ oat = osl_check_oat(oat);
 
 oat.to_do=[1 1 0 0];
 oat = osl_run_oat(oat);
-close all
 
-%% VIEW OAT  REPORT
+close all % close any open figures
+
+%% VIEW OAT REPORT
 %
-% Once finished, the OAT will print a link to a html report. Click to open
+% Once finished, OAT will print a link to a html report. Click to open
 % it in the matlab html browser.
 %
 % *Source Recon*
 %
 % Firstly, click to open the "Session_1_report". This contains the plots
-% relevent to the source_recon. In our case this is the sensor
-% normalisation. Note that the eigenspectrum of the sensordata
+% relevent to the |source_recon| stage. This shows the results of the sensor
+% normalisation that is done prior to the source reconstruction. This is
+% done to ensure that all sensor types can contribute appropriately to the 
+% source reconstruction. 
+% 
+% Note that the eigenspectrum of the sensordata
 % ('Pre-normalised log eigenspectrum') drops off sharply at
-% around 64, this indicates the rank of the sensor data which i limited by
-% maxfilter de-noising.
+% around 64, this indicates the rank of the sensor data which is limited by
+% the maxfilter de-noising that was done during the preprocessing of this
+% data.
 %
 % The Pre-normalised variances shows the sensor-by-sensor variance across
 % time. Channels 205-306 are the Magnetometers and have much higher
@@ -169,7 +173,7 @@ close all
 % this disparity or the information in the Magnetometers will dominate the
 % reconstruction.
 %
-% In the normalised_eigs plot below, we can see that the 'mean_eig' sensor
+% In the |normalised_eigs| plot below, we can see that the 'mean_eig' sensor
 % normalisation has both removed the shelf in the eigenspectrum and brought
 % the sensor variances in line with each other.
 %
