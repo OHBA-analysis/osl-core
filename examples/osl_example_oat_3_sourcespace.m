@@ -38,8 +38,9 @@ workingdir = fullfile(osldir,'example_data','faces_subject1_data_osl2');
 % Note that here we only have 1 subject, but more generally there would be 
 % more than one. For example:
 %
-% |spm_files{1} = [workingdir '/sub1_face_sss.mat'];|
-% |spm_files{2} = [workingdir '/sub2_face_sss.mat'];|
+% |spm_files_continuous{1} = [workingdir '/sub1_face_sss.mat'];|
+%
+% |spm_files_continuous{2} = [workingdir '/sub2_face_sss.mat'];|
 %
 % etc...
 
@@ -74,7 +75,7 @@ D.save()
 % * |method| -   This defines the source reconstruction method to be used. other options include 'beamform_bilateral'
 % * |normalise_method| - How to normalise the magnetometers and gradiometers
 % * |gridstep| - This is the distance (in mm) between points to be reconstructed, the spatial resolution of the analysis. We
-% are using 8mm which is lower than usual but faster to compute.
+% are using 9mm which is lower than usual but faster to compute.
 % * |forward_meg| - This specifies the forward model used.
 % * |modalities| - Defines which types of sensor to use.
 % * |do_source_variance_maps| - If set to 1, this outputs an optional sanity check
@@ -94,7 +95,7 @@ oat.source_recon.time_range=[-0.2 0.4]; % time range in secs
 % These options specify the source reconstruction that will take place.
 oat.source_recon.method='beamform';
 oat.source_recon.normalise_method='mean_eig';
-oat.source_recon.gridstep=8; % in mm
+oat.source_recon.gridstep=9; % in mm
 oat.source_recon.forward_meg='Single Shell';
 oat.source_recon.modalities{1}={'MEGPLANAR', 'MEGMAG'};
 oat.source_recon.report.do_source_variance_maps=1;

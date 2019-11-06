@@ -36,8 +36,9 @@ workingdir = fullfile(osldir,'example_data','faces_singlesubject');
 % Note that here we only have 1 subject, but more generally there would be 
 % more than one. For example:
 %
-% |spm_files{1} = [workingdir '/sub1_face_sss.mat'];|
-% |spm_files{2} = [workingdir '/sub2_face_sss.mat'];|
+% |spm_files_continuous{1} = [workingdir '/sub1_face_sss.mat'];|
+%
+% |spm_files_continuous{2} = [workingdir '/sub2_face_sss.mat'];|
 %
 % etc...
 
