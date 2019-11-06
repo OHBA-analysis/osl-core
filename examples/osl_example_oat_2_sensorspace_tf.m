@@ -14,9 +14,9 @@
 %
 % You will need the following files from the example_data directory:
 %
-% * Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data 
+% * Aface_meg1.mat - an SPM MEEG object that has continuous data 
 % that has already been SSS Maxfiltered and downsampled to 250 Hz.
-% * eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data 
+% * eAface_meg1.mat - an SPM MEEG object that has the same data 
 % epoched into the different task conditions.
 %
 
@@ -121,7 +121,10 @@ oat.first_level.bc=[1 1 0]; % specifies whether or not baseline correction is do
 % sensor's activity is larger for faces than motorbikes.
 
 Xsummary={};
-Xsummary{1}=[1 0 0 0];Xsummary{2}=[0 1 0 0];Xsummary{3}=[0 0 1 0];Xsummary{4}=[0 0 0 1];
+Xsummary{1}=[1 0 0 0];
+Xsummary{2}=[0 1 0 0];
+Xsummary{3}=[0 0 1 0];
+Xsummary{4}=[0 0 0 1];
 oat.first_level.design_matrix_summary=Xsummary;
 
 % contrasts to be calculated:
@@ -204,7 +207,7 @@ oat.first_level.report.first_level_cons_to_do=[3];
 report = oat_first_level_stats_report(oat,oat.first_level.results_fnames{1});
 
 % Open the report in matlabs html browser
-open(oat.results.report.html_fname);
+open(report.html_fname);
 
 
 %% RESULTS

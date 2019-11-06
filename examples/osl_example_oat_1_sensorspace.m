@@ -18,8 +18,10 @@
 % This will use the following files, which should be in the example_data
 % directory:
 %
-% * Asss_fif_spm12_meg25.mat - an SPM MEEG object that has continuous data that has already been SSS Maxfiltered and downsampled to 250 Hz.
-% * eAsss_fif_spm12_meg25.mat - an SPM MEEG object that has the same data epoched into the different task conditions.
+% * Aface_meg1.mat - an SPM MEEG object that has continuous data that has
+% already been SSS Maxfiltered and preprocessed (downsampling, filtering
+% and ICA).
+% * eAface_meg1.mat - an SPM MEEG object that has the same data epoched into the different task conditions.
 %
 
 %% A QUICK SUMMARY OF OAT
@@ -86,7 +88,8 @@ oat.source_recon.time_range=[-0.2 0.4];
 oat.source_recon.method='none';
 oat.source_recon.normalise_method='none';
 
-% Set this to something specific
+% Ensure that the directory name is unique (results in existing directories
+% will be overwritten).
 oat.source_recon.dirname = fullfile(workingdir,'sensorspace_erf');
 
 %% SETUP THE FIRST LEVEL GLM
@@ -106,7 +109,10 @@ oat.source_recon.dirname = fullfile(workingdir,'sensorspace_erf');
 % sensor's activity is larger for faces than motorbikes.
 
 Xsummary={};
-Xsummary{1}=[1 0 0 0];Xsummary{2}=[0 1 0 0];Xsummary{3}=[0 0 1 0];Xsummary{4}=[0 0 0 1];
+Xsummary{1}=[1 0 0 0];
+Xsummary{2}=[0 1 0 0];
+Xsummary{3}=[0 0 1 0];
+Xsummary{4}=[0 0 0 1];
 oat.first_level.design_matrix_summary=Xsummary;
 
 % contrasts to be calculated:
@@ -280,7 +286,7 @@ figure;imagesc(stats1.x);title('GLM design matrix');xlabel('regressor no.');ylab
 %
 % Note that this produces an interactive figure, with which you can:
 %
-% * draw around a set of sensors
+% * click and drag to draw a box around a set of sensors
 % * click in the drawn box to produce a plot of the time series
 % * on the time series plot you can draw a time window
 % * and click in the window to create a topoplot averaged over that time

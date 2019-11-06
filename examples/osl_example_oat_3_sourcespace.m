@@ -95,7 +95,7 @@ oat.source_recon.time_range=[-0.2 0.4]; % time range in secs
 % These options specify the source reconstruction that will take place.
 oat.source_recon.method='beamform';
 oat.source_recon.normalise_method='mean_eig';
-oat.source_recon.gridstep=9; % in mm
+oat.source_recon.gridstep=8; % in mm
 oat.source_recon.forward_meg='Single Shell';
 oat.source_recon.modalities{1}={'MEGPLANAR', 'MEGMAG'};
 oat.source_recon.report.do_source_variance_maps=1;

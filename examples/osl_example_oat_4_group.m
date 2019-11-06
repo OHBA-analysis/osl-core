@@ -325,6 +325,9 @@ S2.group_level_cons_to_do = [1];
 % over the specified time range of 140-150ms. To view the results properly, 
 % setup appropriate color-maps for the images and threshold the t-stat at about 4.5, and the cope at about 0.005.
 %
+% Once you have run this cell, try re-running to look at the window between
+% 90 and 120 ms after stimulus onset. What differences do you notice
+% between the early (90-120ms) and later (140-150ms) responses?
 
 % load in OAT with first 3 stages run:
 
@@ -386,6 +389,11 @@ osleyes( {[],cope,tstat} );
 % * |stats_tstat_gc1_2mm| - original unthresholded t-stat
 % * |stats_clustere_tstat_gc1_2mm| - cluster extent for each voxel (note that this is the number of voxels in the space used for the beamforming (8mm in this case)). 
 % * |stats_clustere_corrp_tstat_gc1_2mm| - whole-brain corrected P-values for each cluster
+%
+% As with the previous cell - once you have run this section, try
+% re-running to look at the window between 90 and 120 ms after stimulus
+% onset. What differences do you notice between the early (90-120ms) and
+% later (140-150ms) responses?
 
 S=[];
 S.oat=oat;
