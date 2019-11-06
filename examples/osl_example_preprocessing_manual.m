@@ -747,13 +747,22 @@ D.conditions
 D.time
 
 %%
-% As mentioned, any trials that overlap with the bad epochs that we marked as bad 
+% Any trials that overlap with bad segments that we marked as bad 
 % on the continuous data, will now be marked as bad trials in
-% the epoched data. We can see the indices for these bad trials using:
+% the epoched data. 
+%
+% We can see this clearly if we use the function |report.trial_timings| to
+% look at the epoched data in continuous space. 
+% Any trials that overlap with bad segments are now marked bad, and are shown in black.
+
+report.trial_timings(D);
+
+%%
+% We can see the indices for bad trials using:
 
 disp('Bad trial indices:');
 disp(D.badtrials);
- 
+
 %%
 % We can also see the indices for any bad channels. 
 
@@ -777,6 +786,7 @@ report.bad_trials(D);
 modalities = {'MEGMAG','MEGPLANAR'};
 report.bad_channels(D, modalities);
 
+%%
 % We will now perform outlier/bad trial detection directly on the epoched
 % data to refine the marking of bad trials further.
 
@@ -837,7 +847,7 @@ report.bad_trials(D);
 report.trial_timings(D);
 
 %% MANUAL BAD TRIAL/CHANNEL DETECTION 
-% Generally, automated bad trial/channel detection is sufficient. 
+% Generally, automated bad trial/channel detection is sufficient and is recommended. 
 % However, there is also the option to run manual bad trial/channel detection using a Fieldtrip interactive tool.
 % We can do this as an alternative, or in addition, to the automated bad
 % trial/channel detection done above. 
