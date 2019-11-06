@@ -6,7 +6,7 @@
 % Three possible models are used: 
 %
 % 1. The HMM-Gaussian, which is run on the power time series. The power time series 
-%   reflects the fluctuations in the amplitude of signal. Therefore, this
+%   reflect the fluctuations in the amplitude of signal. Therefore, this
 %   variant of the HMM captures changes in the instantaneous power, as well as 
 %   changes in the power correlations across regions. This model is
 %   appropriate when we have many channels and we only want to focus on
@@ -38,14 +38,16 @@
 %% 
 
 % We will first set up the necessary directories
-clc; clear all; close all; %clean up workspace
+clc; clear all; close all; % clean up workspace
 
-% Software directories: **you need to update OSLCOURSE_dir** to your local directory
-OSLCOURSE_dir = '/Users/dvidaurre/Work/Matlab/ohba_analysis/';
+% Software directories: **you need to update OSLCOURSE_dir** to be where
+% your OSL directory is
+OSLCOURSE_dir = '/Users/dave/osl/'; % set this to be where your OSL directory is
+
 HMMMAR_dir = [OSLCOURSE_dir '/HMM-MAR'];
 OSLDIR = [OSLCOURSE_dir '/osl-core'];
 ohbaexternal_dir = [OSLCOURSE_dir '/ohba-external'];
-data_dir = [OSLCOURSE_dir 'OSL_course/data_HMM/'];
+data_dir = [OSLCOURSE_dir 'example_data/data_HMM/'];
 
 % Name for this HMM-MAR analysis:
 results_file = [data_dir '/results.mat'];
@@ -77,7 +79,7 @@ conditions = {'Famous face','Unfamiliar face','Scrambled face'};
 
 %%
 % We load the continuous data, for one subject
-% This 50 min of MEG data, 38 ROIs. The variables contained in this data file are: 
+% This is 50 min of MEG data, with 38 ROIs. The variables contained in this data file are: 
 %
 % - The time series X, with dimension (time by channels)
 %
@@ -86,6 +88,9 @@ conditions = {'Famous face','Unfamiliar face','Scrambled face'};
 % we have removed some bad parts
 %
 % - The stimulus vector, containing the stimulus shown at each time point
+%
+% Note that this is less data than we would normally use to run an HMM,
+% and so the results will not look as good (e.g. as in the HMM papers)!
 
 %%
 
@@ -162,7 +167,7 @@ options.cyc = 30; % to make it quicker - leave by default otherwise
 
 %%
 % We run the HMM, which takes a few minutes on one subject
-% Note that we often do this at the group level; here is done only
+% Note that we often do this at the group level; here it is done only
 % on one subject for practical reasons
 
 %%
@@ -708,7 +713,7 @@ design_mat = [ones(size(design_mat,1),1) design_mat];
 
 %%
 % We then run the testing for each time point, for faces vs. scrambled
-% faces. We use the function hmmtest_epoched, which implements permutation
+% faces. We use the function |hmmtest_epoched|, which implements permutation
 % testing for this purpose. 
 
 %%
@@ -747,7 +752,7 @@ ylabel('pvalue');xlabel('time')
 
 %% 
 % As we have seen throughout the tutorial, the HMM provides a decomposition
-% of the data into states. What properties of the data are these states
+% of the data into states. What properties of the data these states are
 % picking up on depends on the type of HMM we are using. In this tutorial,
 % we have tried out three types of HMM: the HMM-Gaussian, the HMM-MAR, and
 % the TDE-HMM. The HMM overall is unsupervised, and allows us to describe
