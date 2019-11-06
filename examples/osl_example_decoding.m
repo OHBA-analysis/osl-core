@@ -48,7 +48,50 @@ OSLdir = '/Users/chiggins/Documents/MATLAB/osl/';
 dir = [OSLdir '/example_data/decoding_example/'];
 load([dir,'OSLDecodingPracticalData.mat']); 
 cd(dir)
-
+%%
+% About this data - for each condition (ie words and images), we now have
+% brain data X and labels Y. These are in the same setup across modalities,
+% with rows representing successive timepoints over trials, and columns
+% representing different data dimensions. 
+%
+% Looking at our stimulus, Y_images has 8 columns, corresponding to the 
+% same 8 columns in Y_words. Each column denotes one of the stimuli, and 
+% is a 1 if that stimulus is presented at that timepoint and a 0 otherwise. 
+% So, for example, looking at Y_words, the first rows indicate that 
+% the word for stimulus 3 was presented; similarly, Y_images indicates that
+% the first image presented was also stimulus 3 (the image presented 
+% always matched the word just shown, so Y_images and Y_words match 
+% throughout). The 8 stimuli used in the experiment were the following:
+%
+% * Chair
+% * Flower
+% * Tiger
+% * Ocean
+% * House
+% * Foot
+% * Tree
+% * Horse
+%
+% The neural data X_words and X_images is organised such that the rows
+% correspond to the same timepoint and trial as the associated labels in
+% Y_words and Y_images. Originally each column was an individual MEG
+% sensor, with the following preprocessing applied:
+%
+% * Highpass filtered with cutoff 0.5Hz
+% * Lowpass filtered with cutoff 50Hz
+% * Downsampled to 100samples / second
+% * Epoched to periods from 0 to 400msec following onset of each stimulus
+% 
+% We have taken an additional step of reducing the data dimensionality with 
+% PCA, so the columns of X now represent the first 50 principal components 
+% of the data.
+%
+% Finally, although our rows represent time, the recording is not 
+% continuous in time throughout - we instead have a series of short trial
+% epochs concatenated one after the other. The variable T_images and 
+% T_words indicate the number of samples in each trial, and so can be used 
+% to determine where each trial begins and ends.
+%
 %%
 % Let's now identify some basic features:
 ttrial = length(trial_timepoints) 
@@ -68,12 +111,12 @@ size(Y_images,1)
 size(X_images,1)
 
 %% 
-% As with yesterday, the rows of our matrices represent timepoints, stacked
-% over subsequent trials. T_images and T_words demarcate the number of
-% timepoints in each trial, demarcating where each trial begins and ends.
-% As a sanity check, the total number of trials times timpoints should 
-% equal the sum of this T vector; which should also be the dimension of
-% rows in our data X and design matrix Y.
+% The rows of our matrices represent timepoints, stacked over subsequent 
+% trials. T_images and T_words demarcate the number of timepoints in each 
+% trial, identifying where each trial begins and ends. As a sanity check, 
+% the total number of trials times timpoints should equal the sum of this 
+% T vector; which should also be the dimension of rows in our data X and 
+% design matrix Y.
 p = size(X_words,2) 
 
 %%
