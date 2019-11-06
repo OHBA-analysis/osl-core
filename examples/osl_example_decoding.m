@@ -13,12 +13,15 @@
 % * Load a single subject's data
 % * Setup a cross validation procedure to separate subsets or 'folds' of 
 % data for training and testing
-% * Train independent classifiers per timepoint on each training fold and 
-% test them on the appropriate test fold; plot the overall accuracy these achieve.
-% * Next, we will train some HMM classifiers and compare their performance 
-% to the above approach.
-% * See whether the timing information from the HMM models is relevant to 
-% behaviour
+% * Train independent classifiers per timepoint (within trials) to classify sensor
+% space MEG data into different trial-types; these are
+% trained on each fold and then
+% tested on the appropriate test fold.
+% * Next, we will train some temporally unconstrained 
+% HMM classifiers and compare their performance 
+% to the above temporally constrained/synchronised approach.
+% * See whether the trial-specific timing information inferred by the HMM  
+% is relevant to behaviour
 % * Investigate whether neural representations of words and images have 
 % shared information by seeing how classifiers generaliseover data types
 % * Load the group level results to conduct group inference
@@ -33,21 +36,29 @@
 % step to see how this result generalises to the group.
 %
 % Let's clear up the workspace before beginning:
-clc;clear all;close all;
-%
-% Amend the following to your working directory:
-dir = '/Users/chiggins/Documents/MATLAB/osl/osl-core/examples/OSL_decoding_data/';
+clc; clear all;close all;
+
+%%
+% Amend the following to be your OSL directory
+OSLdir = '/Users/chiggins/Documents/MATLAB/osl/';
+
+%%
+% We will now load in the data
+
+dir = [OSLdir '/example_data/decoding_example/'];
 load([dir,'OSLDecodingPracticalData.mat']); 
 cd(dir)
 
-
+%%
 % Let's now identify some basic features:
 ttrial = length(trial_timepoints) 
+
 %%
 % This is the number of datapoints in each trial. At a sampling rate of
 % 100 samples/sec, this corresponds to samples taken from 0:400 msec
 % following stimulus presentation. 
 Ntr = length(T_words) 
+
 %%
 % This is the number of independent trials (same number for words and
 % images).
@@ -55,6 +66,7 @@ Ntr*ttrial
 sum(T_images)
 size(Y_images,1)
 size(X_images,1)
+
 %% 
 % As with yesterday, the rows of our matrices represent timepoints, stacked
 % over subsequent trials. T_images and T_words demarcate the number of
@@ -63,21 +75,25 @@ size(X_images,1)
 % equal the sum of this T vector; which should also be the dimension of
 % rows in our data X and design matrix Y.
 p = size(X_words,2) 
+
 %%
 % This is the data dimensionality - note this data has already been
 % preprocessed, and the dimensionality has been reduced by principal
 % component analysis - keeping only the first 50 principal components.
 q = size(Y_words,2) 
+
 %%
 % This is the stimulus dimensionality. We have 8 different stimuli. Let us
 % now conduct a few sanity checks before proceeding:
 unique(Y_words(:))
+
 %%
 % Note that all values of the stimulus Y are in a binary labelled format -
 % that is, each column is either 1 or 0, denoting respectively
 % whether that stimulus is on or off at that particular timepoint.
 num_active_stimuli = sum(Y_words,2);
 unique(num_active_stimuli)
+
 %%
 % This tells us how many stimuli can be active at any point in time over
 % the entire dataset. This tells us that our stimuli here are mutually
@@ -150,12 +166,22 @@ Y_per_trial = Y_images(1:ttrial:end,:);
 [grouplabels,~] = find(Y_per_trial');
 rng(1);
 crossvalpartitions = cvpartition(grouplabels,'KFold',NCV);
+
 %%
 % The above code has called MATLAB's standard cvpartition function to break 
-% the available trials into multiple training and test partitions. 
+% the available trials into multiple training and test partitions.
+%
+% Note the information displayed in |crossvalpartitions|.
+% We have 128 trials in total (each of length 41 timepoints). With 4
+% fold cross vaildation, these 128 trials are split into 4 different partitions, each
+% containing a subset of 96 trials, which will be used as a training set
+% (i.e. to learn a mapping between data and trial types); and 32 trials, 
+% which will be used to test how accurate the mapping is that has been learnt 
+% on the training set. The overall accuracy of the approach is then calculated
+% by combining the results across the 4 test sets.
 %
 % Note that using such a low number of cross validation folds speeds things
-% up for the purposes of this practical, however has some unwanted side 
+% up for the purposes of this practical. However, this has some unwanted side 
 % effects that make it undesirable in practice - namely it becomes much
 % harder to ensure training sets are balanced, and you have fewer
 % samples from which to train your classifiers.
@@ -177,24 +203,34 @@ crossvalpartitions = cvpartition(grouplabels,'KFold',NCV);
 % options - we have found that results will vary slightly over different
 % classifiers but not in particularly meaningful ways.
 %
-% The one big difference that we will investigate below regards how
-% classifiers are trained over time. The standard_classification() function
+% The standard_classification() function
 % takes an approach that is mass univariate in time; that is, an
 % independent classifier is trained for each timestep within the trials,
-% giving us accuracy defined as a function of time.
+% giving us accuracy defined as a function of time. This can be thought of
+% as a "sliding-window" approach, and critically assumes that there is a
+% common timing (or synchronicity) in the response between trials. 
+% Later in the practical we will see how we
+% can use an HMM-based approach to relax this assumption and do temporally
+% unconstrained decoding/encoding.
+
 options=[];
 options.classifier='logistic';
 
 %%
 % We also want to specify the cross validation folds learned above:
 options.c=crossvalpartitions;
+
 %%
-% So - let's train a classifier over the presentation of words. Note this
+% So - let's now train a classifier over the presentation of words by passing
+% the required sensor space MEG data, and trial labels to the function
+% |standard_classification|. Note this
 % will take a minute or two to run.
 acc_words = standard_classification(X_words,Y_words,T_words,options);
+
 %%
-% and separately, let's train a classifier over the presentation of images:
+% And separately, let's also train a classifier over the presentation of images:
 acc_images = standard_classification(X_images,Y_images,T_images,options);
+
 %%
 % Now let's plot the cross validated accuracy:
 f1=figure('Position',[680 384 1084 714]);
@@ -208,6 +244,7 @@ title('Standard Decoding Accuracy');
 chancelevel=0.125;
 plot([trial_timepoints(1),trial_timepoints(end)],[chancelevel,chancelevel],'k--')
 legend('Images','Words','Chance Level');
+
 %%
 % It is apparent that decoding of image data is significantly above
 % chance, however decoding of word data is close to chance levels
@@ -217,6 +254,7 @@ legend('Images','Words','Chance Level');
 
 NCorrect = round(max(acc_words)*Ntr);
 p_value = 1-binocdf(NCorrect,Ntr,chancelevel)
+
 %%
 % This is the p value for the single best classification point - this will
 % vary depending on the random allocation of cross validation folds and
@@ -230,18 +268,22 @@ p_value = 1-binocdf(NCorrect,Ntr,chancelevel)
 %% Section 4: train some HMM classifiers for comparison:
 %
 % In the previous section, we trained classifiers independently on each
-% timepoint. An alternative fully outlined in Vidaurre et al 2019 is to
-% use a HMM model to infer a dynamic state sequence on each trial that
-% best decodes the data. This has the advantage of grouping together points
+% timepoint. An alternative fully outlined in [Vidaurre et al, Cerebral Cortex, 2019]
+% is to use a HMM model to infer a dynamic state sequence on each trial that
+% best decodes the data. This has the advantage of grouping together timepoints
 % that may be similarly distributed but poorly aligned over trials, and 
 % also accessing information content at a broader range of frequencies to
-% decoders trained only on single timepoints.
+% decoders trained only on single timepoints. In other words, this relaxes
+% the assumption that there is common timing (or synchronicity) in the 
+% response between trials, providing a temporally
+% unconstrained decoding.
 %
 % We will train a model now, using the same cross validation folds as
 % before. For this model, we must enter a classifier type as before, with
 % only the options of 'logistic' and 'LDA' now available. 
 options=[];
 options.classifier='logistic';
+
 %%
 % These models infer a set of states that best describe the relationship
 % between the data and the labels, states that can vary over trials to
@@ -253,6 +295,7 @@ options.classifier='logistic';
 % for each test trial, just using the average state timecourse fit over all
 % trials in the training data, denoted here as CVmethod=1:
 options.CVmethod=1;
+
 %%
 % We must also assign a number of states, denoted by the parameter K. More
 % states means more decoding parameters, which will improve classification
@@ -261,13 +304,19 @@ options.CVmethod=1;
 % number of states that maximises the cross validated accuracy. We
 % recommend starting with K=6 states:
 options.K=6;
+
 %%
 % For direct comparison, we use the same cross validation folds as before:
 options.c=crossvalpartitions;
+
 %%
-% we will now determine the accuracy by cross validation as before:
+% So - let's now train a classifier over the presentation of words by passing
+% the required sensor space MEG data, and trial labels to the function
+% |tucacv| to do temporally unconstrained decoding. Note this
+% will take a minute or two to run.
 [~,acc_hmm_images,~,~] = tucacv(X_images,Y_images,T_images,options);
 [~,acc_hmm_words,~,~] = tucacv(X_words,Y_words,T_words,options);
+
 %%
 % Plotting the output:
 f2=figure('Position',[680 384 1084 714]);
@@ -281,10 +330,12 @@ title('HMM decoding Accuracy')
 chancelevel=0.125;
 plot([trial_timepoints(1),trial_timepoints(end)],[chancelevel,chancelevel],'k--')
 legend('Images','Words','Chance Level');
+
 %%
 % Computing the significance of the maximum accuracy point:
 NCorrect = round(max(acc_hmm_words)*Ntr);
 p_value = 1-binocdf(NCorrect,Ntr,chancelevel)
+
 %%
 % For a direct comparison, let's plot the two classifers against
 % each other:
@@ -307,6 +358,7 @@ xlabel('Time (sec)','fontsize',16);
 ylabel('Accuracy','fontsize',16);
 legend('HMM','Standard')
 title('Decoding Images')
+
 %%
 % Again, these results will vary depending on the cross validation
 % randomisation, but should show accuracy curves that are not wildly
@@ -327,7 +379,7 @@ title('Decoding Images')
 % 2. When these are plotted at the group level, they more reliably
 %       outperform standard approaches, even with this conservative estimate
 %
-% 3. They additionally provide us with a key metric of when activity
+% 3. They additionally provide us with a key trial-specfic metric of when activity
 %       patterns are activated on different trials. So, they provide
 %       valuable information in between-trial temporal variability in
 %       stimulus processing
@@ -355,6 +407,7 @@ options.verbose=false;
 [tucamodel_images,Gamma_images] = tucatrain(X_images,Y_images,T_images,options);
 Gamma_images_mean = squeeze(mean(reshape(Gamma_images,T_images(1),length(T_images),options.K),2));
 T=T_images(1);
+
 %%
 % Now Gamma_images denotes the inferred timings that different decoding
 % models are activated. Let's first plot these to get a sense of the
@@ -365,6 +418,7 @@ gammaRasterPlot(Gamma_images,T_images(1),[1:10:41],trial_timepoints([1:10:41]));
 xlabel('Time (sec)','fontsize',16);
 ylabel('Trial','fontsize',16);
 title('Individual trial state timecourses');
+
 %%
 % This should show quite a consistent structure of sequential states being
 % activated, but some variation in the exact timings of when they are
@@ -378,6 +432,7 @@ for k=1:options.K
         [C(k,t),rho_pval(k,t)] = corr(Gamma_images(t:T_images(1):end,k),ReactionTimesImages);
     end
 end
+
 %%
 figure('Position',[680 602 931 496]);
 subplot(2,1,1);
@@ -395,6 +450,7 @@ set(gca,'LineWidth',2);
 xlabel('Time (sec)','fontsize',16);
 ylabel('HMM state','fontsize',16);
 title('Correlation with reaction times')
+
 %%
 % Once again, at the single subject level this is quite noisy, however you
 % may notice a diagonal structure in the correlation pattern. If you
@@ -423,13 +479,19 @@ title('Correlation with reaction times')
 % Let's now manually test this on word data. In order to do this, we need
 % to understand briefly how these classifiers predict data. Logistic
 % regression classifiers form their predictions by the following formula:
-%       Y = logistic sigmoid transfer function (X * beta)
-% where beta are our regression coefficients.
 %
-% On the other hand, LDA models fit a Gaussian distribution to the data of
+%       |Y = logistic_sigmoid_transfer_function (X * beta)|
+%
+% where beta are our regression coefficients. Note that in the code below
+% the function |tudabeta|, given a precomputed TUDA model, returns these
+% betas. The rest of the code predicts |Y| using these betas
+%
+% On the other hand, if you are using LDA things are a bit different. 
+% LDA models fit a Gaussian distribution to the data of
 % each class, and then determine the optimal classification boundary (the
 % 'linear discriminant') between classes. This is done automatically below
-% by the function "LDApredict".
+% by the function |LDApredict|.
+
 T=T_words(1);
 if strcmp(options.classifier,'logistic')
     [~,Beta_coefficients] = tudabeta(tucamodel_images,Gamma_images_mean);
@@ -444,16 +506,22 @@ else %LDA
     [~,hard_assignment_pred] = max(Y_prediction,[],2);
 end
 [~,hard_assignment_true] = max(Y_words,[],2);
+
 %%
 % Having found the highest probability prediction for each trial timepoint,
-% let us compare these to the ground truth to compute the accuracy:
+% contained in |hard_assignment_pred|,
+% let us compare them to the ground truth, |hard_assignment_true|, to compute the accuracy:
+
 accuracy = reshape(hard_assignment_pred==hard_assignment_true,T,length(T_words),1);
 acc_time_imageOnWordData = mean(accuracy,2);
+
 %%
 % Now, let's do the same procedure, training a classifier on word data:
+
 [tucamodel_words,Gamma_words] = tucatrain(X_words,Y_words,T_words,options);
 Gamma_words_mean = squeeze(mean(reshape(Gamma_words,T_images(1),length(T_images),options.K),2));
 T=T_images(1);
+
 %%
 % And test its performance on the image data:
 if strcmp(options.classifier,'logistic')
@@ -470,6 +538,7 @@ else %LDA
     [~,hard_assignment_pred] = max(predictions,[],2);
 end
 [~,hard_assignment_true] = max(Y_images,[],2);
+
 %%
 % Compute the overall accuracy:
 accuracy = reshape(hard_assignment_pred==hard_assignment_true,T,length(T_images),1);
@@ -509,6 +578,7 @@ legend({'Trained on images, tested on words','Trained on words, tested on images
 % will now load each subject's trial by trial accuracy:
 
 load('OSLDecodingPracticalGroupLevelData.mat');
+
 %%
 % As decoding analyses are focussed on predictions of stimuli Y, for 
 % statistical analysis at the group level we can treat our results as just 
@@ -524,6 +594,7 @@ for iSj=1:21
     wordsOnImages = cat(2,wordsOnImages,acc_hmm_wordsOnImageData_sj{iSj});
     imagesOnWords = cat(2,imagesOnWords,acc_hmm_imagesOnWordData_sj{iSj});
 end
+
 %%
 % Find the mean accuracy over all trials:
 word_groupacc = mean(words,2);
