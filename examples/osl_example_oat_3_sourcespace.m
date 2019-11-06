@@ -228,7 +228,7 @@ S2.resamp_gridstep=oat.source_recon.gridstep;
 
 %% OPEN NIFTII RESULTS IN FSLVIEW
 % We can now view the nifti images containing our GLM results using |osleyes|. 
-o = osleyes(fullfile(statsdir,'tstat1_8mm.nii.gz'));
+o = osleyes(fullfile(statsdir,['tstat1_' num2str(oat.source_recon.gridstep) 'mm.nii.gz']));
 
 %%
 % We need to tweak the viewing settings to see the results well.
@@ -300,7 +300,7 @@ S2.first_level_cons_to_do=oat.first_level.report.first_level_cons_to_do; % plots
 %%
 % Note that this output is a combination of all of the NIFTI files that could otherwise be viewed individually
 % using |osleyes|. For example, to plot just the faces tstat for the same voxel shown above, we could use
-o = osleyes(fullfile(statsdir,'tstat2_8mm.nii.gz'));
+o = osleyes(fullfile(statsdir,['tstat2_' num2str(oat.source_recon.gridstep) 'mm.nii.gz']));
 o.current_point = mni_coord;
 o.plot_timeseries;
 close(o.fig); % Close the volume viewer, because we only want the time series plot
@@ -320,7 +320,7 @@ close(o.fig); % Close the volume viewer, because we only want the time series pl
 S2=[];
 S2.oat=oat;
 S2.stats_fname=oat.first_level.results_fnames{1};
-S2.mask_fname=fullfile(osldir,'example_data','faces_singlesubject','structurals','Right_Temporal_Occipital_Fusiform_Cortex_8mm.nii.gz');
+S2.mask_fname=fullfile(osldir,'example_data','faces_singlesubject','structurals',['Right_Temporal_Occipital_Fusiform_Cortex_' num2str(oat.source_recon.gridstep) 'mm.nii.gz']);
 [stats,times,mni_coords_used]=oat_output_roi_stats(S2);
 
 %%
