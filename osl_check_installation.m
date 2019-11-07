@@ -101,7 +101,7 @@ function osl_check_installation(do_log,test_fslview)
         log('Attempting automatic configuration')
         try
             addpath(fullfile(osldir,'osl-core','util'));
-            fsl_initialise;
+            initialise_fsl();
         catch ME
             log_error('Error initialising FSL',ME)
         end
