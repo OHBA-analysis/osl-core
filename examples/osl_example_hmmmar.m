@@ -42,7 +42,7 @@ clc; clear all; close all; % clean up workspace
 
 % Software directories: **you need to update OSLCOURSE_dir** to be where
 % your OSL directory is
-OSLCOURSE_dir = '/Users/dave/osl/'; % set this to be where your OSL directory is
+OSLCOURSE_dir = '/Users/dvidaurre/Work/Matlab/ohba_analysis/'; % set this to be where your OSL directory is
 
 HMMMAR_dir = [OSLCOURSE_dir '/HMM-MAR'];
 OSLDIR = [OSLCOURSE_dir '/osl-core'];
@@ -273,6 +273,10 @@ plot_hmmspectra (spectra_env,[],[],[],[],channels_prim_visual_cortex);
 % In particular, this script will estimate a group (spectrally-defined) HMM from MEG task data, 
 % using two source-reconstructed regions in the primary visual cortex (left and right), 
 % band-pass filtered between 1 and 45 Hz.
+%
+% We will set it up to use only three states because we are only modelling
+% two channels and the autoregressive model is quite expressive, so the
+% data is well-described with just three. 
 %
 % The script follows the paper Vidaurre et al. (2016), which used data from the motor cortex
 
@@ -600,9 +604,25 @@ title('TDE-HMM')
 % separate behavioural information (phenotypes, clinical variability, etc).
 % Here, given that this is task data we are going to look at how the state 
 % activations get modulated by the stimulus presentation. 
-
+%
 % We compute the state evoked response (locked to stimulus presentation)
 % for each variety of the HMM, as well as for the raw signal in the primary visual cortex. 
+%
+% In the figure, each row corresponds to a different class of stimulus: 
+% famous, unfamiliar and scrambled faces. The plots of the left correspond
+% to the classical evoked response field (ERF), where we average the raw
+% signal across presentation of the stimulus. The rest of the rows correspond to
+% the different HMM varieties that we have previously estimated. In these,
+% each colour represents one state, and the curves are telling us what is
+% the proportion of trials when that state is active at each time point,
+% relative to stimulus presentation. The fact that the different types of HMM
+% look different means that each variety is picking up in different aspects 
+% of the stimulus response. Of course, we can look back to the states
+% description to see what are the properties of the most relevant states.
+% For example, the red state for the TDE-HMM (on the right column), which is the
+% second in the precomputed run, is characterised, among other features,
+% by strong broadband power in visual and parietal regions (see OSLeyes
+% maps)
 
 %%
 
@@ -656,101 +676,6 @@ end
 
 
 %% 
-% We saw that the stimulus modulates the state probabilities for all
-% conditions and all models. Now we will test how the activation of the
-% states differ between conditions
-% 
-% We first run some code to put the state time courses into an epoched
-% format, and to build up the appropriate design matrix
-
-%%
-
-window_test = [-0.2 0.5]; % in seconds
-window_test = round(window_test * 250);  % in time points
-
-K_env = size(Gamma_env,2); 
-K_mar = size(Gamma_mar,2);
-K_tde = size(Gamma_tde,2); 
-
-nsamples = sum(abs(window_test))+1;
-t = linspace(window_test(1)/250,window_test(2)/250,nsamples);
-nsamples = length(t);
-ntrials = sum(stimulus>0);
-ncond = length(unique(stimulus(stimulus>0)));
-
-% Make the state time courses to have the same number of time points than the data
-Gamma_pad_env = padGamma(Gamma_env,T,hmm_env.train);
-Gamma_pad_mar = padGamma(Gamma_mar,T,hmm_mar.train);
-Gamma_pad_tde = padGamma(Gamma_tde,T,hmm_tde.train);
-
-Gamma_epoched_env = NaN(nsamples,ntrials,K_env);
-Gamma_epoched_mar = NaN(nsamples,ntrials,K_mar);
-Gamma_epoched_tde = NaN(nsamples,ntrials,K_tde);
-
-design_mat = NaN(ntrials,ncond);
-
-events = find(stimulus>0);
-
-for j = 1:ntrials
-   if (events(j) <= -window_test(1)) | (events(j) > size(Gamma_env,1)-window_test(2))
-       continue
-   end
-   ind = events(j) + (window_test(1):window_test(2));
-   Gamma_epoched_env(:,j,:) = Gamma_pad_env(ind,:);
-   Gamma_epoched_mar(:,j,:) = Gamma_pad_mar(ind,:);
-   Gamma_epoched_tde(:,j,:) = Gamma_pad_tde(ind,:);
-   design_mat(j,:) = 0;
-   design_mat(j,stimulus(events(j))) = 1;
-end
-
-good_trials = ~isnan(design_mat(:,1));
-Gamma_epoched_env = Gamma_epoched_env(:,good_trials,:);
-Gamma_epoched_mar = Gamma_epoched_mar(:,good_trials,:);
-Gamma_epoched_tde = Gamma_epoched_tde(:,good_trials,:);
-
-design_mat = design_mat(good_trials,:);
-design_mat = [ones(size(design_mat,1),1) design_mat];
-
-%%
-% We then run the testing for each time point, for faces vs. scrambled
-% faces. We use the function |hmmtest_epoched|, which implements permutation
-% testing for this purpose. 
-
-%%
-
-contrast = [0 1 1 -2]';
-Nperm = 5000; 
-Y = design_mat * contrast;
-
-if precomputed_results
-    load(precomputed_results_file,'pvals_env','pvals_mar','pvals_tde')
-else
-    tic
-    pvals_env = hmmtest_epoched(Gamma_epoched_env,T,Y,Nperm);
-    pvals_mar = hmmtest_epoched(Gamma_epoched_mar,T,Y,Nperm);
-    pvals_tde = hmmtest_epoched(Gamma_epoched_tde,T,Y,Nperm);
-    toc % 2min
-    save(results_file,'pvals_env','pvals_mar','pvals_tde','-append')
-end
-
-
-%%
-% We plot the p-values for each HMM modality as a function of time.
-% As observed, the HM
-
-
-%%
-
-figure
-
-P = [pvals_env pvals_mar pvals_tde]';
-plot(t,log(P),'LineWidth',3); %ylim([])
-hold on; plot(t,ones(size(t))*log(0.05),'k'); hold off
-set(gca,'ytick',log([0.001 0.005 0.01 0.05]),'yticklabel',[0.001 0.005 0.01 0.05])
-legend('Power envelope','MAR','Time-delay embedded','significance','location','SouthEast')
-ylabel('pvalue');xlabel('time')
-
-%% 
 % As we have seen throughout the tutorial, the HMM provides a decomposition
 % of the data into states. What properties of the data these states are
 % picking up on depends on the type of HMM we are using. In this tutorial,
@@ -761,4 +686,3 @@ ylabel('pvalue');xlabel('time')
 % the states differ across conditions. Another option is to incorporate the
 % information of the task (e.g. the stimulus) directly into the model; this
 % is illustrated in the osl_example_decoding.m tutorial. 
-%
