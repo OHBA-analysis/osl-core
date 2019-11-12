@@ -224,6 +224,12 @@ try oat.first_level.doGLM=oatin.first_level.doGLM; oatin.first_level = rmfield(o
 try oat.first_level.design_matrix=oatin.first_level.design_matrix; oatin.first_level = rmfield(oatin.first_level,'design_matrix'); catch, end; % design matrix should be num_PES x num_tpts
 try oat.first_level.design_matrix_summary=oatin.first_level.design_matrix_summary; oatin.first_level = rmfield(oatin.first_level,'design_matrix_summary'); catch, end;
 
+if(ischar(oat.first_level.design_matrix_summary))
+    if ~strcmp(oat.source_recon.conditions{1},'all')
+        error('Specifying oat.first_level.design_matrix_summary as text files MUST be used in combination with oat.source_recon.conditions set to all');
+    end   
+end
+
 % contrasts:
 try oat.first_level.contrast=oatin.first_level.contrast;
     oatin.first_level = rmfield(oatin.first_level,'contrast');
