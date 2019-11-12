@@ -302,3 +302,66 @@ S2.view_cope=1; % set to 0 to see the t-stat
 
 % calculate t-stat using contrast of absolute value of parameter estimates
 [cfg, dats, fig_handle]=oat_stats_multiplotER(S2);
+
+
+%% Alternate specification of design matrix
+% Alongside the |oat.first_level.design_matrix_summary| approach used above, 
+% we can alternatively specify |oat.first_level.design_matrix_summary| using
+% a list of full file paths to text 
+% files containing each subject?s design matrix.
+
+% Each text file needs to be num_trials x num_regressors for a subject, where the 
+% num_trials is the actual full number of trials (including any bad trials).
+% However, note that the fitted GLM will not use the bad trials when the 
+% design matrix is fit to tthe data.
+% 
+% Note that this MUST be used in combination with ALL conditions being specfied 
+% in |oat.source_recon.conditions|. For example, rather than:
+% 
+% oat.source_recon.conditions={'Motorbike','Neutral face','Happy face','Fearful face'};
+%
+% you must instead specify:
+%
+% oat.source_recon.conditions={'all'};
+
+%%
+% Here we can build the design matrices we need for the data in
+% |spm_files_epoched{1}| by using |D.conditions|
+
+D=spm_eeg_load(spm_files_epoched{1});
+
+oat.source_recon.conditions={'all'};
+
+regressors={'Motorbike','Neutral face','Happy face','Fearful face'};
+design_matrix=zeros(D.ntrials, length(regressors));
+for cc=1:length(regressors)
+    design_matrix(strcmp(regressors{cc},D.conditions),cc)=1;
+end
+
+%%
+% plot design matrix alongside trial timings for sanity check
+report.trial_timings(D);
+
+figure;
+imagesc(design_matrix');
+set(gca, 'YTick', 1:length(regressors));
+set(gca, 'YTickLabel', regressors);
+xlabel('trial index');
+ylabel('regressor');
+
+%%
+% setup Xsummary in |oat.first_level|
+
+Xsummary=[];
+Xsummary{1}='/Users/woolrich/homedir/scripts/osl/example_data/faces_singlesubject/design.txt';
+
+% save design matrix as text file
+save(Xsummary{1},'design_matrix','-ascii');
+
+oat.first_level.design_matrix_summary=Xsummary;
+
+%%
+% run OAT
+
+oat.to_do=[1 1 0 0];
+oat = osl_run_oat(oat);
