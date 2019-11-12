@@ -213,7 +213,7 @@ oat.first_level=struct;
 % Each text file needs to be num_trials x num_regressors for a subject, where the 
 % num_trials is the actual full number of trials (including any bad trials).
 % However, note that the fitted GLM will not use the bad trials when the 
-% design matrix is fit to tthe data.
+% design matrix is fit to the data.
 % Note that this MUST be used in combination with ALL conditions being specified 
 % in |oat.source_recon.conditions|. For example, rather than:
 %   oat.source_recon.conditions={'Motorbike','Neutral face','Happy face','Fearful face'};
