@@ -394,7 +394,13 @@ for subi_todo=1:length(first_level.sessions_to_do),
 
     for i=1:length(source_recon_results.source_recon.conditions), % indexes conditions/triggers within subset
 
-        trigname=source_recon_results.source_recon.conditions{i};
+        
+        if strcmp(source_recon_results.source_recon.conditions{i},'all')
+            trigname=D.condlist;
+        else
+            trigname=source_recon_results.source_recon.conditions{i};
+        end
+        
         Ntrialspercond=length(D.indtrial(trigname,'GOOD')); %% number of trials for this condition
         triallist=[triallist , D.indtrial(trigname,'GOOD')];
         trialtypes=[trialtypes ; ones(Ntrialspercond,1).*i];
