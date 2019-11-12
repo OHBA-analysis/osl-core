@@ -192,9 +192,11 @@ oat.first_level=struct;
 
 % GLM stuff:
 %
-% Either set oatin.first_level.design_matrix explicitly (usually for continuous data),
-% or set oatin.first_level.design_matrix_summary (usually for continuous
-% data):
+% Either set oatin.first_level.design_matrix (for continuous data),
+% or set oatin.first_level.design_matrix_summary (for epoched data):
+%
+% When setting oatin.first_level.design_matrix_summary (for epoched data),
+% you can setup the design_matrix in 2 different ways:
 %
 % 1) oatin.first_level.design_matrix_summary is a parsimonious description of the design matrix.
 % It contains a vector for each regressor, i.e. oatin.first_level.design_matrix_summary{reg},
@@ -207,12 +209,16 @@ oat.first_level=struct;
 % oatin.first_level.design_matrix_summary={}; oatin.first_level.design_matrix_summary{1}=[1 0];oatin.first_level.design_matrix_summary{2}=[0 1];');
 %
 % 2) oatin.first_level.design_matrix_summary can contain a list of full file paths to text files containing each
-% subject's design matrix. Each text file is num_trials x num_regressors for a subject,
-% where the num_trials (and trial order) assumes that the D.badtrials trials have been removed.
-% outputs the design matrix, x, which is num_trials x num_regressorsIn which case you also need to set
-% oatin.first_level.trial_rejects, which is a text file containing a list of trial indices ( for
-% the loaded in Xsummary design matrix ) to indicate any further trials ( above and beyond the D.badtrials trials )
-% that you do not want to include in the analysis (e.g. for behavioural reasons), and which will get set to 0 in the design matrix.
+% subject's design matrix. 
+% Each text file needs to be num_trials x num_regressors for a subject, where the 
+% num_trials is the actual full number of trials (including any bad trials).
+% However, note that the fitted GLM will not use the bad trials when the 
+% design matrix is fit to tthe data.
+% Note that this MUST be used in combination with ALL conditions being specified 
+% in |oat.source_recon.conditions|. For example, rather than:
+%   oat.source_recon.conditions={'Motorbike','Neutral face','Happy face','Fearful face'};
+% you must instead specify:
+%   oat.source_recon.conditions={'all'};
 
 try oat.first_level.doGLM=oatin.first_level.doGLM; oatin.first_level = rmfield(oatin.first_level,'doGLM'); catch, oat.first_level.doGLM=1; end; % flag to determine whether glm is run or not, if not run then the glm_input data is output instead.
 try oat.first_level.design_matrix=oatin.first_level.design_matrix; oatin.first_level = rmfield(oatin.first_level,'design_matrix'); catch, end; % design matrix should be num_PES x num_tpts
