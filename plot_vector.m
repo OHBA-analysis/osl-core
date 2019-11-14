@@ -105,6 +105,7 @@ if ischar(vlim)
   end % switch
 end % if ischar
 
+
 if isempty(hpos) && ~isempty(hlim)
   hpos = (hlim(1)+hlim(2))/2;
 end
