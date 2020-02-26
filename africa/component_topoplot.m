@@ -1,4 +1,4 @@
-function topos = component_topoplot(D,comp,modality,do_plot)
+function topos = component_topoplot(D,comp,modality,do_plot,layout)
 
 % topos = component_topoplot(D,comp,modality)
 %
@@ -6,12 +6,18 @@ function topos = component_topoplot(D,comp,modality,do_plot)
 %
 % MWW 2016
 
-cfg  = [];
-data = [];
+if nargin<5
+    layout = [];
+end
 
 if nargin<4
     do_plot=0;
 end
+
+
+cfg  = [];
+data = [];
+
 
 comp(D.badchannels,:) = 0;
 comp2view = comp(indchantype(D,modality),:);
@@ -37,9 +43,15 @@ elseif strcmp(modality,'MEGMAG') && strcmp(D.sensors('MEG').type,'bti248')
     cfg.layout  = fullfile(osldir, 'layouts', '4D248.lay');
 
 elseif (strcmp(modality,'EEG'))
-    warning('EEG not currently supported, using development EEG layout');
+    if isempty(layout)
+        warning('EEG layout is being automatically generated from sensor info');
+        S = [];
+        S.elec = D.sensors('EEG');
+        cfg.layout  = ft_prepare_layout( S );
+    else
+        cfg.layout = layout;
+    end
     cfg.channel = {'EEG'};
-    cfg.layout  = fullfile(osldir, 'layouts', 'EEG60.lay');
 else
     error('Unsupported modality');
 end

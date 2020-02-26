@@ -20,6 +20,7 @@ function D = osl_africa(D,varargin)
     arg.addParameter('artefact_channels',{'EOG','ECG'},@iscell); % Specify which channels are artefactual e.g. {'EOG1','ECG',32}. Can be chantype OR channel index number
     arg.addParameter('mains_frequency',50); 
     arg.addParameter('used_maxfilter',false); % Reduce ICA dimension if maxfilter was used, 
+    arg.addParameter('eeg_layout',[]); % sensor layout generated from ft_prepare_layout
 
     % STAGE SETTINGS
     arg.addParameter('do_ica',~isfield(D,'ica')); % Do ICA decomposition step
@@ -56,7 +57,7 @@ function D = osl_africa(D,varargin)
             topos = [];
             for m = 1:numel(D.ica.modalities)
                 disp(['Precomputing sensor topographies for modality ' D.ica.modalities{m}]);
-                topos = [topos component_topoplot(D,D.ica.sm,D.ica.modalities(m))];
+                topos = [topos component_topoplot(D,D.ica.sm,D.ica.modalities(m),[],S.eeg_layout)];
             end
             D.ica.topos   = topos;
         else
