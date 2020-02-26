@@ -48,7 +48,7 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
     lags_range = lags>bpm_range(1) & lags<bpm_range(2);
     ac_max = zeros(1,num_ics);
     for ic = 1:num_ics
-        tc_bp = bandpass(tc(ic,D.ica.good_samples),[0 48],D.fsample);
+        tc_bp = osl_filter(tc(ic,D.ica.good_samples),[0,48],'fs',D.fsample);
         ac = xcorr(tc_bp,maxlags,'coeff');
         ac_max(ic) = max(ac(lags_range));
     end
