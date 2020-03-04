@@ -14,9 +14,9 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
     tc = (D(D.ica.chan_inds,:,:)'*pinv(D.ica.sm(D.ica.chan_inds,:))').';
     num_ics = D.ica.params.num_ics;
 
-    %% COMPUTE METRICS 
+    %% COMPUTE METRICS
     metrics = struct;
-    
+
     % Mains frequency
     tc_fft = fft(demean(tc(:,D.ica.good_samples),2),[],2);
     abs_ft  = abs(tc_fft);
@@ -28,16 +28,16 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
     [~, ind] = max(spec');
     metrics.mains.mains_frequency = mains_frequency; % Record which mains frequency was used
     metrics.mains.fmax = freq_ax(ind); % Peak frequency for each component
-    inds = freq_ax > mains_frequency - 1 & freq_ax < mains_frequency + 1; % Mains +- 1Hz 
+    inds = freq_ax > mains_frequency - 1 & freq_ax < mains_frequency + 1; % Mains +- 1Hz
     metrics.mains.spec = max(spec(:,inds),[],2); % Maximum power within 1Hz of mains frequency
     spec_n = normalise(spec,2);
     metrics.mains.spec_n = max(spec_n(:,inds),[],2); % Maximum normalised power within 1Hz of mains frequency
 
-    % Kurtosis 
+    % Kurtosis
     kurt = kurtosis(tc(:,D.ica.good_samples),[],2);
     kurt = kurt(:);
     metrics.kurtosis.raw = kurt-3;
-    metrics.kurtosis.log = log(kurt-3); 
+    metrics.kurtosis.log = log(kurt-3);
     metrics.kurtosis.abs = abs(demean(boxcox1(kurt))); % make distribution more normal to better balance low/high kurtosis
 
     % Cardiac autocorrelation
@@ -84,6 +84,37 @@ function [metrics,tc] = compute_metrics(D,mains_frequency,artefact_channels)
         metric_name = sprintf('corr_chan_%d_%s',chans_to_check(j),D.chantype{chans_to_check(j)});
         metrics.(metric_name).('value')  = ac(:,j);
         metrics.(metric_name).chanind = chans_to_check(j);
+    end
+
+    % Perform template correlations if passed in
+    templates = true;
+    if templates == true
+        load('/Users/andrew/Projects/ntad/ica_templates/MEGEEG70ArtifactTemplateTopographies');
+        corrs = zeros(62,3,length(D.ica.modalities));
+        for ii = 1:length(D.ica.modalities)
+            if strcmp(D.ica.modalities{ii}, 'MEGMAG')
+                mod_ind = 1;
+            elseif strcmp(D.ica.modalities{ii}, 'MEGPLANAR')
+                mod_ind = 2;
+            end
+            chans = D.indchantype(D.ica.modalities{ii});
+            for jj = 1:size(D.ica.sm,2)
+                c = corrcoef(D.ica.sm(chans,jj)',ECG{mod_ind}');
+                corrs(jj,1,ii) = c(1,2);
+                c = corrcoef(D.ica.sm(chans,jj)',VEOG{mod_ind}');
+                corrs(jj,2,ii) = c(1,2);
+                c = corrcoef(D.ica.sm(chans,jj)',HEOG{mod_ind}');
+                corrs(jj,3,ii) = c(1,2);
+            end
+        end
+        corrs = abs(mean(corrs,3)); % average over modalities
+
+        metric_name = 'template_ECG';
+        metrics.(metric_name).('value') = corrs(:,1);
+        metric_name = 'template_VEOG';
+        metrics.(metric_name).('value') = corrs(:,2);
+        metric_name = 'template_HEOG';
+        metrics.(metric_name).('value') = corrs(:,3);
     end
 
     % Assign variables for use in manual GUI
