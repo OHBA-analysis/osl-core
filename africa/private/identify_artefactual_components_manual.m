@@ -8,7 +8,7 @@ MainFig = figure('Name',            ['AFRICA: ' D.fname], ...
                  'Menubar',         'none'              , ...
                  'DockControls',    'on'                , ...
                  'KeyPressFcn',     @key_press          , ...
-                 'Interruptible',   'off'               , ... 
+                 'Interruptible',   'off'               , ...
                  'BusyAction',      'queue'            , ...
                  'Visible',         'off'               , ...
                  'ResizeFcn',       @createlayout); % ,...
@@ -30,16 +30,19 @@ current_comp     = sorted_comps(current_comp_ind);
 
 % Create plotting windows
 tICWindow    = axes('parent',MainFig, 'units','pixels');
+
 specWindow   = axes('parent',MainFig, 'units','pixels');
 metricWindow = axes('parent',MainFig, 'units','pixels');
 covWindow    = axes('parent',MainFig, 'units', 'pixels');
+%corrWindow    = axes('parent',MainFig, 'units', 'pixels');
+corrPanel = uipanel('Parent',MainFig, 'units', 'pixels');
 topoWindow = [];
 
 % If topos not precomputed, then compute them now
 if isempty(topos)
     fprintf('No precomputed topos present, computing them now...\n')
     topos = [];
-    modalities = D.ica.modalities; 
+    modalities = D.ica.modalities;
     for m = 1:numel(modalities)
         topos = [topos component_topoplot(D,D.ica.sm,modalities(m))];
     end
@@ -57,14 +60,14 @@ end
 
 uitools.toolbar    = uitoolbar;
 uitools.setgood    = uipushtool(uitools.toolbar,    'ClickedCallback',@setgood, 'CData',icon_good, 'TooltipString','Set component as good');
-uitools.setbad     = uipushtool(uitools.toolbar,    'ClickedCallback',@setbad,  'CData',icon_bad,  'TooltipString','Set component as bad');    
-uitools.zoom       = uitoggletool(uitools.toolbar,  'ClickedCallback',@cb_zoom, 'CData',icon_zoom,  'TooltipString','Set component as bad');    
-uitools.metrics = uicontrol('Style', 'popup', 'String', metric_names, 'Position', [1 1 1 1], 'Callback', @switchmetric);   
+uitools.setbad     = uipushtool(uitools.toolbar,    'ClickedCallback',@setbad,  'CData',icon_bad,  'TooltipString','Set component as bad');
+uitools.zoom       = uitoggletool(uitools.toolbar,  'ClickedCallback',@cb_zoom, 'CData',icon_zoom,  'TooltipString','Set component as bad');
+uitools.metrics = uicontrol('Style', 'popup', 'String', metric_names, 'Position', [1 1 1 1], 'Callback', @switchmetric);
 
 % Create context menu for side window
 metricContext.menu   = uicontextmenu;
 metricContext.switch = uimenu(metricContext.menu, 'label','Reorder channels on metric switch','Checked','on','callback',@cb_metricContext);
-set(metricWindow,'uicontextmenu',metricContext.menu);      
+set(metricWindow,'uicontextmenu',metricContext.menu);
 
 drawnow
 redraw
@@ -88,70 +91,90 @@ uiwait(MainFig)
         Layout.BorderWidth      = 20;
         Layout.LabelWidth       = 20;
         Layout.MenuHeight       = 20;
-        
+
         vAxisSpace                = Layout.FigHeight - 2*Layout.BorderWidth - 8*Layout.LabelWidth;
-        
+
         Layout.tICWindowHeight    = fix(0.35*vAxisSpace);
         Layout.covWindowHeight    = fix(0.25*vAxisSpace);
-        
+
         Layout.specWindowHeight   = fix(0.4*vAxisSpace);
         Layout.specWindowWidth    = fix(0.45*(Layout.FigWidth  - 3*Layout.BorderWidth - 3*Layout.LabelWidth));
-        
+        Layout.specWindowWidth    = Layout.specWindowWidth*.85;
+
         Layout.topoWindowHeight   = fix(0.4*vAxisSpace);
         Layout.topoWindowWidth    = fix(0.45*(Layout.FigWidth  - 3*Layout.BorderWidth - 3*Layout.LabelWidth));
-        
+
         Layout.metricWindowHeight = Layout.FigHeight           - 2*Layout.BorderWidth - 2*Layout.LabelWidth;
         Layout.metricWindowWidth  = fix(0.1*(Layout.FigWidth   - 3*Layout.BorderWidth - 3*Layout.LabelWidth));
 
-        
-        
+
+
         % tIC Window
         Layout.tICWindow.X(1) = Layout.BorderWidth + 2*Layout.LabelWidth;
         Layout.tICWindow.X(2) = Layout.FigWidth - Layout.BorderWidth - Layout.LabelWidth - Layout.metricWindowWidth;
         Layout.tICWindow.Y(1) = Layout.FigHeight - Layout.BorderWidth - Layout.LabelWidth - Layout.tICWindowHeight;
         Layout.tICWindow.Y(2) = Layout.FigHeight - Layout.BorderWidth - Layout.LabelWidth;
         Layout.tICWindow.position = [Layout.tICWindow.X(1),Layout.tICWindow.Y(1) ,abs(diff(Layout.tICWindow.X)),abs(diff(Layout.tICWindow.Y))];
-        
-        
+
+
         % covariate Window
         Layout.covWindow.X(1) = Layout.BorderWidth + 2*Layout.LabelWidth;
         Layout.covWindow.X(2) = Layout.FigWidth - Layout.BorderWidth - Layout.LabelWidth - Layout.metricWindowWidth;
         Layout.covWindow.Y(1) = Layout.BorderWidth + 3*Layout.LabelWidth + Layout.specWindowHeight;
         Layout.covWindow.Y(2) = Layout.FigHeight - Layout.BorderWidth - 4*Layout.LabelWidth - Layout.tICWindowHeight;
         Layout.covWindow.position = [Layout.covWindow.X(1),Layout.covWindow.Y(1) ,abs(diff(Layout.covWindow.X)),abs(diff(Layout.covWindow.Y))];
-        
-        
+
+
         % spectrum window
         Layout.specWindow.X(1) = Layout.BorderWidth + 2*Layout.LabelWidth;
         Layout.specWindow.X(2) = Layout.specWindow.X(1) + Layout.specWindowWidth;
         Layout.specWindow.Y(1) = Layout.BorderWidth + Layout.LabelWidth;
         Layout.specWindow.Y(2) = Layout.BorderWidth + Layout.LabelWidth + Layout.specWindowHeight;
         Layout.specWindow.position = [Layout.specWindow.X(1),Layout.specWindow.Y(1) ,abs(diff(Layout.specWindow.X)),abs(diff(Layout.specWindow.Y))];
-        
-        
+
+
         % topoplot window
         Layout.topoWindow.X(1) = Layout.BorderWidth + 3*Layout.LabelWidth + Layout.specWindowWidth;
-        Layout.topoWindow.X(2) = Layout.FigWidth - Layout.BorderWidth - Layout.LabelWidth - Layout.metricWindowWidth;
-
+        %Layout.topoWindow.X(2) = Layout.FigWidth - Layout.BorderWidth - Layout.LabelWidth - Layout.metricWindowWidth;
+        Layout.topoWindow.X(2) = Layout.specWindow.X(1) + 2*Layout.specWindowWidth;
         Layout.topoWindow.Y(1) = Layout.BorderWidth + Layout.LabelWidth;
         Layout.topoWindow.Y(2) = Layout.topoWindow.Y(1) + Layout.topoWindowHeight;
         Layout.topoWindow.position = [Layout.topoWindow.X(1),Layout.topoWindow.Y(1),abs(diff(Layout.topoWindow.X)),abs(diff(Layout.topoWindow.Y))];
-        
-        
-        % metric Window
-        Layout.metricWindow.X(1) = Layout.BorderWidth + 4*Layout.LabelWidth + Layout.specWindowWidth + Layout.topoWindowWidth;
+
+        % corr-table window
+        Layout.corrsWindow.X(1) = Layout.BorderWidth + 3*Layout.LabelWidth + 2*Layout.specWindowWidth;
+        Layout.corrsWindow.X(2) = Layout.specWindow.X(1) + 3*Layout.specWindowWidth;
+        Layout.corrsWindow.Y(1) = Layout.BorderWidth + Layout.LabelWidth;
+        Layout.corrsWindow.Y(2) = Layout.topoWindow.Y(1) + Layout.topoWindowHeight;
+        Layout.corrsWindow.position = [Layout.corrsWindow.X(1),Layout.corrsWindow.Y(1),abs(diff(Layout.corrsWindow.X)),abs(diff(Layout.corrsWindow.Y))];
+
+        %
+        num_metrics = numel(fieldnames(metrics));
+        metric_corr_height = num_metrics*(.025*vAxisSpace);
+
+        % correlations Window
+        Layout.metricWindow.X(1) = Layout.BorderWidth + 4*Layout.LabelWidth + Layout.specWindowWidth*1.176470 + Layout.topoWindowWidth;
         Layout.metricWindow.X(2) = Layout.FigWidth - Layout.BorderWidth;
-        Layout.metricWindow.Y(1) = Layout.BorderWidth + Layout.LabelWidth;
+        %Layout.metricWindow.Y(1) = Layout.BorderWidth + Layout.LabelWidth;Layout.BorderWidth + 3*Layout.LabelWidth + Layout.specWindowHeight;
+        Layout.metricWindow.Y(1) = Layout.BorderWidth + 3*Layout.LabelWidth + Layout.specWindowHeight;
+        %Layout.metricWindow.Y(2) = Layout.FigHeight - Layout.BorderWidth - Layout.LabelWidth;Layout.FigHeight - Layout.BorderWidth - Layout.LabelWidth - metric_corr_height;
         Layout.metricWindow.Y(2) = Layout.FigHeight - Layout.BorderWidth - Layout.LabelWidth;
         Layout.metricWindow.position = [Layout.metricWindow.X(1),Layout.metricWindow.Y(1) ,abs(diff(Layout.metricWindow.X)),abs(diff(Layout.metricWindow.Y))];
-        
-        
+
+        % metric Window
+        %Layout.corrsWindow.X(1) = Layout.BorderWidth + 4*Layout.LabelWidth + Layout.specWindowWidth + Layout.topoWindowWidth - Layout.LabelWidth/2;
+        %Layout.corrsWindow.X(2) = Layout.FigWidth - Layout.BorderWidth/2;
+        %Layout.corrsWindow.Y(1) = Layout.BorderWidth + Layout.LabelWidth + Layout.metricWindow.Y(2);
+        %Layout.corrsWindow.Y(2) = Layout.BorderWidth + Layout.LabelWidth + Layout.metricWindow.Y(2)+ metric_corr_height;
+        %Layout.corrsWindow.position = [Layout.corrsWindow.X(1),Layout.corrsWindow.Y(1) ,abs(diff(Layout.corrsWindow.X)),abs(diff(Layout.corrsWindow.Y))];
 
 
         if all([Layout.tICWindow.position([3,4]) Layout.covWindow.position([3,4]) Layout.specWindow.position([3,4]) Layout.topoWindow.position([3,4])] > 0)
             set(tICWindow,   'position',Layout.tICWindow.position);
-            set(specWindow,  'position',Layout.specWindow.position);            
+            set(specWindow,  'position',Layout.specWindow.position);
             set(metricWindow,'position',Layout.metricWindow.position);
+            %set(corrWindow,'position',Layout.corrWindow.position);
+            set(corrPanel,'Position',Layout.corrsWindow.position);
             set(covWindow,   'position',Layout.covWindow.position);
             if length(topoWindow) == 2
                 toposub1 = fix(Layout.topoWindow.position .* [1,1,1/length(topoWindow),1]);
@@ -162,7 +185,7 @@ uiwait(MainFig)
                 set(topoWindow,'position',Layout.topoWindow.position);
             end
         end
-        
+
         % metrics dropdown menu layout
         set(uitools.metrics,'position',[Layout.metricWindow.position(1) Layout.metricWindow.Y(2) Layout.metricWindow.position(3) Layout.MenuHeight])
         linkaxes([tICWindow,covWindow],'x');
@@ -173,51 +196,51 @@ uiwait(MainFig)
 
 
     function redraw % UPDATE PLOTS
-          
+
         drawnow expose
-        
+
         t = (1:size(tc,2))./D.fsample;
-        
+
         if ismember(current_comp,bad_components)
             thistcplotcolor = badcolor;
         else
             thistcplotcolor = goodcolor; %tcplotcolor;
         end
-             
-        
+
+
         % Redraw topo window
         for m = 1:length(topoWindow)
 
             % clear axis contents
-            cla(topoWindow(m));            
-            struct2handle(topos(current_comp,m).children,topoWindow(m)); 
-            
+            cla(topoWindow(m));
+            struct2handle(topos(current_comp,m).children,topoWindow(m));
+
             % Set colormap limits
             contourGroupInd = strcmpi('specgraph.contourgroup', {topos(current_comp,m).children(:).type});
             cmax = max(abs(topos(current_comp,m).children(contourGroupInd).properties.ZData(:)));
-            
-            struct2handle(topos(current_comp,m).children,topoWindow(m)); 
+
+            struct2handle(topos(current_comp,m).children,topoWindow(m));
             axis(topoWindow(m),'image')
             set(topoWindow(m),'Visible','off')
             set(topoWindow(m), 'CLim', cmax*[-1 1]);
             set(MainFig,'CurrentAxes',topoWindow(m)); colormap(bluewhitered);
 
         end
-        
+
         % Redraw spectrum window
-        axes(specWindow); 
-        
+        axes(specWindow);
+
         % plot(component_f,component_P(:,current_comp));
         % set(specWindow,'YScale','log','XLim',[0 D.fsample/2])
         % ylabel('Power spectral density')
         % xlabel('Frequency (Hz)');
-        
+
         pwelch(tc(current_comp,~isnan(tc(current_comp,:))),1024,512,1024,D.fsample);
-        
+
         set(findobj(specWindow,'type','line'),'color', thistcplotcolor,'linewidth',2);
         title(specWindow,'')
         tidyAxes(specWindow, FONTSIZE);
-        
+
         % redraw covariate window
         axes(covWindow);
         if isfield(metrics.(metric_names{current_metric}), 'chanind')
@@ -228,30 +251,30 @@ uiwait(MainFig)
         else
             plot(t, zeros(size(t)), 'color', covcolor);
         end%if
-        
+
         axis tight
         set(covWindow,'xlim',[t(1) t(end)]);
         set(covWindow,'ylim',max(abs(get(covWindow,'ylim')))*[-1 1]);
         xlabel('Time (s)', 'FontSize', FONTSIZE);
         tidyAxes(covWindow, FONTSIZE)
-        
+
         % Redraw tIC window
-        axes(tICWindow); 
+        axes(tICWindow);
         cla(tICWindow);
-        plot(t,tc(current_comp,:),'color',thistcplotcolor), 
+        plot(t,tc(current_comp,:),'color',thistcplotcolor),
         set(tICWindow,'ylim',max(abs(get(tICWindow,'ylim')))*[-1 1]);
         set(tICWindow,'xlim',[t(1) t(end)]);
         tidyAxes(tICWindow, FONTSIZE);
 
-        
+
         % Redraw metric window
         axes(metricWindow), cla(metricWindow), hold(metricWindow,'on');
-        
-        barMetric = metrics.(metric_names{current_metric}).value(sorted_comps); 
+
+        barMetric = metrics.(metric_names{current_metric}).value(sorted_comps);
         barInd = 1:length(barMetric);
-        
+
         [goodbars,badbars,currentbar] = deal(barMetric);
-        
+
         goodbars(   ismember(sorted_comps,bad_components)) = nan;
         badbars(   ~ismember(sorted_comps,bad_components)) = nan;
         currentbar(~ismember(sorted_comps,current_comp))   = nan;
@@ -259,30 +282,51 @@ uiwait(MainFig)
         h_goodbars      = barh(barInd,goodbars);
         h_badbars       = barh(barInd,badbars);
         h_currentbar    = barh(barInd,currentbar);
-        
+
         set(h_goodbars,  'FaceColor', goodcolor,    'EdgeColor', 'none','HitTest','off');
-        set(h_badbars,   'FaceColor', badcolor,     'EdgeColor', 'none','HitTest','off');        
+        set(h_badbars,   'FaceColor', badcolor,     'EdgeColor', 'none','HitTest','off');
         set(h_currentbar,'FaceColor', currentcolor, 'EdgeColor', 'none','HitTest','off');
-        
+
         tidyAxes(metricWindow)
         set(metricWindow,'ytick',find(ismember(sorted_comps,current_comp)),'yticklabel','>')
         set(metricWindow,'xtick',[])
         set(metricWindow,'fontweight','bold','fontsize',16)
         axis(metricWindow,'tight')
-        set(metricWindow,'ydir','reverse')      
+        set(metricWindow,'ydir','reverse')
         set(metricWindow,'ButtonDownFcn',@mouse_select_component)
 
         drawnow
 
         % Add info about metrics as title above tICWindow
         titlestr = 'Component ranking: ';
+        ICA_Corr = zeros(numel(fieldnames(metrics)),1);
         for j = 1:length(metric_names)
             v = metrics.(metric_names{j}).value(current_comp); % Metric value
             r = sum(v <= metrics.(metric_names{j}).value);
+            ICA_Corr(j) = v;
             titlestr = [titlestr sprintf('%s: %i (%.2f)  ',metric_names{j},r,v)];
-        end  
-        title(tICWindow,titlestr,'fontsize',FONTSIZE,'interpreter','none')
-        
+        end
+        %title(tICWindow,titlestr,'fontsize',FONTSIZE,'interpreter','none')
+
+        % uitable
+        cols = {'Covariate','ICA Corr'};
+        MetricNames = fieldnames(metrics);
+        T = table(ICA_Corr,'RowNames',MetricNames);
+        %T = varfun(@(var) round(var, 4), T);
+
+        % Get the table in string form.
+        TString = evalc('disp(T)');
+        % Use TeX Markup for bold formatting and underscores.
+        TString = strrep(TString,'<strong>','\bf');
+        TString = strrep(TString,'</strong>','\rm');
+        TString = strrep(TString,'_','\_');
+        % Get a fixed-width font.
+        FixedWidth = get(0,'FixedWidthFontName');
+        % Output the table using the annotation command.
+        delete(findall(gcf,'Tag','MetricCorrTable'))
+        annotation(corrPanel,'Textbox','String',TString,'Interpreter','Tex','FontName',FixedWidth,...
+                             'Position',[0 0 1 1],'Tag', 'MetricCorrTable','FontSize', FONTSIZE);
+
     end
 
 
@@ -294,19 +338,19 @@ uiwait(MainFig)
     end
 
 
-    
+
     function key_press(~,evnt)
         % scrolling through components
         if any(strcmp(evnt.Key,{'rightarrow','leftarrow','downarrow','uparrow'}))
-            
+
             if strcmp(evnt.Key,'rightarrow') || strcmp(evnt.Key,'downarrow')
                 current_comp_ind = current_comp_ind + 1;
-                
+
             elseif strcmp(evnt.Key,'leftarrow') || strcmp(evnt.Key,'uparrow')
                 current_comp_ind = current_comp_ind - 1;
-                
+
             end
-            
+
             if current_comp_ind < 1
                 current_comp_ind = length(sorted_comps);
             elseif current_comp_ind > length(sorted_comps)
@@ -315,36 +359,36 @@ uiwait(MainFig)
 
             current_comp = sorted_comps(current_comp_ind);
             redraw
-        
+
         % hotkeys
         elseif strcmp(evnt.Key, 'a')
             current_metric = current_metric - 1;
-            if current_metric <= 0 
+            if current_metric <= 0
                 current_metric = length(metric_names);
             end
             set(uitools.metrics,'Value',current_metric);
             switchmetric
-            
+
         elseif strcmp(evnt.Key, 's')
             current_metric = current_metric + 1;
             if current_metric > length(metric_names)
                 current_metric = 1;
-            end 
+            end
             set(uitools.metrics,'Value',current_metric);
             switchmetric
-            
+
         elseif strcmp(evnt.Key, 'b')
             setbad
-            
+
         elseif strcmp(evnt.Key, 'g')
             setgood
-            
+
         elseif strcmp(evnt.Key, 'z')
             %cb_zoom - AB disabled until it can be made to set the button
             %toggle status too
-            
+
         else
-            % no action on other keys            
+            % no action on other keys
         end%if
     end % key_press
 
@@ -353,23 +397,23 @@ uiwait(MainFig)
     function setgood(~,~)
         bad_components(bad_components==current_comp) = [];
         redraw
-    end 
+    end
 
     function setbad(~,~)
         bad_components = unique(sort([bad_components(:); current_comp]));
         redraw
-    end 
+    end
 
 
     function switchmetric(~,~)
         current_metric = get(uitools.metrics,'Value');
         [~,sorted_comps] = sort(metrics.(metric_names{current_metric}).value,'descend');
-        
+
         switch lower(get(metricContext.switch,'checked'))
             case 'on'
                 current_comp_ind = 1;
             case 'off'
-                current_comp_ind = find(sorted_comps == current_comp); 
+                current_comp_ind = find(sorted_comps == current_comp);
         end
         current_comp = sorted_comps(current_comp_ind);
         redraw
@@ -377,7 +421,7 @@ uiwait(MainFig)
 
 
     function cb_metricContext(src,~)
-        
+
         switch lower(get(metricContext.switch,'checked'))
             case 'on'
                 set(metricContext.switch,'checked','off');
@@ -416,7 +460,7 @@ cdata = [
      0     0     0     0     1     1     1     1     1     0     0     0     0     0     0     0
      0     0     0     0     0     1     1     1     0     0     0     0     0     0     0     0
      0     0     0     0     0     0     1     1     0     0     0     0     0     0     0     0];
- 
+
 cdata_r = double(~cdata); cdata_r(cdata_r==1) = nan;
 cdata_g = 0.5*double(~isnan(cdata));
 cdata_b = double(~cdata);
@@ -444,7 +488,7 @@ cdata_r = 0.8*cdata; cdata_r(cdata_r==0) = nan;
 cdata_g = double(~cdata);
 cdata_b = double(~cdata);
 icon_bad = cat(3,cdata_r,cdata_g,cdata_b);
- 
+
 icon_zoom = load(fullfile(matlabroot,'toolbox','matlab','icons','zoom.mat'));
 icon_zoom = icon_zoom.(char(fieldnames(icon_zoom)));
 
