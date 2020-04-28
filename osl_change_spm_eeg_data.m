@@ -94,7 +94,7 @@ else
     D2(D2chanind,:,:)=Sc.newdata;    
 end
 
-for coni=1:length(Sc.cond_list),
+for coni=1:length(Sc.cond_list)
     D2=conditions(D2,coni,Sc.cond_list{coni});
 end
 
@@ -108,7 +108,19 @@ else
     end
     D2=D2.chantype(D2chanind, D.chantype(Dchanind));
     D2=D2.chanlabels(D2chanind, D.chanlabels(Dchanind));
-    
+
+    % copy badtrials
+    badtrials=D.badtrials;
+    if ~isempty(badtrials)
+        tmp_bad = zeros(D.ntrials,1);
+        tmp_bad(badtrials) = 1;
+        D2 = D2.badtrials(1:length(tmp_bad),tmp_bad);
+    end
+
+    % copy events
+    ev = D.events;
+    D2 = D2.events(1:D2.ntrials,ev);
+
 end
 
 if size(D2,3)==1
