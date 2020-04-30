@@ -1,5 +1,4 @@
 function osl_lightbox(in,spat_res,thresh,comp2use)
-
 if nargin<4
     comp2use=0;
 end
