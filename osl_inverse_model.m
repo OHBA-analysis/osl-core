@@ -5,21 +5,22 @@ function D = osl_inverse_model(D,mni_coords,varargin)
 % an SPM object containing the inverse solution in an online montage.
 %
 % D = osl_inverse_model(D,mni_coords,S)
-% 
+%
 % REQUIRED INPUTS:
 %
 % D             - SPM MEG object filename (or SPM MEG object)
 %
-% mni_coords    - [N x 3] list of MNI coordinates to beamform to
+% mni_coords    - [N x 3] list of MNI coordinates to beamform to. A dummy
+%                  variable is required if we are doing a cortical SR
 %
-% 
-% OPTIONAL INPUTS: 
+%
+% OPTIONAL INPUTS:
 %
 % Passed in as a struct:
 %
-% S.modalities     - Sensor modalities to use (e.g. MEG,MEGPLANAR, or both) 
+% S.modalities     - Sensor modalities to use (e.g. MEG,MEGPLANAR, or both)
 %                    (default MEGPLANAR for Neuromag, MEG for CTF)
-% 
+%
 %
 % S.type           - Beamformer type to use {'Scalar' or 'Vector'}
 %                     (default 'Scalar')
@@ -30,7 +31,7 @@ function D = osl_inverse_model(D,mni_coords,varargin)
 % S.pca_order      - PCA dimensionality to use for covariance matrix inversion
 %                     (default to full rank)
 %
-% S.use_class_channel     
+% S.use_class_channel
 %                  - flag indicating whether or not to use the class channel
 %                    in S.D to determine the time samples to be used for
 %                     (default is 0)
@@ -44,10 +45,16 @@ function D = osl_inverse_model(D,mni_coords,varargin)
 % S.dirname        - dir to output results to
 %                     (default is a temporary directory created within D.path)
 %
+% S.mode           - reconstruction mode. Can be 'volumetric' (what we
+%                       normally do at OHBA or 'cortical' to constrain
+%                       solutions to the cortex (if for example you've run
+%                       a recon-all in FreeSurfer). Defaults to volumetric
+%                       if not set
+%
 % S.prefix         - write new SPM file by prepending this prefix
 %                     (default is '')
 %
-% AB 2014, MWW 2014
+% AB 2014, MWW 2014, RT 2020
 
 arg = inputParser;
 arg.addParameter('modalities',[],@(x) ischar(x) || iscell(x)); % Sensor modalities to use
@@ -60,6 +67,7 @@ arg.addParameter('inverse_method','beamform',@(x) any(strcmp(x,{'beamform','beam
 arg.addParameter('conditions','all',@(x) ischar(x) || iscell(x)); % Should be a cell array of conditions
 arg.addParameter('dirname','',@ischar); % dir to output results to - default/empty makes a temporary folder alongside the D object
 arg.addParameter('prefix',''); % write new SPM file by prepending this prefix
+arg.addParameter('mode',''); %volumetric or cortical mode
 arg.parse(varargin{:});
 S = arg.Results;
 
@@ -67,7 +75,7 @@ S = arg.Results;
 
 old_dir = pwd; % Back up the original working directory
 
-if nargin < 3 || isempty(S) 
+if nargin < 3 || isempty(S)
     S = struct;
 end
 
@@ -80,8 +88,8 @@ if isa(D,'meeg')
     % rather than trying to automatically reload the file. If the user did
     % change directory e.g.
     %
-    % D = D.copy('./temp')) 
-    % cd .. 
+    % D = D.copy('./temp'))
+    % cd ..
     % D = spm_eeg_load(D.fullfile)
     %
     % likely scenario is that the file won't exist and cannot be loaded. Worst
@@ -135,7 +143,7 @@ assert(any(strcmp(S.conditions,'all')) || isempty(setdiff(S.conditions,D.condlis
 % Check dirname Specification:
 if isempty(S.dirname)
     [~,tn] = fileparts(tempname(D.path));
-    S.dirname = fullfile(D.path,sprintf('osl_bf_temp_%s',tn(3:3+7))); 
+    S.dirname = fullfile(D.path,sprintf('osl_bf_temp_%s',tn(3:3+7)));
 else
     S.dirname = getfullpath(S.dirname);
 end
@@ -144,104 +152,210 @@ if ~exist(S.dirname,'dir')
     mkdir(S.dirname);
 end
 
+if isempty(S.mode);
+    S.mode='volumetric'
+elseif any(ismember(S.mode,['cortical','Cortical','volumetric','Volumetric']))~=1;
+    error('Volumetric/cortical mode not recognised. Please check and try again');
+end
+
 fprintf(1,'BF working directory: %s\n',S.dirname);
 
 %%%%%%%%%%%%%%%%%%   R U N   I N V E R S E   M O D E L   %%%%%%%%%%%%%%%%%%
 
 clear matlabbatch
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-matlabbatch{1}.spm.tools.beamforming.data.dir                                   = {S.dirname};
-matlabbatch{1}.spm.tools.beamforming.data.D                                     = {fullfile(D.path,D.fname)};
-matlabbatch{1}.spm.tools.beamforming.data.val                                   = 1;
-matlabbatch{1}.spm.tools.beamforming.data.gradsource                            = 'inv';
-matlabbatch{1}.spm.tools.beamforming.data.space                                 = 'MNI-aligned';
-matlabbatch{1}.spm.tools.beamforming.data.overwrite                             = 1;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-matlabbatch{2}.spm.tools.beamforming.sources.BF(1)                              = cfg_dep('Prepare data: BF.mat file', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
-matlabbatch{2}.spm.tools.beamforming.sources.reduce_rank                        = [2 3];
-matlabbatch{2}.spm.tools.beamforming.sources.keep3d                             = 1;
-matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 0;
-matlabbatch{2}.spm.tools.beamforming.sources.plugin.mni_coords.pos              = double(mni_coords);
-
-
-% MESH STUFF!
-%matlabbatch{2}.spm.tools.beamforming.sources.BF(1)                              = cfg_dep('Prepare data: BF.mat file', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
-%matlabbatch{2}.spm.tools.beamforming.sources.reduce_rank                        = [2 3];
-%matlabbatch{2}.spm.tools.beamforming.sources.keep3d                             = 1;
-%matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 0;
-%matlabbatch{2}.spm.tools.beamforming.sources.plugin.mesh.orient                 = 'Original';
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-matlabbatch{3}.spm.tools.beamforming.features.BF(1)                             = cfg_dep('Define sources: BF.mat file', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
-
-if strcmp(S.conditions{1},'all')
-    matlabbatch{3}.spm.tools.beamforming.features.whatconditions.all            = 1;
-else
-    matlabbatch{3}.spm.tools.beamforming.features.whatconditions.condlabel      = S.conditions;
-end
-
-if ~S.use_class_channel
-    if D.ntrials == 1
-        matlabbatch{3}.spm.tools.beamforming.features.plugin.contcov            = struct([]);
-    else
-        matlabbatch{3}.spm.tools.beamforming.features.plugin.cov                = struct([]);
+if (strcmp(S.mode,'cortical') || strcmp(S.mode,'Cortical'))~=1; % Stick with the boring volumetric method
+    fprintf('\nRUNNING A VOLUMETRIC SR\n'); % tell user
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    matlabbatch{1}.spm.tools.beamforming.data.dir                                   = {S.dirname};
+    matlabbatch{1}.spm.tools.beamforming.data.D                                     = {fullfile(D.path,D.fname)};
+    matlabbatch{1}.spm.tools.beamforming.data.val                                   = 1;
+    matlabbatch{1}.spm.tools.beamforming.data.gradsource                            = 'inv';
+    matlabbatch{1}.spm.tools.beamforming.data.space                                 = 'MNI-aligned';
+    matlabbatch{1}.spm.tools.beamforming.data.overwrite                             = 1;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    matlabbatch{2}.spm.tools.beamforming.sources.BF(1)                              = cfg_dep('Prepare data: BF.mat file', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    matlabbatch{2}.spm.tools.beamforming.sources.reduce_rank                        = [2 3];
+    matlabbatch{2}.spm.tools.beamforming.sources.keep3d                             = 1;
+    matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 1;
+    matlabbatch{2}.spm.tools.beamforming.sources.plugin.mni_coords.pos              = double(mni_coords);
+    
+    % Note that the "visualise" function won't work if the D object contain's
+    % an overlapping spheres head model due to the "vol.label" field being
+    % empty. This will crash on the call to
+    % ft_plot_vol(vol, 'edgecolor', [0 0 0], 'facealpha', 0);
+    % on line 137 of bf_sources.m
+    if strcmp(D.inv{1}.forward.voltype,'MEG Local Spheres') ==1 && matlabbatch{2}.spm.tools.beamforming.sources.visualise ==1;
+        warning('Sorry - we cannot visualise this head model with the the DAiSS toolbox. Please seek other visualisation method.');
+        matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 0;
     end
-else
-    matlabbatch{3}.spm.tools.beamforming.features.plugin.cov_bysamples          = struct([]);
+    
+    % MESH STUFF!
+    %matlabbatch{2}.spm.tools.beamforming.sources.BF(1)                              = cfg_dep('Prepare data: BF.mat file', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    %matlabbatch{2}.spm.tools.beamforming.sources.reduce_rank                        = [2 3];
+    %matlabbatch{2}.spm.tools.beamforming.sources.keep3d                             = 1;
+    %matlabbatch{2}.spm.tools.beamforming.sources.visualise                          = 0;
+    %matlabbatch{2}.spm.tools.beamforming.sources.plugin.mesh.orient                 = 'Original';
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    matlabbatch{3}.spm.tools.beamforming.features.BF(1)                             = cfg_dep('Define sources: BF.mat file', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    
+    if strcmp(S.conditions{1},'all')
+        matlabbatch{3}.spm.tools.beamforming.features.whatconditions.all            = 1;
+    else
+        matlabbatch{3}.spm.tools.beamforming.features.whatconditions.condlabel      = S.conditions;
+    end
+    
+    if ~S.use_class_channel
+        if D.ntrials == 1
+            matlabbatch{3}.spm.tools.beamforming.features.plugin.contcov            = struct([]);
+        else
+            matlabbatch{3}.spm.tools.beamforming.features.plugin.cov                = struct([]);
+        end
+    else
+        matlabbatch{3}.spm.tools.beamforming.features.plugin.cov_bysamples          = struct([]);
+    end
+    matlabbatch{3}.spm.tools.beamforming.features.woi                               = S.timespan*1000; % needs to be in msecs for bf_features
+    
+    for jj=1:length(S.modalities),
+        matlabbatch{3}.spm.tools.beamforming.features.modality{jj}                  = S.modalities{jj};
+    end
+    
+    matlabbatch{3}.spm.tools.beamforming.features.fuse                              = S.fuse;
+    matlabbatch{3}.spm.tools.beamforming.features.regularisation.manual.lambda      = 0;
+    matlabbatch{3}.spm.tools.beamforming.features.bootstrap                         = false;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    matlabbatch{4}.spm.tools.beamforming.inverse.BF(1)                              = cfg_dep('Define sources: BF.mat file', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    
+    switch S.inverse_method,
+        case 'beamform'
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 0;
+        case 'beamform_bilateral'
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 1;
+        case 'mne_diag_datacov'
+            mne_lambda=1;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'diag_datacov';
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
+        case 'mne_eye'
+            mne_lambda=1;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'eye';
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
+        case 'mne_adaptive'
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise          = S.MNE.Noise;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = S.MNE.Options;
+        otherwise
+            disp('Inversion method unknown!');
+    end
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    matlabbatch{5}.spm.tools.beamforming.output.BF(1)                               = cfg_dep('Inverse solution: BF.mat file', substruct('.','val', '{}',{4}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise        = 'both';
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    matlabbatch{6}.spm.tools.beamforming.write.BF(1)                                = cfg_dep('Output: BF.mat file', substruct('.','val', '{}',{5}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             = S.prefix;
+    
+    obj = onCleanup(@() cd(old_dir)); % Restore the working directory
+    spm_jobman('run',matlabbatch)
+    
+else % Do a cortical SR
+    fprintf('\nRUNNING A CORTICAL SR\n');
+    warning('We have assumed that you have already downsampled your brain surface');
+    matlabbatch{1}.spm.tools.beamforming.data.dir = {S.dirname};
+    matlabbatch{1}.spm.tools.beamforming.data.D = {fullfile(D.path,D.fname)};
+    matlabbatch{1}.spm.tools.beamforming.data.val = 1;
+    matlabbatch{1}.spm.tools.beamforming.data.gradsource = 'inv';
+    matlabbatch{1}.spm.tools.beamforming.data.space = 'MNI-aligned';
+    matlabbatch{1}.spm.tools.beamforming.data.overwrite = 1;
+    matlabbatch{2}.spm.tools.beamforming.sources.BF(1) = cfg_dep('Prepare data: BF.mat file', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    matlabbatch{2}.spm.tools.beamforming.sources.reduce_rank = [2 3];
+    matlabbatch{2}.spm.tools.beamforming.sources.keep3d = 1;
+    matlabbatch{2}.spm.tools.beamforming.sources.plugin.mesh.orient = 'Original';
+    matlabbatch{2}.spm.tools.beamforming.sources.plugin.mesh.fdownsample = 1;
+    matlabbatch{2}.spm.tools.beamforming.sources.plugin.mesh.flip = false;
+    matlabbatch{2}.spm.tools.beamforming.sources.visualise = 0;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    matlabbatch{3}.spm.tools.beamforming.features.BF(1)                             = cfg_dep('Define sources: BF.mat file', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    
+    if strcmp(S.conditions{1},'all')
+        matlabbatch{3}.spm.tools.beamforming.features.whatconditions.all            = 1;
+    else
+        matlabbatch{3}.spm.tools.beamforming.features.whatconditions.condlabel      = S.conditions;
+    end
+    
+    if ~S.use_class_channel
+        if D.ntrials == 1
+            matlabbatch{3}.spm.tools.beamforming.features.plugin.contcov            = struct([]);
+        else
+            matlabbatch{3}.spm.tools.beamforming.features.plugin.cov                = struct([]);
+        end
+    else
+        matlabbatch{3}.spm.tools.beamforming.features.plugin.cov_bysamples          = struct([]);
+    end
+    matlabbatch{3}.spm.tools.beamforming.features.woi                               = S.timespan*1000; % needs to be in msecs for bf_features
+    
+    for jj=1:length(S.modalities),
+        matlabbatch{3}.spm.tools.beamforming.features.modality{jj}                  = S.modalities{jj};
+    end
+    
+    matlabbatch{3}.spm.tools.beamforming.features.fuse                              = S.fuse;
+    matlabbatch{3}.spm.tools.beamforming.features.regularisation.manual.lambda      = 0;
+    matlabbatch{3}.spm.tools.beamforming.features.bootstrap                         = false;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    matlabbatch{4}.spm.tools.beamforming.inverse.BF(1)                              = cfg_dep('Define sources: BF.mat file', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    
+    switch S.inverse_method,
+        case 'beamform'
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 0;
+        case 'beamform_bilateral'
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 1;
+        case 'mne_diag_datacov'
+            mne_lambda=1;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'diag_datacov';
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
+        case 'mne_eye'
+            mne_lambda=1;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'eye';
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
+        case 'mne_adaptive'
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise          = S.MNE.Noise;
+            matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = S.MNE.Options;
+        otherwise
+            disp('Inversion method unknown!');
+    end
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    matlabbatch{5}.spm.tools.beamforming.output.BF(1)                               = cfg_dep('Inverse solution: BF.mat file', substruct('.','val', '{}',{4}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise        = 'both';
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    matlabbatch{6}.spm.tools.beamforming.write.BF(1)                                = cfg_dep('Output: BF.mat file', substruct('.','val', '{}',{5}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
+    matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             = S.prefix;
+    
+    obj = onCleanup(@() cd(old_dir)); % Restore the working directory
+    spm_jobman('run',matlabbatch)
+    
 end
-matlabbatch{3}.spm.tools.beamforming.features.woi                               = S.timespan*1000; % needs to be in msecs for bf_features
-
-for jj=1:length(S.modalities),
-    matlabbatch{3}.spm.tools.beamforming.features.modality{jj}                  = S.modalities{jj};
-end
-
-matlabbatch{3}.spm.tools.beamforming.features.fuse                              = S.fuse;
-matlabbatch{3}.spm.tools.beamforming.features.regularisation.manual.lambda      = 0;
-matlabbatch{3}.spm.tools.beamforming.features.bootstrap                         = false;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-matlabbatch{4}.spm.tools.beamforming.inverse.BF(1)                              = cfg_dep('Define sources: BF.mat file', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
-
-switch S.inverse_method,
-    case 'beamform'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 0;
-    case 'beamform_bilateral'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.pca_order     = S.pca_order;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.type          = S.type;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.lcmv_multicov.bilateral     = 1;
-    case 'mne_diag_datacov'
-        mne_lambda=1;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'diag_datacov';
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
-    case 'mne_eye'
-        mne_lambda=1;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.noise_cov_type  = 'eye';    
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.lambda          = mne_lambda;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.minimumnorm.type            = S.type;
-    case 'mne_adaptive'
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Noise          = S.MNE.Noise;
-        matlabbatch{4}.spm.tools.beamforming.inverse.plugin.mne_adaptive.Options        = S.MNE.Options;
-    otherwise 
-        disp('Inversion method unknown!');        
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-matlabbatch{5}.spm.tools.beamforming.output.BF(1)                               = cfg_dep('Inverse solution: BF.mat file', substruct('.','val', '{}',{4}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
-matlabbatch{5}.spm.tools.beamforming.output.plugin.montage_osl.normalise        = 'both';
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-matlabbatch{6}.spm.tools.beamforming.write.BF(1)                                = cfg_dep('Output: BF.mat file', substruct('.','val', '{}',{5}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','BF'));
-matlabbatch{6}.spm.tools.beamforming.write.plugin.spmeeg_osl.prefix             = S.prefix;
-
-obj = onCleanup(@() cd(old_dir)); % Restore the working directory
-spm_jobman('run',matlabbatch)
 
 if ~isempty(S.prefix)
     D = spm_eeg_load(fullfile(D.path,[S.prefix D.fname]))
