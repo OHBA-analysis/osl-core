@@ -27,8 +27,16 @@ function osl_RAC(D,varargin);
 
 % Ryan Timms, 2020.
 
-% TO DO:
-% Test test test
+% References:
+%
+% John D'Errico (2020). Inhull
+% (https://www.mathworks.com/matlabcentral/fileexchange/10226-inhull),
+% MATLAB Central File Exchange. Retrieved May 5, 2020.
+%
+% Audrey Cheong (2020). Find Holes in Triangular Mesh
+% (https://www.mathworks.com/matlabcentral/fileexchange/62419-find-holes-in-triangular-mesh),
+% MATLAB Central File Exchange. Retrieved May 5, 2020.
+
 
 % An example CTF dataset
 % D=spm_eeg_load('/Users/rtimms/Documents/DPhil/Source_recon/digit_tap/pre_processed_data/08966/fedff08966080_Ellie_20160210_01.mat');
