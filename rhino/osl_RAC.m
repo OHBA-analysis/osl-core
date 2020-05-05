@@ -17,7 +17,9 @@ function osl_RAC(D,varargin);
 % contain a large number of subjects.
 
 % Should now support M/EEG fusion D objects, but note that only the MEG
-% co-reg is reported
+% co-reg is reported. Also returns STD of co-reg digitised head point
+% error. Now reporting both the RMS and dx/y/z error to check for
+% systematic errors
 
 % Example usage:
 % osl_RAC(D,'output_dir') % to save in 'output_dir'
@@ -221,6 +223,7 @@ fid_label_store={};
 for i=1:3;
     %     if strcmp(MR_fids.label{i},MEG_fids.label{i})==1;
     delta_store(i,:)=norm(MR_fids.pnt(i,:)-MEG_fids.pnt(i,:));
+    diff(i,:)=MR_fids.pnt(i,:)-MEG_fids.pnt(i,:);
     fid_label_store{i}=MR_fids.label{i};
     if norm(MR_fids.pnt(i,:)-MEG_fids.pnt(i,:))<5;
         fid_delta_score=fid_delta_score+1;
@@ -230,9 +233,13 @@ for i=1:3;
     %     end
 end
 if fid_delta_score==3;
-    fprintf('\nThe co-reg error between MEG & MRI fiducials was sufficiently small. (mm):\n%s: %f  %s: %f  %s: %f',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
+    fprintf('\nThe co-reg error between MEG & MRI fiducials was sufficiently small.\nRMS error (mm):\n%s: %f  %s: %f  %s: %f',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
 else
-    fprintf('\nHigh co-reg error between MEG & MRI fiducials. Will take a note of this. Error (mm):\n\n%s: %f  %s: %f  %s: %f',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
+    fprintf('\nHigh co-reg error between MEG & MRI fiducials. Will take a note of this.\nRMS error (mm):\n\n%s: %f  %s: %f  %s: %f',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
+end
+fprintf('\n\nElement wise error (delta x, delta y, delta z):\n');
+for i=1:numel(fid_label_store);
+    fprintf('\n---------------\n%s:\n---------------\n%2.2fmm %2.2fmm %2.2fmm',string(fid_label_store(i)),diff(i,1),diff(i,2),diff(i,3));
 end
 
 fprintf('\n==================================================================\n')
@@ -356,9 +363,10 @@ else
     title('Scalp - digitised head points co-reg error');
     set(gca,'FontSize',18,'FontWeight','bold')
     saveas(gcf,strcat(output_dir{1},'/RAC_head_points.png'));
-    fprintf('Number of Points: %8.0f\nMean Displacement: %8.2fmm\nMedian Displacement: %6.2fmm\nUpper Quartile: %11.2fmm\nMax Error: %16.2fmm\n',...
+    fprintf('Number of Points: %8.0f\nMean Displacement: %8.2fmm\nSTD of displacement: %6.2fmm\nMedian Displacement: %6.2fmm\nUpper Quartile: %11.2fmm\nMax Error: %16.2fmm\n',...
         numel(err),...
         mean(err),...
+        std(err),...
         median(err),...
         quantile(err,[0.75]),...
         max(err))
@@ -441,10 +449,14 @@ fprintf(fileID,' Vertical displacement: %fmm\n',vert_misalign);
 fprintf(fileID,'\nCHECK 3: Did the fiducials end up within ±5mm of one another?\n');
 if fid_delta_score==3;
     total_score=total_score+1;
-    fprintf(fileID,'Yes\n %s: %fmm\n%s: %fmm\n%s: %fmm\n',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
+    fprintf(fileID,'Yes\n%s: %fmm\n%s: %fmm\n%s: %fmm\n',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
 else
-    fprintf(fileID,'No\n %s: %fmm\n%s: %fmm\n%s: %fmm\n',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
+    fprintf(fileID,'No\n%s: %fmm\n%s: %fmm\n%s: %fmm\n',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
 end
+fprintf(fileID,'--------------------------------\nConstituent fiducial errors:\n--------------------------------\n');
+fprintf(fileID,'%s:\n%fmm\n%fmm\n%fmm\n',string(fid_label_store(1)),diff(1,1),diff(1,2),diff(1,3));
+fprintf(fileID,'%s:\n%fmm\n%fmm\n%fmm\n',string(fid_label_store(2)),diff(2,1),diff(2,2),diff(2,3));
+fprintf(fileID,'%s:\n%fmm\n%fmm\n%fmm\n',string(fid_label_store(3)),diff(3,1),diff(3,2),diff(3,3));
 fprintf(fileID,'\nCHECK 4: Is the brain inside the skull?\n');
 if brain_in_skull_score==2;
     total_score=total_score+1;
@@ -471,9 +483,10 @@ if isempty(pol_points)==1;
 else
     total_score=total_score+1;
     fprintf(fileID,'Yes! Summary statistics of digitised head points (CHECK 8) shown below:\n');
-    fprintf(fileID,'Number of Points: %8.0f\nMean Displacement: %8.2fmm\nMedian Displacement: %6.2fmm\nUpper Quartile: %11.2fmm\nMax Error: %16.2fmm\n',...
+    fprintf(fileID,'Number of Points: %8.0f\nMean Displacement: %8.2fmm\nSTD of displacement: %6.2fmm\nMedian Displacement: %6.2fmm\nUpper Quartile: %11.2fmm\nMax Error: %16.2fmm\n',...
         numel(err),...
         mean(err),...
+        std(err),...
         median(err),...
         quantile(err,[0.75]),...
         max(err));
@@ -508,12 +521,17 @@ fprintf(fileID,'RAC report for %s\n',D.fullfile);
 fprintf(fileID,'%s\n',string(datetime(now,'ConvertFrom','datenum')));
 fprintf(fileID,'Co-reg method: %s\n',upper(coreg_method));
 fprintf(fileID,'Scanner manufacturer: %s\n\n',upper(scanner_type));
-fprintf(fileID,'-------------------\nChecklist Results:\n-------------------\n');
+fprintf(fileID,'-------------------\n-------------------\nChecklist Results:\n-------------------\n-------------------\n');
 fprintf(fileID,'fid_in_score: %s\n',string(fid_in_score));
 fprintf(fileID,'LR_vert_score: %s\n',string(LR_vert_score));
 fprintf(fileID,'Vertical displacement: %fmm\n',vert_misalign);
 fprintf(fileID,'fid_delta_score: %s\n',string(fid_delta_score));
+fprintf(fileID,'--------------------------------\nRMS fiducial errors:\n--------------------------------\n');
 fprintf(fileID,'%s: %fmm\n%s: %fmm\n%s: %fmm\n',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
+fprintf(fileID,'--------------------------------\nConstituent fiducial errors:\n--------------------------------\n');
+fprintf(fileID,'%s:\n%fmm\n%fmm\n%fmm\n',string(fid_label_store(1)),diff(1,1),diff(1,2),diff(1,3));
+fprintf(fileID,'%s:\n%fmm\n%fmm\n%fmm\n',string(fid_label_store(2)),diff(2,1),diff(2,2),diff(2,3));
+fprintf(fileID,'%s:\n%fmm\n%fmm\n%fmm\n',string(fid_label_store(3)),diff(3,1),diff(3,2),diff(3,3));
 fprintf(fileID,'brain_in_skull_score: %s\n',string(brain_in_skull_score));
 fprintf(fileID,'skull_in_dewar_score: %s\n',string(skull_in_dewar_score));
 fprintf(fileID,'pol_points_used: %s\n',string(abs(1-isempty(pol_points))));
@@ -522,9 +540,10 @@ fprintf(fileID,'scalp_extraction_score: %s\n',string(scalp_extraction_score));
 fprintf(fileID,'Number of holes: %s',string(round(length(a))));
 if sum(isnan(err))==0;
     fprintf(fileID,'\nSummary statistics of digitised head points (CHECK 8) shown below:\n');
-    fprintf(fileID,'Number of Points: %8.0f\nMean Displacement: %8.2fmm\nMedian Displacement: %6.2fmm\nUpper Quartile: %11.2fmm\nMax Error: %16.2fmm\n',...
+    fprintf(fileID,'Number of Points: %8.0f\nMean Displacement: %8.2fmm\nSTD of displacement: %6.2fmm\nMedian Displacement: %6.2fmm\nUpper Quartile: %11.2fmm\nMax Error: %16.2fmm\n',...
         numel(err),...
         mean(err),...
+        std(err),...
         median(err),...
         quantile(err,[0.75]),...
         max(err));
