@@ -1310,8 +1310,16 @@ if isempty(pol_points)~=1;
     c.Position=[0.364510869565217,0.012845331720105*5,0.310489130434783,0.035438596491228];
     ylabel(c,'Distance (mm)');
 end
-saveas(gcf,strcat(output_dir{1},'/RAC_coreg_vis.png'));
-saveas(gcf,strcat(output_dir{1},'/RAC_coreg_vis.fig'));
+try
+    saveas(gcf,strcat(output_dir{1},'/RAC_coreg_vis.png'));
+catch
+    warning('Unable to save RAC report Figure to disk.');
+end
+try
+    saveas(gcf,strcat(output_dir{1},'/RAC_coreg_vis.fig'));
+catch
+    warning('Unable to save RAC report Figure to disk.');
+end
 end
 
 function [max_x,min_x,max_y,min_y,max_z,min_z]=dewar_extremities(gradiometer_locations);
