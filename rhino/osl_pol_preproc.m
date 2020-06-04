@@ -198,7 +198,7 @@ D=spm_eeg_load(D.fullfile);
 %     % Make a copy of the original D object
 %     copy_of_D=copy(D,'copy_of_D');
 %     
-%     % Delete the shite head points
+%     % Delete the bad head points
 %     R=copy_of_D.fiducials;
 %     R.label(points_to_del)=[];
 %     R.pnt(points_to_del,:)=[];
