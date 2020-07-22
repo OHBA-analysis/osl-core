@@ -1,7 +1,13 @@
 function spm_eeg_inv_checkdatareg_3Donly(varargin)
+% OSL's adaptation of spm_eeg_inv_checkdatareg.m.
+
 % Display of the coregistred meshes and sensor locations in MRI space for
 % quality check by eye.
-% Fiducials which were used for rigid registration are also displayed
+% Fiducials which were used for rigid registration are also displayed. If a
+% fused data set is provided, and no modality index is specified, we
+% default to showing the MEG coregistration result.
+%
+% Last modified by RT, 2020.
 %
 % FORMAT spm_eeg_inv_checkdatareg(D, val, ind)
 %__________________________________________________________________________
@@ -14,20 +20,25 @@ function spm_eeg_inv_checkdatareg_3Donly(varargin)
 %--------------------------------------------------------------------------
 
 %%
-
 [D,val] = spm_eeg_inv_check(varargin{:});
-
 datareg = D.inv{val}.datareg;
 
-% if nargin < 3
-%     str = sprintf('%s|', datareg(:).modality);
-%     str = str(1:(end-1));    
-%     ind = spm_input('What to display?','+1', 'b',  str, 1:numel(D.inv{val}.datareg), 1);
-% else
-%     ind = varargin{3};
-% end
+% We sometimes end up with a "fused" M/EEG dataset. Check for this now
+% before doing anything else. We'll default to showing the MEG co-reg
+% result unless being told otherwise by the user.
+if nargin < 3
+    if strcmp(D.inv{val}.datareg(1).modality,'EEG')==1;
+        if strcmp(D.inv{val}.datareg(2).modality,'MEG')==1;
+            MEG_mod_ind=2;
+        end
+    elseif strcmp(D.inv{val}.datareg(1).modality,'MEG')==1;
+        MEG_mod_ind=1;
+end
+ind = MEG_mod_ind;
+else
+    ind = varargin{3};
+end
  
-ind = 1;
 
 % --- Set up variables ---
 %==========================================================================
