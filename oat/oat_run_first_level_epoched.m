@@ -642,6 +642,7 @@ for subi_todo=1:length(first_level.sessions_to_do),
         Sc.frequencies = first_level_results.frequencies(f);
         Sc.remove_montages=0;
         Sc.cond_list = D.conditions(triallist);
+        Sc.events = D.events(triallist); 
         D_tf = osl_change_spm_eeg_data( Sc );
 
         % add back in Class channel:
