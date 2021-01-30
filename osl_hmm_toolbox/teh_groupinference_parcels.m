@@ -322,7 +322,11 @@ if todo.prepare
             data = data(:,1:ntpts);
         end
     
-        X{subnum}=(M * data)';          
+        X{subnum}=(M * data)';
+        
+        fname = [hmmdir, '/Y', num2str(subnum)];
+        data=X{subnum}';
+        save(fname, 'data');
         
     end
     
@@ -496,7 +500,7 @@ if todo.output
 
             % load first subj to check 
             Dp = spm_eeg_load(data_files{1});
-            statp = zeros(Dp.nchannels,hmm.K);
+            statp = zeros(Dp.nchannels,options.K);
 
             % definitely do not want to do any embedding when computing pcorr
             % maps:
