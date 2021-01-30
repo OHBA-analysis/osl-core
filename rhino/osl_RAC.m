@@ -1,4 +1,4 @@
-function osl_RAC(D,varargin);
+function osl_RAC(D,varargin)
 % OSL's Rhino's Automatic Co-registration Check.
 
 % Function which takes in a co-regged D object and runs some simple sanity
@@ -49,7 +49,7 @@ fprintf('==================================================================')
 fprintf('\nCalling out the RAC...\n');
 fprintf('==================================================================\n')
 
-if nargin<2;
+if nargin<2
     output_dir=string(pwd);
 else
     output_dir=varargin(1);
@@ -71,19 +71,17 @@ end
 
 % Need to check if the data set has EEG channels in it, too. Run a quick
 % check now before doing anything else.
-if strcmp(D.inv{1}.datareg(1).modality,'EEG')==1;
-    if strcmp(D.inv{1}.datareg(2).modality,'MEG')==1;
+if strcmp(D.inv{1}.datareg(1).modality,'EEG')==1
+    if strcmp(D.inv{1}.datareg(2).modality,'MEG')==1
         MEG_mod_ind=2;
     end
-elseif strcmp(D.inv{1}.datareg(1).modality,'MEG')==1;
+elseif strcmp(D.inv{1}.datareg(1).modality,'MEG')==1
     MEG_mod_ind=1;
 else
     error('Couldn''t detect any MEG channels in D object. EEG co-reg check not supported');
 end
 
-
-
-if strcmp(D.modality,'Multimodal')==1; % Thanks, CBU
+if strcmp(D.modality,'Multimodal')==1 % Thanks, CBU
     scanner_type=D.inv{1}.datareg(MEG_mod_ind).sensors.coordsys;
     multimodal=1;
 else
@@ -100,10 +98,10 @@ end
 % nose/cheek), so best just to raise a warning if we see *loads* of these
 % outside of the head.
 
-if strcmp(scanner_type,'ctf')==1;
+if strcmp(scanner_type,'ctf')==1
     % For CTF data, get all of the gradiometer positions
     gradiometer_indices=find(strcmp(D.chantype,{'MEGGRAD'}));
-elseif strcmp(scanner_type,'neuromag')==1;
+elseif strcmp(scanner_type,'neuromag')==1
     if multimodal==0;
         % For Elekta data, get all of the MEG channel locations
         gradiometer_indices=[1:length(D.inv{1}.datareg.sensors.chanpos)];
@@ -112,7 +110,7 @@ elseif strcmp(scanner_type,'neuromag')==1;
     end
 end
 
-if multimodal==0;
+if multimodal==0
     gradiometer_locations=D.inv{1}.datareg.sensors.chanpos(gradiometer_indices,:);
 else
     gradiometer_locations=D.inv{1}.datareg(MEG_mod_ind).sensors.chanpos(gradiometer_indices,:);
@@ -125,7 +123,7 @@ fprintf('CHECK 1: Did the fiducials end up inside the dewar?\n\n')
 [max_x,min_x,max_y,min_y,max_z,min_z]=dewar_extremities(gradiometer_locations);
 
 % Run fiducial sanity check
-if multimodal==0;
+if multimodal==0
     MEG_fids=D.inv{1}.datareg.fid_eeg.fid;
 else
     MEG_fids=D.inv{1}.datareg(MEG_mod_ind).fid_eeg.fid;
@@ -149,9 +147,9 @@ for i=1:length(MEG_fids.label);
         end
     end
 end
-if fid_in_score==3;
+if fid_in_score==3
     fprintf('\nGood news - looks like all fiducial points are within the dewar\n');
-elseif fid_in_score<3 && fid_in_score>0;
+elseif fid_in_score<3 && fid_in_score>0
     fprintf('Hmm. Looks like at least one of the fiducial markers ended up outside of the scanner.\nWe recommend that you take a look again at your co-reg\n');
 elseif fid_in_score==0;
     fprintf('None of the fiducials ended up inside the dewar. Something bad may have happened.\n');
@@ -174,16 +172,16 @@ fprintf('CHECK 2: Are the L/RPA points aligned after co-reg?\n\n')
 % head. Easily achieved by finding the maximum value in the nasion fiducial
 % position. Have to account for different naming conventions across
 % sites/scanners
-tmp_nas=find(ismember(MEG_fids.label,{'Nasion','NASION','Nas','nas'}));
+tmp_nas=find(ismember(MEG_fids.label,{'Nasion','NASION','Nas','nas','NAS'}));
 if sum(tmp_nas)==0;
     error('Couldn''t detect a nasion point, sorry.');
 end
-[where,who]=max(abs(MEG_fids.pnt(tmp_nas,:)));
+[~,who]=max(abs(MEG_fids.pnt(tmp_nas,:)));
 
 store_points=[];
 % Extract just the L/RPA points:
 
-if multimodal==0;
+if multimodal==0
     for i=1:length(D.inv{1}.datareg.fid_mri.fid.label);
         if strcmpi(D.inv{1}.datareg.fid_mri.fid.label{i},'rpa') || strcmpi(D.inv{1}.datareg.fid_mri.fid.label{i},'lpa')
             store_points=[store_points; D.inv{1}.datareg.fid_mri.fid.pnt(i,:)];
@@ -215,7 +213,7 @@ end
 
 fprintf('\n==================================================================\n')
 fprintf('CHECK 3: Did the fiducials end up within ±5mm of one another?\n\n')
-if multimodal==0;
+if multimodal==0
     MR_fids= D.inv{1}.datareg.fid_mri.fid;
 else
     MR_fids= D.inv{1}.datareg(MEG_mod_ind).fid_mri.fid;
@@ -240,19 +238,19 @@ for i=1:3;
     %         error('Not comparing like-with-like fiducials. Eek.')
     %     end
 end
-if fid_delta_score==3;
+if fid_delta_score==3
     fprintf('\nThe co-reg error between MEG & MRI fiducials was sufficiently small.\nRMS error (mm):\n%s: %f  %s: %f  %s: %f',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
 else
     fprintf('\nHigh co-reg error between MEG & MRI fiducials. Will take a note of this.\nRMS error (mm):\n\n%s: %f  %s: %f  %s: %f',string(fid_label_store(1)),delta_store(1),string(fid_label_store(2)),delta_store(2),string(fid_label_store(3)),delta_store(3));
 end
 fprintf('\n\nElement wise error (delta x, delta y, delta z):\n');
-for i=1:numel(fid_label_store);
+for i=1:numel(fid_label_store)
     fprintf('\n---------------\n%s:\n---------------\n%2.2fmm %2.2fmm %2.2fmm',string(fid_label_store(i)),diff(i,1),diff(i,2),diff(i,3));
 end
 
 fprintf('\n==================================================================\n')
 fprintf('CHECK 4: Is the brain inside the skull?\n\n')
-if multimodal==0;
+if multimodal==0
     mesh = spm_eeg_inv_transform_mesh(D.inv{1}.datareg.fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh);
 else
     mesh = spm_eeg_inv_transform_mesh(D.inv{1}.datareg(MEG_mod_ind).fromMNI*D.inv{1}.mesh.Affine, D.inv{1}.mesh);
@@ -260,8 +258,8 @@ end
 Mcortex = mesh.tess_ctx;
 Miskull = mesh.tess_iskull;
 
-cort_vert    = Mcortex.vert; % cortical mesh
-iskull_vert    = Miskull.vert; % inner skull
+cort_vert = Mcortex.vert; % cortical mesh
+iskull_vert = Miskull.vert; % inner skull
 
 brain_in_skull_score=0;
 check_is_in=inhull(cort_vert,iskull_vert);
@@ -298,10 +296,10 @@ fprintf('CHECK 5: Is the skull inside the dewar?\n\n')
 % flag!
 check_is_in=inhull(iskull_vert,gradiometer_locations);
 
-if sum(check_is_in)==length(iskull_vert);
+if sum(check_is_in)==length(iskull_vert)
     fprintf('It looks like all of the skull is inside the dewar.\n');
     skull_in_dewar_score=2;
-elseif sum(check_is_in)>=round(0.80*length(iskull_vert));
+elseif sum(check_is_in)>=round(0.80*length(iskull_vert))
     fprintf('The majority of the skull is inside the dewar, but some points are outside it.\n');
     skull_in_dewar_score=1;
 else
@@ -327,7 +325,6 @@ end
 
 fprintf('\n==================================================================\n')
 fprintf('CHECK 7: Was a custom MRI used to co-reg?\n\n')
-custom_anat_score=[];
 if D.inv{1}.mesh.template==0;
     fprintf('Yes. Good!\n');
     custom_anat_score=1;
@@ -355,7 +352,6 @@ else
     
     n_hist_pts=100;
     [n,x]=hist(err,n_hist_pts);
-    
     
     % Create green to yellow to red colormap
     G2R=[linspace(0.5,1,n_hist_pts);linspace(1,0,n_hist_pts);zeros(1,n_hist_pts)];
@@ -413,14 +409,12 @@ make_RAC_report(D,fid_in_score,LR_vert_score,fid_delta_score,...
     brain_in_skull_score,skull_in_dewar_score,pol_point_score,...
     pol_points,custom_anat_score,err,scalp_extraction_score,output_dir);
 
-
 %%% Make useful visualisation figure
 if strcmp(coreg_method,'rhino')==1;
     visualise_co_reg(D,coreg_method,mesh_rhino,pol_points,scalp_extraction_score,a,output_dir)
 else % we used SPM
     visualise_co_reg(D,coreg_method,mesh_spm,pol_points,scalp_extraction_score,a,output_dir)
 end
-
 
 %%% Write long report to file
 total_score=0;
@@ -569,7 +563,7 @@ fprintf(fileID,'\npol_points_used - 0 (no points used) or 1 (head points used). 
 fprintf(fileID,'\ncustom_anat_score - subject anatomy not used/used [0/1].');
 fprintf(fileID,'\nscalp_extraction_score - 0 or 1, corresponding to holes being found in the scalp extraction.');
 fclose(fileID);
-fprintf('\nDone. Reports and Figures saved to disk.\nCiao.\n');
+fprintf('\nDone. \nReports and Figures saved to disk. Did you know that 99 percent of dust is made up of dead human skin?\nCiao.\n');
 close all; % goodbye
 end
 
