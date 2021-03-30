@@ -7,18 +7,19 @@ function D = osl_forward_model(D,varargin)
     % - D - MEEG object
     %
     % OPTIONAL INPUTS:
-    % - forward_meg - Specify forward model for MEG data {'Single Shell' or
-    %   'MEG Local Spheres'} (default 'Single Shell')
+    % - forward_meg - Specify forward model for MEG data {'Single Shell',
+    %   'MEG Local Spheres','Single Sphere'} (default 'Single Shell')
     % - forward_eeg - Specify forward model for EEG data
     %
     % Returns an MEEG object with D.inv contents updated. NOT saved to disk
     %
+    % Ryan Timms, 2021
     % Romesh Abeysuriya 2017 
     % Adam Baker 2014
 
     arg = inputParser;
     arg.KeepUnmatched = true;
-    arg.addParameter('forward_meg','Single Shell',@(x) any(strcmp(x,{'Single Shell','MEG Local Spheres'})));
+    arg.addParameter('forward_meg','Single Shell',@(x) any(strcmp(x,{'Single Shell','MEG Local Spheres','Single Sphere'})));
     arg.addParameter('forward_eeg','EEG BEM');
     arg.parse(varargin{:});
 

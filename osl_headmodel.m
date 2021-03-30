@@ -21,7 +21,8 @@ function D = osl_headmodel(S)
 %
 % S.use_rhino       - use RHINO coregistration instead of SPM
 %
-% S.forward_meg     - 'Single Shell' or 'MEG Local Spheres' (default)
+% S.forward_meg     - 'Single Shell' (default), 'MEG Local Spheres' or
+%                     'Single Sphere'
 %
 % S.forward_eeg     - 'EEG BEM' (default)
 %
@@ -42,6 +43,7 @@ function D = osl_headmodel(S)
 %                      .coordsys - Specify fiducial coordinate system as:
 %                                  'Native' or 'MNI' (default 'MNI')
 %
+% Ryan Timms 2021
 % Romesh Abeysuriya 2017
 % Adam Baker 2014
 
@@ -58,7 +60,7 @@ end
 
 % Check Headmodel Specification:
 try
-    S = ft_checkopt(S,'forward_meg','char',{'Single Shell','MEG Local Spheres'});
+    S = ft_checkopt(S,'forward_meg','char',{'Single Shell','MEG Local Spheres','Single Sphere'});
 catch
     warning('MEG Forward model specification not recognised or incorrect, assigning default: "Single Shell"')
     S = ft_setopt(S,'forward_meg','Single Shell');
