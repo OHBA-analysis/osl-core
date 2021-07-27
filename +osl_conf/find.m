@@ -21,7 +21,7 @@ function f = find()
         % Config specified and not found - error
         assert( osl_util.isfile(f), 'Configuration file not found (set via $OSLCONF): %s', f );
         return;
-    elseif isempty(f) && strcmp(getenv('OSLUSERMODE'), 'user')
+    elseif isempty(f) && strcmp(getenv('OSLUSERMODE'), 'shared')
         % Config not specified and in user mode - set fname to userpath
         f = fullfile(userpath, 'osl.conf');
     elseif osl_util.isfile(p)
