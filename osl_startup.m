@@ -1,8 +1,21 @@
-function osl_startup( osl_root )
+function osl_startup( osl_root, user_mode )
 %
 % Initialize OSL
 % Optionally accepts a single argument osl_root, which is the folder CONTAINING 'osl-core'.
 %
+% This gets/sets three environment variables
+% OSLDIR - the location of the outer OSL directory
+% OSLCONF - the path to the OSL configuration file
+
+    if nargin < 2 || isempty(user_mode) || strcmp(user_mode, 'osl')
+        % In user_mode we will store and load OSL configurations and
+        % backups to the individual userpath's rather than the OSL
+        % directory itself
+        user_mode = 'osl';
+    else
+        assert(strcmp(user_mode, 'user')==1, 'Specified user_mode not recognised. Please use user or osl');
+    end
+    setenv('OSLUSERMODE',  user_mode);
     
     osl_core = fileparts(mfilename('fullpath')); % folder where this script is
     if nargin < 1 || isempty(osl_root) 

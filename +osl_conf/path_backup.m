@@ -9,7 +9,11 @@ function p = path_backup()
 
     p = path(); 
 
-    fname = osldir( '.path-backup.tmp' );
+    % always backup next to current OSLCONF
+    confdir = fileparts(getenv('OSLCONF'));
+    fprintf(1,'[OSL] Backing-up matlab path to: %s\n',confdir);
+
+    fname = fullfile( confdir, '.path-backup.tmp' );
     setenv('OSL_PATH_BACKUP', fname);
     fh = fopen(fname,'w+');
     fwrite(fh,p);
