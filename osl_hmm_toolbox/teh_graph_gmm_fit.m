@@ -28,6 +28,7 @@ end
 normalised_logistic_data=normalise(logistic_data);   
 
 addpath(genpath([osldir '/ohba-external/netlab3.3']));
+addpath(genpath([osldir '/ohba-external/fmt']));
 
 mix = gmm(1, 2, 'diag');
 mix = gmminit(mix, normalised_logistic_data, foptions);
