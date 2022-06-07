@@ -146,7 +146,7 @@ for subi=1:length(opt.sessions_to_do)
             end
             
             if D.fsample>200            
-                D = osl_filter(D,-1*(100+[-2 2])); % Remove 100Hz with notch filter
+                D = osl_filter(D,-1*(100+[-2 2]),'prefix',''); % Remove 100Hz with notch filter
             else
                 disp('Unable to do mains notch filtering at 100Hz, as D.fsample is not >200Hz');            
             end
