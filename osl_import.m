@@ -79,8 +79,12 @@ function D = osl_import(raw_data,varargin)
     %% MWW added back in from osl1.2.beta.15 - Oct 2013
     ev = events(D,1);
     for j = 1:length(ev)
-        if isempty(ev(j).value) || ~(ev(j).value>0)
-            ev(j).value=1;
+        try
+            if isempty(ev(j).value) || ~(ev(j).value>0)
+                ev(j).value=1;
+            end
+        catch
+            warning('Strange event type encountered in the raw data object. Please inspect the events in the raw file!');
         end
     end
     D = D.events(1,ev);
