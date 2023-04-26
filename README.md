@@ -1,5 +1,8 @@
 # OSL - OHBA SOFTWARE LIBRARY
 
+No Longer Supported - Use Python Version Instead: https://github.com/OHBA-analysis/osl
+======================================================================================
+
 To set up OSL, follow the directions below:
 
 ### Prerequisites
