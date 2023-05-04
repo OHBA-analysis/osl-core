@@ -111,14 +111,18 @@ else
 
     % copy badtrials
     badtrials=D.badtrials;
-    if ~isempty(badtrials)
+    if ~isempty(badtrials) && Sc.D.ntrials==D2.ntrials
         tmp_bad = zeros(D.ntrials,1);
         tmp_bad(badtrials) = 1;
         D2 = D2.badtrials(1:length(tmp_bad),tmp_bad);
     end
 
     % copy events
-    ev = D.events;
+    if isfield(Sc, 'events') % required when number of trials in D and D2 is not equal
+      ev = Sc.events;
+    else
+      ev = D.events;
+    end
     D2 = D2.events(1:D2.ntrials,ev);
 
 end

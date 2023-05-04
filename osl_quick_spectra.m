@@ -18,7 +18,7 @@ if nargin < 2 || isempty(bands)
     bands = {[0 3], [3 7], [7 13], [13 30], [30 100], [100 200]};
 end
 
-chaninds = D.indchantype('MEGPLANAR');
+chaninds = D.indchantype(modality);
 [pxx,f] = pwelch( zscore(D(chaninds,:,1)'),D.fsample,[],[],D.fsample );
 
 font_size = 12;

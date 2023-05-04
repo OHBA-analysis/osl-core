@@ -275,11 +275,15 @@ uiwait(MainFig)
         drawnow
 
         % Add info about metrics as title above tICWindow
-        titlestr = 'Component ranking: ';
+        titlestr = sprintf('Component %d ranking: ', current_comp);
         for j = 1:length(metric_names)
             v = metrics.(metric_names{j}).value(current_comp); % Metric value
             r = sum(v <= metrics.(metric_names{j}).value);
-            titlestr = [titlestr sprintf('%s: %i (%.2f)  ',metric_names{j},r,v)];
+            if mod(j,4)==0
+              titlestr = [titlestr sprintf('\n %s: %i (%.2f)  ',metric_names{j},r,v)];
+            else
+              titlestr = [titlestr sprintf('%s: %i (%.2f)  ',metric_names{j},r,v)];
+            end
         end  
         title(tICWindow,titlestr,'fontsize',FONTSIZE,'interpreter','none')
         
